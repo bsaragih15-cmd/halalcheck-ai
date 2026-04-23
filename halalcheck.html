@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HalalCheck AI — Cek Halal Instan</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:        #16a34a;
+      --green-light:  #dcfce7;
+      --green-mid:    #86efac;
+      --yellow:       #d97706;
+      --yellow-light: #fef9c3;
+      --red:          #dc2626;
+      --red-light:    #fee2e2;
+      --gold:         #f59e0b;
+      --black:        #0f172a;
+      --gray:         #64748b;
+      --gray-light:   #f8fafc;
+      --white:        #ffffff;
+      --border:       #e2e8f0;
+      --radius:       16px;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--black);
+      background: var(--white);
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 60px;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      background: rgba(255,255,255,0.97);
+      backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--green);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+    .logo span { color: var(--green); }
+    nav ul { list-style: none; display: flex; gap: 32px; align-items: center; }
+    nav ul li a {
+      text-decoration: none; color: var(--gray);
+      font-size: 14px; font-weight: 500; transition: color 0.2s;
+    }
+    nav ul li a:hover { color: var(--black); }
+    .nav-cta {
+      background: var(--green) !important;
+      color: var(--white) !important;
+      padding: 10px 22px;
+      border-radius: 100px;
+      font-weight: 600 !important;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 80px 60px;
+      max-width: 1300px;
+      margin: 0 auto;
+      gap: 60px;
+    }
+    .hero-left { flex: 1; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--green-light);
+      color: var(--green);
+      border: 1px solid var(--green-mid);
+      padding: 6px 16px; border-radius: 100px;
+      font-size: 13px; font-weight: 600; margin-bottom: 24px;
+    }
+    h1 {
+      font-size: 58px; font-weight: 800; line-height: 1.1;
+      letter-spacing: -2px; margin-bottom: 20px;
+    }
+    h1 .green { color: var(--green); }
+    .hero-sub {
+      font-size: 18px; color: var(--gray); line-height: 1.7;
+      max-width: 480px; margin-bottom: 36px; font-weight: 400;
+    }
+    .hero-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .btn-primary {
+      background: var(--green); color: var(--white);
+      border: none; padding: 16px 32px; border-radius: 100px;
+      font-size: 16px; font-weight: 700; cursor: pointer;
+      transition: transform 0.15s, background 0.2s;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .btn-primary:hover { background: #15803d; transform: translateY(-1px); }
+    .btn-secondary {
+      background: var(--white); color: var(--black);
+      border: 1.5px solid var(--border); padding: 15px 28px;
+      border-radius: 100px; font-size: 15px; font-weight: 600;
+      cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      transition: border-color 0.2s;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .btn-secondary:hover { border-color: var(--green); color: var(--green); }
+    .hero-trust { display: flex; align-items: center; gap: 8px; margin-top: 20px; }
+    .trust-avatars { display: flex; }
+    .trust-avatars span {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid white; margin-left: -8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700;
+    }
+    .trust-avatars span:first-child { margin-left: 0; }
+    .a1{background:#bbf7d0;color:#15803d;}
+    .a2{background:#fde68a;color:#92400e;}
+    .a3{background:#ddd6fe;color:#5b21b6;}
+    .a4{background:#fecaca;color:#991b1b;}
+    .trust-text { font-size: 13px; color: var(--gray); font-weight: 500; }
+    .trust-text strong { color: var(--black); }
+
+    /* ── HERO CARD ── */
+    .hero-right { flex: 0 0 400px; }
+    .scan-card {
+      background: var(--white);
+      border-radius: 24px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.09);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+    .scan-card-header {
+      background: var(--green);
+      padding: 20px 24px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .scan-card-header .icon { font-size: 24px; }
+    .scan-card-header-text h3 {
+      color: white; font-size: 16px; font-weight: 700; margin-bottom: 2px;
+    }
+    .scan-card-header-text p { color: rgba(255,255,255,0.75); font-size: 12px; }
+    .scan-card-body { padding: 20px 24px; }
+    .product-row {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--gray-light); border-radius: 14px;
+      padding: 14px 16px; margin-bottom: 16px;
+    }
+    .product-img {
+      width: 48px; height: 48px; border-radius: 10px;
+      background: white; display: flex; align-items: center;
+      justify-content: center; font-size: 28px;
+      border: 1px solid var(--border);
+    }
+    .product-info h4 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+    .product-info p { font-size: 12px; color: var(--gray); }
+    .verdict-banner {
+      border-radius: 14px; padding: 16px 20px;
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 14px;
+    }
+    .verdict-halal { background: var(--green-light); border: 1.5px solid var(--green-mid); }
+    .verdict-syubhat { background: var(--yellow-light); border: 1.5px solid #fde68a; }
+    .verdict-haram { background: var(--red-light); border: 1.5px solid #fca5a5; }
+    .verdict-icon { font-size: 32px; flex-shrink: 0; }
+    .verdict-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+    .verdict-halal .verdict-label { color: var(--green); }
+    .verdict-syubhat .verdict-label { color: var(--yellow); }
+    .verdict-haram .verdict-label { color: var(--red); }
+    .verdict-msg { font-size: 13px; font-weight: 600; color: var(--black); line-height: 1.4; }
+    .ingredients-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .ing-tag {
+      font-size: 11px; font-weight: 600; padding: 4px 10px;
+      border-radius: 100px;
+    }
+    .ing-ok  { background: var(--green-light); color: var(--green); }
+    .ing-warn{ background: var(--yellow-light); color: var(--yellow); }
+    .ing-bad { background: var(--red-light); color: var(--red); }
+    .alt-section { background: var(--gray-light); border-radius: 12px; padding: 12px 14px; }
+    .alt-label { font-size: 11px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+    .alt-item { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+    .alt-item::before { content: "✅"; font-size: 14px; }
+
+    /* ── STATS BAR ── */
+    .stats-bar {
+      background: var(--green);
+      padding: 32px 60px;
+      display: flex; justify-content: center; gap: 80px; text-align: center;
+    }
+    .stat-num {
+      font-size: 36px; font-weight: 800; color: white;
+      display: block; margin-bottom: 4px; letter-spacing: -1px;
+    }
+    .stat-label { font-size: 13px; color: rgba(255,255,255,0.75); font-weight: 500; }
+
+    /* ── SCAN METHODS ── */
+    .section { padding: 90px 60px; max-width: 1300px; margin: 0 auto; }
+    .section-tag {
+      display: inline-block; background: var(--green-light); color: var(--green);
+      padding: 6px 16px; border-radius: 100px; font-size: 12px;
+      font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 16px;
+    }
+    h2 { font-size: 42px; font-weight: 800; letter-spacing: -1.5px; margin-bottom: 12px; line-height: 1.15; }
+    .section-sub { font-size: 17px; color: var(--gray); max-width: 500px; line-height: 1.65; margin-bottom: 52px; }
+    .methods-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .method-card {
+      border: 1.5px solid var(--border); border-radius: var(--radius);
+      padding: 32px; transition: border-color 0.2s, transform 0.15s;
+      cursor: pointer;
+    }
+    .method-card:hover { border-color: var(--green); transform: translateY(-2px); }
+    .method-card.active { border-color: var(--green); background: var(--green-light); }
+    .method-icon {
+      width: 52px; height: 52px; background: var(--green-light);
+      border-radius: 14px; display: flex; align-items: center;
+      justify-content: center; font-size: 24px; margin-bottom: 18px;
+    }
+    .method-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+    .method-text { font-size: 14px; color: var(--gray); line-height: 1.6; }
+    .method-badge {
+      display: inline-block; margin-top: 12px;
+      background: var(--green); color: white;
+      font-size: 11px; font-weight: 700; padding: 3px 10px;
+      border-radius: 100px;
+    }
+
+    /* ── TOOL SECTION ── */
+    .tool-section { background: var(--gray-light); padding: 90px 60px; }
+    .tool-inner { max-width: 800px; margin: 0 auto; text-align: center; }
+    .tool-inner h2 { margin-bottom: 8px; }
+    .tool-inner .section-sub { margin: 0 auto 40px; }
+
+    .input-tabs {
+      display: flex; gap: 8px; margin-bottom: 20px;
+      background: var(--white); padding: 6px;
+      border-radius: 14px; border: 1px solid var(--border);
+      width: fit-content; margin-left: auto; margin-right: auto;
+    }
+    .tab-btn {
+      padding: 8px 20px; border-radius: 10px; border: none;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      background: transparent; color: var(--gray);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: all 0.2s;
+    }
+    .tab-btn.active { background: var(--green); color: white; }
+
+    .search-box {
+      background: var(--white); border-radius: 18px;
+      padding: 8px 8px 8px 20px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+      margin-bottom: 28px; border: 1.5px solid var(--border);
+    }
+    .search-box input {
+      flex: 1; border: none; outline: none;
+      font-size: 15px; font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--black); background: transparent;
+    }
+    .search-box input::placeholder { color: #94a3b8; }
+    .btn-scan {
+      background: var(--green); color: white; border: none;
+      padding: 13px 24px; border-radius: 12px;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      white-space: nowrap; font-family: 'Plus Jakarta Sans', sans-serif;
+      display: flex; align-items: center; gap: 6px;
+      transition: background 0.2s;
+    }
+    .btn-scan:hover { background: #15803d; }
+
+    /* RESULTS */
+    .result-wrapper { text-align: left; display: none; }
+    .result-top {
+      background: white; border-radius: var(--radius);
+      padding: 20px 24px; margin-bottom: 12px;
+      border: 1.5px solid var(--border);
+      display: flex; align-items: center; gap: 16px;
+    }
+    .result-product-img {
+      width: 56px; height: 56px; border-radius: 12px;
+      background: var(--gray-light); display: flex;
+      align-items: center; justify-content: center; font-size: 30px;
+      flex-shrink: 0;
+    }
+    .result-product-name { font-size: 16px; font-weight: 700; margin-bottom: 3px; }
+    .result-product-brand { font-size: 13px; color: var(--gray); }
+    .result-verdict {
+      border-radius: var(--radius); padding: 20px 24px;
+      margin-bottom: 12px; display: flex; align-items: flex-start; gap: 16px;
+    }
+    .rv-halal   { background: var(--green-light); border: 1.5px solid var(--green-mid); }
+    .rv-syubhat { background: var(--yellow-light); border: 1.5px solid #fde68a; }
+    .rv-haram   { background: var(--red-light);   border: 1.5px solid #fca5a5; }
+    .rv-icon { font-size: 40px; flex-shrink: 0; }
+    .rv-label {
+      font-size: 11px; font-weight: 800; letter-spacing: 1.2px;
+      text-transform: uppercase; margin-bottom: 4px;
+    }
+    .rv-halal .rv-label   { color: var(--green); }
+    .rv-syubhat .rv-label { color: var(--yellow); }
+    .rv-haram .rv-label   { color: var(--red); }
+    .rv-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+    .rv-reason { font-size: 14px; color: #374151; line-height: 1.6; }
+
+    .ing-breakdown {
+      background: white; border-radius: var(--radius);
+      padding: 20px 24px; margin-bottom: 12px;
+      border: 1.5px solid var(--border);
+    }
+    .ing-title { font-size: 13px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px; }
+    .ing-list { display: flex; flex-direction: column; gap: 8px; }
+    .ing-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px; border-radius: 10px; font-size: 14px;
+    }
+    .ing-item.ok    { background: var(--green-light); }
+    .ing-item.warn  { background: var(--yellow-light); }
+    .ing-item.bad   { background: var(--red-light); }
+    .ing-item-name { font-weight: 600; }
+    .ing-item-status {
+      font-size: 11px; font-weight: 700; padding: 3px 10px;
+      border-radius: 100px;
+    }
+    .ok   .ing-item-status { background: var(--green);   color: white; }
+    .warn .ing-item-status { background: var(--yellow);  color: white; }
+    .bad  .ing-item-status { background: var(--red);     color: white; }
+
+    .alt-box {
+      background: white; border-radius: var(--radius);
+      padding: 20px 24px; border: 1.5px solid var(--border);
+    }
+    .alt-box-title { font-size: 13px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 14px; }
+    .alt-products { display: flex; gap: 12px; }
+    .alt-product {
+      flex: 1; background: var(--green-light); border-radius: 12px;
+      padding: 14px; text-align: center;
+    }
+    .alt-product-icon { font-size: 28px; margin-bottom: 6px; }
+    .alt-product-name { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+    .alt-product-label { font-size: 11px; color: var(--green); font-weight: 600; }
+
+    /* ── VERDICT EXAMPLES ── */
+    .examples-section { background: var(--white); }
+    .examples-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .example-card {
+      border-radius: var(--radius); overflow: hidden;
+      border: 1.5px solid var(--border);
+      transition: transform 0.15s;
+    }
+    .example-card:hover { transform: translateY(-2px); }
+    .example-header {
+      padding: 16px 20px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .eh-halal   { background: var(--green-light); }
+    .eh-syubhat { background: var(--yellow-light); }
+    .eh-haram   { background: var(--red-light); }
+    .example-emoji { font-size: 28px; }
+    .example-verdict-tag {
+      font-size: 11px; font-weight: 800; padding: 4px 12px;
+      border-radius: 100px; letter-spacing: 0.8px;
+    }
+    .halal-tag   { background: var(--green); color: white; }
+    .syubhat-tag { background: var(--yellow); color: white; }
+    .haram-tag   { background: var(--red);   color: white; }
+    .example-body { padding: 16px 20px; }
+    .example-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .example-brand { font-size: 12px; color: var(--gray); margin-bottom: 10px; }
+    .example-reason { font-size: 13px; color: var(--gray); line-height: 1.5; }
+
+    /* ── HOW IT WORKS ── */
+    .hiw-section { background: var(--gray-light); padding: 90px 60px; }
+    .hiw-inner { max-width: 1200px; margin: 0 auto; }
+    .hiw-steps { display: flex; gap: 0; position: relative; margin-top: 52px; }
+    .hiw-steps::before {
+      content: '';
+      position: absolute; top: 28px; left: 60px; right: 60px;
+      height: 2px; background: var(--green-mid); z-index: 0;
+    }
+    .hiw-step { flex: 1; text-align: center; padding: 0 20px; position: relative; z-index: 1; }
+    .hiw-num {
+      width: 56px; height: 56px; background: var(--green);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 800; color: white;
+      margin: 0 auto 16px; border: 3px solid white;
+      box-shadow: 0 0 0 3px var(--green-mid);
+    }
+    .hiw-icon { font-size: 28px; margin-bottom: 12px; }
+    .hiw-title { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+    .hiw-text { font-size: 13px; color: var(--gray); line-height: 1.6; }
+
+    /* ── TIKTOK SECTION ── */
+    .tiktok-section { padding: 90px 60px; max-width: 1300px; margin: 0 auto; }
+    .tiktok-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+    .tiktok-videos { display: flex; gap: 16px; }
+    .tiktok-card {
+      flex: 1; background: var(--black); border-radius: 20px;
+      overflow: hidden; aspect-ratio: 9/16; max-width: 160px;
+      position: relative; display: flex; flex-direction: column;
+      justify-content: flex-end; padding: 16px 12px;
+    }
+    .tiktok-card:nth-child(2) { margin-top: 32px; }
+    .tiktok-bg {
+      position: absolute; inset: 0; display: flex;
+      align-items: center; justify-content: center; font-size: 64px;
+    }
+    .tiktok-overlay {
+      position: relative; z-index: 1;
+      background: linear-gradient(transparent, rgba(0,0,0,0.8));
+      margin: -16px -12px -0px;
+      padding: 32px 12px 12px;
+    }
+    .tiktok-views { font-size: 18px; font-weight: 800; color: white; }
+    .tiktok-caption { font-size: 10px; color: rgba(255,255,255,0.8); line-height: 1.4; margin-top: 4px; }
+    .tiktok-right h2 { margin-bottom: 12px; }
+    .tiktok-points { list-style: none; display: flex; flex-direction: column; gap: 14px; margin-top: 28px; }
+    .tiktok-points li {
+      display: flex; align-items: flex-start; gap: 12px;
+      font-size: 15px; color: var(--gray); line-height: 1.5;
+    }
+    .tiktok-points li::before {
+      content: "✅"; font-size: 16px; flex-shrink: 0; margin-top: 1px;
+    }
+    .tiktok-points li strong { color: var(--black); }
+
+    /* ── FINAL CTA ── */
+    .final-cta {
+      background: var(--green); padding: 100px 60px; text-align: center;
+    }
+    .final-cta h2 { color: white; font-size: 52px; margin-bottom: 16px; }
+    .final-cta p { color: rgba(255,255,255,0.8); font-size: 18px; margin-bottom: 40px; }
+    .btn-white {
+      background: white; color: var(--green);
+      border: none; padding: 18px 40px; border-radius: 100px;
+      font-size: 17px; font-weight: 800; cursor: pointer;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      transition: transform 0.15s;
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-white:hover { transform: translateY(-2px); }
+    .cta-sub { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 16px; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border); padding: 32px 60px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    footer p { font-size: 13px; color: var(--gray); }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a { font-size: 13px; color: var(--gray); text-decoration: none; }
+
+    @media (max-width: 900px) {
+      nav { padding: 16px 20px; }
+      nav ul { display: none; }
+      .hero { flex-direction: column; padding: 40px 20px; }
+      .hero-right { width: 100%; flex: unset; }
+      h1 { font-size: 38px; }
+      .section { padding: 60px 20px; }
+      .methods-grid { grid-template-columns: 1fr; }
+      .tool-section { padding: 60px 20px; }
+      .examples-grid { grid-template-columns: 1fr; }
+      .hiw-section { padding: 60px 20px; }
+      .hiw-steps { flex-direction: column; gap: 32px; }
+      .hiw-steps::before { display: none; }
+      .tiktok-section { padding: 60px 20px; }
+      .tiktok-grid { grid-template-columns: 1fr; }
+      .stats-bar { flex-direction: column; gap: 32px; padding: 48px 20px; }
+      .final-cta { padding: 60px 20px; }
+      .final-cta h2 { font-size: 36px; }
+      footer { flex-direction: column; gap: 16px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    <div class="logo-icon">☪️</div>
+    Halal<span>Check</span> AI
+  </div>
+  <ul>
+    <li><a href="#cara">Cara Kerja</a></li>
+    <li><a href="#cek">Cek Sekarang</a></li>
+    <li><a href="#contoh">Contoh</a></li>
+    <li><a href="#cek" class="nav-cta">Cek Gratis →</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-left">
+    <div class="hero-badge">🤖 Powered by AI · Database 50,000+ Bahan</div>
+    <h1>Cek Halal<br/><span class="green">Instan & Akurat</span></h1>
+    <p class="hero-sub">Scan barcode atau foto label produk — AI kami langsung menganalisis setiap bahan dan memberi verdik Halal, Syubhat, atau Haram dalam hitungan detik.</p>
+    <div class="hero-actions">
+      <a href="#cek" class="btn-primary">🔍 Cek Produk Sekarang</a>
+      <a href="#cara" class="btn-secondary">▶ Lihat Demo</a>
+    </div>
+    <div class="hero-trust" style="margin-top:24px;">
+      <div class="trust-avatars">
+        <span class="a1">SR</span>
+        <span class="a2">DN</span>
+        <span class="a3">FZ</span>
+        <span class="a4">MY</span>
+      </div>
+      <span class="trust-text">Dipercaya <strong>50,000+</strong> Muslim Indonesia</span>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="scan-card">
+      <div class="scan-card-header">
+        <div class="icon">🔬</div>
+        <div class="scan-card-header-text">
+          <h3>Hasil Analisis AI</h3>
+          <p>Oreo Original 133g · Barcode: 7622210449283</p>
+        </div>
+      </div>
+      <div class="scan-card-body">
+        <div class="product-row">
+          <div class="product-img">🍪</div>
+          <div class="product-info">
+            <h4>Oreo Original</h4>
+            <p>Nabisco · Produk Impor · 133g</p>
+          </div>
+        </div>
+        <div class="verdict-banner verdict-syubhat">
+          <div class="verdict-icon">⚠️</div>
+          <div>
+            <div class="verdict-label">Syubhat — Perlu Hati-hati</div>
+            <div class="verdict-msg">Mengandung E471 (Mono and Diglycerides) yang bisa berasal dari lemak babi atau nabati</div>
+          </div>
+        </div>
+        <div class="ingredients-row">
+          <span class="ing-tag ing-ok">Tepung Terigu ✓</span>
+          <span class="ing-tag ing-ok">Gula ✓</span>
+          <span class="ing-tag ing-warn">E471 ⚠️</span>
+          <span class="ing-tag ing-ok">Kakao ✓</span>
+          <span class="ing-tag ing-ok">Vanili ✓</span>
+        </div>
+        <div class="alt-section">
+          <div class="alt-label">Alternatif Halal Tersertifikasi</div>
+          <div class="alt-item">Oreo Indonesia (produksi lokal, MUI certified)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div><span class="stat-num">50K+</span><span class="stat-label">Produk teranalisis</span></div>
+  <div><span class="stat-num">230M</span><span class="stat-label">Muslim Indonesia</span></div>
+  <div><span class="stat-num">98%</span><span class="stat-label">Akurasi verdik</span></div>
+  <div><span class="stat-num">3 detik</span><span class="stat-label">Waktu analisis</span></div>
+</div>
+
+<!-- SCAN METHODS -->
+<div class="section" id="cara">
+  <span class="section-tag">3 Cara Scan</span>
+  <h2>Sefleksibel kebutuhanmu</h2>
+  <p class="section-sub">Scan barcode di supermarket, foto labelnya, atau cukup ketik nama produknya — semua bisa.</p>
+  <div class="methods-grid">
+    <div class="method-card active">
+      <div class="method-icon">📷</div>
+      <div class="method-title">Scan Barcode</div>
+      <div class="method-text">Arahkan kamera ke barcode produk. AI langsung identifikasi produk dan analisis semua bahannya.</div>
+      <span class="method-badge">Paling Cepat</span>
+    </div>
+    <div class="method-card">
+      <div class="method-icon">🔍</div>
+      <div class="method-title">Foto Label</div>
+      <div class="method-text">Foto komposisi/ingredient list di kemasan. AI membaca dan menganalisis setiap bahan secara detail.</div>
+      <span class="method-badge">Paling Akurat</span>
+    </div>
+    <div class="method-card">
+      <div class="method-icon">⌨️</div>
+      <div class="method-title">Ketik Nama Produk</div>
+      <div class="method-text">Cukup ketik nama produk dan mereknya. Cocok untuk cek sebelum beli atau saat tidak pegang produk.</div>
+      <span class="method-badge">Paling Mudah</span>
+    </div>
+  </div>
+</div>
+
+<!-- TOOL -->
+<div class="tool-section" id="cek">
+  <div class="tool-inner">
+    <span class="section-tag">Coba Gratis</span>
+    <h2>Cek produkmu sekarang</h2>
+    <p class="section-sub">Tidak perlu daftar. Langsung cek.</p>
+
+    <div class="input-tabs">
+      <button class="tab-btn active" onclick="setTab(this,'barcode')">📷 Barcode</button>
+      <button class="tab-btn" onclick="setTab(this,'foto')">🔍 Foto Label</button>
+      <button class="tab-btn" onclick="setTab(this,'ketik')">⌨️ Ketik Nama</button>
+    </div>
+
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder='Ketik nama produk... cth: "Indomie Goreng", "Kitkat", "Pond\'s"'/>
+      <button class="btn-scan" onclick="showResult()">🔍 Cek Sekarang</button>
+    </div>
+
+    <div id="resultArea" class="result-wrapper">
+      <div class="result-top">
+        <div class="result-product-img">🍜</div>
+        <div>
+          <div class="result-product-name" id="productName">Indomie Goreng Spesial</div>
+          <div class="result-product-brand">Indofood · Produk Lokal · MUI Certified</div>
+        </div>
+      </div>
+      <div class="result-verdict rv-halal">
+        <div class="rv-icon">✅</div>
+        <div>
+          <div class="rv-label">Halal — Aman Dikonsumsi</div>
+          <div class="rv-title">Halal & Tersertifikasi MUI</div>
+          <div class="rv-reason">Semua bahan telah terverifikasi halal. Produk ini memiliki sertifikasi MUI resmi dan diproduksi di fasilitas halal bersertifikat.</div>
+        </div>
+      </div>
+      <div class="ing-breakdown">
+        <div class="ing-title">Breakdown Bahan-Bahan</div>
+        <div class="ing-list">
+          <div class="ing-item ok">
+            <span class="ing-item-name">🌾 Tepung Terigu</span>
+            <span class="ing-item-status">Halal</span>
+          </div>
+          <div class="ing-item ok">
+            <span class="ing-item-name">🌴 Minyak Kelapa Sawit</span>
+            <span class="ing-item-status">Halal</span>
+          </div>
+          <div class="ing-item ok">
+            <span class="ing-item-name">🧂 Garam, Gula, Bumbu</span>
+            <span class="ing-item-status">Halal</span>
+          </div>
+          <div class="ing-item ok">
+            <span class="ing-item-name">🌿 MSG (E621)</span>
+            <span class="ing-item-status">Halal</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EXAMPLES -->
+<div class="section examples-section" id="contoh">
+  <span class="section-tag">Contoh Hasil</span>
+  <h2>Temuan mengejutkan<br/>dari AI kami</h2>
+  <p class="section-sub">Beberapa produk populer punya hasil yang bikin kaget. Sudah kamu cek?</p>
+  <div class="examples-grid">
+    <div class="example-card">
+      <div class="example-header eh-halal">
+        <span class="example-emoji">🍜</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;">Indomie Goreng</div>
+          <div style="font-size:12px;color:#64748b;">Indofood</div>
+        </div>
+        <span class="example-verdict-tag halal-tag" style="margin-left:auto;">✅ HALAL</span>
+      </div>
+      <div class="example-body">
+        <div class="example-reason">Semua bahan halal. Sertifikasi MUI aktif. Diproduksi di fasilitas halal bersertifikat sejak 1985.</div>
+      </div>
+    </div>
+    <div class="example-card">
+      <div class="example-header eh-syubhat">
+        <span class="example-emoji">🍪</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;">Oreo Original (Impor)</div>
+          <div style="font-size:12px;color:#64748b;">Nabisco · USA</div>
+        </div>
+        <span class="example-verdict-tag syubhat-tag" style="margin-left:auto;">⚠️ SYUBHAT</span>
+      </div>
+      <div class="example-body">
+        <div class="example-reason">Mengandung E471 yang sumber asal-usulnya tidak jelas — bisa dari lemak nabati ATAU lemak babi. Versi lokal Indonesia aman (MUI certified).</div>
+      </div>
+    </div>
+    <div class="example-card">
+      <div class="example-header eh-haram">
+        <span class="example-emoji">🍷</span>
+        <div>
+          <div style="font-size:14px;font-weight:700;">Vanilla Extract (Impor)</div>
+          <div style="font-size:12px;color:#64748b;">McCormick · USA</div>
+        </div>
+        <span class="example-verdict-tag haram-tag" style="margin-left:auto;">❌ HARAM</span>
+      </div>
+      <div class="example-body">
+        <div class="example-reason">Mengandung alkohol (35% ethanol) sebagai pelarut. Alternatif halal: gunakan vanilla powder atau vanilla paste tanpa alkohol.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS (TECH) -->
+<div class="hiw-section">
+  <div class="hiw-inner">
+    <div style="text-align:center;">
+      <span class="section-tag">Teknologi</span>
+      <h2>Bagaimana AI kami bekerja</h2>
+      <p class="section-sub" style="margin:0 auto;">Dari scan ke verdik dalam 3 detik.</p>
+    </div>
+    <div class="hiw-steps">
+      <div class="hiw-step">
+        <div class="hiw-num">1</div>
+        <div class="hiw-icon">📷</div>
+        <div class="hiw-title">Input Produk</div>
+        <div class="hiw-text">Scan barcode, foto label, atau ketik nama produk</div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">2</div>
+        <div class="hiw-icon">🗃️</div>
+        <div class="hiw-title">Ambil Data</div>
+        <div class="hiw-text">Sistem mengambil data bahan dari database 50,000+ produk global</div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">3</div>
+        <div class="hiw-icon">🤖</div>
+        <div class="hiw-title">Analisis AI</div>
+        <div class="hiw-text">AI menganalisis setiap bahan berdasarkan standar MUI & fiqih Islam</div>
+      </div>
+      <div class="hiw-step">
+        <div class="hiw-num">4</div>
+        <div class="hiw-icon">✅</div>
+        <div class="hiw-title">Verdik + Penjelasan</div>
+        <div class="hiw-text">Dapatkan verdik lengkap dengan alasan dan alternatif halal</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TIKTOK SECTION -->
+<div class="tiktok-section">
+  <div class="tiktok-grid">
+    <div class="tiktok-videos">
+      <div class="tiktok-card" style="background:linear-gradient(135deg,#1a1a2e,#16213e);">
+        <div class="tiktok-bg">🍪</div>
+        <div class="tiktok-overlay">
+          <div class="tiktok-views">2.4M views</div>
+          <div class="tiktok-caption">"Kaget banget... snack favoritku ternyata SYUBHAT 😱"</div>
+        </div>
+      </div>
+      <div class="tiktok-card" style="background:linear-gradient(135deg,#1a1a2e,#0f3460);">
+        <div class="tiktok-bg">💄</div>
+        <div class="tiktok-overlay">
+          <div class="tiktok-views">1.8M views</div>
+          <div class="tiktok-caption">"Cek lipstik viral ini pakai HalalCheck AI..."</div>
+        </div>
+      </div>
+      <div class="tiktok-card" style="background:linear-gradient(135deg,#1a1a2e,#2d6a4f);">
+        <div class="tiktok-bg">🛒</div>
+        <div class="tiktok-overlay">
+          <div class="tiktok-views">3.1M views</div>
+          <div class="tiktok-caption">"Scan semua makanan di kulkas... hasilnya mengejutkan"</div>
+        </div>
+      </div>
+    </div>
+    <div class="tiktok-right">
+      <span class="section-tag">Viral di TikTok</span>
+      <h2>Konten yang<br/>menulis dirinya sendiri</h2>
+      <ul class="tiktok-points">
+        <li><strong>Shock factor</strong> — Orang selalu kaget temuan AI, langsung share</li>
+        <li><strong>Relatable</strong> — Semua Muslim Indonesia pernah bertanya-tanya soal ini</li>
+        <li><strong>Educational</strong> — Konten save-worthy yang terus disebar</li>
+        <li><strong>Challenge-worthy</strong> — "Scan kulkas kamu" jadi viral trend</li>
+        <li><strong>Fear + Curiosity</strong> — Kombinasi paling powerful di TikTok</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- FINAL CTA -->
+<div class="final-cta">
+  <span class="section-tag" style="background:rgba(255,255,255,0.2);color:white;border:1px solid rgba(255,255,255,0.3);">Gratis Selamanya</span>
+  <h2>Mulai cek sekarang,<br/>makan dengan tenang</h2>
+  <p>Bergabung dengan 50,000+ Muslim Indonesia yang sudah pakai HalalCheck AI.</p>
+  <button class="btn-white" onclick="document.getElementById('cek').scrollIntoView({behavior:'smooth'})">
+    ☪️ Cek Produkmu Gratis →
+  </button>
+  <div class="cta-sub">Tidak perlu daftar · Tidak perlu download · Langsung pakai</div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="logo">
+    <div class="logo-icon">☪️</div>
+    Halal<span>Check</span> AI
+  </div>
+  <p>© 2025 HalalCheck AI · Makan halal, hidup berkah.</p>
+  <div class="footer-links">
+    <a href="#">Tentang</a>
+    <a href="#">Privasi</a>
+    <a href="#">Kontak</a>
+    <a href="#">API untuk Bisnis</a>
+  </div>
+</footer>
+
+<script>
+  // ── Tab switching ────────────────────────────────────────────────────────────
+  function setTab(btn, type) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const placeholders = {
+      barcode: 'Masukkan nomor barcode... cth: "7622210449283"',
+      foto:    'Fitur foto label — ketik nama produk yang ada di label',
+      ketik:   'Ketik nama produk... cth: "Indomie Goreng", "Kitkat", "Pond\'s"'
+    };
+    document.getElementById('searchInput').placeholder = placeholders[type];
+  }
+
+  // ── Helper: verdict config ───────────────────────────────────────────────────
+  const VERDICT_CONFIG = {
+    HALAL:   { cls: 'rv-halal',   icon: '✅', label: 'HALAL — Aman Dikonsumsi' },
+    SYUBHAT: { cls: 'rv-syubhat', icon: '⚠️', label: 'SYUBHAT — Perlu Hati-hati' },
+    HARAM:   { cls: 'rv-haram',   icon: '❌', label: 'HARAM — Hindari Produk Ini' }
+  };
+
+  const ING_STATUS_CLASS = { HALAL: 'ok', SYUBHAT: 'warn', HARAM: 'bad' };
+  const ING_EMOJI = { HALAL: '✅', SYUBHAT: '⚠️', HARAM: '❌' };
+
+  // ── Render API result into the UI ────────────────────────────────────────────
+  function renderResult(data) {
+    const area    = document.getElementById('resultArea');
+    const verdict = (data.verdict || 'SYUBHAT').toUpperCase();
+    const vc      = VERDICT_CONFIG[verdict] || VERDICT_CONFIG['SYUBHAT'];
+
+    // Product header
+    document.getElementById('productName').textContent = data.productName || 'Produk';
+    document.querySelector('.result-product-brand').textContent =
+      verdict === 'HALAL' ? 'Terverifikasi AI · Aman dikonsumsi'
+      : verdict === 'HARAM' ? 'Terverifikasi AI · Tidak halal'
+      : 'Terverifikasi AI · Perlu kehati-hatian';
+
+    const iconMap = { HALAL: '✅', HARAM: '🚫', SYUBHAT: '⚠️' };
+    document.querySelector('.result-product-img').textContent = iconMap[verdict] || '🔍';
+
+    // Verdict banner
+    const vEl = document.querySelector('.result-verdict');
+    vEl.className = 'result-verdict ' + vc.cls;
+    vEl.innerHTML = `
+      <div class="rv-icon">${vc.icon}</div>
+      <div>
+        <div class="rv-label">${vc.label}</div>
+        <div class="rv-title">${data.verdict}</div>
+        <div class="rv-reason">${data.reason || ''}</div>
+      </div>`;
+
+    // Ingredients breakdown
+    const ingList = document.querySelector('.ing-list');
+    ingList.innerHTML = '';
+
+    const flagged = data.flaggedIngredients || [];
+    const safe    = data.safeIngredients    || [];
+
+    flagged.forEach(ing => {
+      const cls = ING_STATUS_CLASS[ing.status] || 'warn';
+      const em  = ING_EMOJI[ing.status] || '⚠️';
+      ingList.innerHTML += `
+        <div class="ing-item ${cls}">
+          <span class="ing-item-name">${em} ${ing.name}</span>
+          <span class="ing-item-status">${ing.status}</span>
+        </div>`;
+    });
+
+    safe.slice(0, 4).forEach(name => {
+      ingList.innerHTML += `
+        <div class="ing-item ok">
+          <span class="ing-item-name">✅ ${name}</span>
+          <span class="ing-item-status">Halal</span>
+        </div>`;
+    });
+
+    if (!flagged.length && !safe.length) {
+      ingList.innerHTML = `<div class="ing-item ok"><span class="ing-item-name">ℹ️ Data bahan tidak tersedia</span><span class="ing-item-status">—</span></div>`;
+    }
+
+    // Alternatives (only if HARAM/SYUBHAT)
+    const altBox = document.getElementById('altBox');
+    if (altBox) altBox.remove();
+
+    const alts = data.alternatives || [];
+    if (alts.length && verdict !== 'HALAL') {
+      const box = document.createElement('div');
+      box.id = 'altBox';
+      box.className = 'alt-box';
+      box.innerHTML = `
+        <div class="alt-box-title">Alternatif Halal Tersertifikasi</div>
+        <div class="alt-products">
+          ${alts.map(a => `
+            <div class="alt-product">
+              <div class="alt-product-icon">✅</div>
+              <div class="alt-product-name">${a}</div>
+              <div class="alt-product-label">Halal</div>
+            </div>`).join('')}
+        </div>`;
+      document.querySelector('.ing-breakdown').insertAdjacentElement('afterend', box);
+    }
+
+    area.style.display = 'block';
+    area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // ── Loading / error states ───────────────────────────────────────────────────
+  function showLoading(product) {
+    const area = document.getElementById('resultArea');
+    document.getElementById('productName').textContent = product;
+    document.querySelector('.result-product-brand').textContent = 'Menganalisis dengan AI...';
+    document.querySelector('.result-product-img').textContent = '🔬';
+
+    const vEl = document.querySelector('.result-verdict');
+    vEl.className = 'result-verdict rv-syubhat';
+    vEl.innerHTML = `
+      <div class="rv-icon">⏳</div>
+      <div>
+        <div class="rv-label">MENGANALISIS...</div>
+        <div class="rv-title">AI sedang memeriksa bahan-bahan</div>
+        <div class="rv-reason">Mohon tunggu sebentar...</div>
+      </div>`;
+
+    document.querySelector('.ing-list').innerHTML =
+      `<div class="ing-item ok"><span class="ing-item-name">⏳ Sedang menganalisis bahan...</span></div>`;
+
+    area.style.display = 'block';
+    area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function showError(msg) {
+    const vEl = document.querySelector('.result-verdict');
+    vEl.className = 'result-verdict rv-haram';
+    vEl.innerHTML = `
+      <div class="rv-icon">❗</div>
+      <div>
+        <div class="rv-label">ERROR</div>
+        <div class="rv-title">Analisis Gagal</div>
+        <div class="rv-reason">${msg}</div>
+      </div>`;
+    document.querySelector('.ing-list').innerHTML = '';
+  }
+
+  // ── Main: call Claude API via server ─────────────────────────────────────────
+  async function showResult() {
+    const input   = document.getElementById('searchInput').value.trim();
+    const scanBtn = document.querySelector('.btn-scan');
+
+    if (!input) {
+      document.getElementById('searchInput').focus();
+      return;
+    }
+
+    // Disable button while loading
+    scanBtn.disabled = true;
+    scanBtn.textContent = '⏳ Menganalisis...';
+
+    showLoading(input);
+
+    try {
+      const res = await fetch('/api/check', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ product: input })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        showError(data.error || 'Terjadi kesalahan. Coba lagi.');
+        return;
+      }
+
+      renderResult(data);
+    } catch (err) {
+      showError('Tidak bisa terhubung ke server. Pastikan server berjalan.');
+      console.error(err);
+    } finally {
+      scanBtn.disabled = false;
+      scanBtn.innerHTML = '🔍 Cek Sekarang';
+    }
+  }
+
+  // ── Keyboard shortcut ────────────────────────────────────────────────────────
+  document.getElementById('searchInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') showResult();
+  });
+
+  // ── Smooth scroll ────────────────────────────────────────────────────────────
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      const t = document.querySelector(a.getAttribute('href'));
+      if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth' }); }
+    });
+  });
+</script>
+</body>
+</html>
