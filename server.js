@@ -12,7 +12,7 @@ const app = express();
 
 app.use(express.json());
 app.use(express.static(__dirname)); // serve HTML files
-
+app.get('/', (req, res) => res.redirect('/halalcheck.html'));
 // ── Halal expert system prompt (cached — same for every request) ──────────────
 const HALAL_SYSTEM_PROMPT = `Kamu adalah ahli syariah Islam dan ahli kimia pangan/kosmetik yang berspesialisasi dalam sertifikasi halal berdasarkan standar MUI (Majelis Ulama Indonesia).
 
