@@ -1,0 +1,138 @@
+// OreSight AI — shared page utilities: nav/footer, API helper, AI badge,
+// number tween, sparkline, Chart.js dark defaults.
+
+export const $ = (sel, root = document) => root.querySelector(sel);
+export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+export async function postJSON(url, body) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
+  return res.json();
+}
+
+export function renderNav(active = '') {
+  const el = document.createElement('header');
+  el.className = 'nav';
+  el.innerHTML = `
+    <div class="container nav-inner">
+      <a class="logo" href="/index.html"><span class="logo-mark">OS</span><span>Ore<em>Sight</em> AI</span></a>
+      <nav class="nav-links">
+        <a href="/index.html#matrix" ${active === 'matrix' ? 'class="active"' : ''}>Value Chain</a>
+        <a href="/control-tower.html" ${active === 'control-tower' ? 'class="active"' : ''}>Control Tower</a>
+        <a href="/maintenance.html" ${active === 'maintenance' ? 'class="active"' : ''}>Maintenance</a>
+        <a href="/production.html" ${active === 'production' ? 'class="active"' : ''}>Blending</a>
+        <a href="/safety.html" ${active === 'safety' ? 'class="active"' : ''}>Safety</a>
+        <span class="ai-badge" id="aiBadge"><span class="dot"></span><span id="aiBadgeText">AI: …</span></span>
+        <button class="btn-cta" onclick="document.getElementById('pilot')?.scrollIntoView({behavior:'smooth'}) || (location.href='/index.html#pilot')">Book a pilot</button>
+      </nav>
+    </div>`;
+  document.body.prepend(el);
+  initAIBadge();
+}
+
+export function renderFooter() {
+  const el = document.createElement('footer');
+  el.className = 'footer';
+  el.innerHTML = `
+    <div class="container footer-inner">
+      <a class="logo" href="/index.html"><span class="logo-mark">OS</span><span>Ore<em>Sight</em> AI</span></a>
+      <span>Operations Intelligence for Indonesian Mining</span>
+      <span class="copy">PT OreSight Teknologi Indonesia · Treasury Tower, SCBD, Jakarta · © 2026</span>
+    </div>`;
+  document.body.append(el);
+}
+
+export async function initAIBadge() {
+  const badge = $('#aiBadge');
+  const text = $('#aiBadgeText');
+  if (!badge) return;
+  try {
+    const { aiMode } = await (await fetch('/api/health')).json();
+    badge.classList.add(aiMode === 'live' ? 'live' : 'demo');
+    text.textContent = aiMode === 'live' ? 'AI: Live' : 'AI: Demo Mode';
+  } catch {
+    badge.classList.add('demo');
+    text.textContent = 'AI: Demo Mode';
+  }
+}
+
+// Tween a numeric text node toward a target value.
+export function tween(el, to, { decimals = 0, duration = 600, suffix = '' } = {}) {
+  const from = parseFloat(String(el.textContent).replace(/[^\d.-]/g, '')) || 0;
+  const t0 = performance.now();
+  function frame(t) {
+    const k = Math.min(1, (t - t0) / duration);
+    const v = from + (to - from) * (1 - Math.pow(1 - k, 3));
+    el.textContent = v.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }) + suffix;
+    if (k < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// Minimal SVG sparkline: fills an <svg> with a polyline of the data.
+export function sparkline(svg, data, { stroke = 'var(--amber)' } = {}) {
+  const w = 100, h = 30, pad = 2;
+  const min = Math.min(...data), max = Math.max(...data), span = max - min || 1;
+  const pts = data.map((v, i) => `${pad + (i / (data.length - 1)) * (w - 2 * pad)},${h - pad - ((v - min) / span) * (h - 2 * pad)}`).join(' ');
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+  svg.setAttribute('preserveAspectRatio', 'none');
+  svg.innerHTML = `<polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="1.8" stroke-linejoin="round"/>`;
+}
+
+// Chart.js dark theme defaults (call once per page that uses charts).
+export function chartDefaults() {
+  if (!window.Chart) return;
+  const C = window.Chart;
+  C.defaults.color = '#8b98a9';
+  C.defaults.borderColor = 'rgba(36, 48, 66, 0.8)';
+  C.defaults.font.family = "'Inter', system-ui, sans-serif";
+  C.defaults.font.size = 11;
+  C.defaults.plugins.legend.labels.boxWidth = 12;
+  C.defaults.plugins.legend.labels.boxHeight = 12;
+  C.defaults.animation.duration = 400;
+}
+
+export const PALETTE = {
+  amber: '#f5a623',
+  green: '#22c55e',
+  red: '#ef4444',
+  cyan: '#38bdf8',
+  muted: '#5b6878',
+};
+
+// Render an AI result ({headline, recommendations, valueImpactUSD, narrative})
+// into a container as an .ai-panel body.
+export function renderAIResult(el, r) {
+  const recs = (r.recommendations || []).map((rec, i) => `
+    <div class="ai-rec">
+      <div class="n">${String(i + 1).padStart(2, '0')}</div>
+      <div><div class="a">${esc(rec.action)}</div>
+      <div class="meta"><b>${esc(rec.impact)}</b> · ${esc(rec.timeframe)}</div></div>
+    </div>`).join('');
+  el.innerHTML = `
+    <div class="ai-panel-head"><span class="spark">✦</span><span class="t">OreSight AI Recommendation</span>
+      <span class="src">${r.source === 'live' ? 'claude · live inference' : 'OreSight engine'}</span></div>
+    <div class="ai-headline">${esc(r.headline)}</div>
+    ${recs}
+    ${r.valueImpactUSD ? `<div class="ai-value"><span class="v">$${Number(r.valueImpactUSD).toLocaleString('en-US')}</span><span class="l">estimated annualised value impact</span></div>` : ''}
+    ${r.narrative ? `<div class="ai-narrative">${esc(r.narrative)}</div>` : ''}`;
+}
+
+export function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+export function setLoading(btn, on, label = 'Analyzing…') {
+  if (on) {
+    btn.dataset.label = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner"></span>${label}`;
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = btn.dataset.label || btn.innerHTML;
+  }
+}

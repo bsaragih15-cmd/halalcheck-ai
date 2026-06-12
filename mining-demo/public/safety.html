@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OreSight AI — Safety &amp; Compliance Intelligence</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%23f5a623'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23161003'>OS</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="/vendor/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <div class="breadcrumb"><a href="/index.html#matrix">Value Chain</a><span class="sep">/</span><span>Cross-cutting · HSE</span><span class="sep">/</span><span class="cur">Safety &amp; Compliance Intelligence</span></div>
+    <div class="demo-head">
+      <h1>Safety &amp; Compliance Intelligence <span class="tag ok">LIVE DEMO</span></h1>
+      <div class="site mono">Incident triage · Kepmen ESDM 1827K · Permen ESDM 26/2018 · SMKP Minerba · ISO 45001</div>
+      <p class="pitch">Paste any shift report or incident narrative. The AI classifies hazard and severity, places it on the 5×5 risk matrix, maps it against Indonesian mining regulations, and drafts immediate and preventive actions — in minutes, not days.</p>
+    </div>
+
+    <div class="grid-1-2" style="align-items: start;">
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div class="panel">
+          <h3>📄 Incident report <span class="hint">type, paste, or pick a sample</span></h3>
+          <div class="chips" id="sampleChips" style="margin-bottom: 12px;"></div>
+          <textarea class="report-input" id="reportInput" placeholder="Paste an incident or hazard report here…"></textarea>
+          <div style="margin-top: 14px;">
+            <button class="btn-ai" id="analyzeBtn">✦ Analyze with AI</button>
+          </div>
+        </div>
+        <div class="chart-box">
+          <div class="ct">Incidents by category — last 12 months</div>
+          <canvas id="catChart"></canvas>
+        </div>
+        <div class="chart-box">
+          <div class="ct">TRIFR trend (per million hours)</div>
+          <canvas id="trifrChart"></canvas>
+        </div>
+      </div>
+
+      <div id="resultCol">
+        <div class="panel" id="placeholder" style="display:grid; place-items:center; min-height: 280px; color: var(--muted); font-size: 14px; text-align:center;">
+          <div><div style="font-size: 34px; margin-bottom: 10px;">🦺</div>Select a sample report or paste your own,<br/>then run the analysis.</div>
+        </div>
+        <div id="results" style="display: none; flex-direction: column; gap: 16px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/safety.js"></script>
+</body>
+</html>

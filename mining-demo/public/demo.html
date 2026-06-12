@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OreSight AI — Demo</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%23f5a623'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23161003'>OS</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="/vendor/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <div class="breadcrumb" id="crumb"></div>
+    <div class="demo-head">
+      <h1 id="title"></h1>
+      <div class="site mono" id="site"></div>
+      <p class="pitch" id="pitch"></p>
+    </div>
+
+    <div class="kpi-row" id="kpis"></div>
+
+    <div class="grid-2" id="charts" style="margin-bottom: 18px;"></div>
+
+    <div class="grid-2" style="align-items: start;">
+      <div class="panel">
+        <h3>⚙ Scenario <span class="hint">drag the control — the model reacts instantly</span></h3>
+        <div class="scenario" id="scenario"></div>
+        <div style="margin-top: 18px;">
+          <button class="btn-ai" id="aiBtn">✦ Generate AI Recommendation</button>
+        </div>
+      </div>
+      <div class="ai-panel" id="aiPanel">
+        <div class="ai-panel-head"><span class="spark">✦</span><span class="t">OreSight AI Recommendation</span></div>
+        <div style="color: var(--muted); font-size: 13.5px;">Set your scenario on the left, then generate a recommendation. The AI reacts to the value you choose.</div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/demo.js"></script>
+</body>
+</html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OreSight AI — Control Tower</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%23f5a623'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23161003'>OS</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="/vendor/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <div class="breadcrumb"><a href="/index.html#matrix">Value Chain</a><span class="sep">/</span><span>0 h / 24 h horizon</span><span class="sep">/</span><span class="cur">Control Tower &amp; Command Center</span></div>
+    <div class="demo-head">
+      <h1>Control Tower — End-to-end Visibility <span class="tag ok">LIVE DEMO</span></h1>
+      <div class="site mono">Morowali Nickel Operations · pit-to-port · <span id="witaClock">--:--:--</span> WITA</div>
+      <p class="pitch">One screen for the whole chain: pits, crushers, the 14-km conveyor, port and shipping. When a disruption hits, the command center asks the AI for a ranked mitigation plan — before the loss compounds downstream.</p>
+    </div>
+
+    <div class="panel" style="padding: 16px; margin-bottom: 18px;">
+      <h3>Value-chain status <span class="hint">live · 2 s cadence</span></h3>
+      <div class="chain-strip" id="chainStrip"></div>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="l">Material moved today</div><div class="v" id="kMoved">214,380<small>t</small></div><div class="d up">104% of plan</div></div>
+      <div class="kpi-card"><div class="l">Active equipment</div><div class="v">47<small>/52</small></div><div class="d">5 in planned maintenance</div></div>
+      <div class="kpi-card"><div class="l">Port stockpile</div><div class="v" id="kPort">438<small>kt</small></div><div class="d">6.2 days of shipping cover</div></div>
+      <div class="kpi-card"><div class="l">Vessels</div><div class="v">2<small> queued</small></div><div class="d">BG-3107 loading · 14.2 kt/day</div></div>
+    </div>
+
+    <div class="alert-banner" id="disruptions">
+      <span class="ic">🌧</span>
+      <div style="flex: 1;">
+        <div class="t">Heavy rainfall warning — Pit 2 (BMKG orange alert)</div>
+        <div class="d">Front arrives in ~3 h · forecast 60–90 mm over 6 h · Pit 2 ramp and south wall exposed · last comparable event cost 7.5 h of ex-pit production</div>
+      </div>
+      <button class="btn-ai" id="mitigateBtn">✦ Ask AI for mitigation plan</button>
+    </div>
+
+    <div class="ai-panel" id="aiPanel" style="display: none; margin-top: 16px;"></div>
+
+    <div class="grid-2" style="margin-top: 18px; align-items: start;">
+      <div class="chart-box">
+        <div class="ct">Chain throughput — mine vs port (t/h, live)</div>
+        <canvas id="flowChart"></canvas>
+      </div>
+      <div class="panel" style="padding: 18px;">
+        <h3>Operations event feed <span class="hint">streaming</span></h3>
+        <div class="feed" id="feed"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/control-tower.js"></script>
+</body>
+</html>

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "start:mining": "node mining-demo/server.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

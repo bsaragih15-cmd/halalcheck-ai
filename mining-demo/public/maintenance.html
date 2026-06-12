@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OreSight AI — Maintenance Optimisation</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%23f5a623'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23161003'>OS</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="/vendor/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <div class="breadcrumb"><a href="/index.html#matrix">Value Chain</a><span class="sep">/</span><span>6-month horizon</span><span class="sep">/</span><span class="cur">Maintenance Optimisation</span></div>
+    <div class="demo-head">
+      <h1>Maintenance Optimisation <span class="tag ok">LIVE DEMO</span></h1>
+      <div class="site mono">Morowali Nickel Operations — Pit 2 · <span id="witaClock">--:--:--</span> WITA · streaming fleet telemetry</div>
+      <p class="pitch">Condition monitoring across the mobile fleet and fixed plant. The AI predicts component failures from vibration and temperature signatures, then recommends the cheapest window to intervene.</p>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="l">Fleet availability</div><div class="v" id="kAvail">91.7<small>%</small></div><div class="d up">+2.3 pts with predictive program</div></div>
+      <div class="kpi-card"><div class="l">Active alerts</div><div class="v" id="kAlerts">—</div><div class="d">across 9 monitored assets</div></div>
+      <div class="kpi-card"><div class="l">MTBF — haul fleet</div><div class="v">412<small>h</small></div><div class="d up">+18% YoY</div></div>
+      <div class="kpi-card"><div class="l">Cost avoidance YTD</div><div class="v">$2.4<small>M</small></div><div class="d">planned vs unplanned interventions</div></div>
+    </div>
+
+    <div class="grid-1-2" style="align-items: start;">
+      <div class="panel" style="padding: 16px;">
+        <h3>Fleet — Pit 2 <span class="hint">click an asset</span></h3>
+        <div id="fleetList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 18px;">
+        <div class="panel" id="detailPanel">
+          <h3 id="detailTitle">—</h3>
+          <div class="grid-2">
+            <div class="chart-box" style="border: none; padding: 0;">
+              <div class="ct">Vibration RMS (mm/s) — final drive, streaming</div>
+              <canvas id="vibChart"></canvas>
+            </div>
+            <div class="chart-box" style="border: none; padding: 0;">
+              <div class="ct">Bearing temperature (°C), streaming</div>
+              <canvas id="tempChart"></canvas>
+            </div>
+          </div>
+          <div style="margin-top: 16px; display: flex; gap: 12px; align-items: center;">
+            <button class="btn-ai" id="diagBtn">✦ Run AI Diagnosis</button>
+            <span style="color: var(--muted); font-size: 12.5px;" id="diagHint">Last 60 samples · 2 s cadence · ISO 10816 bands drawn on chart</span>
+          </div>
+        </div>
+
+        <div class="ai-panel" id="aiPanel" style="display: none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/maintenance.js"></script>
+</body>
+</html>
