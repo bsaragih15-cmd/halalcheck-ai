@@ -13,7 +13,7 @@ chartDefaults();
 
 if (!uc || uc.flagship) {
   $('#title').textContent = 'Demo not found';
-  $('#pitch').innerHTML = 'Unknown use case — <a href="/index.html#matrix" style="color:var(--amber)">back to the value chain</a>.';
+  $('#pitch').innerHTML = 'Unknown use case — <a href="/index.html#matrix" style="color:var(--accent)">back to the value chain</a>.';
   throw new Error('unknown case');
 }
 
@@ -21,8 +21,8 @@ document.title = `OreSight AI — ${uc.title}`;
 
 // Header
 $('#crumb').innerHTML = `<a href="/index.html#matrix">Value Chain</a><span class="sep">/</span><span>${esc(uc.stage)}</span><span class="sep">/</span><span class="cur">${esc(uc.title)}</span>`;
-const badges = (uc.drivers || []).map((d) => `<span class="vd ${VALUE_DRIVERS[d].cls}" title="${VALUE_DRIVERS[d].label}" style="font-size:12px; width:24px; height:24px;">${VALUE_DRIVERS[d].icon}</span>`).join('');
-$('#title').innerHTML = `${esc(uc.title)} <span style="display:inline-flex; gap:6px;">${badges}</span> <span class="tag info">Horizon: ${esc(uc.horizon)}</span>`;
+const badges = (uc.drivers || []).map((d) => `<span class="vdg ${VALUE_DRIVERS[d].cls}" title="${VALUE_DRIVERS[d].label}" style="font-size:15px;">${VALUE_DRIVERS[d].icon}</span>`).join(' ');
+$('#title').innerHTML = `${esc(uc.title)} <span style="display:inline-flex; gap:8px;">${badges}</span> <span class="tag info">Horizon: ${esc(uc.horizon)}</span> <span class="badge-indev">IN DEV</span>`;
 $('#site').textContent = uc.site || '';
 $('#pitch').textContent = uc.pitch || '';
 

@@ -74,7 +74,7 @@ export function tween(el, to, { decimals = 0, duration = 600, suffix = '' } = {}
 }
 
 // Minimal SVG sparkline: fills an <svg> with a polyline of the data.
-export function sparkline(svg, data, { stroke = 'var(--amber)' } = {}) {
+export function sparkline(svg, data, { stroke = 'var(--accent)' } = {}) {
   const w = 100, h = 30, pad = 2;
   const min = Math.min(...data), max = Math.max(...data), span = max - min || 1;
   const pts = data.map((v, i) => `${pad + (i / (data.length - 1)) * (w - 2 * pad)},${h - pad - ((v - min) / span) * (h - 2 * pad)}`).join(' ');
@@ -87,8 +87,8 @@ export function sparkline(svg, data, { stroke = 'var(--amber)' } = {}) {
 export function chartDefaults() {
   if (!window.Chart) return;
   const C = window.Chart;
-  C.defaults.color = '#8b98a9';
-  C.defaults.borderColor = 'rgba(36, 48, 66, 0.8)';
+  C.defaults.color = '#6e7468';
+  C.defaults.borderColor = 'rgba(29, 37, 31, 0.08)';
   C.defaults.font.family = "'Inter', system-ui, sans-serif";
   C.defaults.font.size = 11;
   C.defaults.plugins.legend.labels.boxWidth = 12;
@@ -96,12 +96,15 @@ export function chartDefaults() {
   C.defaults.animation.duration = 400;
 }
 
+// Light-theme chart palette. Keys are kept from the original dark theme so
+// per-case chart configs keep working: "amber" is now the warm secondary tone
+// and "green" doubles as the primary brand accent.
 export const PALETTE = {
-  amber: '#f5a623',
-  green: '#22c55e',
-  red: '#ef4444',
-  cyan: '#38bdf8',
-  muted: '#5b6878',
+  amber: '#b45309',
+  green: '#15803d',
+  red: '#b91c1c',
+  cyan: '#0e7490',
+  muted: '#a8a699',
 };
 
 // Render an AI result ({headline, recommendations, valueImpactUSD, narrative})

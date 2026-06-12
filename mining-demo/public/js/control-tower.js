@@ -89,7 +89,7 @@ $('#mitigateBtn').addEventListener('click', async () => {
     renderAIResult(panel, r);
     const note = document.createElement('div');
     note.style.cssText = 'margin-top:12px; font-size:12px; color:var(--muted);';
-    note.innerHTML = '↳ Cross-referenced: <a href="/maintenance.html" style="color:var(--amber)">HT-104 maintenance alert</a> and <a href="/production.html" style="color:var(--amber)">blend console</a> reflect this plan.';
+    note.innerHTML = '↳ Cross-referenced: <a href="/maintenance.html" style="color:var(--accent)">HT-104 maintenance alert</a> and <a href="/production.html" style="color:var(--accent)">blend console</a> reflect this plan.';
     panel.appendChild(note);
   } catch (e) {
     panel.innerHTML = `<div style="color:var(--red); font-size:13.5px;">${esc(e.message)}</div>`;

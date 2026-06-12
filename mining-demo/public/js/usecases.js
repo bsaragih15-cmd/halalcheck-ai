@@ -28,13 +28,12 @@ export const VALUE_DRIVERS = {
 export const MATRIX_ROWS = [
   { horizon: '0h',   cells: [{ case: 'control-tower', span: [1, 10] }] },
   { horizon: '24h',  cells: [{ case: 'command-center', span: [1, 10] }] },
-  { horizon: 'HSE',  cells: [{ case: 'safety', span: [1, 10] }] },
   { horizon: '4w', cells: [
     { case: 'orebody',  span: [1, 2] },
     { case: 'blast',    span: [3, 3] },
     { case: 'payload',  span: [4, 4] },
     { case: 'dispatch', span: [5, 5] },
-    { stack: ['recovery', 'quality'], span: [6, 6] },
+    { case: 'recovery', span: [6, 6] },
     { case: 'haul',     span: [7, 7] },
     { case: 'blending', span: [8, 8] },
     { case: 'shipping', span: [9, 9] },
@@ -107,8 +106,8 @@ export const USE_CASES = {
   // ── Templated demos (demo.html?case=<id>) ─────────────────────────────────
   'orebody': {
     title: 'Next-Gen Ore-body Knowledge',
-    decisions: 'resource model confidence & infill drilling',
-    stage: 'Exploration & mine dev.', horizon: '4w', drivers: [],
+    decisions: 'where to drill next',
+    stage: 'Exploration & mine dev.', horizon: '4w', drivers: ['npv'],
     pitch: 'Machine-learning grade models fuse drillhole assays, blasthole samples and geophysics into a continuously updated ore-body model — so short-term plans mine the ore body that is actually there.',
     site: 'Morowali Nickel Operations — laterite resource, Central Sulawesi',
     kpis: [
@@ -275,9 +274,9 @@ export const USE_CASES = {
   },
 
   'recovery': {
-    title: 'Recovery Optimisation',
+    title: 'Recovery & Quality Optimisation',
     decisions: 'plant set-points',
-    stage: 'Processing', horizon: '4w', drivers: ['margin'],
+    stage: 'Processing', horizon: '4w', drivers: ['cost', 'margin'],
     pitch: 'AI recommends plant set-points in real time from ore characteristics — recovering metal that fixed set-points leave in the tailings.',
     site: 'Ore preparation & RKEF feed plant — Morowali',
     kpis: [
