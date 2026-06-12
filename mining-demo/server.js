@@ -6,7 +6,8 @@ import { dirname, join } from 'path';
 import { maintenanceFallback, safetyFallback, productionFallback } from './data/fallbacks.js';
 import { USE_CASES } from './public/js/usecases.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 dotenv.config({ path: join(__dirname, '..', '.env') });
 
 const client = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null;
@@ -212,8 +213,14 @@ app.post('/api/usecase/analyze', async (req, res) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────────
-const PORT = process.env.MINING_PORT || 3003;
-app.listen(PORT, () => {
-  console.log(`\n✅ OreSight AI demo running at http://localhost:${PORT}`);
-  console.log(`🤖 AI mode: ${aiMode()}${aiMode() === 'simulated' ? ' (set ANTHROPIC_API_KEY for live analysis — demo works fully without it)' : ''}\n`);
-});
+// Exported for serverless platforms (Vercel imports the app from api/index.js);
+// listens only when launched directly (npm run start:mining).
+export default app;
+
+if (process.argv[1] === __filename) {
+  const PORT = process.env.MINING_PORT || 3003;
+  app.listen(PORT, () => {
+    console.log(`\n✅ OreSight AI demo running at http://localhost:${PORT}`);
+    console.log(`🤖 AI mode: ${aiMode()}${aiMode() === 'simulated' ? ' (set ANTHROPIC_API_KEY for live analysis — demo works fully without it)' : ''}\n`);
+  });
+}
