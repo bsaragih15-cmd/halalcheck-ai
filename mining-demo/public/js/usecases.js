@@ -96,6 +96,58 @@ export const USE_CASES = {
     flagship: true, href: '/maintenance.html',
   },
 
+  'fsp': {
+    title: 'Future Scheduling Platform',
+    decisions: 'allocate convoys, barges & vessels; re-plan on disruption',
+    stage: 'Cross-chain', horizon: 'Scheduling', drivers: ['throughput', 'margin'],
+    flagship: true, href: '/fsp.html',
+    promptContext: 'Future Scheduling Platform (FSP) for the Morowali nickel logistics chain: pits feed a crusher and 14-km overland conveyor into the port stockyard; two jetty berths load four self-propelled barges (BG-3101..BG-3104, ~7,500 t each, cycle: 4 h load, 3 h transit out, 5 h transshipment at floating crane FC-1, 3 h return); FC-1 transships to ocean-going vessels at the anchorage (MV Anoa loading now, laycan ends in 38 h; MV Celebes queued). Demurrage ~$28k/day. A disruption has hit the published 48-hour schedule; produce the re-plan rationale: which activities move, what stays fixed, and the quantified impact (tonnes protected, demurrage avoided, schedule adherence).',
+    fallback: (s = {}) => {
+      const byId = {
+        'jetty2-down': {
+          headline: 'Re-plan: berth 2 outage (4 h) absorbed — affected barge loads re-slotted to berth 1, MV Anoa laycan protected',
+          recommendations: [
+            { action: 'Move BG-3102 and BG-3104 loads from berth 2 to berth 1, re-sequenced around BG-3101 (queue priority by OGV laycan exposure)', impact: '3 of 4 affected loads keep their tide window; net slip +1.5 h', timeframe: 'Immediate — auto-dispatched' },
+            { action: 'Hold FC-1 transshipment order unchanged: BG-3103 arrival already covers the crane until 21:00', impact: 'Zero crane idle time during the outage', timeframe: 'No action needed' },
+            { action: 'Bring berth 2 loader fitter crew forward to the 14:00 window; conveyor CV-103 keeps stacking to SP-2 meanwhile', impact: 'Outage capped at 4 h; stockyard absorbs 5,400 t buffer', timeframe: '0–4 h' },
+          ],
+          valueImpactUSD: 214000,
+          narrative: 'The schedule bends instead of breaking: berth 1 has 3.1 h of slack in the next 12 hours and the stockyard has buffer to keep the conveyor stacking. Re-sequencing by laycan exposure (not first-come-first-served) is what protects MV Anoa — the legacy HOS schedule would have pushed the last load 6 h right and put 1.2 days of demurrage at risk.',
+        },
+        'swell': {
+          headline: 'Re-plan: heavy swell cuts FC-1 transshipment rate 40% for 8 h — MV Anoa completion slips +5 h but stays inside laycan',
+          recommendations: [
+            { action: 'Stretch FC-1 transshipment blocks through the swell window and re-time BG-3102/BG-3104 departures to arrive after 22:00 (no anchorage queueing in swell)', impact: 'Barges wait at jetty, not at sea — safer and saves ~1.4 t fuel/barge', timeframe: 'Immediate' },
+            { action: 'Use the jetty-side gap to advance BG-3103 maintenance wash-down (was scheduled tomorrow)', impact: 'Recovers 2 h of tomorrow\'s schedule for free', timeframe: 'During swell window' },
+            { action: 'Notify MV Celebes agent: ETB shifts +5 h; laycan buffer remains 9 h — no renomination needed', impact: 'Avoids a $34k/day panic renomination', timeframe: 'Next hour' },
+          ],
+          valueImpactUSD: 286000,
+          narrative: 'Weather is absorbed by re-timing, not by brute force: the constraint moves from the jetty to the crane, so the optimum holds barges back rather than queuing them at the anchorage. Completion still lands inside MV Anoa\'s laycan with 9 hours of buffer — the value is the demurrage and the renomination that do not happen.',
+        },
+        'barge-engine': {
+          headline: 'Re-plan: BG-3103 engine fault — barge held 6 h at jetty; BG-3104 cycle advanced to cover, net loss held to one part-cycle',
+          recommendations: [
+            { action: 'Pull BG-3104\'s next cycle forward 2.5 h into BG-3103\'s vacated berth slot; FC-1 sequence swaps the two barges', impact: 'Crane utilisation holds at 92% through the shift', timeframe: 'Immediate' },
+            { action: 'Dispatch the mechanic to BG-3103 at berth (not anchorage) — fault diagnosed as fuel-rack actuator, 4–6 h repair', impact: 'Repair overlaps the schedule gap instead of adding to it', timeframe: '0–6 h' },
+            { action: 'If repair exceeds 6 h, activate spot barge BG-3110 from IMIP pool (standing rate $9.5k/day)', impact: 'Caps worst-case schedule loss at 1,800 t', timeframe: 'Decision gate at 21:00' },
+          ],
+          valueImpactUSD: 121000,
+          narrative: 'A four-barge cycle has exactly one barge of redundancy, and the re-plan spends it deliberately: advance the spare capacity, swap the crane order, and put a decision gate (not a hope) on the repair. The fallback spot barge is pre-priced so the 21:00 decision takes one minute, not one meeting.',
+        },
+      };
+      return byId[s.disruptionId] || {
+        headline: 'Re-plan computed: schedule re-sequenced around the disruption with laycan-priority ordering',
+        recommendations: [
+          { action: 'Re-sequence affected loads by OGV laycan exposure rather than original order', impact: 'Protects the highest-cost deadline first', timeframe: 'Immediate' },
+          { action: 'Hold transshipment chain unchanged where buffers cover the slip', impact: 'Avoids cascading the disruption downstream', timeframe: 'Ongoing' },
+          { action: 'Publish the revised 48-h schedule to all resource operators', impact: 'One plan, no side-channel improvisation', timeframe: 'Next 15 min' },
+        ],
+        valueImpactUSD: 150000,
+        narrative: 'The platform treats the disruption as a constraint change, not an emergency: the optimiser re-solves the 48-hour schedule under the new constraint and republishes it to every resource in minutes.',
+      };
+    },
+  },
+
   'blending': {
     title: 'Blending Optimisation',
     decisions: 'haul / rail to pile allocation',

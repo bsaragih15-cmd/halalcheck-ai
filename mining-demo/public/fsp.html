@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OreSight AI — Future Scheduling Platform</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/styles.css" />
+  <script src="/vendor/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <div class="container">
+    <div class="breadcrumb"><a href="/index.html#matrix">Value Chain</a><span class="sep">/</span><span>Scheduling horizon</span><span class="sep">/</span><span class="cur">Future Scheduling Platform</span></div>
+    <div class="demo-head">
+      <h1>Future Scheduling Platform <span class="badge-live">▶ LIVE DEMO</span></h1>
+      <div class="site mono">Morowali nickel logistics — pit → stockyard → jetty → barge → transshipment → vessel · <span id="witaClock">--:--:--</span> WITA</div>
+      <p class="pitch">One scheduling brain for the whole logistics chain. The platform publishes a 48-hour plan for every convoy, berth, barge and vessel — and when a disruption hits, it re-solves the schedule in minutes, not meetings.</p>
+    </div>
+
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="l">Schedule adherence (7 d)</div><div class="v" id="kAdh">94.2<small>%</small></div><div class="d up">+11 pts vs legacy HOS</div></div>
+      <div class="kpi-card"><div class="l">Chain throughput</div><div class="v">41.2<small>kt/d</small></div><div class="d up">+6% with FSP sequencing</div></div>
+      <div class="kpi-card"><div class="l">Demurrage avoided YTD</div><div class="v">$1.1<small>M</small></div><div class="d up">laycan-priority re-planning</div></div>
+      <div class="kpi-card"><div class="l">Re-plan time</div><div class="v">4<small>min</small></div><div class="d">was ~6 h of phone calls</div></div>
+    </div>
+
+    <!-- FSP workspace: dark "control room" screen -->
+    <div class="fsp-screen">
+      <div class="fsp-bar">
+        <div class="fsp-tabs">
+          <button class="fsp-tab active" data-tab="outload">UC2 · Outload schedule</button>
+          <button class="fsp-tab" data-tab="inload">UC1 · Inload logistics</button>
+          <button class="fsp-tab" data-tab="execution">UC3 · Execution</button>
+        </div>
+        <div class="fsp-status mono" id="fspStatus">PLAN v12 · PUBLISHED</div>
+      </div>
+
+      <!-- UC2: Outload Gantt -->
+      <section class="fsp-pane" id="pane-outload">
+        <div class="fsp-toolbar">
+          <span class="mono-label" style="color:#8fa18f;">Inject disruption</span>
+          <button class="disrupt-btn" data-d="jetty2-down">⚙ Berth 2 loader down — 4 h</button>
+          <button class="disrupt-btn" data-d="swell">🌊 Heavy swell at anchorage — 8 h</button>
+          <button class="disrupt-btn" data-d="barge-engine">🛠 BG-3103 engine fault</button>
+          <button class="disrupt-btn reset" data-d="reset">↺ Restore base plan</button>
+        </div>
+        <div class="gantt" id="gantt"></div>
+        <div class="gantt-legend">
+          <span><i class="gl load"></i>Load at jetty</span>
+          <span><i class="gl transit"></i>Transit</span>
+          <span><i class="gl tranship"></i>Transship</span>
+          <span><i class="gl ogv"></i>OGV loading</span>
+          <span><i class="gl maint"></i>Outage / repair</span>
+          <span><i class="gl laycan"></i>Laycan window</span>
+        </div>
+      </section>
+
+      <!-- UC1: Inload network -->
+      <section class="fsp-pane" id="pane-inload" style="display:none;">
+        <div class="grid-2" style="gap: 14px; align-items: stretch;">
+          <div>
+            <div class="mono-label" style="color:#8fa18f; margin-bottom: 10px;">Pit → stockyard network · live convoy positions</div>
+            <svg id="netmap" viewBox="0 0 640 300" style="width:100%; background:#0d120c; border-radius:10px; border:1px solid #283226;"></svg>
+          </div>
+          <div>
+            <div class="mono-label" style="color:#8fa18f; margin-bottom: 10px;">Convoy allocation — next 4 hours</div>
+            <table class="fsp-table" id="allocTable"></table>
+          </div>
+        </div>
+      </section>
+
+      <!-- UC3: Execution -->
+      <section class="fsp-pane" id="pane-execution" style="display:none;">
+        <div class="grid-2" style="gap: 14px; align-items: start;">
+          <div>
+            <div class="mono-label" style="color:#8fa18f; margin-bottom: 10px;">Variance to plan — by resource (h, last 24 h)</div>
+            <canvas id="varChart" style="max-height: 220px;"></canvas>
+          </div>
+          <div>
+            <div class="mono-label" style="color:#8fa18f; margin-bottom: 10px;">Re-plan log</div>
+            <div class="fsp-log" id="replanLog"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="grid-2" style="margin-top: 18px; align-items: start;">
+      <div class="ai-panel" id="aiPanel">
+        <div class="ai-panel-head"><span class="spark">✦</span><span class="t">OreSight AI — Re-plan rationale</span></div>
+        <div style="color: var(--muted); font-size: 13.5px;">Inject a disruption above. The platform re-solves the 48-hour schedule and explains every move it makes — what shifts, what holds, and what it's worth.</div>
+      </div>
+      <div class="panel">
+        <h3>Platform objectives <span class="hint">why operations teams adopt it</span></h3>
+        <div class="list-block">
+          <div class="li">Replace legacy spreadsheet/HOS scheduling with one optimised, published plan</div>
+          <div class="li">Transition schedulers and dispatchers (50+ users) onto a single tool with embedded processes</div>
+          <div class="li">Build internal digital capability to support and extend the platform</div>
+          <div class="li">Deliver value from increased throughput &amp; margin — measured per re-plan, not per slide</div>
+        </div>
+        <div class="derived" style="margin-top: 16px;"><span class="l">Value protected this week</span><span class="v" style="color: var(--green);" id="kProtected">$621,000</span><span class="note">demurrage + throughput recovered by re-plans</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/fsp.js"></script>
+</body>
+</html>
