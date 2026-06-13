@@ -3,58 +3,140 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OreSight AI — Control Tower</title>
+  <title>OreSight AI — IROC Integrated Operations Centre</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css" />
-  <script src="/vendor/chart.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *{box-sizing:border-box;}
+    html,body{margin:0;padding:0;height:100%;}
+    body{font-family:'Barlow Semi Condensed',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+    .mono{font-family:'IBM Plex Mono',monospace;}
+    #irocRoot{
+      --bg:#eef1f5;--panel:#fff;--elevated:#fff;--inset:#f3f5f8;--track:#e7ebf0;--border:#dde3ea;--line:#e7ebf0;
+      --text:#1f2937;--muted:#647082;--faint:#8a95a3;--accent:#0d9488;--accent-soft:rgba(13,148,136,.12);
+      --green:#059669;--amber:#d97706;--red:#dc2626;--blue:#2563eb;--gray:#94a3b8;--ret:#0891b2;
+      --needle:#334155;--truck-stroke:rgba(15,23,42,.45);--shadow:0 1px 3px rgba(16,24,40,.07),0 1px 2px rgba(16,24,40,.04);
+      --map-bg:#e7ebf0;--map-grid:#dfe3e9;--bench-line:#c8bda6;--bench1:#e7e1d5;--bench2:#ded6c6;--bench3:#d4cab4;--bench4:#cabda4;
+      --road:#b7bec8;--road-flow:#88929d;--dest:#e9e3d6;--dest-stroke:#bcae96;--dest-roof:#c9b48f;--pit-label:#9aa0a8;--shovel-fill:#cfe9e0;
+      height:100vh;overflow:hidden;background:var(--bg);color:var(--text);display:flex;flex-direction:column;padding:8px;gap:8px;
+    }
+    #irocRoot[data-variant="blueprint"]{
+      --bg:#eef2f8;--panel:#fff;--elevated:#fff;--inset:#eef3fb;--track:#e2eaf5;--border:#d3deee;--line:#e2eaf5;
+      --text:#14233b;--muted:#566884;--faint:#8493ab;--accent:#2563eb;--accent-soft:rgba(37,99,235,.10);
+      --green:#0f8a5f;--amber:#c2740a;--red:#d23b3b;--blue:#2563eb;--gray:#93a2bb;--ret:#0e7490;
+      --needle:#243b5e;--truck-stroke:rgba(20,35,59,.45);--shadow:0 1px 3px rgba(20,40,80,.10),0 1px 2px rgba(20,40,80,.05);
+      --map-bg:#e4ebf6;--map-grid:#dbe4f1;--bench-line:#aabbd6;--bench1:#dbe4f1;--bench2:#d0dbec;--bench3:#c5d2e6;--bench4:#b9c9df;
+      --road:#aebfd6;--road-flow:#6f86b3;--dest:#d9e2f1;--dest-stroke:#a4b6d4;--dest-roof:#b9c9e3;--pit-label:#7e8fb0;--shovel-fill:#d4e2f5;
+    }
+    #irocRoot[data-variant="warm"]{
+      --bg:#f4efe7;--panel:#fffdf9;--elevated:#fffdf9;--inset:#f6f1e8;--track:#ece3d4;--border:#e6ddcd;--line:#efe8da;
+      --text:#2a2722;--muted:#756c5d;--faint:#998f7d;--accent:#c2620f;--accent-soft:rgba(194,98,15,.12);
+      --green:#047857;--amber:#b45309;--red:#b91c1c;--blue:#1d4ed8;--gray:#a89a85;--ret:#0f766e;
+      --needle:#4a4334;--truck-stroke:rgba(42,39,34,.42);--shadow:0 1px 3px rgba(80,60,30,.10),0 1px 2px rgba(80,60,30,.05);
+      --map-bg:#efe7da;--map-grid:#e7dcc9;--bench-line:#c9b89c;--bench1:#e8dcc6;--bench2:#e0d2b8;--bench3:#d6c6a6;--bench4:#ccb993;
+      --road:#c3b59c;--road-flow:#9c8a6f;--dest:#e4d6bd;--dest-stroke:#bca888;--dest-roof:#cdbb98;--pit-label:#998c76;--shovel-fill:#d8ead6;
+    }
+    @keyframes flow{to{stroke-dashoffset:-18;}}
+    @keyframes ctBlink{0%,100%{opacity:1;}50%{opacity:.25;}}
+    @keyframes pulsering{0%{r:14;opacity:.9;}100%{r:46;opacity:0;}}
+    .card{background:var(--panel);border:1px solid var(--border);border-radius:8px;box-shadow:var(--shadow);}
+    .lbl{font-size:10.5px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+    .faint{color:var(--faint);}
+    .ct-nav{height:50px;flex-shrink:0;background:var(--elevated);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;gap:14px;padding:0 12px;box-shadow:var(--shadow);}
+    .ct-brand{display:flex;align-items:center;gap:9px;flex-shrink:0;text-decoration:none;}
+    .ct-logo{width:26px;height:26px;border-radius:6px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;}
+    .ct-bt1{font-size:14.5px;font-weight:700;letter-spacing:.4px;color:var(--text);line-height:1;}
+    .ct-bt1 b{color:var(--accent);}
+    .ct-bt2{font-size:9px;letter-spacing:1.4px;text-transform:uppercase;color:var(--faint);}
+    .ct-tabs{flex:1;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;}
+    .ct-tabs::-webkit-scrollbar{display:none;}
+    .ct-tab{flex-shrink:0;border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:11.5px;font-weight:600;letter-spacing:.5px;color:var(--muted);padding:8px 12px;border-radius:6px 6px 0 0;border-bottom:2px solid transparent;}
+    .ct-tab.active{background:var(--accent-soft);color:var(--accent);font-weight:700;border-bottom-color:var(--accent);}
+    .ct-right{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+    .ct-seg{display:flex;background:var(--inset);border:1px solid var(--border);border-radius:7px;padding:2px;}
+    .ct-seg button{border:none;background:transparent;cursor:pointer;font-family:inherit;font-size:10.5px;font-weight:600;color:var(--muted);padding:4px 9px;border-radius:5px;text-transform:capitalize;}
+    .ct-seg button.active{background:var(--elevated);color:var(--accent);box-shadow:var(--shadow);}
+    .ct-div{width:1px;height:26px;background:var(--border);}
+    .ct-clock{font-size:16px;font-weight:600;color:var(--text);}
+    .ct-shift{font-size:9px;letter-spacing:.6px;text-transform:uppercase;color:var(--faint);}
+    .ct-ico{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;position:relative;}
+    .ct-badge{position:absolute;top:-5px;right:-5px;background:var(--red);color:#fff;font-size:9px;font-weight:600;border-radius:8px;padding:0 4px;min-width:15px;text-align:center;font-family:'IBM Plex Mono',monospace;}
+    .ct-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent-soft);border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+    .ct-body{flex:1;display:flex;gap:8px;min-height:0;}
+    .ct-main{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0;overflow:hidden;}
+    .ct-aside{width:312px;flex-shrink:0;}
+    .ct-gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;height:142px;flex-shrink:0;}
+    .ct-gauge{padding:9px 12px;display:flex;flex-direction:column;}
+    .ct-ghead{display:flex;justify-content:space-between;align-items:baseline;}
+    .ct-ghint{font-size:9.5px;color:var(--faint);}
+    .ct-garc{flex:1;min-height:0;}
+    .ct-mid{flex:1;display:grid;grid-template-columns:1fr 290px;gap:8px;min-height:0;}
+    .ct-map{position:relative;overflow:hidden;padding:0;}
+    .ct-map svg.scene{position:absolute;inset:0;width:100%;height:100%;}
+    .ct-ovl{position:absolute;z-index:8;}
+    .ct-ovl.tl{top:10px;left:12px;} .ct-ovl.tr{top:10px;right:12px;} .ct-ovl.bl{bottom:10px;left:12px;}
+    .ct-livetag{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:600;letter-spacing:.5px;color:var(--text);background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:5px 9px;box-shadow:var(--shadow);}
+    .ct-livedot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:ctBlink 1.6s infinite;}
+    .ct-leg{display:flex;gap:9px;margin-top:6px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:5px 9px;box-shadow:var(--shadow);}
+    .ct-leg span{display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--muted);font-family:'IBM Plex Mono',monospace;}
+    .ct-leg i{width:9px;height:9px;border-radius:2px;}
+    .ct-alpill{display:flex;align-items:center;gap:7px;background:var(--panel);border:1px solid var(--red);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;color:var(--red);cursor:pointer;box-shadow:var(--shadow);}
+    .ct-alpill .d{width:7px;height:7px;border-radius:50%;background:var(--red);animation:ctBlink 1.2s infinite;}
+    .ct-tele{background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:8px 11px;box-shadow:var(--shadow);}
+    .ct-tele .big{font-size:21px;font-weight:600;color:var(--text);font-family:'IBM Plex Mono',monospace;}
+    .ct-pop{position:absolute;z-index:9;background:var(--elevated);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 30px rgba(16,24,40,.18);padding:10px;}
+    .ct-alrow{display:flex;gap:8px;align-items:flex-start;padding:7px 6px;border-radius:6px;cursor:pointer;}
+    .ct-alrow:hover{background:var(--inset);}
+    .ct-alrow .d{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+    .ct-alrow .tx{font-size:12px;color:var(--text);line-height:1.3;}
+    .ct-alrow .mt{font-size:10px;color:var(--faint);font-family:'IBM Plex Mono',monospace;}
+    .ct-kpicol{display:flex;flex-direction:column;gap:8px;overflow:hidden;}
+    .ct-kpicard{padding:10px 12px;}
+    .ct-bar{height:6px;border-radius:4px;background:var(--track);overflow:hidden;margin-top:6px;}
+    .ct-bar div{height:100%;border-radius:4px;transition:width .9s ease;}
+    .ct-chips{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px;}
+    .ct-chip{background:var(--inset);border:1px solid var(--border);border-radius:7px;padding:7px 9px;}
+    .ct-chip .l{font-size:9px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .ct-chip .v{font-size:17px;font-weight:600;font-family:'IBM Plex Mono',monospace;line-height:1.1;}
+    .ct-chip .u{font-size:10px;color:var(--faint);}
+    .ct-sched{border-left:3px solid var(--accent);background:var(--inset);border-radius:6px;padding:8px 10px;font-size:12px;}
+    .ct-sched.next{border-left-color:var(--gray);}
+    .ct-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;height:132px;flex-shrink:0;}
+    .ct-card{padding:9px 11px;cursor:pointer;display:flex;flex-direction:column;}
+    .ct-comms{height:100%;display:flex;flex-direction:column;padding:0;}
+    .ct-chead{display:flex;align-items:center;gap:8px;padding:11px 13px;border-bottom:1px solid var(--border);}
+    .ct-online{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 0 3px color-mix(in srgb,var(--green) 22%,transparent);}
+    .ct-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:9px;}
+    .ct-msg{max-width:84%;} .ct-msg.mine{align-self:flex-end;}
+    .ct-bub{font-size:12.5px;line-height:1.35;padding:8px 10px;border-radius:10px 10px 10px 2px;background:var(--inset);border:1px solid var(--border);color:var(--text);}
+    .ct-msg.mine .ct-bub{border-radius:10px 10px 2px 10px;background:var(--accent-soft);border-color:var(--accent);}
+    .ct-meta{font-size:9.5px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin-top:3px;}
+    .ct-msg.mine .ct-meta{text-align:right;}
+    .ct-cinput{display:flex;gap:7px;padding:10px;border-top:1px solid var(--border);}
+    .ct-cinput input{flex:1;min-width:0;border:1px solid var(--border);background:var(--inset);border-radius:7px;padding:8px 10px;font-family:inherit;font-size:12.5px;color:var(--text);outline:none;}
+    .ct-cinput button{border:none;background:var(--accent);color:#fff;border-radius:7px;padding:8px 13px;font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.5px;cursor:pointer;}
+    .ct-secbody{flex:1;overflow:auto;display:flex;flex-direction:column;gap:8px;}
+    .ct-stat{display:grid;gap:8px;}
+    .ct-statcard{padding:12px 14px;}
+    .ct-statcard .big{font-size:32px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--text);line-height:1;}
+    .ct-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+    .ct-table th{text-align:left;padding:8px 10px;font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);font-weight:600;}
+    .ct-table td{padding:8px 10px;border-bottom:1px solid var(--line);color:var(--text);}
+    .ct-table td.m{font-family:'IBM Plex Mono',monospace;}
+    .ct-hbar{height:14px;border-radius:4px;background:var(--track);overflow:hidden;position:relative;}
+    .ct-hbar div{height:100%;background:var(--accent);border-radius:4px;}
+    .ct-scrim{position:fixed;inset:0;background:rgba(15,23,42,.32);z-index:50;display:flex;align-items:center;justify-content:center;}
+    .ct-modal{background:var(--elevated);border:1px solid var(--border);border-radius:12px;box-shadow:0 20px 60px rgba(16,24,40,.3);padding:18px 20px;width:480px;max-width:92vw;}
+    .ct-tip{position:fixed;z-index:9999;pointer-events:none;background:var(--elevated);border:1px solid var(--border);border-radius:7px;box-shadow:0 8px 24px rgba(16,24,40,.18);padding:8px 10px;font-size:11.5px;color:var(--text);max-width:240px;}
+    .ct-tip .r{display:flex;justify-content:space-between;gap:14px;}
+    .ct-tip .r span:first-child{color:var(--muted);}
+    .ct-tip .r span:last-child{font-family:'IBM Plex Mono',monospace;}
+  </style>
 </head>
 <body>
-
-  <div class="container">
-    <div class="breadcrumb"><a href="/index.html#matrix">Value Chain</a><span class="sep">/</span><span>0 h / 24 h horizon</span><span class="sep">/</span><span class="cur">Control Tower &amp; Command Center</span></div>
-    <div class="demo-head">
-      <h1>Control Tower — End-to-end Visibility <span class="badge-live">▶ LIVE DEMO</span></h1>
-      <div class="site mono">Morowali Nickel Operations · pit-to-port · <span id="witaClock">--:--:--</span> WITA</div>
-      <p class="pitch">One screen for the whole chain: pits, crushers, the 14-km conveyor, port and shipping. When a disruption hits, the command center asks the AI for a ranked mitigation plan — before the loss compounds downstream.</p>
-    </div>
-
-    <div class="panel" style="padding: 16px; margin-bottom: 18px;">
-      <h3>Value-chain status <span class="hint">live · 2 s cadence</span></h3>
-      <div class="chain-strip" id="chainStrip"></div>
-    </div>
-
-    <div class="kpi-row">
-      <div class="kpi-card"><div class="l">Material moved today</div><div class="v" id="kMoved">214,380<small>t</small></div><div class="d up">104% of plan</div></div>
-      <div class="kpi-card"><div class="l">Active equipment</div><div class="v">47<small>/52</small></div><div class="d">5 in planned maintenance</div></div>
-      <div class="kpi-card"><div class="l">Port stockpile</div><div class="v" id="kPort">438<small>kt</small></div><div class="d">6.2 days of shipping cover</div></div>
-      <div class="kpi-card"><div class="l">Vessels</div><div class="v">2<small> queued</small></div><div class="d">BG-3107 loading · 14.2 kt/day</div></div>
-    </div>
-
-    <div class="alert-banner" id="disruptions">
-      <span class="ic">🌧</span>
-      <div style="flex: 1;">
-        <div class="t">Heavy rainfall warning — Pit 2 (BMKG orange alert)</div>
-        <div class="d">Front arrives in ~3 h · forecast 60–90 mm over 6 h · Pit 2 ramp and south wall exposed · last comparable event cost 7.5 h of ex-pit production</div>
-      </div>
-      <button class="btn-ai" id="mitigateBtn">✦ Ask AI for mitigation plan</button>
-    </div>
-
-    <div class="ai-panel" id="aiPanel" style="display: none; margin-top: 16px;"></div>
-
-    <div class="grid-2" style="margin-top: 18px; align-items: start;">
-      <div class="chart-box">
-        <div class="ct">Chain throughput — mine vs port (t/h, live)</div>
-        <canvas id="flowChart"></canvas>
-      </div>
-      <div class="panel" style="padding: 18px;">
-        <h3>Operations event feed <span class="hint">streaming</span></h3>
-        <div class="feed" id="feed"></div>
-      </div>
-    </div>
-  </div>
-
+  <div id="irocRoot" data-variant="console"></div>
   <script type="module" src="/js/control-tower.js"></script>
 </body>
 </html>
