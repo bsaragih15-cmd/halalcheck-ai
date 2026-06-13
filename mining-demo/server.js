@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { maintenanceFallback, safetyFallback, productionFallback } from './data/fallbacks.js';
 import { parseDisruptionFallback, copilotFallback } from './data/fsp.js';
+import { haulFallback } from './data/haul.js';
 import { USE_CASES } from './public/js/usecases.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -174,6 +175,30 @@ Mapping rules:
 
 IMPORTANT: Return ONLY valid JSON, no other text.`;
 
+const HAUL_PROMPT = `You are OreSight AI's haulage dispatch optimiser for the port haul circuit at a nickel laterite operation in Morowali, Central Sulawesi. A fleet of nine Komatsu HD785-7 haul trucks (91 t rated payload) shuttles ore ~4.2 km from two port stockpiles (SP-1 saprolite via LD-1 Cat 992K, SP-2 limonite via LD-2 Hitachi EX1900) up an ~8% ramp to the jetty surge hopper that feeds the barge loadout. Two 12-hour shifts (07:00/19:00 WITA). The delivered rate must track the active barge loadout demand (~1,900 t/h): the hopper is a small surge bin — if it starves, barge loading stalls and laycan/demurrage exposure rises; if it overflows, trucks queue and spill.
+
+Given a JSON snapshot of the haul circuit and a disruption scenario, produce a dispatch optimisation. Return JSON with EXACTLY this structure:
+
+{
+  "headline": "<one-line conclusion: current delivered rate vs demand and the recommended move>",
+  "bindingConstraint": "loader" | "haul-road" | "jetty-hopper" | "fleet",
+  "currentRateTph": <number, ore delivered to the hopper now, t/h>,
+  "optimisedRateTph": <number, achievable after the actions; >= currentRateTph>,
+  "matchFactor": <number; 1.0 balanced, <1 loader-starved, >1 trucks queue>,
+  "recommendations": [{"action": "<dispatch / road / payload / sequencing action>", "impact": "<quantified: t/h, queue-min, fuel-L, US$>", "timeframe": "<when>"}],
+  "valueImpactUSD": <integer, annualised value of the optimisation set>,
+  "narrative": "<3-4 sentences linking the moves to the barge loadout demand and the binding constraint>"
+}
+
+Domain rules:
+- Match factor MF ~ (assigned trucks)/(trucks needed to keep loaders loading). MF<0.9 → loaders wait (under-trucked); MF>1.1 → trucks bunch and queue (over-trucked). Drive toward 0.95–1.05.
+- The hopper is the pacemaker: optimisedRateTph tracks demand, not wasteful excess. If demand exceeds capacity, name the binding constraint and the marginal t/h of relieving it.
+- Respect limits: 2 loaders, 9 trucks, 91 t rated. Apply the 10/10/20 payload policy; watch tyre TKPH in wet-season heat on the ramp.
+- When a barge is laycan-critical, prioritise building hopper buffer ahead of its load window even at slightly higher fuel per tonne.
+- 3-4 recommendations, each concrete and quantified.
+
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
 const FSP_COPILOT_PROMPT = `You are the OreSight Future Scheduling Platform copilot for a Morowali nickel barge-logistics chain (jetty berths → four barges → floating crane FC-1 → ocean vessels; one published 48-hour plan; demurrage ~$28k/day). Answer the planner's question in 2-4 sentences, grounded ONLY in the provided plan-state JSON. Be concrete and quantified, and reference the bottleneck and the laycan buffer where relevant. Do not invent resources that are not in the state.
 
 Return JSON with EXACTLY this structure:
@@ -257,6 +282,18 @@ app.post('/api/fsp/parse', async (req, res) => {
     systemPrompt: FSP_PARSE_PROMPT,
     userMessage: `Dispatcher note:\n"""${text.trim().slice(0, 600)}"""\n\nReturn only valid JSON.`,
     fallback: parseDisruptionFallback(text),
+  });
+  res.json(result);
+});
+
+// Hauling: dispatch optimisation rationale for a disruption scenario.
+app.post('/api/haul/analyze', async (req, res) => {
+  const { scenario } = req.body || {};
+  const result = await askClaude({
+    label: `haul:${scenario?.disruptionId ?? 'optimise'}`,
+    systemPrompt: HAUL_PROMPT,
+    userMessage: `Optimise this haul-circuit scenario:\n${JSON.stringify(scenario ?? {}, null, 2)}\n\nReturn only valid JSON.`,
+    fallback: haulFallback(scenario || {}),
   });
   res.json(result);
 });

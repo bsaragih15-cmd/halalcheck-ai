@@ -414,7 +414,7 @@ export const USE_CASES = {
   'haul': {
     title: 'Haul Optimisation',
     decisions: 'truck/rail movements',
-    stage: 'Hauling', horizon: '4w', drivers: ['throughput'],
+    stage: 'Hauling', horizon: '4w', drivers: ['throughput'], href: '/haul.html',
     pitch: 'The 38-km mine-to-port haul is its own production system. AI tunes convoy spacing, speed profiles and fuel burn across the corridor.',
     site: 'Mine gate → Kendari port corridor — side-dump road train fleet',
     kpis: [
