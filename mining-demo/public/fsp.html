@@ -38,6 +38,9 @@
         <div class="fsp-status mono" id="fspStatus">PLAN v12 · PUBLISHED</div>
       </div>
 
+      <!-- Live constraint / bottleneck strip (Theory-of-Constraints drum + buffer) -->
+      <div class="bottleneck-strip" id="bottleneckStrip"></div>
+
       <!-- UC2: Outload Gantt -->
       <section class="fsp-pane" id="pane-outload">
         <div class="fsp-toolbar">
@@ -47,6 +50,11 @@
           <button class="disrupt-btn" data-d="barge-engine">🛠 BG-3103 engine fault</button>
           <button class="disrupt-btn reset" data-d="reset">↺ Restore base plan</button>
         </div>
+        <div class="freeform-row">
+          <input id="ffInput" placeholder='Describe any disruption — e.g. "two tugs out of service until midnight" or "MV Celebes arrives 6 h early"' />
+          <button class="ff-btn" id="ffBtn">Re-solve →</button>
+          <span class="ff-hint">✦ Natural-language disruptions are parsed by AI into a schedule constraint, then re-solved by the engine.</span>
+        </div>
         <div class="gantt" id="gantt"></div>
         <div class="gantt-legend">
           <span><i class="gl load"></i>Load at jetty</span>
@@ -55,7 +63,9 @@
           <span><i class="gl ogv"></i>OGV loading</span>
           <span><i class="gl maint"></i>Outage / repair</span>
           <span><i class="gl laycan"></i>Laycan window</span>
+          <span><i class="gl tide"></i>Tidal draft gate</span>
         </div>
+        <div class="option-cards" id="optionCards" style="display:none;"></div>
       </section>
 
       <!-- UC1: Inload network -->
@@ -74,6 +84,7 @@
 
       <!-- UC3: Execution -->
       <section class="fsp-pane" id="pane-execution" style="display:none;">
+        <div class="exec-prob mono-label" id="execProb" style="color:#8fa18f; margin-bottom:12px;"></div>
         <div class="grid-2" style="gap: 14px; align-items: start;">
           <div>
             <div class="mono-label" style="color:#8fa18f; margin-bottom: 10px;">Variance to plan — by resource (h, last 24 h)</div>
@@ -87,11 +98,14 @@
       </section>
     </div>
 
-    <div class="grid-2" style="margin-top: 18px; align-items: start;">
-      <div class="ai-panel" id="aiPanel">
-        <div class="ai-panel-head"><span class="spark">✦</span><span class="t">OreSight AI — Re-plan rationale</span></div>
-        <div style="color: var(--muted); font-size: 13.5px;">Inject a disruption above. The platform re-solves the 48-hour schedule and explains every move it makes — what shifts, what holds, and what it's worth.</div>
-      </div>
+    <div class="ai-panel" id="aiPanel" style="margin-top: 18px;">
+      <div class="ai-panel-head"><span class="spark">✦</span><span class="t">OreSight AI — Re-plan rationale</span></div>
+      <div style="color: var(--muted); font-size: 13.5px;">Inject a disruption — pick a preset, type one in plain language, or pre-position against a forecast risk. The platform re-solves the 48-hour schedule, offers the trade-off options, and explains every move it makes — what shifts, what holds, and what it's worth.</div>
+    </div>
+
+    <div class="fsp-grid3">
+      <div class="panel" id="riskRadar"></div>
+      <div class="panel" id="copilotPanel"></div>
       <div class="panel">
         <h3>Platform objectives <span class="hint">why operations teams adopt it</span></h3>
         <div class="list-block">
@@ -101,6 +115,7 @@
           <div class="li">Deliver value from increased throughput &amp; margin — measured per re-plan, not per slide</div>
         </div>
         <div class="derived" style="margin-top: 16px;"><span class="l">Value protected this week</span><span class="v" style="color: var(--green);" id="kProtected">$621,000</span><span class="note">demurrage + throughput recovered by re-plans</span></div>
+        <div class="precedent" id="precedent">↳ <b>Learning loop:</b> 2 prior disruptions on file — re-plans referenced against precedent.</div>
       </div>
     </div>
   </div>

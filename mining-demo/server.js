@@ -4,6 +4,7 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { maintenanceFallback, safetyFallback, productionFallback } from './data/fallbacks.js';
+import { parseDisruptionFallback, copilotFallback } from './data/fsp.js';
 import { USE_CASES } from './public/js/usecases.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -148,6 +149,41 @@ Rules:
 
 IMPORTANT: Return ONLY valid JSON, no other text.`;
 
+const FSP_PARSE_PROMPT = `You convert a mine-logistics dispatcher's free-text disruption note into ONE structured schedule constraint for the Morowali nickel barge chain. Resources: jetty berths JET-1 / JET-2 (load four barges), barges BG-3101..BG-3104, floating transshipment crane FC-1, ocean vessels MV-ANOA (loading now, laycan ends ~hour 38) and MV-CELEBES (queued). The published schedule spans a 48-hour horizon and "now" is ~hour 14.5.
+
+Return JSON with EXACTLY this structure:
+
+{
+  "resourceId": "JET-1" | "JET-2" | "FC-1" | "BG-3101" | "BG-3102" | "BG-3103" | "BG-3104" | "MV-ANOA" | "MV-CELEBES",
+  "kind": "outage" | "slowdown" | "hold" | "eta",
+  "start": <hour 0-48 when it begins; default 15 if unspecified>,
+  "dur": <duration in hours; for kind "eta" use a signed hour shift, negative = earlier>,
+  "magnitudePct": <0-100, percent of capacity lost; 100 for a full outage; ~40 for typical swell>,
+  "barge": <a barge id if a specific barge is affected, else null>,
+  "label": "<=16 character UPPERCASE label for the Gantt block>",
+  "title": "<one-line plain-English restatement of the disruption>"
+}
+
+Mapping rules:
+- Weather / swell / wind / sea state → kind "slowdown" on FC-1.
+- Tug / pilot / mooring shortage → kind "slowdown" on FC-1 (the chain throttles at transshipment).
+- A barge engine / mechanical fault → kind "hold" with that barge in "barge".
+- A berth, loader or jetty-side equipment failure → kind "outage" on that jetty.
+- A vessel arriving earlier or later → kind "eta" on that vessel (negative dur = earlier).
+- If several things are described, pick the single most material constraint.
+
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
+const FSP_COPILOT_PROMPT = `You are the OreSight Future Scheduling Platform copilot for a Morowali nickel barge-logistics chain (jetty berths → four barges → floating crane FC-1 → ocean vessels; one published 48-hour plan; demurrage ~$28k/day). Answer the planner's question in 2-4 sentences, grounded ONLY in the provided plan-state JSON. Be concrete and quantified, and reference the bottleneck and the laycan buffer where relevant. Do not invent resources that are not in the state.
+
+Return JSON with EXACTLY this structure:
+
+{
+  "answer": "<2-4 sentence grounded answer>"
+}
+
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
 // ── Endpoints ─────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, aiMode: aiMode() }));
 
@@ -208,6 +244,32 @@ app.post('/api/usecase/analyze', async (req, res) => {
       'Return only valid JSON.',
     ].join('\n'),
     fallback,
+  });
+  res.json(result);
+});
+
+// FSP: parse a free-text disruption into a structured schedule constraint.
+app.post('/api/fsp/parse', async (req, res) => {
+  const { text } = req.body || {};
+  if (!text || !text.trim()) return res.status(400).json({ error: 'Disruption text is required' });
+  const result = await askClaude({
+    label: 'fsp:parse',
+    systemPrompt: FSP_PARSE_PROMPT,
+    userMessage: `Dispatcher note:\n"""${text.trim().slice(0, 600)}"""\n\nReturn only valid JSON.`,
+    fallback: parseDisruptionFallback(text),
+  });
+  res.json(result);
+});
+
+// FSP: scheduling copilot Q&A grounded in the live plan state.
+app.post('/api/fsp/copilot', async (req, res) => {
+  const { question, state } = req.body || {};
+  if (!question || !question.trim()) return res.status(400).json({ error: 'A question is required' });
+  const result = await askClaude({
+    label: 'fsp:copilot',
+    systemPrompt: FSP_COPILOT_PROMPT,
+    userMessage: `Plan state:\n${JSON.stringify(state || {}, null, 2)}\n\nPlanner question: ${question.trim().slice(0, 400)}\n\nReturn only valid JSON.`,
+    fallback: copilotFallback({ question, state }),
   });
   res.json(result);
 });
