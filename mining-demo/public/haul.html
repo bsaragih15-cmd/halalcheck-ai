@@ -7,165 +7,231 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css" />
+  <style>
+    *{box-sizing:border-box;}
+    html,body{margin:0;padding:0;background:#eeece3;}
+    body{font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;color:#1a1f17;}
+    @keyframes osBlink{0%,100%{opacity:1;}50%{opacity:.25;}}
+    @keyframes osDash{to{stroke-dashoffset:-32;}}
+    @keyframes osPulse{0%,100%{opacity:1;}50%{opacity:.45;}}
+    input::placeholder{color:#9aa091;}
+    input:focus{outline:none;}
+    button{cursor:pointer;font-family:inherit;}
+    a{text-decoration:none;color:inherit;}
+    .rail::-webkit-scrollbar{width:8px;}
+    .rail::-webkit-scrollbar-thumb{background:#dcdac9;border-radius:6px;}
+    .h-viewbtn{border:none;font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.03em;font-weight:600;padding:7px 14px;border-radius:7px;background:transparent;color:#8b9182;transition:all .18s;}
+    .h-viewbtn.active{background:#15803d;color:#fff;}
+    .h-preset{border:1px solid #e7e4d8;background:#faf9f3;color:#3a4133;font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.01em;font-weight:600;padding:8px 11px;border-radius:9px;display:inline-flex;align-items:center;gap:7px;transition:all .18s;}
+    .h-preset:hover{border-color:#cdd3bf;background:#f3f1e6;}
+    .h-preset.active{border-color:#15803d;background:#eef6ef;color:#15803d;}
+    .h-strat{display:flex;flex-direction:column;gap:5px;text-align:left;border:1.5px solid #e7e4d8;background:#fff;border-radius:12px;padding:12px 15px;transition:all .18s;width:100%;}
+    .h-cpq{border:1px solid #e7e4d8;background:#faf9f3;border-radius:9px;padding:8px 12px;font-size:13px;color:#3a4133;font-family:'Inter',sans-serif;transition:all .18s;}
+    .h-cpq:hover{border-color:#cdd3bf;background:#f3f1e6;}
+  </style>
 </head>
-<body class="hx">
+<body>
+<div style="height:100vh;overflow:hidden;display:flex;flex-direction:column;background:#eeece3;padding:16px 20px 14px;">
 
-  <header class="hx-nav">
-    <a class="hx-brand" href="/index.html#matrix"><span class="hx-logo">OS</span><span>Ore<em>Sight</em>&nbsp;AI</span></a>
-    <span class="hx-title">Hauling Optimisation</span>
-    <span class="hx-eyebrow">Morowali port · 9× HD785-7 · stockpile → jetty</span>
-    <span class="hx-spacer"></span>
-    <div class="hx-toggle">
-      <button class="haul-viewbtn" data-view="3d">🛰 Satellite</button>
-      <button class="haul-viewbtn active" data-view="2d">◫ Schematic</button>
-    </div>
-    <span class="hx-clock mono" id="witaClock">--:--:--</span>
-  </header>
-
-  <div class="hx-body">
-    <!-- LHS — live map + fleet/loaders -->
-    <div class="hx-map">
-      <div id="haul3d"></div>
-      <div id="haul2d">
-        <svg id="haulMap" viewBox="0 0 960 440" preserveAspectRatio="xMidYMid meet">
-          <defs>
-            <pattern id="haulgrid" width="34" height="34" patternUnits="userSpaceOnUse"><path d="M34 0 L0 0 0 34" fill="none" stroke="#18201620" stroke-width="1"/></pattern>
-            <radialGradient id="hopglow" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#15803d" stop-opacity="0.20"/><stop offset="1" stop-color="#15803d" stop-opacity="0"/></radialGradient>
-          </defs>
-          <rect x="0" y="0" width="960" height="440" fill="url(#haulgrid)"/>
-          <path d="M120 130 L250 150 L340 175 L700 175 L840 185" fill="none" stroke="#222c1f" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M120 320 L250 235 L340 175 L700 175 L840 185" fill="none" stroke="#222c1f" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M840 235 L700 250 L340 250 L250 165 L120 130" fill="none" stroke="#1c241a" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M840 235 L700 250 L340 250 L250 300 L120 320" fill="none" stroke="#1c241a" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M345 175 L700 175" fill="none" stroke="#3a4a34" stroke-width="2" stroke-dasharray="10 12" style="animation:osDash 1.4s linear infinite;"/>
-          <path d="M700 250 L345 250" fill="none" stroke="#2c3a28" stroke-width="2" stroke-dasharray="10 12" style="animation:osDash 2.1s linear infinite;"/>
-          <text x="520" y="143" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" letter-spacing="2" fill="#566350">RAMP ~8% · 4.2 KM</text>
-          <text x="520" y="285" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9.5" letter-spacing="1.5" fill="#3f4c3a">RETURN EMPTY</text>
-          <g>
-            <rect x="64" y="104" width="104" height="52" rx="10" fill="#171f15" stroke="#2c3727" stroke-width="1.5"/>
-            <text x="116" y="124" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#cdd6c6">LD-1</text>
-            <text x="116" y="139" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1" fill="#6f7c68">SP-1 · CAT 992K</text>
-            <text x="116" y="150" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="7.5" letter-spacing="1" fill="#566350">SAPROLITE</text>
-          </g>
-          <g>
-            <rect x="64" y="294" width="104" height="52" rx="10" fill="#171f15" stroke="#2c3727" stroke-width="1.5"/>
-            <text x="116" y="314" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#cdd6c6">LD-2</text>
-            <text x="116" y="329" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1" fill="#6f7c68">SP-2 · EX1900</text>
-            <text x="116" y="340" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="7.5" letter-spacing="1" fill="#566350">LIMONITE</text>
-          </g>
-          <rect id="ld2Down" x="64" y="294" width="104" height="52" rx="10" fill="#b91c1c" opacity="0" stroke="#b91c1c" stroke-width="1.5"/>
-          <g id="q1Badge" opacity="0"><circle cx="196" cy="120" r="12" fill="#b45309"/><text id="q1Text" x="196" y="124" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fff">0</text></g>
-          <g id="q2Badge" opacity="0"><circle cx="196" cy="310" r="12" fill="#b45309"/><text id="q2Text" x="196" y="314" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fff">0</text></g>
-          <g id="qhBadge" opacity="0"><circle cx="770" cy="150" r="12" fill="#b45309"/><text id="qhText" x="770" y="154" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fff">0</text></g>
-          <ellipse cx="868" cy="205" rx="120" ry="120" fill="url(#hopglow)"/>
-          <rect x="836" y="150" width="62" height="104" rx="7" fill="#0c110b" stroke="#2c3727" stroke-width="1.5"/>
-          <rect id="hopFill" x="838" y="250" width="58" height="2" rx="4" fill="#15803d"/>
-          <line x1="836" y1="187" x2="898" y2="187" stroke="#3a2a14" stroke-width="1.5" stroke-dasharray="3 3"/>
-          <text x="903" y="190" font-family="'JetBrains Mono',monospace" font-size="7.5" fill="#7a5a2a">10m</text>
-          <path d="M848 254 L886 254 L874 280 L860 280 Z" fill="#171f15" stroke="#2c3727" stroke-width="1.5"/>
-          <rect x="824" y="298" width="92" height="26" rx="5" fill="#12211f" stroke="#0e7490" stroke-width="1.5"/>
-          <text x="870" y="315" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" letter-spacing="1" fill="#3fa9c4">BARGE LOADOUT</text>
-          <text x="867" y="142" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10.5" font-weight="700" letter-spacing="1" fill="#cdd6c6">JETTY HOPPER</text>
-          <text id="hopPct" x="867" y="208" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="18" font-weight="700" fill="#fff">68%</text>
-          <text id="hopMin" x="867" y="225" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="0.5" fill="#8a9384">13 min</text>
-          <text id="hopDemand" x="867" y="343" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" letter-spacing="0.5" fill="#6f7c68">DEMAND 1,900 t/h</text>
-          <text x="40" y="402" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1.5" fill="#5a4242">DOWN / PARKED</text>
-          <g id="truckLayer"></g>
-        </svg>
-      </div>
-
-      <!-- overlays -->
-      <div class="hx-ovl tl"><div class="haul-kpis" id="kpiRow"></div></div>
-
-      <div class="hx-ovl tr">
-        <div class="hx-card hx-cst">
-          <div class="hc-cap">Binding constraint <span class="hc-shift" id="cstShift"></span></div>
-          <div class="hc-name-row"><span class="hc-square" id="cstSquare"></span><span class="hc-name" id="cstName">Fleet</span></div>
-          <div class="hc-bars" id="cstBars"></div>
-          <div class="hc-note" id="cstNote"></div>
+  <!-- header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-shrink:0;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <a href="/index.html#matrix" title="Back to use-case matrix" style="width:34px;height:34px;border-radius:9px;background:#15803d;display:inline-flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;">OS</a>
+      <div style="white-space:nowrap;">
+        <div style="display:flex;align-items:baseline;gap:10px;">
+          <span style="font-size:19px;font-weight:800;letter-spacing:-0.015em;color:#161b13;">Hauling Optimisation</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9aa091;">OreSight AI</span>
         </div>
-      </div>
-
-      <div class="hx-ovl tc">
-        <div class="hx-card hx-disrupt">
-          <div class="hd-toggles" id="haulPresets"></div>
-          <div class="hd-freebar">
-            <input id="haulFree" placeholder="or type a disruption…" />
-            <button id="haulFreeBtn">→</button>
-            <button id="haulReset" class="hd-resetbtn" title="Reset to balanced">↺</button>
-          </div>
-          <div class="hd-parsed mono" id="haulParsed"></div>
-        </div>
-      </div>
-
-      <div class="hx-ovl bl">
-        <div class="hx-card hx-gauges">
-          <div class="hx-g">
-            <div class="hc-cap">Match factor</div>
-            <svg viewBox="0 0 200 130">
-              <path d="M20 120 A80 80 0 0 1 180 120" fill="none" stroke="#1d251a" stroke-width="13" stroke-linecap="round"/>
-              <path d="M82 49 A80 80 0 0 1 118 49" fill="none" stroke="#15803d" stroke-width="13" stroke-linecap="round"/>
-              <line id="mfNeedle" x1="100" y1="120" x2="100" y2="56" stroke="#e7ece3" stroke-width="3" stroke-linecap="round"/>
-              <circle cx="100" cy="120" r="6" fill="#e7ece3"/>
-            </svg>
-            <div class="hs-val" id="mfVal">1.01</div>
-          </div>
-          <div class="hx-g">
-            <div class="hc-cap">Hopper buffer</div>
-            <svg viewBox="0 0 200 130">
-              <path d="M20 120 A80 80 0 0 1 180 120" fill="none" stroke="#1d251a" stroke-width="13" stroke-linecap="round"/>
-              <path id="bufArc" d="M20 120 A80 80 0 0 1 100 40" fill="none" stroke="#15803d" stroke-width="13" stroke-linecap="round"/>
-            </svg>
-            <div class="hs-val" id="bufVal">13<span> min</span></div>
-          </div>
-        </div>
-        <div class="hx-card hx-pred">
-          <div class="hx-predrow"><span class="dot" id="starveDot"></span><span id="starveChip">Hopper-starve 4h: —</span></div>
-          <div class="hx-predrow"><span class="dot" id="mfDot"></span><span id="mfChip">Match factor: —</span></div>
-        </div>
-      </div>
-
-      <div class="hx-ovl br">
-        <div class="hx-card"><div class="haul-legend" id="haulLegend"></div></div>
-        <span class="hx-viewnote mono" id="view3dNote"></span>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.04em;color:#7c8473;margin-top:3px;">Morowali port · 9× HD785-7 · stockpile → jetty</div>
       </div>
     </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div style="display:flex;gap:4px;background:#fff;border:1px solid #e7e4d8;border-radius:10px;padding:4px;">
+        <button class="h-viewbtn active" data-view="schematic">◫ Schematic</button>
+        <button class="h-viewbtn" data-view="satellite">🛰 Satellite</button>
+      </div>
+      <div style="text-align:right;">
+        <div id="witaClock" style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:#161b13;line-height:1;">--:--:--</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#9aa091;margin-top:4px;">WITA · Shift A</div>
+      </div>
+      <span style="display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;background:#eaf2ea;border:1px solid #cfe1cf;">
+        <span style="width:8px;height:8px;border-radius:50%;background:#15803d;animation:osBlink 1.7s infinite;"></span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#15803d;font-weight:600;">Live</span>
+      </span>
+    </div>
+  </div>
 
-    <!-- RHS — AI output + optimisation -->
-    <aside class="hx-rail">
-      <div class="haul-ai">
-        <div class="ha-head"><span class="ha-badge">AI</span><span class="ha-cap">OreSight dispatch optimiser</span><span class="ha-solve" id="haulSolve">● re-solving…</span></div>
-        <div class="ha-headline" id="aiHeadline"></div>
-        <div class="ha-delta">
-          <div class="ha-dcard"><div class="l">Current</div><div class="v" id="aiCurrent">—<span> t/h</span></div></div>
-          <div class="ha-arrow">→</div>
-          <div class="ha-dcard opt"><div class="l">Optimised</div><div class="v" id="aiOptimised">—<span> t/h</span></div></div>
-          <div class="ha-dcard"><div class="l">Value / yr</div><div class="v" id="aiValue">—</div></div>
+  <!-- body: [KPIs + map + dock] | [wide AI rail] -->
+  <div style="flex:1;min-height:0;display:grid;grid-template-columns:1.4fr 1fr;gap:14px;">
+
+    <!-- LEFT -->
+    <div style="display:flex;flex-direction:column;gap:13px;min-height:0;">
+
+      <!-- KPI row -->
+      <div id="kpiRow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:13px;flex-shrink:0;"></div>
+
+      <!-- map -->
+      <div style="flex:1;min-height:190px;background:#fff;border:1px solid #e7e4d8;border-radius:16px;padding:10px;box-shadow:0 1px 2px rgba(20,30,15,0.04);display:flex;flex-direction:column;gap:9px;">
+        <div style="flex:1;min-height:0;position:relative;border-radius:12px;overflow:hidden;background:#0e140d;">
+          <div id="haulBg" style="position:absolute;inset:0;background:#0e140d;transition:background .4s;"></div>
+          <svg viewBox="0 0 960 440" preserveAspectRatio="xMidYMid meet" style="position:absolute;inset:0;width:100%;height:100%;">
+            <defs>
+              <pattern id="haulgrid" width="34" height="34" patternUnits="userSpaceOnUse"><path d="M34 0 L0 0 0 34" fill="none" stroke="#ffffff0d" stroke-width="1"></path></pattern>
+              <radialGradient id="hopglow" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#15803d" stop-opacity="0.2"></stop><stop offset="1" stop-color="#15803d" stop-opacity="0"></stop></radialGradient>
+            </defs>
+            <rect id="haulGrid" x="0" y="0" width="960" height="440" fill="url(#haulgrid)"></rect>
+            <path d="M120 130 L250 150 L340 175 L700 175 L840 185" fill="none" stroke="#222c1f" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M120 320 L250 235 L340 175 L700 175 L840 185" fill="none" stroke="#222c1f" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M840 235 L700 250 L340 250 L250 165 L120 130" fill="none" stroke="#1c241a" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M840 235 L700 250 L340 250 L250 300 L120 320" fill="none" stroke="#1c241a" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"></path>
+            <path d="M345 175 L700 175" fill="none" stroke="#3a4a34" stroke-width="2" stroke-dasharray="10 12" style="animation:osDash 1.4s linear infinite;"></path>
+            <path d="M700 250 L345 250" fill="none" stroke="#2c3a28" stroke-width="2" stroke-dasharray="10 12" style="animation:osDash 2.1s linear infinite;"></path>
+            <text x="520" y="143" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" letter-spacing="2" fill="#566350">RAMP ~8% · 4.2 KM</text>
+            <text x="520" y="285" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9.5" letter-spacing="1.5" fill="#3f4c3a">RETURN EMPTY</text>
+            <g>
+              <rect x="64" y="104" width="104" height="52" rx="10" fill="#171f15" stroke="#2c3727" stroke-width="1.5"></rect>
+              <text x="116" y="124" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#cdd6c6">LD-1</text>
+              <text x="116" y="139" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1" fill="#6f7c68">SP-1 · CAT 992K</text>
+              <text x="116" y="150" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="7.5" letter-spacing="1" fill="#566350">SAPROLITE</text>
+            </g>
+            <g>
+              <rect x="64" y="294" width="104" height="52" rx="10" fill="#171f15" stroke="#2c3727" stroke-width="1.5"></rect>
+              <text x="116" y="314" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#cdd6c6">LD-2</text>
+              <text x="116" y="329" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1" fill="#6f7c68">SP-2 · EX1900</text>
+              <text x="116" y="340" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="7.5" letter-spacing="1" fill="#566350">LIMONITE</text>
+            </g>
+            <rect id="ld2Down" x="64" y="294" width="104" height="52" rx="10" fill="#b91c1c" opacity="0" stroke="#b91c1c" stroke-width="1.5"></rect>
+            <g id="q1Badge" opacity="0"><circle cx="196" cy="120" r="12" fill="#b45309"></circle><text id="q1Text" x="196" y="124" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fff">0</text></g>
+            <g id="q2Badge" opacity="0"><circle cx="196" cy="310" r="12" fill="#b45309"></circle><text id="q2Text" x="196" y="314" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fff">0</text></g>
+            <g id="qhBadge" opacity="0"><circle cx="770" cy="150" r="12" fill="#b45309"></circle><text id="qhText" x="770" y="154" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fff">0</text></g>
+            <ellipse cx="868" cy="205" rx="120" ry="120" fill="url(#hopglow)"></ellipse>
+            <rect x="836" y="150" width="62" height="104" rx="7" fill="#0c110b" stroke="#2c3727" stroke-width="1.5"></rect>
+            <rect id="hopFill" x="838" y="250" width="58" height="2" rx="4" fill="#15803d"></rect>
+            <line x1="836" y1="187" x2="898" y2="187" stroke="#3a2a14" stroke-width="1.5" stroke-dasharray="3 3"></line>
+            <text x="903" y="190" font-family="'JetBrains Mono',monospace" font-size="7.5" fill="#7a5a2a">10m</text>
+            <path d="M848 254 L886 254 L874 280 L860 280 Z" fill="#171f15" stroke="#2c3727" stroke-width="1.5"></path>
+            <rect x="824" y="298" width="92" height="26" rx="5" fill="#12211f" stroke="#0e7490" stroke-width="1.5"></rect>
+            <text x="870" y="315" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" letter-spacing="1" fill="#3fa9c4">BARGE LOADOUT</text>
+            <text x="867" y="142" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10.5" font-weight="700" letter-spacing="1" fill="#cdd6c6">JETTY HOPPER</text>
+            <text id="hopPct" x="867" y="208" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="18" font-weight="700" fill="#fff">68%</text>
+            <text id="hopMin" x="867" y="225" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="0.5" fill="#8a9384">13 min</text>
+            <text id="hopDemand" x="867" y="343" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" letter-spacing="0.5" fill="#6f7c68">DEMAND 1,900 t/h</text>
+            <text x="40" y="402" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1.5" fill="#5a4242">DOWN / PARKED</text>
+            <g id="truckLayer"></g>
+          </svg>
         </div>
-        <div class="ha-sec">Strategy <span style="color:#5f6b59;font-weight:400;text-transform:none;letter-spacing:0">· pick the trade-off</span></div>
-        <div class="ha-options" id="aiOptions"></div>
-        <div class="ha-cols">
+        <div style="display:flex;align-items:center;gap:8px 18px;flex-wrap:wrap;padding:0 5px;">
+          <div id="haulLegend" style="display:flex;align-items:center;gap:8px 18px;flex-wrap:wrap;"></div>
+          <span id="viewNote" style="margin-left:auto;white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.03em;color:#a7ac9c;">Live · Morowali port</span>
+        </div>
+      </div>
+
+      <!-- dock: constraint | gauges | disruptions -->
+      <div style="display:grid;grid-template-columns:1.1fr 0.95fr 1.2fr;gap:13px;flex-shrink:0;">
+
+        <!-- constraint -->
+        <div style="background:#fff;border:1px solid #e7e4d8;border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(20,30,15,0.04);">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8b9182;font-weight:600;display:flex;align-items:center;gap:7px;">Binding constraint<span id="cstShift" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#b45309;"></span></div>
+          <div style="display:flex;align-items:center;gap:9px;margin-top:9px;margin-bottom:11px;">
+            <span id="cstSquare" style="width:11px;height:11px;border-radius:3px;background:#15803d;"></span>
+            <span id="cstName" style="font-size:19px;font-weight:800;letter-spacing:-0.01em;color:#161b13;">Fleet</span>
+          </div>
+          <div id="cstBars" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- gauges -->
+        <div style="background:#fff;border:1px solid #e7e4d8;border-radius:14px;padding:14px;box-shadow:0 1px 2px rgba(20,30,15,0.04);display:flex;flex-direction:column;gap:9px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+            <div style="display:flex;flex-direction:column;align-items:center;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#8b9182;font-weight:600;align-self:flex-start;">Match factor</div>
+              <svg viewBox="0 0 200 130" style="width:100%;max-width:112px;margin-top:3px;">
+                <path d="M20 120 A80 80 0 0 1 180 120" fill="none" stroke="#eeece1" stroke-width="13" stroke-linecap="round"></path>
+                <path d="M82 49 A80 80 0 0 1 118 49" fill="none" stroke="#bfe0c8" stroke-width="13" stroke-linecap="round"></path>
+                <line id="mfNeedle" x1="100" y1="120" x2="100" y2="56" stroke="#161b13" stroke-width="3" stroke-linecap="round"></line>
+                <circle cx="100" cy="120" r="6" fill="#161b13"></circle>
+              </svg>
+              <div id="mfVal" style="font-size:21px;font-weight:800;color:#15803d;line-height:1;margin-top:-3px;">1.01</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#8b9182;font-weight:600;align-self:flex-start;">Hopper buffer</div>
+              <svg viewBox="0 0 200 130" style="width:100%;max-width:112px;margin-top:3px;">
+                <path d="M20 120 A80 80 0 0 1 180 120" fill="none" stroke="#eeece1" stroke-width="13" stroke-linecap="round"></path>
+                <path id="bufArc" d="M20 120 A80 80 0 0 1 100 40" fill="none" stroke="#15803d" stroke-width="13" stroke-linecap="round"></path>
+              </svg>
+              <div id="bufVal" style="font-size:21px;font-weight:800;color:#161b13;line-height:1;margin-top:-3px;white-space:nowrap;">13<span style="font-size:12px;font-weight:600;color:#9aa091;"> min</span></div>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid #eeece1;padding-top:9px;">
+            <div style="display:flex;align-items:center;gap:8px;"><span id="starveDot" style="width:8px;height:8px;border-radius:50%;background:#16915a;flex-shrink:0;"></span><span id="starveChip" style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.02em;color:#16915a;">Hopper-starve 4h: —</span></div>
+            <div style="display:flex;align-items:center;gap:8px;"><span id="mfDot" style="width:8px;height:8px;border-radius:50%;background:#16915a;flex-shrink:0;"></span><span id="mfChip" style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.02em;color:#5c6353;">Match factor: —</span></div>
+          </div>
+        </div>
+
+        <!-- disruptions -->
+        <div style="background:#fff;border:1px solid #e7e4d8;border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(20,30,15,0.04);display:flex;flex-direction:column;gap:9px;">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8b9182;font-weight:600;">Disruption · re-dispatch</div>
+          <div id="haulPresets" style="display:flex;gap:7px;flex-wrap:wrap;"></div>
+          <div style="display:flex;gap:7px;align-items:center;background:#faf9f3;border:1px solid #e7e4d8;border-radius:10px;padding:5px 6px 5px 13px;margin-top:auto;">
+            <input id="haulFree" placeholder="or type a disruption…" style="flex:1;min-width:0;background:transparent;border:none;color:#1a1f17;font-family:'Inter',sans-serif;font-size:13px;padding:5px 0;" />
+            <button id="haulFreeBtn" title="Re-dispatch" style="border:none;background:#15803d;color:#fff;font-size:14px;font-weight:700;padding:7px 12px;border-radius:8px;">→</button>
+            <button id="haulReset" title="Reset to balanced" style="border:1px solid #e0ddcd;background:#fff;color:#8b9182;font-size:14px;padding:7px 10px;border-radius:8px;">↺</button>
+          </div>
+          <div id="haulParsed" style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.02em;color:#0e7490;min-height:12px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT — wide AI rail -->
+    <aside class="rail" style="min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:13px;padding-right:4px;">
+      <div style="background:#fff;border:1px solid #e7e4d8;border-radius:16px;padding:20px 22px;box-shadow:0 1px 2px rgba(20,30,15,0.04);">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px;">
+          <span style="width:26px;height:26px;border-radius:8px;background:#15803d;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;font-family:'JetBrains Mono',monospace;">AI</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:#8b9182;font-weight:600;">OreSight dispatch optimiser</span>
+          <span id="haulSolve" style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#15803d;opacity:0;transition:opacity .3s;">● re-solving…</span>
+        </div>
+        <div id="aiHeadline" style="font-size:20px;font-weight:700;line-height:1.4;letter-spacing:-0.01em;margin-bottom:18px;color:#161b13;">Loading circuit…</div>
+        <div style="display:flex;gap:11px;margin-bottom:18px;">
+          <div style="flex:1;background:#faf9f3;border:1px solid #eeece1;border-radius:12px;padding:13px 15px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#9aa091;margin-bottom:6px;">Current</div>
+            <div style="font-size:23px;font-weight:800;color:#3a4133;"><span id="aiCurrent">—</span><span style="font-size:12px;color:#9aa091;font-weight:600;"> t/h</span></div>
+          </div>
+          <div style="display:flex;align-items:center;font-size:19px;color:#15803d;">→</div>
+          <div style="flex:1;background:#eef6ef;border:1px solid #cfe3d3;border-radius:12px;padding:13px 15px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#2f8a52;margin-bottom:6px;">Optimised</div>
+            <div style="font-size:23px;font-weight:800;color:#15803d;"><span id="aiOptimised">—</span><span style="font-size:12px;color:#2f8a52;font-weight:600;"> t/h</span></div>
+          </div>
+          <div style="flex:1;background:#faf9f3;border:1px solid #eeece1;border-radius:12px;padding:13px 15px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#9aa091;margin-bottom:6px;">Value / yr</div>
+            <div id="aiValue" style="font-size:23px;font-weight:800;color:#161b13;">—</div>
+          </div>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8b9182;font-weight:600;margin-bottom:10px;">Strategy <span style="color:#b3b7a6;font-weight:400;text-transform:none;letter-spacing:0;">· pick the trade-off</span></div>
+        <div id="aiOptions" style="display:flex;flex-direction:column;gap:9px;margin-bottom:18px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
           <div>
-            <div class="ha-sec">Fleet actions</div>
-            <div class="ha-actions" id="aiActions"></div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8b9182;font-weight:600;margin-bottom:10px;">Fleet actions</div>
+            <div id="aiActions" style="display:flex;flex-direction:column;gap:8px;"></div>
           </div>
           <div>
-            <div class="ha-sec">Recommendations</div>
-            <div class="ha-recs" id="aiRecs"></div>
-            <div class="ha-narr" id="aiNarrative"></div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8b9182;font-weight:600;margin-bottom:10px;">Recommendations</div>
+            <div id="aiRecs" style="display:flex;flex-direction:column;gap:9px;margin-bottom:13px;"></div>
+            <div id="aiNarrative" style="font-size:13px;line-height:1.55;color:#6b7264;border-top:1px solid #eeece1;padding-top:12px;"></div>
           </div>
         </div>
       </div>
 
-      <div class="haul-copilot">
-        <div class="hr-cap">Copilot · ask the fleet</div>
-        <div class="cp-qs" id="copilotQs"></div>
-        <div class="cp-row"><input id="cpInput" placeholder="Ask, or set a target — e.g. &quot;get me to 2000 t/h&quot;" /><button id="cpBtn">Ask</button></div>
-        <div class="cp-ans" id="copilotAnswer">Ask about the binding constraint, hopper buffer, match factor — or set a target rate. Answers come from the live circuit.</div>
+      <div style="background:#fff;border:1px solid #e7e4d8;border-radius:16px;padding:18px 20px;box-shadow:0 1px 2px rgba(20,30,15,0.04);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#8b9182;font-weight:600;margin-bottom:12px;">Copilot · ask the fleet</div>
+        <div id="copilotQs" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;"></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+          <input id="cpInput" placeholder="Ask, or set a target — e.g. &quot;get me to 2000 t/h&quot;" style="flex:1;min-width:0;background:#faf9f3;border:1px solid #e7e4d8;color:#1a1f17;font-family:'Inter',sans-serif;font-size:13px;padding:10px 13px;border-radius:10px;" />
+          <button id="cpBtn" style="border:none;background:#15803d;color:#fff;font-size:13px;font-weight:700;padding:10px 17px;border-radius:10px;">Ask</button>
+        </div>
+        <div id="copilotAnswer" style="font-size:13px;line-height:1.55;color:#4a5142;background:#faf9f3;border:1px solid #eeece1;border-radius:11px;padding:13px 15px;">Ask about the binding constraint, hopper buffer, match factor — or set a target rate. Answers come from the live circuit.</div>
       </div>
     </aside>
   </div>
+</div>
 
   <script type="module" src="/js/haul.js"></script>
 </body>
