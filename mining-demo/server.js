@@ -26,12 +26,59 @@ app.get('/', (req, res) => res.redirect('/index.html'));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const simulatedLatency = () => sleep(900 + Math.random() * 700);
 
+// ── Abuse / cost protection ───────────────────────────────────────────────────
+// These public endpoints each call Claude, so an unthrottled caller could run up
+// the Anthropic bill. We add a lightweight per-IP fixed-window rate limit plus a
+// short-lived response cache keyed on the exact prompt. Both are in-memory: on
+// serverless each warm instance keeps its own state (no cross-instance sharing),
+// a deliberate trade-off for a zero-dependency demo — swap in a shared store
+// (e.g. Vercel KV) if you need globally enforced limits.
+const RL_WINDOW_MS = 60_000;            // window length
+const RL_MAX = Number(process.env.HAUL_RL_MAX) || 40; // requests/window/IP
+const rlHits = new Map();               // ip -> { count, resetAt }
+
+function clientIp(req) {
+  return (req.headers['x-forwarded-for'] || '').split(',')[0].trim() || req.socket?.remoteAddress || 'unknown';
+}
+function rateLimit(req, res, next) {
+  const now = Date.now();
+  if (rlHits.size > 5000) for (const [k, v] of rlHits) if (now > v.resetAt) rlHits.delete(k);
+  const ip = clientIp(req);
+  let e = rlHits.get(ip);
+  if (!e || now > e.resetAt) { e = { count: 0, resetAt: now + RL_WINDOW_MS }; rlHits.set(ip, e); }
+  e.count++;
+  res.setHeader('X-RateLimit-Limit', RL_MAX);
+  res.setHeader('X-RateLimit-Remaining', Math.max(0, RL_MAX - e.count));
+  if (e.count > RL_MAX) {
+    res.setHeader('Retry-After', Math.ceil((e.resetAt - now) / 1000));
+    return res.status(429).json({ error: 'Rate limit exceeded — please slow down and retry shortly.' });
+  }
+  next();
+}
+// Throttle the AI POST endpoints only; /api/health (GET) stays free for the badge.
+app.use((req, res, next) => (req.method === 'POST' && req.path.startsWith('/api/') ? rateLimit(req, res, next) : next()));
+
+// Short-TTL cache of live model responses, keyed on label + prompt hash. Repeated
+// identical requests (e.g. the five fixed haul scenarios) reuse one inference.
+const CACHE_TTL_MS = Number(process.env.HAUL_CACHE_TTL_MS) || 10 * 60_000;
+const respCache = new Map();            // key -> { at, value }
+const hashStr = (s) => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+const cacheKey = (label, systemPrompt, userMessage) => `${label}|${hashStr(systemPrompt + ' ' + userMessage)}`;
+
 // ── Core helper: live Claude call with unbreakable fallback ───────────────────
 async function askClaude({ systemPrompt, userMessage, fallback, label }) {
   if (!client) {
     await simulatedLatency(); // feels like inference, never errors
     console.log(`[${label}] simulated (no API key)`);
     return { ...fallback, source: 'simulated' };
+  }
+
+  // Serve an identical recent inference from cache to cut latency and API cost.
+  const key = cacheKey(label, systemPrompt, userMessage);
+  const hit = respCache.get(key);
+  if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
+    console.log(`[${label}] cache hit`);
+    return { ...hit.value, source: 'live', cached: true };
   }
 
   try {
@@ -53,6 +100,9 @@ async function askClaude({ systemPrompt, userMessage, fallback, label }) {
 
     const u = response.usage;
     console.log(`[${label}] live | in: ${u.input_tokens} | cache_read: ${u.cache_read_input_tokens ?? 0} | cache_write: ${u.cache_creation_input_tokens ?? 0} | out: ${u.output_tokens}`);
+    // Cache the successful inference; prune expired entries when the map grows.
+    respCache.set(key, { at: Date.now(), value: result });
+    if (respCache.size > 500) for (const [k, v] of respCache) if (Date.now() - v.at >= CACHE_TTL_MS) respCache.delete(k);
     return { ...result, source: 'live' };
   } catch (err) {
     // Demo guarantee: any failure degrades to the canned analysis, never a 500.
