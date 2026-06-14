@@ -427,7 +427,7 @@ document.querySelectorAll('.haul-table th[data-sort]').forEach((th) => th.addEve
 // Lazy-loaded via CDN; the 2D schematic is the automatic fallback if WebGL or
 // the libraries/tiles are unavailable. Trucks are driven by the same sim state.
 let map3d = null, deck3d = null, view3dReady = false, view3dFailed = false;
-const G = { ld1: [122.165, -2.859], ld2: [122.165, -2.865], merge: [122.184, -2.862], jetty: [122.200, -2.861], barge: [122.206, -2.861] };
+const G = { ld1: [122.172, -2.856], ld2: [122.172, -2.864], merge: [122.188, -2.860], jetty: [122.202, -2.859], barge: [122.207, -2.859] };
 G.loadedLD1 = [G.ld1, G.merge, G.jetty]; G.loadedLD2 = [G.ld2, G.merge, G.jetty];
 G.returnLD1 = [G.jetty, G.merge, G.ld1]; G.returnLD2 = [G.jetty, G.merge, G.ld2];
 function geoLerp(route, f) {
@@ -457,25 +457,32 @@ async function init3D() {
     await loadScript('https://unpkg.com/deck.gl@9/dist.min.js');
     const maplibregl = window.maplibregl, deck = window.deck;
     if (!maplibregl || !deck) throw new Error('libs');
-    map3d = new maplibregl.Map({ container: 'haul3d', style: 'https://tiles.openfreemap.org/styles/liberty', center: [122.184, -2.862], zoom: 13.4, pitch: 55, bearing: -22, attributionControl: false });
-    deck3d = new deck.MapboxOverlay({ interleaved: true, layers: [] });
+    const satStyle = {
+      version: 8,
+      sources: { sat: { type: 'raster', tileSize: 256, attribution: '© Esri World Imagery', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'] } },
+      layers: [{ id: 'sat', type: 'raster', source: 'sat' }],
+    };
+    map3d = new maplibregl.Map({ container: 'haul3d', style: satStyle, center: [122.189, -2.860], zoom: 14.3, pitch: 0, bearing: 0, attributionControl: false, maxZoom: 18 });
+    deck3d = new deck.MapboxOverlay({ interleaved: false, layers: [] });
     map3d.addControl(deck3d);
-    map3d.on('load', () => { view3dReady = true; el('view3dNote').textContent = 'Live · Morowali port (OpenFreeMap)'; loop3d(); });
+    map3d.on('load', () => { view3dReady = true; el('view3dNote').textContent = 'Live · Morowali port · Esri imagery'; loop3d(); });
     setTimeout(() => { if (!view3dReady) fail3D(); }, 9000);
   } catch { fail3D(); }
 }
 function loop3d() {
   if (!view3dReady || !deck3d || !window.deck) return;
   const D = window.deck;
-  const roads = [{ path: G.loadedLD1, c: [180, 140, 40] }, { path: G.loadedLD2, c: [180, 140, 40] }, { path: G.returnLD1, c: [96, 104, 92] }, { path: G.returnLD2, c: [96, 104, 92] }];
-  const sites = [{ poly: squarePoly(G.ld1, 55), h: 28, c: [120, 90, 55] }, { poly: squarePoly(G.ld2, 55), h: 24, c: [150, 80, 55] }, { poly: squarePoly(G.jetty, 42), h: 44, c: [40, 55, 40] }];
+  const roads = [{ path: G.loadedLD1, c: [235, 185, 70] }, { path: G.loadedLD2, c: [235, 185, 70] }, { path: G.returnLD1, c: [210, 215, 205] }, { path: G.returnLD2, c: [210, 215, 205] }];
+  const nodes = [
+    { pos: G.ld1, c: [14, 116, 144], r: 36, t: 'SP-1 · LD-1' }, { pos: G.ld2, c: [14, 116, 144], r: 36, t: 'SP-2 · LD-2' },
+    { pos: G.jetty, c: [21, 128, 61], r: 40, t: 'JETTY HOPPER' }, { pos: G.barge, c: [63, 169, 196], r: 28, t: 'BARGE' },
+  ];
   const truckData = trucks.map((t) => { const st = (t.state === 'qloader' || t.state === 'qhopper') ? 'queuing' : t.state; return { pos: truckGeo(t), col: hexRgb(t.state === 'down' ? '#6b7280' : (STATE_COLOR[st] || '#64748b')), id: t.num }; });
-  const labels = [{ pos: G.ld1, text: 'SP-1' }, { pos: G.ld2, text: 'SP-2' }, { pos: G.jetty, text: 'JETTY' }];
   deck3d.setProps({ layers: [
-    new D.PolygonLayer({ id: 'sites', data: sites, extruded: true, getPolygon: (d) => d.poly, getElevation: (d) => d.h, getFillColor: (d) => d.c, opacity: 0.85 }),
-    new D.PathLayer({ id: 'roads', data: roads, getPath: (d) => d.path, getColor: (d) => d.c, getWidth: 9, widthUnits: 'meters', capRounded: true, jointRounded: true }),
-    new D.ScatterplotLayer({ id: 'trucks', data: truckData, getPosition: (d) => d.pos, getFillColor: (d) => d.col, getRadius: 17, radiusUnits: 'meters', stroked: true, getLineColor: [255, 255, 255], lineWidthMinPixels: 1.5 }),
-    new D.TextLayer({ id: 'labels', data: labels, getPosition: (d) => d.pos, getText: (d) => d.text, getSize: 12, getColor: [30, 38, 28], getPixelOffset: [0, -24], getTextAnchor: 'middle', fontFamily: 'JetBrains Mono, monospace' }),
+    new D.PathLayer({ id: 'roads', data: roads, getPath: (d) => d.path, getColor: (d) => d.c, getWidth: 7, widthUnits: 'meters', widthMinPixels: 3, capRounded: true, jointRounded: true, opacity: 0.9 }),
+    new D.ScatterplotLayer({ id: 'nodes', data: nodes, getPosition: (d) => d.pos, getRadius: (d) => d.r, radiusUnits: 'meters', radiusMinPixels: 6, getFillColor: (d) => [...d.c, 45], stroked: true, getLineColor: (d) => d.c, lineWidthMinPixels: 2 }),
+    new D.ScatterplotLayer({ id: 'trucks', data: truckData, getPosition: (d) => d.pos, getFillColor: (d) => d.col, getRadius: 15, radiusUnits: 'meters', radiusMinPixels: 4, stroked: true, getLineColor: [255, 255, 255], lineWidthMinPixels: 1.6 }),
+    new D.TextLayer({ id: 'labels', data: nodes, getPosition: (d) => d.pos, getText: (d) => d.t, getSize: 11, getColor: [255, 255, 255], background: true, getBackgroundColor: [16, 21, 15, 205], backgroundPadding: [5, 3], getPixelOffset: [0, -26], getTextAnchor: 'middle', fontFamily: 'JetBrains Mono, monospace' }),
   ] });
   requestAnimationFrame(loop3d);
 }
