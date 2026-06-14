@@ -59,7 +59,13 @@
 
       <!-- FLEET BOARD -->
       <div class="haul-pane" id="pane-fleet">
-        <div style="padding:8px 8px 0;">
+        <div class="haul-viewbar">
+          <button class="haul-viewbtn" data-view="3d">🗺 3D map</button>
+          <button class="haul-viewbtn active" data-view="2d">◫ Schematic</button>
+          <span class="haul-viewnote" id="view3dNote"></span>
+        </div>
+        <div id="haul3d"></div>
+        <div id="haul2d" style="padding:8px 8px 0;">
           <svg id="haulMap" viewBox="0 0 960 440" style="width:100%;height:auto;display:block;">
             <defs>
               <pattern id="haulgrid" width="34" height="34" patternUnits="userSpaceOnUse"><path d="M34 0 L0 0 0 34" fill="none" stroke="#18201620" stroke-width="1"/></pattern>
