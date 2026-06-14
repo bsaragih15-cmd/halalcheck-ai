@@ -6,6 +6,7 @@ import { dirname, join } from 'path';
 import { maintenanceFallback, safetyFallback, productionFallback } from './data/fallbacks.js';
 import { parseDisruptionFallback, copilotFallback } from './data/fsp.js';
 import { haulFallback, haulParseFallback, haulCopilotFallback } from './data/haul.js';
+import { irocFallback, irocParseFallback, irocCopilotFallback } from './data/iroc.js';
 import { USE_CASES } from './public/js/usecases.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -223,6 +224,44 @@ Return JSON with EXACTLY this structure:
 }
 IMPORTANT: Return ONLY valid JSON, no other text.`;
 
+const IROC_PROMPT = `You are OreSight AI's duty controller for the IROC (Integrated Operations Centre) of the Batu Hijau copper-gold open pit, Sumbawa, Indonesia. The chain runs pit → primary gyratory crusher → SAG mill. The fleet: ~8 haul trucks (CAT-301..308, some AHS/autonomous), two electric shovels (SH-01, SH-02), waste dumps WD-1/WD-2. A controller manages exceptions against one integrated plan — they do not drive machines.
+
+Given a disruption and a live-state JSON, produce an exception-management response. Return JSON with EXACTLY this structure:
+
+{
+  "headline": "<one-line situation + the recommended move>",
+  "rootCause": "<2-3 sentence diagnosis of what happened and why it matters>",
+  "bindingConstraint": "loader" | "haul-road" | "crusher" | "mill" | "geotech" | "weather" | "fleet",
+  "productionImpact": {"lostKt": <number, kilotonnes at risk this shift>, "planPct": <number, signed % vs plan>},
+  "actions": [{"action": "<specific action>", "impact": "<quantified result>", "owner": "Dispatch" | "Maintenance" | "Process" | "Geotech" | "Geology" | "OCE"}],
+  "traceUnit": "<unit id to highlight on the map, or null>",
+  "draftedComms": "<a concise radio/dispatch message to broadcast to operators>",
+  "narrative": "<3-4 sentence controller's rationale tying the actions to the constraint and the plan>"
+}
+
+Rules:
+- A controller does exception management: diagnose, quantify the impact on the plan, prioritise actions with a clear owner, and broadcast one clear message.
+- Safety (geotech / weather) overrides production — evacuate / hold first, preserve dig rate second.
+- Think across the chain: a crusher choke or mill trip is a downstream constraint that ripples back up the pit; slow or reroute the fleet to match, don't just bank idle stockpile.
+- 3-4 actions, each concrete, quantified and owned. draftedComms must be radio-brief.
+
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
+const IROC_PARSE_PROMPT = `You convert an IROC controller's free-text note into ONE of these disruption ids for the Batu Hijau pit-to-plant chain: "shovel-down" (a shovel/loader/face fault), "road-block" (haul-road blocked / rockfall / reroute), "crusher-choke" (gyratory crusher choke / feed bin), "slope-alarm" (slope radar / geotech / wall), "storm-hold" (lightning / storm / weather), "mill-trip" (SAG mill trip / grinding). Pick the single best match.
+
+Return JSON with EXACTLY this structure:
+{
+  "disruptionId": "shovel-down" | "road-block" | "crusher-choke" | "slope-alarm" | "storm-hold" | "mill-trip",
+  "interpretation": "<one-line restatement starting with 'Parsed:'>"
+}
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
+const IROC_COPILOT_PROMPT = `You are the OreSight IROC ops copilot for the Batu Hijau copper-gold pit (pit → gyratory crusher → SAG mill; ~8 trucks, 2 shovels). Answer the controller's question in 2-3 sentences, grounded ONLY in the provided live-state JSON. Be concrete and quantified; reason about risk to the production plan and where to deploy the fleet.
+
+Return JSON with EXACTLY this structure:
+{ "answer": "<2-3 sentence grounded answer>" }
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
 const FSP_COPILOT_PROMPT = `You are the OreSight Future Scheduling Platform copilot for a Morowali nickel barge-logistics chain (jetty berths → four barges → floating crane FC-1 → ocean vessels; one published 48-hour plan; demurrage ~$28k/day). Answer the planner's question in 2-4 sentences, grounded ONLY in the provided plan-state JSON. Be concrete and quantified, and reference the bottleneck and the laycan buffer where relevant. Do not invent resources that are not in the state.
 
 Return JSON with EXACTLY this structure:
@@ -344,6 +383,44 @@ app.post('/api/haul/copilot', async (req, res) => {
     systemPrompt: HAUL_COPILOT_PROMPT,
     userMessage: `Live state:\n${JSON.stringify(state || {}, null, 2)}\n\nController question: ${question.trim().slice(0, 400)}\n\nReturn only valid JSON.`,
     fallback: haulCopilotFallback({ question, state }),
+  });
+  res.json(result);
+});
+
+// IROC: duty-controller exception analysis for a disruption.
+app.post('/api/iroc/analyze', async (req, res) => {
+  const { scenario } = req.body || {};
+  const result = await askClaude({
+    label: `iroc:${scenario?.disruptionId ?? '?'}`,
+    systemPrompt: IROC_PROMPT,
+    userMessage: `Disruption + live state:\n${JSON.stringify(scenario ?? {}, null, 2)}\n\nReturn only valid JSON.`,
+    fallback: irocFallback(scenario || {}),
+  });
+  res.json(result);
+});
+
+// IROC: parse a free-text disruption into a runnable id.
+app.post('/api/iroc/parse', async (req, res) => {
+  const { text } = req.body || {};
+  if (!text || !text.trim()) return res.status(400).json({ error: 'Disruption text is required' });
+  const result = await askClaude({
+    label: 'iroc:parse',
+    systemPrompt: IROC_PARSE_PROMPT,
+    userMessage: `Controller note:\n"""${text.trim().slice(0, 500)}"""\n\nReturn only valid JSON.`,
+    fallback: irocParseFallback(text),
+  });
+  res.json(result);
+});
+
+// IROC: ops copilot Q&A grounded in the live state.
+app.post('/api/iroc/copilot', async (req, res) => {
+  const { question, state } = req.body || {};
+  if (!question || !question.trim()) return res.status(400).json({ error: 'A question is required' });
+  const result = await askClaude({
+    label: 'iroc:copilot',
+    systemPrompt: IROC_COPILOT_PROMPT,
+    userMessage: `Live state:\n${JSON.stringify(state || {}, null, 2)}\n\nController question: ${question.trim().slice(0, 400)}\n\nReturn only valid JSON.`,
+    fallback: irocCopilotFallback({ question, state }),
   });
   res.json(result);
 });

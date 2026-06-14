@@ -7,6 +7,7 @@ const root = document.getElementById('irocRoot');
 const cl = (v, a, b) => Math.max(a, Math.min(b, v));
 const hhmm = (d) => String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+async function postJSON(url, body) { const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }); if (!res.ok) throw new Error('HTTP ' + res.status); return res.json(); }
 
 const FALL = { text: '#1f2937', muted: '#647082', faint: '#8a95a3', accent: '#0d9488', green: '#059669', amber: '#d97706', red: '#dc2626', blue: '#2563eb', gray: '#94a3b8', ret: '#0891b2', needle: '#334155', truckStroke: 'rgba(15,23,42,.45)' };
 const VARS = { text: 'text', muted: 'muted', faint: 'faint', accent: 'accent', green: 'green', amber: 'amber', red: 'red', blue: 'blue', gray: 'gray', ret: 'ret', needle: 'needle', truckStroke: 'truck-stroke' };
@@ -78,6 +79,7 @@ const S = {
     { who: 'dispatch', text: 'Grader GD-12 dispatched, ETA 8 min. Watch Shovel 2 — over-trucked, queue building.', time: '13:04', mine: false },
   ],
   selected: null, highlight: null, vib: 2.5, slope: 1270, dil: 5.5,
+  disruption: null, downShovel: null, exclusion: null, dEff: null, dutyResp: null,
 };
 
 // ── Simulation tick ───────────────────────────────────────────────────────────
@@ -98,6 +100,7 @@ function tick() {
   g.matchT = cl(g.matchT + (Math.random() - 0.5) * 0.05, 0.86, 1.16);
   g.cycleT = cl(g.cycleT + (Math.random() - 0.5) * 0.6, 21, 29);
   g.prodT = cl(g.prodT + (Math.random() - 0.5) * 0.25, 5.2, 7.2);
+  if (S.disruption && S.dEff) { if (S.dEff.prodT != null) g.prodT = S.dEff.prodT; if (S.dEff.matchT != null) g.matchT = S.dEff.matchT; if (S.dEff.cycleT != null) g.cycleT = S.dEff.cycleT; }
   g.match += (g.matchT - g.match) * 0.30; g.cycle += (g.cycleT - g.cycle) * 0.30; g.prod += (g.prodT - g.prod) * 0.30;
   S.kpis = S.kpis.map((k) => { const nv = cl(k.value + (Math.random() - 0.5) * k.step, k.lo, k.hi); return { ...k, value: nv, up: nv >= k.value, good: k.higherGood ? nv >= k.target : nv <= k.target }; });
   S.shovels = S.shovels.map((sh) => ({ ...sh, mf: cl(sh.mf + (Math.random() - 0.5) * 0.06, sh.id === 'SH-02' ? 1.0 : 0.85, sh.id === 'SH-02' ? 1.28 : 1.12) }));
@@ -236,13 +239,24 @@ function buildMap() {
   const scene = `<svg class="scene" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid slice">
     <rect x="0" y="0" width="1000" height="600" style="fill:var(--map-bg)"/>${grid}${benches}
     <text x="350" y="324" text-anchor="middle" font-size="13" style="fill:var(--pit-label)" font-family="'IBM Plex Mono'">460 RL</text>
-    ${roads}${dests}<g id="ctShovels"></g><g id="ctTrucks"></g><g id="ctHighlight"></g></svg>`;
+    ${roads}${dests}<g id="ctDisrupt"></g><g id="ctShovels"></g><g id="ctTrucks"></g><g id="ctHighlight"></g></svg>`;
   el('ctMap').innerHTML = scene + `
     <div class="ct-ovl tl"><div class="ct-livetag"><span class="ct-livedot"></span>LIVE FLEET MAP · BATU HIJAU PIT</div>
-      <div class="ct-leg">${[['Hauling', P.green], ['Queuing', P.amber], ['Spotting', P.blue], ['Down', P.gray]].map(([n, c]) => `<span><i style="background:${c}"></i>${n}</span>`).join('')}</div></div>
+      <div class="ct-leg">${[['Hauling', P.green], ['Queuing', P.amber], ['Spotting', P.blue], ['Down', P.gray]].map(([n, c]) => `<span><i style="background:${c}"></i>${n}</span>`).join('')}</div>
+      <div class="ct-predwrap" id="ctPred"></div></div>
     <div class="ct-ovl tr"><div class="ct-alpill" id="ctAlPill"><span class="d"></span>Alarms (<span id="ctAlCount">${S.alertCount}</span>) ▾</div></div>
     <div class="ct-ovl bl"><div class="ct-tele"><div class="lbl">Tonnes moved · shift</div><div class="big" id="ctTele">0</div><div class="faint mono" style="font-size:10px" id="ctTele2"></div></div></div>
+    <div class="ct-ovl" style="bottom:12px;left:50%;transform:translateX(-50%);z-index:8">
+      <div class="ct-disrupt"><span class="ct-dcap">Inject disruption</span><div class="ct-dtoggles" id="ctDTog"></div>
+        <input id="ctDFree" placeholder="or type… 'lightning within 10 km'"/><button id="ctDGo">→</button><button id="ctDReset" title="Clear">↺</button></div>
+    </div>
+    <div class="ct-duty" id="ctDuty" style="display:none"></div>
     <div id="ctMapPop"></div>`;
+  renderDTog(); renderPred();
+  el('ctDGo').addEventListener('click', dFree);
+  el('ctDFree').addEventListener('keydown', (e) => { if (e.key === 'Enter') dFree(); });
+  el('ctDReset').addEventListener('click', clearDisruption);
+  if (S.disruption && S.dutyResp) renderDuty(S.dutyResp);
   el('ctShovels').innerHTML = S.shovels.map((sh) => `<g data-unit="${sh.id}" style="cursor:pointer"><circle cx="${sh.x}" cy="${sh.y}" r="16" style="fill:var(--shovel-fill)" stroke="${P.accent}" stroke-width="2.5" class="ct-shring"/><rect x="${sh.x - 9}" y="${sh.y - 6}" width="18" height="12" rx="2" style="fill:var(--needle)"/><text x="${sh.x}" y="${sh.y + 30}" text-anchor="middle" font-size="10" style="fill:var(--muted)" font-family="'IBM Plex Mono'">${sh.id}</text></g>`).join('');
   el('ctTrucks').innerHTML = S.trucks.map((t) => `<g data-unit="${t.id}" style="cursor:pointer;transition:transform 1.05s linear"><rect x="-11" y="-6" width="22" height="12" rx="3" fill="${statusColor(t.status)}" stroke="${t.autonomy === 'AHS' ? P.accent : t.autonomy === 'Tele-remote' ? P.blue : P.truckStroke}" stroke-width="${t.autonomy === 'AHS' ? 1.6 : 1.2}" stroke-dasharray="${t.autonomy === 'Tele-remote' ? '3 2' : ''}"><title>${t.id} · ${t.autonomy}</title></rect></g>`).join('');
   el('ctMap').querySelectorAll('[data-unit]').forEach((g) => g.addEventListener('click', (e) => { e.stopPropagation(); S.selected = g.dataset.unit; S.alarmsOpen = false; updateMap(); }));
@@ -258,14 +272,18 @@ function updateMap() {
     g.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)}) rotate(${ang.toFixed(0)})`);
     g.querySelector('rect').setAttribute('fill', statusColor(t.status));
   });
-  S.shovels.forEach((sh) => { const ring = el('ctShovels').querySelector(`[data-unit="${sh.id}"] .ct-shring`); if (ring) ring.setAttribute('stroke', (sh.mf < 0.85 || sh.mf > 1.15) ? P.amber : P.accent); });
+  S.shovels.forEach((sh) => { const ring = el('ctShovels').querySelector(`[data-unit="${sh.id}"] .ct-shring`); if (ring) ring.setAttribute('stroke', sh.id === S.downShovel ? P.gray : (sh.mf < 0.85 || sh.mf > 1.15) ? P.amber : P.accent); });
+  const dz = el('ctDisrupt'); if (dz) dz.innerHTML = S.exclusion ? `<circle cx="${S.exclusion.x}" cy="${S.exclusion.y}" r="${S.exclusion.r}" fill="rgba(220,38,38,0.10)" stroke="${P.red}" stroke-width="2" stroke-dasharray="6 5"><animate attributeName="r" from="${S.exclusion.r - 10}" to="${S.exclusion.r}" dur="1.6s" repeatCount="indefinite"/></circle><text x="${S.exclusion.x}" y="${S.exclusion.y - S.exclusion.r - 6}" text-anchor="middle" font-size="10" font-family="'IBM Plex Mono'" fill="${P.red}">EXCLUSION</text>` : '';
+  renderPred();
   el('ctTele').textContent = Math.round(S.tonnes).toLocaleString('en-US');
   el('ctTele2').textContent = S.g.prod.toFixed(1) + ' kt/h · ' + S.trucks.filter((t) => !t.down).length + ' units active';
   el('ctAlCount').textContent = S.alertCount;
   const pop = el('ctMapPop');
   if (S.alarmsOpen) {
-    pop.innerHTML = `<div class="ct-pop" style="top:46px;right:12px;width:320px;max-height:340px;overflow:auto">
-      <div class="lbl" style="margin-bottom:6px">Active alarms · ${S.alarms.length}</div>
+    const groups = {}; S.alarms.forEach((a) => { const k = a.unit || a.text.split('—')[0].trim().split(' ').slice(0, 2).join(' '); groups[k] = (groups[k] || 0) + 1; });
+    const top = Object.entries(groups).sort((x, y) => y[1] - x[1])[0];
+    pop.innerHTML = `<div class="ct-pop" style="top:46px;right:12px;width:330px;max-height:360px;overflow:auto">
+      <div class="ct-triage">✦ AI triage · ${S.alarms.length} alarms → ${Object.keys(groups).length} events${top ? ` · top: ${esc(top[0])} (${top[1]})` : ''}</div>
       ${S.alarms.map((a) => `<div class="ct-alrow" data-al="${esc(a.unit || '')}"><span class="d" style="background:${sevColor(a.sev)}"></span><div><div class="tx">${esc(a.text)}</div><div class="mt">${a.unit ? a.unit + ' · ' : ''}${a.time}</div></div></div>`).join('')}</div>`;
     pop.querySelectorAll('.ct-alrow').forEach((row) => row.addEventListener('click', () => { const u = row.dataset.al; if (u) traceUnit(u); }));
   } else if (S.selected) {
@@ -289,6 +307,84 @@ function traceUnit(id) {
   if (S.tab !== 'FLEET DISPATCH') setTab('FLEET DISPATCH');
   S.highlight = { x: pos.x, y: pos.y, id }; S.selected = id; S.alarmsOpen = false; updateMap();
   setTimeout(() => { S.highlight = null; if (el('ctHighlight')) el('ctHighlight').innerHTML = ''; }, 4600);
+}
+
+// ── Disruptions + AI duty controller ──────────────────────────────────────────
+const DISRUPTIONS = [
+  { id: 'shovel-down', label: 'Shovel down', dot: '#dc2626', alarm: { sev: 'red', text: 'SH-02 hydraulic fault — loading halted', unit: 'SH-02' }, trace: 'SH-02', eff: { downShovel: 'SH-02', g: { prodT: 5.4, matchT: 1.22, cycleT: 27.5 } } },
+  { id: 'road-block', label: 'Road block', dot: '#d97706', alarm: { sev: 'amber', text: 'Haul-road seg B blocked — rockfall', unit: null }, trace: { x: 540, y: 490 }, eff: { exclusion: { x: 540, y: 490, r: 60 }, g: { prodT: 5.8, cycleT: 28 } } },
+  { id: 'crusher-choke', label: 'Crusher choke', dot: '#dc2626', alarm: { sev: 'red', text: 'Gyratory choke — feed bin 96%', unit: null }, trace: { x: 834, y: 117 }, eff: { g: { prodT: 5.0 } } },
+  { id: 'slope-alarm', label: 'Slope alarm', dot: '#dc2626', alarm: { sev: 'red', text: 'Slope radar prism P-12 accelerating', unit: null }, trace: { x: 300, y: 300 }, eff: { exclusion: { x: 300, y: 300, r: 92 }, g: { prodT: 5.6, matchT: 0.92 } } },
+  { id: 'storm-hold', label: 'Lightning hold', dot: '#d97706', alarm: { sev: 'amber', text: 'Lightning within 10 km — AHS hold', unit: null }, trace: null, eff: { g: { prodT: 4.8, cycleT: 29 } } },
+  { id: 'mill-trip', label: 'Mill trip', dot: '#dc2626', alarm: { sev: 'red', text: 'SAG mill trip — feed demand dropped', unit: null }, trace: { x: 834, y: 117 }, eff: { g: { prodT: 5.2 } } },
+];
+function dutyState() {
+  return { site: 'Batu Hijau', tonnes: Math.round(S.tonnes), tonnesTarget: S.tonnesTarget, prodKtH: +S.g.prod.toFixed(1), matchFactor: +S.g.match.toFixed(2), downUnits: S.trucks.filter((t) => t.down).map((t) => t.id).concat(S.downShovel ? [S.downShovel] : []), alarms: S.alarms.length, activeDisruption: S.disruption || 'none' };
+}
+function renderDTog() {
+  if (!el('ctDTog')) return;
+  el('ctDTog').innerHTML = DISRUPTIONS.map((d) => `<button class="ct-dtoggle" data-id="${d.id}"><span class="dot" style="background:${d.dot}"></span>${d.label}</button>`).join('');
+  el('ctDTog').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => applyDisruption(b.dataset.id)));
+  syncDTog();
+}
+function syncDTog() { if (el('ctDTog')) el('ctDTog').querySelectorAll('.ct-dtoggle').forEach((b) => b.classList.toggle('active', b.dataset.id === S.disruption)); }
+function applyDisruption(id) {
+  const d = DISRUPTIONS.find((x) => x.id === id); if (!d) return;
+  if (S.disruption === id) { clearDisruption(); return; }
+  S.disruption = id; S.downShovel = d.eff.downShovel || null; S.exclusion = d.eff.exclusion || null; S.dEff = d.eff.g || {};
+  S.alarms = [{ ...d.alarm, id: Date.now(), time: hhmm(new Date()) }, ...S.alarms].slice(0, 14); S.alertCount += 1;
+  if (S.tab !== 'FLEET DISPATCH') setTab('FLEET DISPATCH');
+  if (typeof d.trace === 'string') traceUnit(d.trace);
+  else if (d.trace) { S.highlight = { x: d.trace.x, y: d.trace.y }; setTimeout(() => { S.highlight = null; if (el('ctHighlight')) el('ctHighlight').innerHTML = ''; }, 6000); }
+  syncDTog(); updateMap();
+  el('ctDuty').style.display = ''; el('ctDuty').innerHTML = `<div class="ct-duty-head"><span class="ct-duty-badge">AI</span><span>Duty controller</span></div><div class="faint" style="font-size:12px;padding:8px 2px">Analysing the exception across the chain…</div>`;
+  fetchDuty(id, d);
+}
+function clearDisruption() {
+  S.disruption = null; S.downShovel = null; S.exclusion = null; S.dEff = null; S.dutyResp = null;
+  if (el('ctDuty')) el('ctDuty').style.display = 'none';
+  syncDTog(); updateMap();
+}
+async function fetchDuty(id, d) {
+  let r;
+  try { r = await postJSON('/api/iroc/analyze', { scenario: { disruptionId: id, description: d.alarm.text, state: dutyState() } }); }
+  catch { return; }
+  if (S.disruption !== id) return; // cleared while loading
+  S.dutyResp = r; renderDuty(r);
+  if (r.draftedComms) { S.chat.push({ who: 'dispatch', text: '✦ Duty controller: ' + r.draftedComms, time: hhmm(new Date()), mine: false }); if (el('ctMsgs')) paintMsgs(); }
+}
+function renderDuty(r) {
+  const duty = el('ctDuty'); if (!duty) return; duty.style.display = '';
+  const pp = r.productionImpact || {};
+  duty.innerHTML = `
+    <div class="ct-duty-head"><span class="ct-duty-badge">AI</span><span>Duty controller</span><span class="ct-duty-x" id="ctDutyX">✕</span></div>
+    <div class="ct-duty-hl">${esc(r.headline || '')}</div>
+    <div class="ct-duty-impact">
+      <div><span class="l">At risk</span><span class="v">${pp.lostKt ?? '—'} kt</span></div>
+      <div><span class="l">To plan</span><span class="v" style="color:${(pp.planPct ?? 0) < 0 ? 'var(--red)' : 'var(--green)'}">${(pp.planPct ?? 0) > 0 ? '+' : ''}${pp.planPct ?? '—'}%</span></div>
+      <div><span class="l">Binding</span><span class="v" style="text-transform:capitalize">${esc(r.bindingConstraint || '—')}</span></div>
+    </div>
+    <div class="ct-duty-sec">Root cause</div><div class="ct-duty-rc">${esc(r.rootCause || '')}</div>
+    <div class="ct-duty-sec">Prioritised actions</div>
+    <div class="ct-duty-actions">${(r.actions || []).map((a) => `<div class="ct-act"><div class="ct-act-a">${esc(a.action)}</div><div class="ct-act-m">${esc(a.impact || '')} · <b>${esc(a.owner || '')}</b></div></div>`).join('')}</div>
+    ${r.draftedComms ? `<div class="ct-duty-sec">Drafted comms <span class="faint" style="font-weight:400;text-transform:none">· posted to dispatch</span></div><div class="ct-duty-comms">${esc(r.draftedComms)}</div>` : ''}
+    <div class="ct-duty-narr">${esc(r.narrative || '')}</div>`;
+  el('ctDutyX').addEventListener('click', clearDisruption);
+}
+function dFree() {
+  const inp = el('ctDFree'); const v = (inp.value || '').trim(); if (!v) return; inp.value = '';
+  postJSON('/api/iroc/parse', { text: v }).then((r) => applyDisruption(r.disruptionId || 'shovel-down')).catch(() => {});
+}
+function renderPred() {
+  if (!el('ctPred')) return;
+  const sh2 = S.shovels.find((x) => x.id === 'SH-02');
+  const binRisk = Math.round(52 + Math.sin(S.now.getTime() / 9000) * 30);
+  const pred = [
+    { p: binRisk, t: 'Crusher feed bin → choke', c: binRisk > 70 ? 'hi' : binRisk > 45 ? 'med' : 'lo' },
+    { p: S.tyre < 66 ? 71 : 32, t: 'CAT-305 tyre TKPH → limit', c: S.tyre < 66 ? 'hi' : 'lo' },
+    { p: sh2 && sh2.mf > 1.15 ? 64 : 24, t: 'Shovel 2 over-truck / queue', c: sh2 && sh2.mf > 1.15 ? 'med' : 'lo' },
+  ];
+  el('ctPred').innerHTML = `<div class="ct-pred-cap">✦ AI predictive · next 30 min</div>${pred.map((r) => `<div class="ct-pred-row"><span class="ct-pred-p ${r.c}">${r.p}%</span><span>${r.t}</span></div>`).join('')}`;
 }
 
 // ── KPI column ────────────────────────────────────────────────────────────────
@@ -359,10 +455,13 @@ function paintMsgs() {
   el('ctMsgs').innerHTML = S.chat.map((m) => `<div class="ct-msg ${m.mine ? 'mine' : ''}"><div class="ct-bub">${esc(m.text)}</div><div class="ct-meta">${m.mine ? 'You' : 'Dispatch'} · ${m.time}</div></div>`).join('');
   el('ctMsgs').scrollTop = el('ctMsgs').scrollHeight;
 }
-function sendChat() {
+async function sendChat() {
   const inp = el('ctChatIn'); const v = inp.value.trim(); if (!v) return;
   S.chat.push({ who: 'you', text: v, time: hhmm(new Date()), mine: true }); inp.value = ''; paintMsgs();
-  setTimeout(() => { S.chat.push({ who: 'dispatch', text: REPLIES[Math.floor(Math.random() * REPLIES.length)], time: hhmm(new Date()), mine: false }); paintMsgs(); }, 1400);
+  let text;
+  try { const r = await postJSON('/api/iroc/copilot', { question: v, state: dutyState() }); text = r.answer; }
+  catch { text = REPLIES[Math.floor(Math.random() * REPLIES.length)]; }
+  S.chat.push({ who: 'dispatch', text: text || '…', time: hhmm(new Date()), mine: false }); paintMsgs();
 }
 
 // ── Secondary tabs ────────────────────────────────────────────────────────────
