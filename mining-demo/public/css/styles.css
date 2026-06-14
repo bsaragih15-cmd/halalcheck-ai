@@ -464,6 +464,13 @@ textarea.report-input:focus { outline: none; border-color: var(--accent); }
 .haul-tabmeta { display: flex; align-items: center; gap: 16px; }
 .haul-tabmeta .mono { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #5f6b59; }
 .haul-circ { display: flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: #8a9384; }
+.haul-viewbar { display: flex; align-items: center; gap: 6px; padding: 10px 12px 0; }
+.haul-viewbtn { background: #161d14; border: 1px solid #2c382a; color: #8a9384; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; font-weight: 700; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+.haul-viewbtn.active { background: #15803d; color: #fff; border-color: #15803d; }
+.haul-viewbtn:disabled { opacity: .4; cursor: not-allowed; }
+.haul-viewnote { font-family: var(--font-mono); font-size: 10px; color: #8a9384; margin-left: 6px; }
+#haul3d { height: 440px; margin: 8px 8px 0; border-radius: 10px; overflow: hidden; background: #0d120c; position: relative; }
+#haul3d canvas { border-radius: 10px; }
 .haul-legend { display: flex; flex-wrap: wrap; gap: 7px 16px; padding: 6px 20px 18px; }
 .hl-chip { display: flex; align-items: center; gap: 7px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: #8a9384; }
 .hl-chip i { width: 10px; height: 10px; border-radius: 50%; }

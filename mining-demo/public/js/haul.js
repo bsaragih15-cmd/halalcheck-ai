@@ -423,6 +423,72 @@ document.querySelectorAll('.haul-table th[data-sort]').forEach((th) => th.addEve
   const k = th.dataset.sort; if (state.sort === k) state.sortDir *= -1; else { state.sort = k; state.sortDir = 1; } renderDispatch();
 }));
 
+// ── 3D map (deck.gl + MapLibre, real Morowali geography) ──────────────────────
+// Lazy-loaded via CDN; the 2D schematic is the automatic fallback if WebGL or
+// the libraries/tiles are unavailable. Trucks are driven by the same sim state.
+let map3d = null, deck3d = null, view3dReady = false, view3dFailed = false;
+const G = { ld1: [122.165, -2.859], ld2: [122.165, -2.865], merge: [122.184, -2.862], jetty: [122.200, -2.861], barge: [122.206, -2.861] };
+G.loadedLD1 = [G.ld1, G.merge, G.jetty]; G.loadedLD2 = [G.ld2, G.merge, G.jetty];
+G.returnLD1 = [G.jetty, G.merge, G.ld1]; G.returnLD2 = [G.jetty, G.merge, G.ld2];
+function geoLerp(route, f) {
+  f = Math.max(0, Math.min(1, f)); const segs = []; let tot = 0;
+  for (let i = 0; i < route.length - 1; i++) { const l = Math.hypot(route[i + 1][0] - route[i][0], route[i + 1][1] - route[i][1]); segs.push(l); tot += l; }
+  let d = f * tot;
+  for (let i = 0; i < segs.length; i++) { if (d <= segs[i] || i === segs.length - 1) { const tt = segs[i] ? d / segs[i] : 0; return [route[i][0] + (route[i + 1][0] - route[i][0]) * tt, route[i][1] + (route[i + 1][1] - route[i][1]) * tt]; } d -= segs[i]; }
+  return route[route.length - 1];
+}
+function truckGeo(t) {
+  if (t.state === 'down') return [G.jetty[0] + 0.0012, G.jetty[1] - 0.0016];
+  if (t.state === 'loading' || t.state === 'qloader') { const lp = t.loader === 'LD-1' ? G.ld1 : G.ld2; return [lp[0] + 0.0007, lp[1]]; }
+  if (t.state === 'dumping' || t.state === 'qhopper') return [G.jetty[0] - 0.0007, G.jetty[1]];
+  if (t.state === 'hauling') return geoLerp(t.loader === 'LD-1' ? G.loadedLD1 : G.loadedLD2, t.prog);
+  return geoLerp(t.loader === 'LD-1' ? G.returnLD1 : G.returnLD2, t.prog);
+}
+const hexRgb = (h) => { h = h.replace('#', ''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; };
+function squarePoly(c, mtr) { const dLat = mtr / 111320, dLng = mtr / (111320 * Math.cos(c[1] * Math.PI / 180)); return [[c[0] - dLng, c[1] - dLat], [c[0] + dLng, c[1] - dLat], [c[0] + dLng, c[1] + dLat], [c[0] - dLng, c[1] + dLat], [c[0] - dLng, c[1] - dLat]]; }
+function loadScript(src) { return new Promise((res, rej) => { if ([...document.scripts].some((s) => s.src === src)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
+function fail3D() { view3dFailed = true; const b = document.querySelector('.haul-viewbtn[data-view="3d"]'); if (b) b.disabled = true; el('view3dNote').textContent = '3D map unavailable — showing schematic.'; setView('2d'); }
+async function init3D() {
+  if (map3d || view3dFailed) return;
+  el('view3dNote').textContent = 'Loading 3D map…';
+  try {
+    if (!document.getElementById('mlcss')) { const lk = document.createElement('link'); lk.id = 'mlcss'; lk.rel = 'stylesheet'; lk.href = 'https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css'; document.head.appendChild(lk); }
+    await loadScript('https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js');
+    await loadScript('https://unpkg.com/deck.gl@9/dist.min.js');
+    const maplibregl = window.maplibregl, deck = window.deck;
+    if (!maplibregl || !deck) throw new Error('libs');
+    map3d = new maplibregl.Map({ container: 'haul3d', style: 'https://tiles.openfreemap.org/styles/liberty', center: [122.184, -2.862], zoom: 13.4, pitch: 55, bearing: -22, attributionControl: false });
+    deck3d = new deck.MapboxOverlay({ interleaved: true, layers: [] });
+    map3d.addControl(deck3d);
+    map3d.on('load', () => { view3dReady = true; el('view3dNote').textContent = 'Live · Morowali port (OpenFreeMap)'; loop3d(); });
+    setTimeout(() => { if (!view3dReady) fail3D(); }, 9000);
+  } catch { fail3D(); }
+}
+function loop3d() {
+  if (!view3dReady || !deck3d || !window.deck) return;
+  const D = window.deck;
+  const roads = [{ path: G.loadedLD1, c: [180, 140, 40] }, { path: G.loadedLD2, c: [180, 140, 40] }, { path: G.returnLD1, c: [96, 104, 92] }, { path: G.returnLD2, c: [96, 104, 92] }];
+  const sites = [{ poly: squarePoly(G.ld1, 55), h: 28, c: [120, 90, 55] }, { poly: squarePoly(G.ld2, 55), h: 24, c: [150, 80, 55] }, { poly: squarePoly(G.jetty, 42), h: 44, c: [40, 55, 40] }];
+  const truckData = trucks.map((t) => { const st = (t.state === 'qloader' || t.state === 'qhopper') ? 'queuing' : t.state; return { pos: truckGeo(t), col: hexRgb(t.state === 'down' ? '#6b7280' : (STATE_COLOR[st] || '#64748b')), id: t.num }; });
+  const labels = [{ pos: G.ld1, text: 'SP-1' }, { pos: G.ld2, text: 'SP-2' }, { pos: G.jetty, text: 'JETTY' }];
+  deck3d.setProps({ layers: [
+    new D.PolygonLayer({ id: 'sites', data: sites, extruded: true, getPolygon: (d) => d.poly, getElevation: (d) => d.h, getFillColor: (d) => d.c, opacity: 0.85 }),
+    new D.PathLayer({ id: 'roads', data: roads, getPath: (d) => d.path, getColor: (d) => d.c, getWidth: 9, widthUnits: 'meters', capRounded: true, jointRounded: true }),
+    new D.ScatterplotLayer({ id: 'trucks', data: truckData, getPosition: (d) => d.pos, getFillColor: (d) => d.col, getRadius: 17, radiusUnits: 'meters', stroked: true, getLineColor: [255, 255, 255], lineWidthMinPixels: 1.5 }),
+    new D.TextLayer({ id: 'labels', data: labels, getPosition: (d) => d.pos, getText: (d) => d.text, getSize: 12, getColor: [30, 38, 28], getPixelOffset: [0, -24], getTextAnchor: 'middle', fontFamily: 'JetBrains Mono, monospace' }),
+  ] });
+  requestAnimationFrame(loop3d);
+}
+function setView(v) {
+  if (v === '3d' && view3dFailed) return;
+  el('haul3d').style.display = v === '3d' ? '' : 'none';
+  el('haul2d').style.display = v === '3d' ? 'none' : '';
+  document.querySelectorAll('.haul-viewbtn').forEach((b) => b.classList.toggle('active', b.dataset.view === v));
+  if (v === '3d') { if (!map3d) init3D(); else map3d.resize(); }
+}
+document.querySelectorAll('.haul-viewbtn').forEach((b) => b.addEventListener('click', () => { if (b.dataset.view === '3d' && view3dFailed) return; setView(b.dataset.view); }));
+function webglOK() { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } }
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 initSim();
 applySimFlags(m, true);
@@ -435,3 +501,7 @@ requestAnimationFrame(frame);
 setInterval(tick, 550);
 setInterval(() => { el('witaClock').textContent = witaTime(); }, 1000);
 el('witaClock').textContent = witaTime();
+
+// Lead with the 3D map when WebGL is available; otherwise keep the schematic.
+if (webglOK()) setView('3d');
+else { const b = document.querySelector('.haul-viewbtn[data-view="3d"]'); if (b) { b.disabled = true; b.title = 'WebGL unavailable'; } }
