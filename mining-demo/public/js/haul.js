@@ -313,6 +313,7 @@ el('haulLegend').innerHTML = LEGEND.map(([k, n]) => `<span class="hl-chip"><i st
 // ── Scenario application + AI ─────────────────────────────────────────────────
 const state = { sort: 'id', sortDir: 1 };
 let currentStrategy = null;
+let currentScenarioKey = 'optimise';
 
 // Predictive helpers (client-computed insight)
 function normalCdf(z) { const t = 1 / (1 + 0.2316419 * Math.abs(z)); const d = 0.3989423 * Math.exp(-z * z / 2); const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return z > 0 ? 1 - p : p; }
@@ -371,7 +372,7 @@ async function applyScenario(key) {
   const prev = m.binding;
   m = buildMetrics(key);
   applySimFlags(m, false);
-  currentStrategy = null;
+  currentStrategy = null; currentScenarioKey = key; syncToggles();
   renderKPIs(); renderConstraint(); renderAIPanel(); renderOptions(); renderPredictive();
   // solving flash + shift indicator
   const solve = el('haulSolve'); solve.style.opacity = '1'; setTimeout(() => { solve.style.opacity = '0'; }, 1400);
@@ -403,13 +404,15 @@ function parseFree(text) {
 
 // ── Wiring ────────────────────────────────────────────────────────────────────
 const PRESETS = [
-  { key: 'truck-down', label: 'Truck down', dot: '#b91c1c' },
-  { key: 'loader-down', label: 'Loader down', dot: '#0e7490' },
-  { key: 'road-wet', label: 'Ramp wet', dot: '#b45309' },
+  { key: 'loader-down', label: 'Shut LD-2', dot: '#0e7490' },
+  { key: 'truck-down', label: 'Shut HT-105', dot: '#b91c1c' },
+  { key: 'road-wet', label: 'Wet ramp', dot: '#b45309' },
   { key: 'demand-surge', label: 'Demand surge', dot: '#15803d' },
 ];
-el('haulPresets').innerHTML = PRESETS.map((p) => `<button class="hd-preset" data-key="${p.key}"><span class="dot" style="background:${p.dot}"></span>${p.label}</button>`).join('');
-el('haulPresets').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => applyScenario(b.dataset.key)));
+el('haulPresets').innerHTML = PRESETS.map((p) => `<button class="hd-toggle" data-key="${p.key}"><span class="dot" style="background:${p.dot}"></span>${p.label}</button>`).join('');
+el('haulPresets').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => applyScenario(currentScenarioKey === b.dataset.key ? 'optimise' : b.dataset.key)));
+function syncToggles() { el('haulPresets').querySelectorAll('.hd-toggle').forEach((b) => b.classList.toggle('active', b.dataset.key === currentScenarioKey)); }
+syncToggles();
 el('haulReset').addEventListener('click', () => { el('haulFree').value = ''; applyScenario('optimise'); });
 async function submitFree() {
   const v = el('haulFree').value.trim(); if (!v) return;
@@ -428,7 +431,7 @@ el('haulFree').addEventListener('keydown', (e) => { if (e.key === 'Enter') submi
 // Lazy-loaded via CDN; the 2D schematic is the automatic fallback if WebGL or
 // the libraries/tiles are unavailable. Trucks are driven by the same sim state.
 let map3d = null, deck3d = null, view3dReady = false, view3dFailed = false;
-const G = { ld1: [122.172, -2.856], ld2: [122.172, -2.864], merge: [122.188, -2.860], jetty: [122.202, -2.859], barge: [122.207, -2.859] };
+const G = { ld1: [122.1825, -2.857], ld2: [122.1825, -2.863], merge: [122.190, -2.860], jetty: [122.197, -2.859], barge: [122.1995, -2.859] };
 G.loadedLD1 = [G.ld1, G.merge, G.jetty]; G.loadedLD2 = [G.ld2, G.merge, G.jetty];
 G.returnLD1 = [G.jetty, G.merge, G.ld1]; G.returnLD2 = [G.jetty, G.merge, G.ld2];
 function geoLerp(route, f) {
@@ -463,7 +466,7 @@ async function init3D() {
       sources: { sat: { type: 'raster', tileSize: 256, attribution: '© Esri World Imagery', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'] } },
       layers: [{ id: 'sat', type: 'raster', source: 'sat' }],
     };
-    map3d = new maplibregl.Map({ container: 'haul3d', style: satStyle, center: [122.189, -2.860], zoom: 14.3, pitch: 0, bearing: 0, attributionControl: false, maxZoom: 18 });
+    map3d = new maplibregl.Map({ container: 'haul3d', style: satStyle, center: [122.190, -2.860], zoom: 15.4, pitch: 0, bearing: 0, attributionControl: false, interactive: false });
     deck3d = new deck.MapboxOverlay({ interleaved: false, layers: [] });
     map3d.addControl(deck3d);
     map3d.on('load', () => { view3dReady = true; el('view3dNote').textContent = 'Live · Morowali port · Esri imagery'; loop3d(); });
