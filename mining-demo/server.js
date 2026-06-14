@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { maintenanceFallback, safetyFallback, productionFallback } from './data/fallbacks.js';
 import { parseDisruptionFallback, copilotFallback } from './data/fsp.js';
-import { haulFallback } from './data/haul.js';
+import { haulFallback, haulParseFallback, haulCopilotFallback } from './data/haul.js';
 import { USE_CASES } from './public/js/usecases.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -199,6 +199,30 @@ Domain rules:
 
 IMPORTANT: Return ONLY valid JSON, no other text.`;
 
+const HAUL_PARSE_PROMPT = `You convert a haul-dispatch controller's free-text note into ONE of five scenarios the OreSight haul-circuit engine can run, for a Morowali port haul circuit (9 HD785-7 trucks, loaders LD-1/LD-2, jetty surge hopper, ~1,900 t/h barge demand).
+
+Choose the single best scenarioKey:
+- "truck-down" — a haul truck out of service / fault / refuel / crib (fleet under-trucked)
+- "loader-down" — a loader (LD-1/LD-2, wheel loader or excavator) down or impaired (loader constraint)
+- "road-wet" — wet ramp / rain / traction / grade issue (haul-road constraint)
+- "demand-surge" — a laycan-critical barge / rush / higher loadout demand (fleet surge)
+- "optimise" — no material disruption; hold the balanced plan
+
+Return JSON with EXACTLY this structure:
+{
+  "scenarioKey": "truck-down" | "loader-down" | "road-wet" | "demand-surge" | "optimise",
+  "interpretation": "<one-line restatement starting with 'Parsed:' of what was understood and the dispatch response>"
+}
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
+const HAUL_COPILOT_PROMPT = `You are the OreSight Hauling Optimisation copilot for a Morowali port haul circuit (9 HD785-7 trucks → two stockpile loaders → jetty surge hopper feeding a barge loadout; ~1,900 t/h demand; match-factor target 0.95–1.05). Answer the controller's question in 2-3 sentences, grounded ONLY in the provided live-state JSON. If the question sets a target delivery rate, reason about what it takes to reach it given the binding constraint. Be concrete and quantified.
+
+Return JSON with EXACTLY this structure:
+{
+  "answer": "<2-3 sentence grounded answer>"
+}
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
 const FSP_COPILOT_PROMPT = `You are the OreSight Future Scheduling Platform copilot for a Morowali nickel barge-logistics chain (jetty berths → four barges → floating crane FC-1 → ocean vessels; one published 48-hour plan; demurrage ~$28k/day). Answer the planner's question in 2-4 sentences, grounded ONLY in the provided plan-state JSON. Be concrete and quantified, and reference the bottleneck and the laycan buffer where relevant. Do not invent resources that are not in the state.
 
 Return JSON with EXACTLY this structure:
@@ -294,6 +318,32 @@ app.post('/api/haul/analyze', async (req, res) => {
     systemPrompt: HAUL_PROMPT,
     userMessage: `Optimise this haul-circuit scenario:\n${JSON.stringify(scenario ?? {}, null, 2)}\n\nReturn only valid JSON.`,
     fallback: haulFallback(scenario || {}),
+  });
+  res.json(result);
+});
+
+// Hauling: parse a free-text disruption into a runnable scenario.
+app.post('/api/haul/parse', async (req, res) => {
+  const { text } = req.body || {};
+  if (!text || !text.trim()) return res.status(400).json({ error: 'Disruption text is required' });
+  const result = await askClaude({
+    label: 'haul:parse',
+    systemPrompt: HAUL_PARSE_PROMPT,
+    userMessage: `Controller note:\n"""${text.trim().slice(0, 500)}"""\n\nReturn only valid JSON.`,
+    fallback: haulParseFallback(text),
+  });
+  res.json(result);
+});
+
+// Hauling: dispatch copilot Q&A grounded in the live circuit state.
+app.post('/api/haul/copilot', async (req, res) => {
+  const { question, state } = req.body || {};
+  if (!question || !question.trim()) return res.status(400).json({ error: 'A question is required' });
+  const result = await askClaude({
+    label: 'haul:copilot',
+    systemPrompt: HAUL_COPILOT_PROMPT,
+    userMessage: `Live state:\n${JSON.stringify(state || {}, null, 2)}\n\nController question: ${question.trim().slice(0, 400)}\n\nReturn only valid JSON.`,
+    fallback: haulCopilotFallback({ question, state }),
   });
   res.json(result);
 });
