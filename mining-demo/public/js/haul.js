@@ -281,20 +281,32 @@ function renderRisks() {
     { title: 'Truck degradation', ...((m.down || []).length ? { level: 'WATCH', color: '#b45309' } : { level: 'LOW', color: '#15803d' }), note: (m.down || []).length ? `${m.down.join(', ')} flagged — cycle-time outlier handed to Maintenance.` : 'Fleet cycle times within band; no degradation signature.' },
     { title: 'Hopper starve', ...(m.hopMin < 6 ? { level: 'CRITICAL', color: '#b91c1c' } : m.hopMin < 10 ? { level: 'WATCH', color: '#b45309' } : { level: 'SAFE', color: '#15803d' }), note: `${m.hopMin} min to starve at current delivery vs demand.` },
   ];
+  const sp = Math.round(starveProbability() * 100);
+  const mfr = mfRecommendation();
+  risks.push(
+    { title: 'Hopper-starve forecast (4h)', level: sp + '%', color: sp > 50 ? '#b91c1c' : sp > 25 ? '#b45309' : '#15803d', note: `P(buffer hits zero within 4h) at the current ${fmt(m.delivered)}→${fmt(m.demand)} t/h gap.` },
+    { title: 'Match-factor optimiser', level: mfr.level, color: mfr.color, note: mfr.text },
+  );
   el('riskList').innerHTML = risks.map((r) => `
     <div class="hr-item"><span class="dot" style="background:${r.color}"></span>
       <div><div class="hr-row"><span class="t">${r.title}</span><span class="lv" style="color:${r.color}">${r.level}</span></div><div class="n">${r.note}</div></div>
     </div>`).join('');
 }
 
-const COPILOT = [
-  { q: 'What is the binding constraint right now?', a: () => `The binding constraint is ${CST[m.binding].label.toLowerCase()} — utilisation ${m.bars[m.binding]}%. ${m.cnote}` },
-  { q: 'How many minutes until the hopper starves?', a: () => `Hopper buffer is ${m.hopMin} min (${m.hopPct}% fill) at ${fmt(m.delivered)} t/h delivered vs ${fmt(m.demand)} t/h demand. ${m.hopMin < 10 ? 'Below the 10-min warning line — protect the feed.' : 'Comfortably above the 10-min warning line.'}` },
-  { q: 'Are we over- or under-trucked?', a: () => `Match factor is ${m.mf.toFixed(2)} — ${m.mf < 0.95 ? 'under-trucked, loaders waiting' : m.mf > 1.05 ? 'over-trucked, trucks queuing' : 'balanced'}. Forecast next 4h tracks ${fmt(m.delivered * 4)} t to the jetty.` },
-];
+// Copilot — grounded Q&A over live state via /api/haul/copilot (heuristic fallback).
+const COPILOT_SUGGEST = ['What is the binding constraint right now?', 'Minutes until the hopper starves?', 'Get me to 2,000 t/h'];
 function renderCopilot() {
-  el('copilotQs').innerHTML = COPILOT.map((c, i) => `<button data-cp="${i}">${c.q}</button>`).join('');
-  el('copilotQs').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { el('copilotAnswer').textContent = COPILOT[+b.dataset.cp].a(); }));
+  el('copilotQs').innerHTML = COPILOT_SUGGEST.map((q) => `<button data-q="${esc(q)}">${q}</button>`).join('');
+  el('copilotQs').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => askCopilot(b.dataset.q)));
+  el('cpBtn').addEventListener('click', () => askCopilot(el('cpInput').value));
+  el('cpInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') askCopilot(el('cpInput').value); });
+}
+async function askCopilot(q) {
+  q = (q || '').trim(); if (!q) return;
+  el('cpInput').value = '';
+  el('copilotAnswer').textContent = '…';
+  try { const r = await postJSON('/api/haul/copilot', { question: q, state: planState() }); el('copilotAnswer').textContent = r.answer || '—'; }
+  catch (e) { el('copilotAnswer').textContent = 'Error: ' + e.message; }
 }
 
 const LEGEND = [['loading', 'Loading'], ['hauling', 'Hauling'], ['queuing', 'Queuing'], ['dumping', 'Dumping'], ['returning', 'Returning'], ['down', 'Down / parked']];
@@ -302,12 +314,55 @@ el('haulLegend').innerHTML = LEGEND.map(([k, n]) => `<span class="hl-chip"><i st
 
 // ── Scenario application + AI ─────────────────────────────────────────────────
 const state = { sort: 'id', sortDir: 1 };
+let currentStrategy = null;
+
+// Predictive helpers (client-computed insight)
+function normalCdf(z) { const t = 1 / (1 + 0.2316419 * Math.abs(z)); const d = 0.3989423 * Math.exp(-z * z / 2); const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return z > 0 ? 1 - p : p; }
+function starveProbability() { const gap = m.demand - m.delivered; const drift = gap > 0 ? gap / 180 : 0; const z = (m.hopMin - 4 - drift * 3) / 3.4; return Math.max(0.01, Math.min(0.97, 1 - normalCdf(z))); }
+function mfRecommendation() {
+  if (Math.abs(m.mf - 1) < 0.04) return { level: 'OK', color: '#15803d', text: `Balanced at MF ${m.mf.toFixed(2)} — hold the 9-truck deployment.` };
+  const delta = Math.round(9 / m.mf) - 9;
+  return delta < 0
+    ? { level: 'OVER', color: '#b45309', text: `Over-trucked (MF ${m.mf.toFixed(2)}): hold ${-delta} truck${-delta > 1 ? 's' : ''} as spare toward MF 1.0.` }
+    : { level: 'UNDER', color: '#b45309', text: `Under-trucked (MF ${m.mf.toFixed(2)}): add ${delta} truck${delta > 1 ? 's' : ''} / end a crib break to refill cadence.` };
+}
+function planState() { return { binding: m.binding, deliveredTph: m.delivered, demandTph: m.demand, matchFactor: +m.mf.toFixed(2), fleetUtilPct: m.util, hopperBufferMin: m.hopMin, hopperPct: m.hopPct, downTrucks: m.down || [], wet: !!m.wet, activeStrategy: currentStrategy || 'base' }; }
+
+// Trade-off strategies — three objectives derived from the scenario metrics.
+const STRATEGIES = [
+  { id: 'protect-demand', label: 'Protect demand', desc: 'Hold delivery on the barge line; accept a touch more fuel.' },
+  { id: 'max-throughput', label: 'Max throughput', desc: 'Push delivered rate hard; risk queue + fuel/t.' },
+  { id: 'min-fuel', label: 'Min fuel / tonne', desc: 'Ease cadence to the demand line; lowest cost per tonne.' },
+];
+function buildOptions() {
+  const o = STRATEGIES.map((s) => {
+    if (s.id === 'protect-demand') return { ...s, optimised: Math.max(m.demand, m.optimised), fuel: '+0.2 L/t', value: m.value };
+    if (s.id === 'max-throughput') return { ...s, optimised: m.optimised + 60, fuel: '+0.5 L/t', value: Math.round(m.value * 1.15) };
+    return { ...s, optimised: Math.max(m.demand, m.delivered), fuel: '−0.3 L/t', value: Math.round(m.value * 0.85) };
+  });
+  return { o, recommended: m.delivered < m.demand ? 'max-throughput' : 'protect-demand' };
+}
+function renderOptions() {
+  const { o, recommended } = buildOptions();
+  if (!currentStrategy) currentStrategy = recommended;
+  const sel = o.find((x) => x.id === currentStrategy) || o[0];
+  el('aiOptimised').innerHTML = fmt(sel.optimised) + '<span> t/h</span>';
+  el('aiValue').textContent = usd(sel.value);
+  el('aiOptions').innerHTML = o.map((opt) => `
+    <div class="ha-opt ${opt.id === currentStrategy ? 'chosen' : ''} ${opt.id === recommended ? 'rec' : ''}" data-opt="${opt.id}">
+      <div class="on"><span class="nm">${opt.label}</span><span class="tg">${opt.id === recommended ? '✓ recommended' : 'option'}</span></div>
+      <div class="ds">${opt.desc}</div>
+      <div class="mt"><span>rate <b>${fmt(opt.optimised)}</b></span><span>fuel <b>${opt.fuel}</b></span><span>value <b>$${(opt.value / 1000).toFixed(0)}k</b></span></div>
+    </div>`).join('');
+  el('aiOptions').querySelectorAll('.ha-opt').forEach((c) => c.addEventListener('click', () => { currentStrategy = c.dataset.opt; renderOptions(); }));
+}
 
 async function applyScenario(key) {
   const prev = m.binding;
   m = buildMetrics(key);
   applySimFlags(m, false);
-  renderKPIs(); renderConstraint(); renderAIPanel(); renderRisks(); renderDispatch();
+  currentStrategy = null;
+  renderKPIs(); renderConstraint(); renderAIPanel(); renderOptions(); renderRisks(); renderDispatch();
   // solving flash + shift indicator
   const solve = el('haulSolve'); solve.style.opacity = '1'; setTimeout(() => { solve.style.opacity = '0'; }, 1400);
   el('cstShift').textContent = (prev !== m.binding && key !== 'optimise') ? `⟳ constraint shifted ${prev.toUpperCase()} → ${m.binding.toUpperCase()}` : '';
@@ -346,7 +401,16 @@ const PRESETS = [
 el('haulPresets').innerHTML = PRESETS.map((p) => `<button class="hd-preset" data-key="${p.key}"><span class="dot" style="background:${p.dot}"></span>${p.label}</button>`).join('');
 el('haulPresets').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => applyScenario(b.dataset.key)));
 el('haulReset').addEventListener('click', () => { el('haulFree').value = ''; applyScenario('optimise'); });
-function submitFree() { const v = el('haulFree').value.trim(); if (!v) return; applyScenario(parseFree(v)); }
+async function submitFree() {
+  const v = el('haulFree').value.trim(); if (!v) return;
+  const btn = el('haulFreeBtn'), lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Parsing…';
+  let key = 'optimise', interp = '';
+  try { const r = await postJSON('/api/haul/parse', { text: v }); key = r.scenarioKey || parseFree(v); interp = r.interpretation || ''; }
+  catch { key = parseFree(v); }
+  btn.disabled = false; btn.textContent = lbl;
+  applyScenario(key);
+  if (interp) el('haulParsed').textContent = interp;
+}
 el('haulFreeBtn').addEventListener('click', submitFree);
 el('haulFree').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitFree(); });
 
@@ -363,7 +427,7 @@ document.querySelectorAll('.haul-table th[data-sort]').forEach((th) => th.addEve
 initSim();
 applySimFlags(m, true);
 hopDisp = m.hopPct;
-renderKPIs(); renderConstraint(); renderAIPanel(); renderRisks(); renderCopilot(); renderDispatch();
+renderKPIs(); renderConstraint(); renderAIPanel(); renderOptions(); renderRisks(); renderCopilot(); renderDispatch();
 for (let i = 0; i < 28; i++) history.push({ d: m.delivered + Math.sin(i / 3) * 40, dem: m.demand });
 drawTrends();
 last = performance.now();
