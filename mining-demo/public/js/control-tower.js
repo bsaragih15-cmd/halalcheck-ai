@@ -151,13 +151,11 @@ function setVariant(v) { root.setAttribute('data-variant', v); el('ctVariant').q
 // ── KPI row ───────────────────────────────────────────────────────────────────
 function renderKPIs() {
   const planPct = S.tonnes / S.tonnesTarget * 100;
-  const reds = S.alarms.filter((a) => a.sev === 'red').length, ambers = S.alarms.filter((a) => a.sev === 'amber').length;
   const mfOk = S.g.match >= 0.9 && S.g.match <= 1.1;
   const kpis = [
     { l: 'Production rate', v: S.g.prod.toFixed(1), u: 'kt/h', d: S.g.prod >= 6.4 ? 'on target' : (S.g.prod - 6.5).toFixed(1), dc: S.g.prod >= 6.0 ? P.green : P.amber, sub: 'target 6.5 kt/h' },
     { l: 'Tonnes to plan', v: planPct.toFixed(1), u: '%', d: Math.round(S.tonnes / 1000) + 'k / ' + Math.round(S.tonnesTarget / 1000) + 'k', dc: P.muted, sub: 'shift plan' },
     { l: 'Fleet match factor', v: S.g.match.toFixed(2), u: '', d: mfOk ? 'balanced' : (S.g.match > 1.1 ? 'over-trucked' : 'under-trucked'), dc: mfOk ? P.green : P.amber, sub: 'target 0.9–1.1' },
-    { l: 'Open exceptions', v: String(reds + ambers), u: '', d: reds + ' red · ' + ambers + ' amber', dc: reds ? P.red : ambers ? P.amber : P.green, sub: 'live alarm bus' },
   ];
   el('ctKpis').innerHTML = kpis.map((k) => `<div class="card ct-kpi"><div class="ct-kpi-top"><span class="lbl">${k.l}</span><span class="ct-kpi-d" style="color:${k.dc}">${k.d}</span></div><div class="ct-kpi-v">${k.v}${k.u ? `<span>${k.u}</span>` : ''}</div><div class="ct-kpi-sub">${k.sub}</div></div>`).join('');
 }
