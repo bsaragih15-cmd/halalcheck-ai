@@ -87,6 +87,18 @@
         </div>
       </div>
 
+      <div class="hx-ovl tc">
+        <div class="hx-card hx-disrupt">
+          <div class="hd-toggles" id="haulPresets"></div>
+          <div class="hd-freebar">
+            <input id="haulFree" placeholder="or type a disruption…" />
+            <button id="haulFreeBtn">→</button>
+            <button id="haulReset" class="hd-resetbtn" title="Reset to balanced">↺</button>
+          </div>
+          <div class="hd-parsed mono" id="haulParsed"></div>
+        </div>
+      </div>
+
       <div class="hx-ovl bl">
         <div class="hx-card hx-gauges">
           <div class="hx-g">
@@ -133,24 +145,17 @@
         </div>
         <div class="ha-sec">Strategy <span style="color:#5f6b59;font-weight:400;text-transform:none;letter-spacing:0">· pick the trade-off</span></div>
         <div class="ha-options" id="aiOptions"></div>
-        <div class="ha-sec">Fleet actions</div>
-        <div class="ha-actions" id="aiActions"></div>
-        <div class="ha-sec">Recommendations</div>
-        <div class="ha-recs" id="aiRecs"></div>
-        <div class="ha-narr" id="aiNarrative"></div>
-      </div>
-
-      <div class="haul-disrupt">
-        <div class="hd-head">
-          <span class="hd-cap">Disruption · live re-dispatch</span>
-          <button class="hd-reset" id="haulReset">↺ Reset</button>
+        <div class="ha-cols">
+          <div>
+            <div class="ha-sec">Fleet actions</div>
+            <div class="ha-actions" id="aiActions"></div>
+          </div>
+          <div>
+            <div class="ha-sec">Recommendations</div>
+            <div class="ha-recs" id="aiRecs"></div>
+            <div class="ha-narr" id="aiNarrative"></div>
+          </div>
         </div>
-        <div class="hd-presets" id="haulPresets"></div>
-        <div class="hd-free">
-          <input id="haulFree" placeholder='Describe a disruption — e.g. "HT-105 down, ramp wet"' />
-          <button id="haulFreeBtn">Re-dispatch →</button>
-        </div>
-        <div class="hd-parsed" id="haulParsed"></div>
       </div>
 
       <div class="haul-copilot">
