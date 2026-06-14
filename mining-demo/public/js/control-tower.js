@@ -127,7 +127,7 @@ function tick() {
 
 // ── SVG builders ──────────────────────────────────────────────────────────────
 function gaugeSVG({ value, min, max, greenLo, greenHi, thr, valueStr, unit, W = 300, H = 140 }) {
-  const cx = W / 2, cy = H - 14, R = Math.min(W / 2 - 16, H - 26), sw = Math.max(9, R * 0.15);
+  const cx = W / 2, cy = H - 14, R = Math.min(W / 2 - 14, H - 30), sw = Math.max(9, R * 0.15);
   const frac = (v) => (cl(v, min, max) - min) / ((max - min) || 1);
   const ang = (f) => 180 - f * 180;
   const pt = (a, r = R) => [cx + r * Math.cos(a * Math.PI / 180), cy - r * Math.sin(a * Math.PI / 180)];
@@ -136,15 +136,15 @@ function gaugeSVG({ value, min, max, greenLo, greenHi, thr, valueStr, unit, W = 
   if (thr) { const f1 = frac(thr[0]), f2 = frac(thr[1]); segs = arc(0, f1, P.green) + arc(f1, f2, P.amber) + arc(f2, 1, P.red); }
   else { const fLo = frac(greenLo), fHi = frac(greenHi), aL = Math.max(0, fLo - 0.16), aH = Math.min(1, fHi + 0.16); segs = arc(0, aL, P.red) + arc(aL, fLo, P.amber) + arc(fLo, fHi, P.green) + arc(fHi, aH, P.amber) + arc(aH, 1, P.red); }
   let ticks = '';
-  for (let i = 0; i <= 8; i++) { const a = ang(i / 8), o1 = pt(a, R + sw / 2 + 1), o2 = pt(a, R + sw / 2 + (i % 2 ? 4 : 8)); ticks += `<line x1="${o1[0].toFixed(1)}" y1="${o1[1].toFixed(1)}" x2="${o2[0].toFixed(1)}" y2="${o2[1].toFixed(1)}" stroke="${P.faint}" stroke-width="1.4"/>`; }
+  for (let i = 0; i <= 8; i++) { const a = ang(i / 8), o1 = pt(a, R + sw / 2 + 1), o2 = pt(a, R + sw / 2 + (i % 2 ? 2 : 5)); ticks += `<line x1="${o1[0].toFixed(1)}" y1="${o1[1].toFixed(1)}" x2="${o2[0].toFixed(1)}" y2="${o2[1].toFixed(1)}" stroke="${P.faint}" stroke-width="1.4"/>`; }
   const av = ang(frac(value)), np = pt(av, R - 3), bp = pt(av + 180, 9);
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" style="display:block;overflow:visible"><g>${segs}</g><g>${ticks}</g>` +
     `<text x="${pt(180, R + 3)[0].toFixed(1)}" y="${cy + 12}" font-size="9" fill="${P.faint}" font-family="'IBM Plex Mono'">${min}</text>` +
     `<text x="${pt(0, R + 3)[0].toFixed(1)}" y="${cy + 12}" text-anchor="end" font-size="9" fill="${P.faint}" font-family="'IBM Plex Mono'">${max}</text>` +
     `<line x1="${bp[0].toFixed(1)}" y1="${bp[1].toFixed(1)}" x2="${np[0].toFixed(1)}" y2="${np[1].toFixed(1)}" stroke="${P.needle}" stroke-width="3" stroke-linecap="round"/>` +
     `<circle cx="${cx}" cy="${cy}" r="5.5" fill="${P.needle}"/>` +
-    `<text x="${cx}" y="${(cy - R * 0.30).toFixed(1)}" text-anchor="middle" font-family="'IBM Plex Mono'" font-weight="600" font-size="${(R * 0.36).toFixed(1)}" fill="${P.text}">${valueStr}</text>` +
-    `<text x="${cx}" y="${(cy - R * 0.30 + 13).toFixed(1)}" text-anchor="middle" font-size="10" fill="${P.muted}">${unit || ''}</text></svg>`;
+    `<text x="${cx}" y="${(cy - R * 0.32).toFixed(1)}" text-anchor="middle" font-family="'IBM Plex Mono'" font-weight="600" font-size="${(R * 0.33).toFixed(1)}" fill="${P.text}">${valueStr}</text>` +
+    `<text x="${cx}" y="${(cy - R * 0.32 + 12).toFixed(1)}" text-anchor="middle" font-size="10" fill="${P.muted}">${unit || ''}</text></svg>`;
 }
 function areaSVG(data, color, W, H, id) {
   if (!data || data.length < 2) data = [0, 1];
