@@ -1,6 +1,7 @@
 // Hauling Optimisation — stockpile→jetty haul-circuit dispatch console.
-// Deterministic simulation drives the live route map (always runs); the AI
-// dispatch rationale comes from /api/haul/analyze with an unbreakable fallback.
+// Light-theme console: a deterministic circuit simulation drives the live route
+// map (always runs), while the AI dispatch rationale comes from /api/haul/*
+// with an unbreakable deterministic fallback baked in below.
 import { postJSON, esc } from './shared.js';
 import { witaTime } from './sim.js';
 
@@ -10,79 +11,123 @@ const usd = (n) => '$' + (n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : Math.round(n /
 const NS = 'http://www.w3.org/2000/svg';
 
 const STATE_COLOR = { loading: '#15803d', hauling: '#0e7490', queuing: '#b45309', dumping: '#0f766e', returning: '#64748b', down: '#b91c1c' };
-const CST = {
-  fleet: { label: 'Fleet', color: '#15803d' },
-  loader: { label: 'Loader', color: '#0e7490' },
-  'haul-road': { label: 'Haul-road', color: '#b45309' },
-  'jetty-hopper': { label: 'Jetty-hopper', color: '#b91c1c' },
-};
+const LEGEND = [
+  { name: 'Loading', color: '#15803d' }, { name: 'Hauling', color: '#0e7490' }, { name: 'Queuing', color: '#b45309' },
+  { name: 'Dumping', color: '#0f766e' }, { name: 'Returning', color: '#64748b' }, { name: 'Down / parked', color: '#b91c1c' },
+];
 const BASE_DEMAND = 1900;
 
 // ── Deterministic scenario engine ─────────────────────────────────────────────
-const TAG = { reassign: ['#0e7490', '#0c2a32'], hold: ['#b45309', '#2e2008'], release: ['#15803d', '#0e2114'], refuel: ['#a78b2e', '#241f0c'], reroute: ['#7c5cff', '#1a1430'], payload: ['#0f766e', '#0c2622'], surge: ['#15803d', '#0e2114'] };
-const fa = (unit, action, detail, delta) => ({ unit, action, detail, delta: (delta >= 0 ? '+' : '') + delta + ' t/h', deltaColor: delta >= 0 ? '#5cc77e' : '#e06666', tagColor: (TAG[action] || ['#8a9384', '#1d251a'])[0], tagBg: (TAG[action] || ['#8a9384', '#1d251a'])[1] });
+const TAG = { reassign: '#0e7490', hold: '#b45309', release: '#15803d', refuel: '#a78b2e', reroute: '#7c5cff', payload: '#0f766e', surge: '#15803d' };
+const fa = (unit, action, detail, delta) => ({ unit, action, detail, delta: (delta >= 0 ? '+' : '') + delta + ' t/h', deltaColor: delta >= 0 ? '#16915a' : '#c0392b', tagColor: TAG[action] || '#6b7264' });
 
 function buildMetrics(key) {
   const D = BASE_DEMAND;
-  const base = { demand: D };
-  if (key === 'truck-down') return { ...base, delivered: 1815, mf: 0.92, util: 84, hopPct: 41, hopMin: 7, binding: 'fleet',
-    bars: { loader: 70, 'haul-road': 68, 'jetty-hopper': 58, fleet: 95 },
-    cnote: 'One truck out drops the loaded count below the loaders’ feed rate — under-trucked.',
-    headline: 'HT-105 down — delivered 1,815 t/h, 85 below the 1,900 demand line. Re-balance recovers it.',
-    current: 1815, optimised: 1900,
-    fa: [fa('HT-104', 'reassign', 'Pull from LD-2 spare to LD-1 to refill its cadence', 45), fa('HT-102', 'release', 'End crib break early, return to circuit now', 25), fa('HT-107', 'payload', 'Lift to 90 t within 10/10/20 policy', 15)],
-    recs: [{ action: 'Re-balance fleet 5/3 across loaders', impact: '+85 t/h, queue −2 min/cyc', timeframe: 'now' }, { action: 'Stagger HT-103 refuel to 11:40', impact: 'holds feed above demand line', timeframe: '+25 min' }, { action: 'Flag HT-105 cycle-time outlier to Maintenance', impact: 'pre-empts a second failure', timeframe: 'this shift' }],
-    value: 1.9e6,
-    narrative: 'A single truck loss pushes the fleet under-trucked (MF 0.92), starving the loaders and dipping delivery 85 t/h below the barge demand. Reassigning the LD-2 spare and ending one crib break early restores match factor to ~1.0 and lifts delivery back to the 1,900 line, protecting the coupled barge’s laycan window.',
-    actions: { 'HT-104': '→ LD-1 (reassign +45 t/h)', 'HT-102': 'Release from crib break', 'HT-105': 'DOWN — hand to Maintenance', 'HT-107': 'Payload → 90 t' },
-    down: ['HT-105'], loaderDown: null, wet: false, surge: false, moved: ['HT-104', 'HT-102'], parsed: 'Parsed: 1 truck DOWN (HT-105) → re-balance' };
-  if (key === 'loader-down') return { ...base, delivered: 1560, mf: 1.28, util: 79, hopPct: 28, hopMin: 5, binding: 'loader',
-    bars: { loader: 100, 'haul-road': 60, 'jetty-hopper': 47, fleet: 72 },
-    cnote: 'All ore funnels through LD-1 — trucks bunch and queue (over-trucked on one loader).',
-    headline: 'LD-2 down — single-loader cap holds delivery to ~1,740 t/h. Hold trucks to kill the queue.',
-    current: 1560, optimised: 1740,
-    fa: [fa('HT-106', 'hold', 'Park as spare — LD-1 can’t absorb 9 trucks', 0), fa('HT-108', 'hold', 'Stage at SP-1; release as LD-1 frees', 0), fa('HT-103', 'payload', 'Max policy payload to lift per-cycle tonnes', 40), fa('HT-101', 'reassign', 'Tighten spot time at LD-1', 30)],
-    recs: [{ action: 'Hold 3 trucks — run LD-1 at MF 1.0', impact: 'queue 6→2 min/cyc, +180 t/h recovered', timeframe: 'now' }, { action: 'Expedite LD-2 repair', impact: 'restores +180 t/h marginal capacity', timeframe: 'ETA 90 min' }, { action: 'Surge payload to policy ceiling on LD-1', impact: '+40 t/h within 10/10/20', timeframe: 'now' }],
-    value: 4.2e6,
-    narrative: 'With LD-2 out, the loader becomes the binding constraint: nine trucks chasing one loader drives MF to 1.28 and bunches the queue, yet delivery is capped at single-loader capacity (~1,740 t/h). Holding three trucks as spares restores MF to ~1.0 and cuts queue loss; the only path past 1,740 is bringing LD-2 back, worth +180 t/h marginal. Hopper buffer is the live risk at 5 minutes.',
-    actions: { 'HT-106': 'HOLD — spare', 'HT-108': 'HOLD — stage SP-1', 'HT-103': 'Payload → ceiling', 'HT-101': '→ LD-1 tighten spot', 'HT-107': '→ LD-1 (reassign)', 'HT-109': '→ LD-1 (reassign)' },
-    down: [], loaderDown: 'LD-2', wet: false, surge: false, moved: ['HT-106', 'HT-107', 'HT-108', 'HT-109', 'HT-101'], parsed: 'Parsed: LOADER DOWN (LD-2) → hold 3, expedite repair' };
-  if (key === 'road-wet') return { ...base, delivered: 1735, mf: 0.97, util: 83, hopPct: 44, hopMin: 8, binding: 'haul-road',
-    bars: { loader: 74, 'haul-road': 96, 'jetty-hopper': 60, fleet: 88 },
-    cnote: 'Wet 8% ramp cuts traction — cycle time stretches and TKPH headroom thins.',
-    headline: 'Ramp wet — cycle time +2.4 min stretches the haul-road to the binding constraint.',
-    current: 1735, optimised: 1880,
-    fa: [fa('LD-1', 'payload', 'Trim to 88 t to protect tyre TKPH on the wet grade', -10), fa('HT-102', 'reroute', 'Eco-speed downhill, 22 km/h cap on ramp', 35), fa('HT-105', 'reroute', 'Same speed discipline — no bunching on grade', 30)],
-    recs: [{ action: 'Schedule watering passes off-peak', impact: 'dust control without traction loss, +90 t/h', timeframe: 'now' }, { action: 'Cap ramp speed at 22 km/h', impact: 'protects TKPH, fuel −0.4 L/t', timeframe: 'now' }, { action: 'Trim payload to 88 t on wet cycles', impact: 'tyre-failure risk down, holds cadence', timeframe: 'until ramp dries' }],
-    value: 2.6e6,
-    narrative: 'Watering the wet 8% ramp protects against dust but cuts traction, stretching cycle time and pushing the haul-road to 96% — the binding constraint. Capping ramp speed at 22 km/h and trimming payload to 88 t protects tyre TKPH in wet-season heat while recovering ~145 t/h. The loaders and hopper still have slack, so the road is where the AI spends its moves.',
-    actions: { 'LD-1': 'Payload → 88 t', 'HT-102': 'Eco-speed + 22 km/h cap', 'HT-105': 'Speed discipline on grade', 'HT-103': '22 km/h ramp cap' },
-    down: [], loaderDown: null, wet: true, surge: false, moved: ['HT-102', 'HT-105'], parsed: 'Parsed: RAMP WET → watering + speed cap' };
-  if (key === 'demand-surge') { const dd = Math.round(D * 1.16); return { ...base, demand: dd, delivered: 2080, mf: 1.04, util: 92, hopPct: 35, hopMin: 6, binding: 'fleet',
-    bars: { loader: 90, 'haul-road': 85, 'jetty-hopper': 78, fleet: 97 },
-    cnote: 'Laycan-critical barge lifts demand to ' + fmt(dd) + ' t/h — fleet is now the binding constraint.',
-    headline: 'Laycan-critical barge — demand ' + fmt(dd) + ' t/h. Surge the fleet to build buffer ahead of the window.',
-    current: 2080, optimised: 2150,
-    fa: [fa('HT-106', 'surge', 'All 9 in circuit — defer crib breaks 30 min', 40), fa('HT-108', 'surge', 'Hold zero spares, max cadence', 20), fa('LD-2', 'payload', 'Policy-ceiling payloads to chase demand', 10), fa('HT-101', 'refuel', 'Top-off staggered to never drop feed', 0)],
-    recs: [{ action: 'Surge all 9 trucks, defer crib breaks', impact: '+70 t/h, builds hopper buffer pre-window', timeframe: 'now → load window' }, { action: 'Accept +0.3 L/t fuel to chase demand', impact: 'demurrage protection outweighs fuel', timeframe: 'this barge' }, { action: 'Pre-build hopper to 80% before swell', impact: 'covers forecast 14:00 swell stall', timeframe: '+2 h' }],
-    value: 5.6e6,
-    narrative: 'A laycan-critical barge lifts loadout demand to ' + fmt(dd) + ' t/h, making the fleet the binding constraint at full surge (~2,150 t/h achievable). The AI deploys all nine trucks, defers crib breaks, and pre-builds the hopper to 80% ahead of the load window and a forecast 14:00 swell — accepting a small fuel-per-tonne penalty because protected demurrage on the coupled barge dwarfs it.',
-    actions: { 'HT-106': 'SURGE — defer crib', 'HT-108': 'SURGE — max cadence', 'LD-2': 'Payload → ceiling', 'HT-101': 'Staggered top-off' },
-    down: [], loaderDown: null, wet: false, surge: true, moved: ['HT-106', 'HT-108'], parsed: 'Parsed: DEMAND SURGE (laycan-critical) → fleet surge' }; }
-  return { ...base, delivered: 1985, mf: 1.01, util: 88, hopPct: 68, hopMin: 13, binding: 'fleet',
-    bars: { loader: 82, 'haul-road': 71, 'jetty-hopper': 64, fleet: 90 },
-    cnote: 'Fleet near balanced — loaders carry slack; small moves bank headroom.',
-    headline: 'Delivered 1,985 t/h vs 1,900 demand — meeting demand with 4% headroom.',
-    current: 1985, optimised: 2010,
-    fa: [fa('HT-103', 'refuel', 'Stagger refuel to 11:40 to avoid feed dip', 0), fa('HT-108', 'hold', 'Brief hold — trim MF from 1.04 toward 1.0', 15), fa('LD-2', 'payload', 'Nudge mean payload to 89 t', 10)],
-    recs: [{ action: 'Stagger refuels & crib breaks', impact: 'keeps feed above demand, +25 t/h', timeframe: 'rolling' }, { action: 'Hold MF in 0.98–1.03 band', impact: 'queue under 2 min/cyc', timeframe: 'continuous' }, { action: 'Bank hopper buffer to 75% pre-shift-change', impact: 'covers 19:00 handover gap', timeframe: '+3 h' }],
-    value: 2.4e6,
-    narrative: 'The circuit is running balanced — MF 1.01, delivery 4% above the barge demand line, hopper buffer a healthy 13 minutes. The AI’s moves here are about banking headroom: staggering refuels and trimming match factor toward 1.0 keep the queue minimal and pre-build buffer ahead of the 19:00 shift handover.',
-    actions: { 'HT-103': 'Stagger refuel 11:40', 'HT-108': 'Brief hold', 'LD-2': 'Payload → 89 t' },
-    down: [], loaderDown: null, wet: false, surge: false, moved: [], parsed: '' };
+  let s;
+  if (key === 'truck-down') {
+    s = { demand: D, delivered: 1815, mf: 0.92, util: 84, hopPct: 41, hopMin: 7, binding: 'fleet', starvePct: 9,
+      bars: { loader: 70, 'haul-road': 68, 'jetty-hopper': 58, fleet: 95 },
+      cnote: 'One truck out drops the loaded count below the loaders’ feed rate — under-trucked.',
+      headline: 'HT-105 down — delivered 1,815 t/h, 85 below the 1,900 demand line. Re-balance recovers it.',
+      current: 1815, optimised: 1900, baseFuel: 0.1,
+      fa: [fa('HT-104', 'reassign', 'Pull from LD-2 spare to LD-1 to refill its cadence', 45), fa('HT-102', 'release', 'End crib break early, return to circuit now', 25), fa('HT-107', 'payload', 'Lift to 90 t within 10/10/20 policy', 15)],
+      recs: [{ action: 'Re-balance fleet 5/3 across loaders', impact: '+85 t/h, queue −2 min/cyc', timeframe: 'now' }, { action: 'Stagger HT-103 refuel to 11:40', impact: 'holds feed above demand line', timeframe: '+25 min' }, { action: 'Flag HT-105 outlier to Maintenance', impact: 'pre-empts a second failure', timeframe: 'this shift' }],
+      value: 1.9e6,
+      narrative: 'A single truck loss pushes the fleet under-trucked (MF 0.92), starving the loaders and dipping delivery 85 t/h below barge demand. Reassigning the LD-2 spare and ending one crib break early restores match factor to ~1.0 and lifts delivery back to the 1,900 line.',
+      moved: ['HT-104', 'HT-102'], down: ['HT-105'], loaderDown: null, wet: false, parsed: 'Parsed: 1 truck DOWN (HT-105) → re-balance' };
+  } else if (key === 'loader-down') {
+    s = { demand: D, delivered: 1560, mf: 1.28, util: 79, hopPct: 28, hopMin: 5, binding: 'loader', starvePct: 46,
+      bars: { loader: 100, 'haul-road': 60, 'jetty-hopper': 47, fleet: 72 },
+      cnote: 'All ore funnels through LD-1 — trucks bunch and queue (over-trucked on one loader).',
+      headline: 'LD-2 down — single-loader cap holds delivery to ~1,740 t/h. Hold trucks to kill the queue.',
+      current: 1560, optimised: 1740, baseFuel: 0.0,
+      fa: [fa('HT-106', 'hold', 'Park as spare — LD-1 can’t absorb 9 trucks', 0), fa('HT-108', 'hold', 'Stage at SP-1; release as LD-1 frees', 0), fa('HT-103', 'payload', 'Max policy payload to lift per-cycle tonnes', 40)],
+      recs: [{ action: 'Hold 3 trucks — run LD-1 at MF 1.0', impact: 'queue 6→2 min/cyc, +180 t/h', timeframe: 'now' }, { action: 'Expedite LD-2 repair', impact: 'restores +180 t/h marginal capacity', timeframe: 'ETA 90 min' }, { action: 'Surge payload to policy ceiling on LD-1', impact: '+40 t/h within 10/10/20', timeframe: 'now' }],
+      value: 4.2e6,
+      narrative: 'With LD-2 out, the loader is the binding constraint: nine trucks chasing one loader drives MF to 1.28 and bunches the queue, yet delivery is capped at ~1,740 t/h. Holding three trucks as spares restores MF to ~1.0; the only path past the cap is bringing LD-2 back. Hopper buffer is the live risk at 5 minutes.',
+      moved: ['HT-106', 'HT-107', 'HT-108', 'HT-109', 'HT-101'], down: [], loaderDown: 'LD-2', wet: false, parsed: 'Parsed: LOADER DOWN (LD-2) → hold 3, expedite repair' };
+  } else if (key === 'road-wet') {
+    s = { demand: D, delivered: 1735, mf: 0.97, util: 83, hopPct: 44, hopMin: 8, binding: 'haul-road', starvePct: 18,
+      bars: { loader: 74, 'haul-road': 96, 'jetty-hopper': 60, fleet: 88 },
+      cnote: 'Wet 8% ramp cuts traction — cycle time stretches and TKPH headroom thins.',
+      headline: 'Ramp wet — cycle time +2.4 min stretches the haul-road to the binding constraint.',
+      current: 1735, optimised: 1880, baseFuel: 0.2,
+      fa: [fa('LD-1', 'payload', 'Trim to 88 t to protect tyre TKPH on the wet grade', -10), fa('HT-102', 'reroute', 'Eco-speed downhill, 22 km/h cap on ramp', 35), fa('HT-105', 'reroute', 'Speed discipline — no bunching on grade', 30)],
+      recs: [{ action: 'Schedule watering passes off-peak', impact: 'dust control without traction loss, +90 t/h', timeframe: 'now' }, { action: 'Cap ramp speed at 22 km/h', impact: 'protects TKPH, fuel −0.4 L/t', timeframe: 'now' }, { action: 'Trim payload to 88 t on wet cycles', impact: 'tyre-failure risk down, holds cadence', timeframe: 'until dry' }],
+      value: 2.6e6,
+      narrative: 'Watering the wet 8% ramp cuts traction, stretching cycle time and pushing the haul-road to 96% — the binding constraint. Capping ramp speed at 22 km/h and trimming payload to 88 t protects tyre TKPH in wet-season heat while recovering ~145 t/h. The loaders and hopper still have slack.',
+      moved: ['HT-102', 'HT-105'], down: [], loaderDown: null, wet: true, parsed: 'Parsed: RAMP WET → watering + speed cap' };
+  } else if (key === 'demand-surge') {
+    const dd = Math.round(D * 1.16);
+    s = { demand: dd, delivered: 2080, mf: 1.04, util: 92, hopPct: 35, hopMin: 6, binding: 'fleet', starvePct: 34,
+      bars: { loader: 90, 'haul-road': 85, 'jetty-hopper': 78, fleet: 97 },
+      cnote: 'Laycan-critical barge lifts demand to ' + fmt(dd) + ' t/h — fleet is now binding.',
+      headline: 'Laycan-critical barge — demand ' + fmt(dd) + ' t/h. Surge the fleet to build buffer ahead of the window.',
+      current: 2080, optimised: 2150, baseFuel: 0.3,
+      fa: [fa('HT-106', 'surge', 'All 9 in circuit — defer crib breaks 30 min', 40), fa('HT-108', 'surge', 'Hold zero spares, max cadence', 20), fa('LD-2', 'payload', 'Policy-ceiling payloads to chase demand', 10)],
+      recs: [{ action: 'Surge all 9 trucks, defer crib breaks', impact: '+70 t/h, builds hopper buffer', timeframe: 'now' }, { action: 'Accept +0.3 L/t fuel to chase demand', impact: 'demurrage protection outweighs fuel', timeframe: 'this barge' }, { action: 'Pre-build hopper to 80% before swell', impact: 'covers forecast 14:00 swell stall', timeframe: '+2 h' }],
+      value: 5.6e6,
+      narrative: 'A laycan-critical barge lifts loadout demand to ' + fmt(dd) + ' t/h, making the fleet binding at full surge (~2,150 t/h). The AI deploys all nine trucks, defers crib breaks, and pre-builds the hopper to 80% ahead of the window and a forecast 14:00 swell — accepting a small fuel-per-tonne penalty because protected demurrage dwarfs it.',
+      moved: ['HT-106', 'HT-108'], down: [], loaderDown: null, wet: false, parsed: 'Parsed: DEMAND SURGE (laycan-critical) → fleet surge' };
+  } else {
+    s = { demand: D, delivered: 1985, mf: 1.01, util: 88, hopPct: 68, hopMin: 13, binding: 'fleet', starvePct: 1,
+      bars: { loader: 82, 'haul-road': 71, 'jetty-hopper': 64, fleet: 90 },
+      cnote: 'Fleet near balanced — loaders carry slack; small moves bank headroom.',
+      headline: 'Delivered 1,985 t/h vs 1,900 demand — meeting demand with 4% headroom.',
+      current: 1985, optimised: 2010, baseFuel: 0.2,
+      fa: [fa('HT-103', 'refuel', 'Stagger refuel to 11:40 to avoid feed dip', 0), fa('HT-108', 'hold', 'Brief hold — trim MF from 1.04 toward 1.0', 15), fa('LD-2', 'payload', 'Nudge mean payload to 89 t', 10)],
+      recs: [{ action: 'Stagger refuels & crib breaks', impact: 'keeps feed above demand, +25 t/h', timeframe: 'rolling' }, { action: 'Hold MF in 0.98–1.03 band', impact: 'queue under 2 min/cyc', timeframe: 'continuous' }, { action: 'Bank hopper buffer to 75% pre-handover', impact: 'covers 19:00 handover gap', timeframe: '+3 h' }],
+      value: 2.4e6,
+      narrative: 'The circuit is running balanced — MF 1.01, delivery 4% above the barge demand line, hopper buffer a healthy 13 minutes. The AI’s moves here bank headroom: staggering refuels and trimming match factor toward 1.0 keep the queue minimal ahead of the 19:00 shift handover.',
+      moved: [], down: [], loaderDown: null, wet: false, parsed: '' };
+  }
+  const rate = s.optimised, val = s.value;
+  s.strategies = {
+    'protect-demand': { name: 'Protect demand', tag: '✓ recommended', desc: 'Hold delivery on the barge line; accept a touch more fuel.', rate, fuel: (s.baseFuel >= 0 ? '+' : '') + s.baseFuel.toFixed(1) + ' L/t', value: usd(val), optimised: rate },
+    'max-throughput': { name: 'Max throughput', tag: 'option', desc: 'Push delivered rate hard; risk queue + fuel/t.', rate: rate + 60, fuel: '+' + (s.baseFuel + 0.3).toFixed(1) + ' L/t', value: usd(val * 1.15), optimised: rate + 60 },
+    'min-fuel': { name: 'Min fuel / tonne', tag: 'option', desc: 'Ease cadence to the demand line; lowest cost per tonne.', rate: s.current, fuel: (s.baseFuel - 0.5).toFixed(1) + ' L/t', value: usd(val * 0.85), optimised: s.current },
+  };
+  return s;
 }
 
-// ── Simulation ────────────────────────────────────────────────────────────────
+// ── View-model (pure data, light theme) ───────────────────────────────────────
+function viewModel(m, chosen) {
+  const cColor = { loader: '#b45309', 'haul-road': '#0e7490', 'jetty-hopper': '#c0392b', fleet: '#15803d' }[m.binding] || '#15803d';
+  const cLabel = { loader: 'Loader', 'haul-road': 'Haul-road', 'jetty-hopper': 'Jetty hopper', fleet: 'Fleet' }[m.binding] || m.binding;
+  const bars = ['loader', 'haul-road', 'jetty-hopper', 'fleet'].map((name) => {
+    const pct = m.bars[name], isB = name === m.binding;
+    const color = isB ? cColor : (pct >= 92 ? '#b45309' : (pct >= 80 ? '#0e7490' : '#5f9a6e'));
+    return { name: name.replace('-', ' '), pct: pct + '%', w: pct + '%', color, labelColor: isB ? cColor : '#8b9182', valColor: isB ? cColor : '#3a4133' };
+  });
+  const dDelta = m.delivered - m.demand;
+  const kpis = [
+    { label: 'Delivered', value: fmt(m.delivered), unit: 't/h', delta: (dDelta >= 0 ? '+' : '−') + fmt(Math.abs(dDelta)), deltaColor: dDelta >= 0 ? '#16915a' : '#c0392b', barW: Math.min(100, m.delivered / m.demand * 100) + '%', barColor: dDelta >= 0 ? '#15803d' : '#b45309', sub: 'demand ' + fmt(m.demand) + ' t/h' },
+    { label: 'Match factor', value: m.mf.toFixed(2), unit: 'ratio', delta: (m.mf >= 0.95 && m.mf <= 1.05) ? 'balanced' : (m.mf < 0.95 ? 'under' : 'over'), deltaColor: (m.mf >= 0.95 && m.mf <= 1.05) ? '#16915a' : '#b45309', barW: Math.max(4, Math.min(100, (m.mf - 0.7) / 0.6 * 100)) + '%', barColor: (m.mf >= 0.95 && m.mf <= 1.05) ? '#15803d' : '#b45309', sub: 'target 0.95–1.05' },
+    { label: 'Fleet util', value: m.util, unit: '%', delta: (m.util - 85 >= 0 ? '+' : '') + (m.util - 85), deltaColor: m.util >= 85 ? '#16915a' : '#b45309', barW: m.util + '%', barColor: m.util >= 85 ? '#15803d' : '#b45309', sub: 'prod ÷ avail' },
+    { label: 'Hopper buffer', value: m.hopMin, unit: 'min', delta: m.hopMin >= 10 ? 'safe' : (m.hopMin >= 6 ? 'watch' : 'critical'), deltaColor: m.hopMin >= 10 ? '#16915a' : (m.hopMin >= 6 ? '#b45309' : '#c0392b'), barW: Math.min(100, m.hopMin / 20 * 100) + '%', barColor: m.hopMin >= 10 ? '#15803d' : (m.hopMin >= 6 ? '#b45309' : '#c0392b'), sub: m.hopPct + '% to starve' },
+  ];
+  const strategies = ['protect-demand', 'max-throughput', 'min-fuel'].map((k) => {
+    const st = m.strategies[k], on = k === chosen;
+    return { ...st, key: k, on,
+      border: on ? (k === 'protect-demand' ? '#15803d' : '#b45309') : '#e7e4d8',
+      bg: on ? (k === 'protect-demand' ? '#eef6ef' : '#fdf4ea') : '#ffffff',
+      tagColor: k === 'protect-demand' ? '#15803d' : '#9aa091' };
+  });
+  const starveColor = m.starvePct >= 30 ? '#c0392b' : (m.starvePct >= 10 ? '#b45309' : '#16915a');
+  const mfBal = (m.mf >= 0.95 && m.mf <= 1.05);
+  const mfChip = 'MF ' + m.mf.toFixed(2) + ' · ' + (mfBal ? 'balanced' : (m.mf < 0.95 ? 'under-trucked' : 'over-trucked')) + ' — ' + (m.loaderDown ? 'hold 3' : (m.down && m.down.length ? 're-balance' : 'hold 9'));
+  const chosenStrat = m.strategies[chosen] || m.strategies['protect-demand'];
+  return {
+    kpis, bars, legend: LEGEND,
+    constraint: { color: cColor, label: cLabel, note: m.cnote, shiftTxt: m.shiftFrom ? ('⟳ ' + m.shiftFrom.toUpperCase() + '→' + m.binding.toUpperCase()) : '' },
+    strategies, chosenStrat,
+    starveChip: 'Hopper-starve 4h: ' + m.starvePct + '%', starveColor, mfChip, mfChipColor: mfBal ? '#16915a' : '#b45309',
+    ai: { headline: m.headline, current: fmt(m.current), optimised: fmt(chosenStrat.optimised), value: chosenStrat.value },
+    fleetActions: m.fa, recs: m.recs, narrative: m.narrative,
+  };
+}
+
+// ── Simulation (deterministic circuit) ────────────────────────────────────────
 const GEO = {
   loadedLD1: [[120, 130], [250, 150], [340, 175], [700, 175], [840, 185]],
   loadedLD2: [[120, 320], [250, 235], [340, 175], [700, 175], [840, 185]],
@@ -91,8 +136,10 @@ const GEO = {
 };
 const LOADER_POS = { 'LD-1': [116, 130], 'LD-2': [116, 320] };
 const T = { load: 2.4, haul: 7.0, dump: 1.8, ret: 6.0 };
-let trucks = [], loaders, hopper, speedMult = 1, tnodes = [], hopDisp = 68, history = [], last = 0;
+let trucks = [], loaders, hopper, speedMult = 1, tnodes = [], hopDisp = 68, last = 0;
 let m = buildMetrics('optimise');
+let chosen = 'protect-demand';
+let currentScenarioKey = 'optimise';
 
 function initSim() {
   loaders = { 'LD-1': { busy: false, down: false }, 'LD-2': { busy: false, down: false } };
@@ -105,11 +152,10 @@ function initSim() {
     if (ph < 0.5) { t.state = 'hauling'; t.prog = ph * 2; } else { t.state = 'returning'; t.prog = (ph - 0.5) * 2; }
     return t;
   });
-  // build truck nodes
   const layer = el('truckLayer'); layer.innerHTML = '';
   tnodes = trucks.map((t) => {
     const g = document.createElementNS(NS, 'g');
-    const c = document.createElementNS(NS, 'circle'); c.setAttribute('r', '7.5'); c.setAttribute('stroke', 'rgba(255,255,255,0.35)'); c.setAttribute('stroke-width', '1.5'); c.setAttribute('fill', '#64748b');
+    const c = document.createElementNS(NS, 'circle'); c.setAttribute('r', '7.5'); c.setAttribute('stroke', 'rgba(255,255,255,0.4)'); c.setAttribute('stroke-width', '1.5'); c.setAttribute('fill', '#64748b');
     const tx = document.createElementNS(NS, 'text'); tx.setAttribute('text-anchor', 'middle'); tx.setAttribute('y', '-11'); tx.setAttribute('font-family', "'JetBrains Mono',monospace"); tx.setAttribute('font-size', '8'); tx.setAttribute('font-weight', '700'); tx.setAttribute('fill', '#aeb6a5'); tx.textContent = t.num;
     g.appendChild(c); g.appendChild(tx); layer.appendChild(g); return g;
   });
@@ -152,232 +198,166 @@ function step(ts) {
     const node = tnodes[i];
     node.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
     const c = node.querySelector('circle');
-    c.setAttribute('fill', t.state === 'down' ? '#10150f' : (STATE_COLOR[st] || '#64748b'));
-    c.setAttribute('stroke', t.state === 'down' ? '#b91c1c' : 'rgba(255,255,255,0.35)');
+    c.setAttribute('fill', t.state === 'down' ? '#0e140d' : (STATE_COLOR[st] || '#64748b'));
+    c.setAttribute('stroke', t.state === 'down' ? '#c0392b' : 'rgba(255,255,255,0.4)');
     c.setAttribute('stroke-width', t.state === 'down' ? '2.5' : '1.5');
   });
   setBadge('q1Badge', 'q1Text', qlc['LD-1']); setBadge('q2Badge', 'q2Text', qlc['LD-2']); setBadge('qhBadge', 'qhText', qhc);
   hopDisp += (m.hopPct - hopDisp) * Math.min(1, dt * 2);
   const h0 = 100, y0 = 152, h = Math.max(2, hopDisp / 100 * h0);
   const hf = el('hopFill'); hf.setAttribute('height', h.toFixed(1)); hf.setAttribute('y', (y0 + h0 - h).toFixed(1));
-  hf.setAttribute('fill', m.hopMin < 6 ? '#b91c1c' : (m.hopMin < 10 ? '#b45309' : '#15803d'));
+  hf.setAttribute('fill', m.hopMin < 6 ? '#c0392b' : (m.hopMin < 10 ? '#b45309' : '#15803d'));
   el('hopPct').textContent = Math.round(hopDisp) + '%';
 }
 function frame(ts) { step(ts); requestAnimationFrame(frame); }
 
 function tick() {
   step(performance.now());
-  history.push({ d: m.delivered + (Math.random() - 0.5) * 22, dem: m.demand });
-  if (history.length > 30) history.shift();
   el('hopMin').textContent = m.hopMin + ' min';
   el('hopDemand').textContent = 'DEMAND ' + fmt(m.demand) + ' t/h';
-  drawTrends();
 }
 
-function drawTrends() {
-  if (el('deliveredLine')) {
-    const w = 420, h = 150, lo = 1400, hi = 2300;
-    const sx = (i) => i / (history.length - 1) * w, sy = (v) => h - ((v - lo) / (hi - lo)) * h;
-    el('deliveredLine').setAttribute('points', history.map((p, i) => sx(i).toFixed(1) + ',' + sy(p.d).toFixed(1)).join(' '));
-    el('demandLine').setAttribute('points', history.map((p, i) => sx(i).toFixed(1) + ',' + sy(p.dem).toFixed(1)).join(' '));
-    el('trendNow').textContent = fmt(m.delivered); el('trendDemand').textContent = fmt(m.demand);
-  }
+function drawGauges() {
   const frac = Math.max(0, Math.min(1, (m.mf - 0.7) / 0.6)), ang = (-90 + frac * 180) * Math.PI / 180;
   const nd = el('mfNeedle'); nd.setAttribute('x2', (100 + Math.sin(ang) * 64).toFixed(1)); nd.setAttribute('y2', (120 - Math.cos(ang) * 64).toFixed(1));
-  const mv = el('mfVal'); mv.textContent = m.mf.toFixed(2); mv.style.color = (m.mf >= 0.95 && m.mf <= 1.05) ? '#5cc77e' : '#e0a44a';
+  const mv = el('mfVal'); mv.textContent = m.mf.toFixed(2); mv.style.color = (m.mf >= 0.95 && m.mf <= 1.05) ? '#15803d' : '#b45309';
   const bf = Math.max(0, Math.min(1, m.hopMin / 20)), a0 = Math.PI, a1 = Math.PI - bf * Math.PI;
   const x0 = 100 + 80 * Math.cos(a0), y0b = 120 - 80 * Math.sin(a0), x1 = 100 + 80 * Math.cos(a1), y1 = 120 - 80 * Math.sin(a1);
   const ba = el('bufArc'); ba.setAttribute('d', `M${x0.toFixed(1)} ${y0b.toFixed(1)} A80 80 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`);
-  ba.setAttribute('stroke', m.hopMin < 6 ? '#b91c1c' : (m.hopMin < 10 ? '#b45309' : '#15803d'));
-  el('bufVal').innerHTML = m.hopMin + '<span> min</span>';
+  ba.setAttribute('stroke', m.hopMin < 6 ? '#c0392b' : (m.hopMin < 10 ? '#b45309' : '#15803d'));
+  el('bufVal').innerHTML = m.hopMin + '<span style="font-size:12px;font-weight:600;color:#9aa091;"> min</span>';
 }
 
 function applySimFlags(metrics, initial) {
-  trucks.forEach((t, i) => { if (t.state === 'down') { t.state = 'returning'; t.prog = 0.5; } t.loader = t.origLoader; t.moved = false; const c = tnodes[i].querySelector('circle'); if (c) c.style.animation = ''; });
+  trucks.forEach((t, i) => { if (t.state === 'down') { t.state = 'returning'; t.prog = 0.5; } t.loader = t.origLoader; const c = tnodes[i].querySelector('circle'); if (c) c.style.animation = ''; });
   loaders['LD-1'].down = false; loaders['LD-2'].down = false;
   speedMult = metrics.wet ? 1.45 : 1;
   (metrics.down || []).forEach((id) => { const t = trucks.find((x) => x.id === id); if (t) t.state = 'down'; });
-  if (metrics.loaderDown) { loaders[metrics.loaderDown].down = true; const other = metrics.loaderDown === 'LD-2' ? 'LD-1' : 'LD-2'; trucks.forEach((t) => { if (t.origLoader === metrics.loaderDown && t.state !== 'down') { t.loader = other; t.moved = true; } }); }
-  if (!initial) { const mv = new Set(metrics.moved || []); trucks.forEach((t, i) => { if (mv.has(t.id)) { t.moved = true; const c = tnodes[i].querySelector('circle'); if (c) { c.style.transformBox = 'fill-box'; c.style.transformOrigin = 'center'; c.style.animation = 'osPulse 0.9s ease 3'; setTimeout(() => { if (c) c.style.animation = ''; }, 2800); } } }); }
+  if (metrics.loaderDown) { loaders[metrics.loaderDown].down = true; const other = metrics.loaderDown === 'LD-2' ? 'LD-1' : 'LD-2'; trucks.forEach((t) => { if (t.origLoader === metrics.loaderDown && t.state !== 'down') t.loader = other; }); }
+  if (!initial) { const mv = new Set(metrics.moved || []); trucks.forEach((t, i) => { if (mv.has(t.id)) { const c = tnodes[i].querySelector('circle'); if (c) { c.style.transformBox = 'fill-box'; c.style.transformOrigin = 'center'; c.style.animation = 'osPulse 0.9s ease 3'; setTimeout(() => { if (c) c.style.animation = ''; }, 2800); } } }); }
   el('ld2Down').setAttribute('opacity', metrics.loaderDown === 'LD-2' ? '0.28' : '0');
 }
 
 // ── Panel rendering ───────────────────────────────────────────────────────────
-function renderKPIs() {
-  const dDelta = m.delivered - m.demand;
-  const inBand = m.mf >= 0.95 && m.mf <= 1.05;
-  const cards = [
-    { label: 'Delivered vs demand', value: fmt(m.delivered), unit: 't/h', delta: (dDelta >= 0 ? '+' : '−') + fmt(Math.abs(dDelta)), deltaColor: dDelta >= 0 ? '#15803d' : '#b91c1c', barW: Math.min(100, m.delivered / 2300 * 100), barColor: dDelta >= 0 ? '#15803d' : '#b91c1c', sub: 'demand ' + fmt(m.demand) + ' t/h' },
-    { label: 'Match factor', value: m.mf.toFixed(2), unit: 'ratio', delta: inBand ? 'balanced' : (m.mf < 0.95 ? 'under' : 'over'), deltaColor: inBand ? '#15803d' : '#b45309', barW: Math.max(4, Math.min(100, (m.mf - 0.7) / 0.6 * 100)), barColor: inBand ? '#15803d' : '#b45309', sub: 'target 0.95–1.05' },
-    { label: 'Fleet utilisation', value: m.util, unit: '%', delta: (m.util >= 85 ? '+' : '−') + Math.abs(m.util - 85), deltaColor: m.util >= 85 ? '#15803d' : '#b45309', barW: m.util, barColor: m.util >= 85 ? '#15803d' : '#b45309', sub: 'productive ÷ available' },
-    { label: 'Hopper buffer', value: m.hopMin, unit: 'min', delta: m.hopMin >= 10 ? 'safe' : (m.hopMin >= 6 ? 'watch' : 'critical'), deltaColor: m.hopMin >= 10 ? '#15803d' : (m.hopMin >= 6 ? '#b45309' : '#b91c1c'), barW: m.hopPct, barColor: m.hopMin >= 10 ? '#15803d' : (m.hopMin >= 6 ? '#b45309' : '#b91c1c'), sub: m.hopPct + '% fill · to starve' },
-  ];
-  el('kpiRow').innerHTML = cards.map((k) => `
-    <div class="haul-kpi">
-      <div class="hk-top"><span class="hk-label">${k.label}</span><span class="hk-delta" style="color:${k.deltaColor}">${k.delta}</span></div>
-      <div class="hk-val">${k.value}<span>${k.unit}</span></div>
-      <div class="hk-bar"><div style="width:${k.barW}%;background:${k.barColor}"></div></div>
-      <div class="hk-sub">${k.sub}</div>
+function renderKPIs(vm) {
+  el('kpiRow').innerHTML = vm.kpis.map((k) => `
+    <div style="background:#fff;border:1px solid #e7e4d8;border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(20,30,15,0.04);">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#8b9182;font-weight:600;">${k.label}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${k.deltaColor};">${k.delta}</span>
+      </div>
+      <div style="display:flex;align-items:baseline;gap:5px;margin-top:8px;">
+        <span style="font-size:26px;font-weight:800;letter-spacing:-0.02em;line-height:1;color:#161b13;">${k.value}</span>
+        <span style="font-size:13px;font-weight:600;color:#9aa091;">${k.unit}</span>
+      </div>
+      <div style="margin-top:10px;height:5px;border-radius:3px;background:#eeece1;overflow:hidden;"><div style="height:100%;border-radius:3px;width:${k.barW};background:${k.barColor};transition:width .6s ease,background .4s ease;"></div></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.02em;color:#9aa091;margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${k.sub}</div>
     </div>`).join('');
 }
 
-function renderConstraint() {
-  const c = CST[m.binding];
-  el('cstSquare').style.background = c.color; el('cstSquare').style.boxShadow = `0 0 0 4px ${c.color}22`;
-  el('cstName').textContent = c.label;
-  el('cstNote').textContent = m.cnote;
-  el('cstBars').innerHTML = Object.entries(m.bars).map(([name, pct]) => {
-    const isB = name === m.binding;
-    const col = isB ? c.color : (pct >= 92 ? '#b45309' : pct >= 80 ? '#0e7490' : '#15803d');
-    return `<div class="hcb"><div class="hcb-top"><span style="color:${isB ? c.color : '#8fa18f'}">${name.replace('-', ' ')}</span><span style="color:${isB ? c.color : '#cdd6c6'}">${pct}%</span></div><div class="hcb-bar"><div style="width:${pct}%;background:${col}"></div></div></div>`;
-  }).join('');
-}
-
-function renderDispatch() {
-  const sortKey = state.sort, dir = state.sortDir;
-  const rows = trucks.map((t) => {
-    const st = (t.state === 'qloader' || t.state === 'qhopper') ? 'queuing' : t.state;
-    return { id: t.id, num: t.num, state: st.toUpperCase(), color: STATE_COLOR[st] || '#64748b', loader: t.loader, cycle: t.lastCycle + '′', cycleN: t.lastCycle, payload: t.payload + ' t', payloadN: t.payload, action: m.actions[t.id] || '—', moved: t.moved };
-  });
-  rows.sort((a, b) => {
-    let av, bv;
-    if (sortKey === 'cycle') { av = a.cycleN; bv = b.cycleN; } else if (sortKey === 'payload') { av = a.payloadN; bv = b.payloadN; } else { av = a[sortKey]; bv = b[sortKey]; }
-    return (av > bv ? 1 : av < bv ? -1 : 0) * dir;
-  });
-  el('dispatchBody').innerHTML = rows.map((r) => `
-    <tr style="${r.moved ? 'background:rgba(20,60,30,0.16)' : ''}">
-      <td class="mono b">${r.id}</td>
-      <td><span class="hd-state"><span class="dot" style="background:${r.color}"></span><span style="color:${r.color}">${r.state}</span></span></td>
-      <td class="mono">${r.loader}</td>
-      <td class="r mono" style="color:${r.cycleN > 22 ? '#b45309' : '#c6cebf'}">${r.cycle}</td>
-      <td class="r mono" style="color:${r.payloadN > 91 ? '#b45309' : '#c6cebf'}">${r.payload}</td>
-      <td style="color:${r.moved ? '#5cc77e' : '#9aa091'}">${esc(r.action)}</td>
-    </tr>`).join('');
-}
-
-function renderAIPanel() {
-  el('aiHeadline').textContent = m.headline;
-  el('aiCurrent').innerHTML = fmt(m.current) + '<span> t/h</span>';
-  el('aiOptimised').innerHTML = fmt(m.optimised) + '<span> t/h</span>';
-  el('aiValue').textContent = usd(m.value);
-  el('aiActions').innerHTML = m.fa.map((f) => `
-    <div class="ha-action">
-      <span class="ha-unit">${f.unit}</span>
-      <span class="ha-tag" style="color:${f.tagColor};background:${f.tagBg}">${f.action}</span>
-      <span class="ha-detail">${esc(f.detail)}</span>
-      <span class="ha-d" style="color:${f.deltaColor}">${f.delta}</span>
-    </div>`).join('');
-  el('aiRecs').innerHTML = m.recs.map((r) => `
-    <div class="ha-rec"><span class="dot"></span><div><span class="a">${esc(r.action)}</span><span class="i"> — ${esc(r.impact)}</span><span class="t"> · ${esc(r.timeframe)}</span></div></div>`).join('');
-  el('aiNarrative').textContent = m.narrative;
-}
-
-function renderRisks() {
-  const risks = [
-    { title: 'Wet-ramp traction', ...(m.wet ? { level: 'HIGH', color: '#b91c1c' } : { level: 'LOW', color: '#15803d' }), note: m.wet ? 'Ramp watered — traction down, cycle time stretched on the grade.' : 'Ramp dry; traction nominal on the 8% grade.' },
-    { title: 'Tyre TKPH (wet-season heat)', ...(m.wet ? { level: 'FLAGGED', color: '#b45309' } : { level: 'OK', color: '#15803d' }), note: m.wet ? 'Overload on watered grade thins TKPH headroom — trim payload.' : 'TKPH headroom within rating at current payloads.' },
-    { title: 'Truck degradation', ...((m.down || []).length ? { level: 'WATCH', color: '#b45309' } : { level: 'LOW', color: '#15803d' }), note: (m.down || []).length ? `${m.down.join(', ')} flagged — cycle-time outlier handed to Maintenance.` : 'Fleet cycle times within band; no degradation signature.' },
-    { title: 'Hopper starve', ...(m.hopMin < 6 ? { level: 'CRITICAL', color: '#b91c1c' } : m.hopMin < 10 ? { level: 'WATCH', color: '#b45309' } : { level: 'SAFE', color: '#15803d' }), note: `${m.hopMin} min to starve at current delivery vs demand.` },
-  ];
-  const sp = Math.round(starveProbability() * 100);
-  const mfr = mfRecommendation();
-  risks.push(
-    { title: 'Hopper-starve forecast (4h)', level: sp + '%', color: sp > 50 ? '#b91c1c' : sp > 25 ? '#b45309' : '#15803d', note: `P(buffer hits zero within 4h) at the current ${fmt(m.delivered)}→${fmt(m.demand)} t/h gap.` },
-    { title: 'Match-factor optimiser', level: mfr.level, color: mfr.color, note: mfr.text },
-  );
-  el('riskList').innerHTML = risks.map((r) => `
-    <div class="hr-item"><span class="dot" style="background:${r.color}"></span>
-      <div><div class="hr-row"><span class="t">${r.title}</span><span class="lv" style="color:${r.color}">${r.level}</span></div><div class="n">${r.note}</div></div>
+function renderConstraint(vm) {
+  el('cstShift').textContent = vm.constraint.shiftTxt;
+  el('cstSquare').style.background = vm.constraint.color;
+  el('cstSquare').style.boxShadow = `0 0 0 4px ${vm.constraint.color}22`;
+  el('cstName').textContent = vm.constraint.label;
+  el('cstBars').innerHTML = vm.bars.map((bar) => `
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.03em;text-transform:uppercase;color:${bar.labelColor};font-weight:600;white-space:nowrap;">${bar.name}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${bar.valColor};">${bar.pct}</span>
+      </div>
+      <div style="height:6px;border-radius:4px;background:#eeece1;overflow:hidden;"><div style="height:100%;border-radius:4px;width:${bar.w};background:${bar.color};transition:width .6s ease,background .4s ease;"></div></div>
     </div>`).join('');
 }
 
-// Copilot — grounded Q&A over live state via /api/haul/copilot (heuristic fallback).
-const COPILOT_SUGGEST = ['What is the binding constraint right now?', 'Minutes until the hopper starves?', 'Get me to 2,000 t/h'];
-function renderCopilot() {
-  el('copilotQs').innerHTML = COPILOT_SUGGEST.map((q) => `<button data-q="${esc(q)}">${q}</button>`).join('');
-  el('copilotQs').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => askCopilot(b.dataset.q)));
-  el('cpBtn').addEventListener('click', () => askCopilot(el('cpInput').value));
-  el('cpInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') askCopilot(el('cpInput').value); });
-}
-async function askCopilot(q) {
-  q = (q || '').trim(); if (!q) return;
-  el('cpInput').value = '';
-  el('copilotAnswer').textContent = '…';
-  try { const r = await postJSON('/api/haul/copilot', { question: q, state: planState() }); el('copilotAnswer').textContent = r.answer || '—'; }
-  catch (e) { el('copilotAnswer').textContent = 'Error: ' + e.message; }
+function renderChips(vm) {
+  el('starveDot').style.background = vm.starveColor;
+  el('starveChip').style.color = vm.starveColor;
+  el('starveChip').textContent = vm.starveChip;
+  el('mfDot').style.background = vm.mfChipColor;
+  el('mfChip').textContent = vm.mfChip;
 }
 
-const LEGEND = [['loading', 'Loading'], ['hauling', 'Hauling'], ['queuing', 'Queuing'], ['dumping', 'Dumping'], ['returning', 'Returning'], ['down', 'Down / parked']];
-el('haulLegend').innerHTML = LEGEND.map(([k, n]) => `<span class="hl-chip"><i style="background:${STATE_COLOR[k]}"></i>${n}</span>`).join('');
-
-// ── Scenario application + AI ─────────────────────────────────────────────────
-const state = { sort: 'id', sortDir: 1 };
-let currentStrategy = null;
-let currentScenarioKey = 'optimise';
-
-// Predictive helpers (client-computed insight)
-function normalCdf(z) { const t = 1 / (1 + 0.2316419 * Math.abs(z)); const d = 0.3989423 * Math.exp(-z * z / 2); const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274)))); return z > 0 ? 1 - p : p; }
-function starveProbability() { const gap = m.demand - m.delivered; const drift = gap > 0 ? gap / 180 : 0; const z = (m.hopMin - 4 - drift * 3) / 3.4; return Math.max(0.01, Math.min(0.97, 1 - normalCdf(z))); }
-function mfRecommendation() {
-  if (Math.abs(m.mf - 1) < 0.04) return { level: 'OK', color: '#15803d', text: `Balanced at MF ${m.mf.toFixed(2)} — hold the 9-truck deployment.` };
-  const delta = Math.round(9 / m.mf) - 9;
-  return delta < 0
-    ? { level: 'OVER', color: '#b45309', text: `Over-trucked (MF ${m.mf.toFixed(2)}): hold ${-delta} truck${-delta > 1 ? 's' : ''} as spare toward MF 1.0.` }
-    : { level: 'UNDER', color: '#b45309', text: `Under-trucked (MF ${m.mf.toFixed(2)}): add ${delta} truck${delta > 1 ? 's' : ''} / end a crib break to refill cadence.` };
-}
-function planState() { return { binding: m.binding, deliveredTph: m.delivered, demandTph: m.demand, matchFactor: +m.mf.toFixed(2), fleetUtilPct: m.util, hopperBufferMin: m.hopMin, hopperPct: m.hopPct, downTrucks: m.down || [], wet: !!m.wet, activeStrategy: currentStrategy || 'base' }; }
-// Predictive chips on the map gauge overlay.
-function renderPredictive() {
-  const sp = Math.round(starveProbability() * 100);
-  const spc = sp > 50 ? '#b91c1c' : sp > 25 ? '#b45309' : '#5cc77e';
-  el('starveDot').style.background = spc; el('starveChip').style.color = spc;
-  el('starveChip').textContent = `Hopper-starve 4h: ${sp}%`;
-  const mfr = mfRecommendation();
-  const lbl = mfr.level === 'OK' ? 'balanced — hold 9' : mfr.level === 'OVER' ? 'over-trucked' : 'under-trucked';
-  el('mfDot').style.background = mfr.color === '#15803d' ? '#5cc77e' : mfr.color;
-  el('mfChip').style.color = mfr.color === '#15803d' ? '#cdd6c6' : mfr.color;
-  el('mfChip').textContent = `MF ${m.mf.toFixed(2)} · ${lbl}`;
-}
-
-// Trade-off strategies — three objectives derived from the scenario metrics.
-const STRATEGIES = [
-  { id: 'protect-demand', label: 'Protect demand', desc: 'Hold delivery on the barge line; accept a touch more fuel.' },
-  { id: 'max-throughput', label: 'Max throughput', desc: 'Push delivered rate hard; risk queue + fuel/t.' },
-  { id: 'min-fuel', label: 'Min fuel / tonne', desc: 'Ease cadence to the demand line; lowest cost per tonne.' },
-];
-function buildOptions() {
-  const o = STRATEGIES.map((s) => {
-    if (s.id === 'protect-demand') return { ...s, optimised: Math.max(m.demand, m.optimised), fuel: '+0.2 L/t', value: m.value };
-    if (s.id === 'max-throughput') return { ...s, optimised: m.optimised + 60, fuel: '+0.5 L/t', value: Math.round(m.value * 1.15) };
-    return { ...s, optimised: Math.max(m.demand, m.delivered), fuel: '−0.3 L/t', value: Math.round(m.value * 0.85) };
-  });
-  return { o, recommended: m.delivered < m.demand ? 'max-throughput' : 'protect-demand' };
-}
-function renderOptions() {
-  const { o, recommended } = buildOptions();
-  if (!currentStrategy) currentStrategy = recommended;
-  const sel = o.find((x) => x.id === currentStrategy) || o[0];
-  el('aiOptimised').innerHTML = fmt(sel.optimised) + '<span> t/h</span>';
-  el('aiValue').textContent = usd(sel.value);
-  el('aiOptions').innerHTML = o.map((opt) => `
-    <div class="ha-opt ${opt.id === currentStrategy ? 'chosen' : ''} ${opt.id === recommended ? 'rec' : ''}" data-opt="${opt.id}">
-      <div class="on"><span class="nm">${opt.label}</span><span class="tg">${opt.id === recommended ? '✓ recommended' : 'option'}</span></div>
-      <div class="ds">${opt.desc}</div>
-      <div class="mt"><span>rate <b>${fmt(opt.optimised)}</b></span><span>fuel <b>${opt.fuel}</b></span><span>value <b>$${(opt.value / 1000).toFixed(0)}k</b></span></div>
+function renderAIPanel(vm) {
+  el('aiHeadline').textContent = vm.ai.headline;
+  el('aiCurrent').textContent = vm.ai.current;
+  el('aiOptimised').textContent = vm.ai.optimised;
+  el('aiValue').textContent = vm.ai.value;
+  el('aiActions').innerHTML = vm.fleetActions.map((f) => `
+    <div style="background:#faf9f3;border:1px solid #eeece1;border-radius:10px;padding:10px 12px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#161b13;">${f.unit}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;color:#fff;background:${f.tagColor};padding:3px 7px;border-radius:5px;">${f.action}</span>
+        <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${f.deltaColor};">${f.delta}</span>
+      </div>
+      <div style="font-size:13px;color:#6b7264;margin-top:5px;line-height:1.4;">${esc(f.detail)}</div>
     </div>`).join('');
-  el('aiOptions').querySelectorAll('.ha-opt').forEach((c) => c.addEventListener('click', () => { currentStrategy = c.dataset.opt; renderOptions(); }));
+  el('aiRecs').innerHTML = vm.recs.map((rc) => `
+    <div style="display:flex;gap:9px;align-items:flex-start;">
+      <span style="width:6px;height:6px;border-radius:50%;background:#15803d;margin-top:7px;flex-shrink:0;"></span>
+      <div style="font-size:13px;line-height:1.45;"><span style="color:#2a3024;font-weight:600;">${esc(rc.action)}</span><span style="color:#8b9182;"> — ${esc(rc.impact)}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#0e7490;"> · ${esc(rc.timeframe)}</span></div>
+    </div>`).join('');
+  el('aiNarrative').textContent = vm.narrative;
+}
+
+function renderStrategies(vm) {
+  el('aiOptions').innerHTML = vm.strategies.map((st) => `
+    <button class="h-strat" data-key="${st.key}" style="border-color:${st.border};background:${st.bg};">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;">
+        <span style="font-size:15px;font-weight:700;color:#1a1f17;white-space:nowrap;">${st.name}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700;color:${st.tagColor};">${st.tag}</span>
+      </div>
+      <div style="font-size:13px;color:#6b7264;line-height:1.4;">${st.desc}</div>
+      <div style="display:flex;gap:16px;font-family:'JetBrains Mono',monospace;font-size:11px;color:#9aa091;">
+        <span>rate <b style="color:#3a4133;">${fmt(st.rate)}</b></span><span>fuel <b style="color:#3a4133;">${st.fuel}</b></span><span>value <b style="color:#3a4133;">${st.value}</b></span>
+      </div>
+    </button>`).join('');
+  el('aiOptions').querySelectorAll('.h-strat').forEach((b) => b.addEventListener('click', () => {
+    chosen = b.dataset.key;
+    const v = viewModel(m, chosen);
+    renderStrategies(v);
+    el('aiOptimised').textContent = v.ai.optimised;
+    el('aiValue').textContent = v.ai.value;
+  }));
+}
+
+function renderAll() {
+  const vm = viewModel(m, chosen);
+  renderKPIs(vm); renderConstraint(vm); renderChips(vm); renderAIPanel(vm); renderStrategies(vm);
+  drawGauges();
+}
+
+// ── Map view toggle (schematic ↔ satellite terrain) ───────────────────────────
+function applyView(view) {
+  const terrain = 'radial-gradient(120% 90% at 20% 15%, #3a4327 0%, #2c3520 35%, #222a18 60%, #1a2013 100%), repeating-linear-gradient(58deg, rgba(0,0,0,0.16) 0 14px, rgba(255,255,255,0.02) 14px 30px)';
+  el('haulBg').style.background = view === 'satellite' ? terrain : '#0e140d';
+  el('haulGrid').setAttribute('opacity', view === 'satellite' ? '0.25' : '1');
+  el('viewNote').textContent = view === 'satellite' ? 'Satellite · est. terrain' : 'Live · Morowali port';
+  document.querySelectorAll('.h-viewbtn').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+}
+document.querySelectorAll('.h-viewbtn').forEach((b) => b.addEventListener('click', () => applyView(b.dataset.view)));
+
+// ── Legend ────────────────────────────────────────────────────────────────────
+el('haulLegend').innerHTML = LEGEND.map((lg) => `
+  <div style="display:flex;align-items:center;gap:7px;"><span style="width:9px;height:9px;border-radius:50%;background:${lg.color};"></span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.02em;text-transform:uppercase;color:#8b9182;">${lg.name}</span></div>`).join('');
+
+// ── Scenario application + live AI ─────────────────────────────────────────────
+function planState() {
+  return { binding: m.binding, deliveredTph: m.delivered, demandTph: m.demand, matchFactor: +m.mf.toFixed(2), fleetUtilPct: m.util, hopperBufferMin: m.hopMin, hopperPct: m.hopPct, downTrucks: m.down || [], wet: !!m.wet, activeStrategy: chosen };
 }
 
 async function applyScenario(key) {
   const prev = m.binding;
   m = buildMetrics(key);
+  m.shiftFrom = (prev !== m.binding && key !== 'optimise') ? prev : null;
+  chosen = 'protect-demand';
+  currentScenarioKey = key;
   applySimFlags(m, false);
-  currentStrategy = null; currentScenarioKey = key; syncToggles();
-  renderKPIs(); renderConstraint(); renderAIPanel(); renderOptions(); renderPredictive();
-  // solving flash + shift indicator
-  const solve = el('haulSolve'); solve.style.opacity = '1'; setTimeout(() => { solve.style.opacity = '0'; }, 1400);
-  el('cstShift').textContent = (prev !== m.binding && key !== 'optimise') ? `⟳ constraint shifted ${prev.toUpperCase()} → ${m.binding.toUpperCase()}` : '';
+  syncToggles();
+  renderAll();
   el('haulParsed').textContent = m.parsed || '';
+  // solving flash
+  const solve = el('haulSolve'); solve.style.opacity = '1'; setTimeout(() => { solve.style.opacity = '0'; }, 1400);
   // live AI rationale (falls back to the deterministic copy when offline)
   try {
     const r = await postJSON('/api/haul/analyze', { scenario: { disruptionId: key, description: m.headline, demandTph: m.demand, deliveredTph: m.delivered, matchFactor: m.mf, hopperBufferMin: m.hopMin } });
@@ -385,134 +365,91 @@ async function applyScenario(key) {
       if (r.headline) el('aiHeadline').textContent = r.headline;
       if (r.narrative) el('aiNarrative').textContent = r.narrative;
       if (r.valueImpactUSD) el('aiValue').textContent = usd(r.valueImpactUSD);
-      if (typeof r.optimisedRateTph === 'number') el('aiOptimised').innerHTML = fmt(r.optimisedRateTph) + '<span> t/h</span>';
+      if (typeof r.optimisedRateTph === 'number') el('aiOptimised').textContent = fmt(r.optimisedRateTph);
       if (Array.isArray(r.recommendations) && r.recommendations.length) {
-        el('aiRecs').innerHTML = r.recommendations.map((rc) => `<div class="ha-rec"><span class="dot"></span><div><span class="a">${esc(rc.action)}</span><span class="i"> — ${esc(rc.impact)}</span><span class="t"> · ${esc(rc.timeframe)}</span></div></div>`).join('');
+        el('aiRecs').innerHTML = r.recommendations.map((rc) => `
+          <div style="display:flex;gap:9px;align-items:flex-start;">
+            <span style="width:6px;height:6px;border-radius:50%;background:#15803d;margin-top:7px;flex-shrink:0;"></span>
+            <div style="font-size:13px;line-height:1.45;"><span style="color:#2a3024;font-weight:600;">${esc(rc.action)}</span><span style="color:#8b9182;"> — ${esc(rc.impact)}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#0e7490;"> · ${esc(rc.timeframe)}</span></div>
+          </div>`).join('');
       }
     }
   } catch { /* deterministic copy already shown */ }
 }
 
-function parseFree(text) {
+function parseFreeLocal(text) {
   const t = text.toLowerCase();
   if (/(loader|ld-?\d).*(down|out|fail|broke)|(down|out).*(loader|ld-?\d)/.test(t)) return 'loader-down';
-  if (/(wet|rain|ramp|slip|traction|muddy)/.test(t)) return 'road-wet';
-  if (/(surge|laycan|demurrage|barge|swell|critical)/.test(t)) return 'demand-surge';
+  if (/(wet|rain|ramp|slip|traction|muddy|water)/.test(t)) return 'road-wet';
+  if (/(surge|laycan|demurrage|barge|swell|critical|demand)/.test(t)) return 'demand-surge';
   if (/(ht-?\d|truck).*(down|out|fault|fail|broke)|(down|out|fault).*(truck|ht-?\d)/.test(t)) return 'truck-down';
   return 'optimise';
 }
 
-// ── Wiring ────────────────────────────────────────────────────────────────────
+// ── Disruption presets + free text ────────────────────────────────────────────
 const PRESETS = [
   { key: 'loader-down', label: 'Shut LD-2', dot: '#0e7490' },
-  { key: 'truck-down', label: 'Shut HT-105', dot: '#b91c1c' },
+  { key: 'truck-down', label: 'Shut HT-105', dot: '#c0392b' },
   { key: 'road-wet', label: 'Wet ramp', dot: '#b45309' },
   { key: 'demand-surge', label: 'Demand surge', dot: '#15803d' },
 ];
-el('haulPresets').innerHTML = PRESETS.map((p) => `<button class="hd-toggle" data-key="${p.key}"><span class="dot" style="background:${p.dot}"></span>${p.label}</button>`).join('');
+el('haulPresets').innerHTML = PRESETS.map((p) => `<button class="h-preset" data-key="${p.key}"><span style="width:8px;height:8px;border-radius:50%;background:${p.dot};"></span>${p.label}</button>`).join('');
 el('haulPresets').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => applyScenario(currentScenarioKey === b.dataset.key ? 'optimise' : b.dataset.key)));
-function syncToggles() { el('haulPresets').querySelectorAll('.hd-toggle').forEach((b) => b.classList.toggle('active', b.dataset.key === currentScenarioKey)); }
-syncToggles();
+function syncToggles() { el('haulPresets').querySelectorAll('.h-preset').forEach((b) => b.classList.toggle('active', b.dataset.key === currentScenarioKey)); }
+
 el('haulReset').addEventListener('click', () => { el('haulFree').value = ''; applyScenario('optimise'); });
 async function submitFree() {
   const v = el('haulFree').value.trim(); if (!v) return;
-  const btn = el('haulFreeBtn'), lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Parsing…';
+  const btn = el('haulFreeBtn'), lbl = btn.textContent; btn.disabled = true; btn.textContent = '…';
   let key = 'optimise', interp = '';
-  try { const r = await postJSON('/api/haul/parse', { text: v }); key = r.scenarioKey || parseFree(v); interp = r.interpretation || ''; }
-  catch { key = parseFree(v); }
+  try { const r = await postJSON('/api/haul/parse', { text: v }); key = r.scenarioKey || parseFreeLocal(v); interp = r.interpretation || ''; }
+  catch { key = parseFreeLocal(v); }
   btn.disabled = false; btn.textContent = lbl;
-  applyScenario(key);
+  await applyScenario(key);
   if (interp) el('haulParsed').textContent = interp;
 }
 el('haulFreeBtn').addEventListener('click', submitFree);
 el('haulFree').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitFree(); });
 
-// ── 3D map (deck.gl + MapLibre, real Morowali geography) ──────────────────────
-// Lazy-loaded via CDN; the 2D schematic is the automatic fallback if WebGL or
-// the libraries/tiles are unavailable. Trucks are driven by the same sim state.
-let map3d = null, deck3d = null, view3dReady = false, view3dFailed = false;
-const G = { ld1: [122.1825, -2.857], ld2: [122.1825, -2.863], merge: [122.190, -2.860], jetty: [122.197, -2.859], barge: [122.1995, -2.859] };
-G.loadedLD1 = [G.ld1, G.merge, G.jetty]; G.loadedLD2 = [G.ld2, G.merge, G.jetty];
-G.returnLD1 = [G.jetty, G.merge, G.ld1]; G.returnLD2 = [G.jetty, G.merge, G.ld2];
-function geoLerp(route, f) {
-  f = Math.max(0, Math.min(1, f)); const segs = []; let tot = 0;
-  for (let i = 0; i < route.length - 1; i++) { const l = Math.hypot(route[i + 1][0] - route[i][0], route[i + 1][1] - route[i][1]); segs.push(l); tot += l; }
-  let d = f * tot;
-  for (let i = 0; i < segs.length; i++) { if (d <= segs[i] || i === segs.length - 1) { const tt = segs[i] ? d / segs[i] : 0; return [route[i][0] + (route[i + 1][0] - route[i][0]) * tt, route[i][1] + (route[i + 1][1] - route[i][1]) * tt]; } d -= segs[i]; }
-  return route[route.length - 1];
+// ── Copilot — grounded Q&A over live state (API with heuristic fallback) ───────
+const COPILOT_SUGGEST = ['What is the binding constraint right now?', 'Minutes until the hopper starves?', 'Get me to 2,000 t/h'];
+el('copilotQs').innerHTML = COPILOT_SUGGEST.map((q) => `<button class="h-cpq" data-q="${esc(q)}">${q}</button>`).join('');
+el('copilotQs').querySelectorAll('button').forEach((b) => b.addEventListener('click', () => askCopilot(b.dataset.q)));
+el('cpBtn').addEventListener('click', () => askCopilot(el('cpInput').value));
+el('cpInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') askCopilot(el('cpInput').value); });
+
+function copilotLocal(q) {
+  const tt = (q || '').toLowerCase();
+  const tm = tt.match(/(\d[\d,\.]{2,})\s*t\/?h?|\bto\s+(\d[\d,\.]{2,})/);
+  if (/binding|constraint/.test(tt)) return 'Binding constraint is ' + m.binding.toUpperCase() + ': ' + m.cnote + ' Delivered ' + fmt(m.delivered) + ' t/h vs ' + fmt(m.demand) + ' demand.';
+  if (/starv|hopper|buffer|min/.test(tt)) return 'Hopper buffer is ' + m.hopMin + ' min at ' + fmt(m.delivered) + ' t/h delivered vs ' + fmt(m.demand) + ' demand (' + m.hopPct + '% level). 4h starve risk ' + m.starvePct + '%.';
+  if ((/over|under|truck|match|mf/.test(tt)) && !tm) return 'Match factor ' + m.mf.toFixed(2) + ' — ' + (m.mf < 0.95 ? 'under-trucked, loaders waiting' : (m.mf > 1.05 ? 'over-trucked, trucks queuing' : 'balanced')) + '. Fleet utilisation ' + m.util + '%.';
+  if (tm) {
+    const tgt = parseInt((tm[1] || tm[2]).replace(/[,\.]/g, ''), 10);
+    const cap = m.strategies['max-throughput'].optimised;
+    if (tgt <= m.current) return 'Target ' + fmt(tgt) + ' t/h is at or below current ' + fmt(m.delivered) + ' t/h — already met. Switch to Min fuel / tonne to hold the line at lowest cost.';
+    if (tgt <= cap) return 'To reach ' + fmt(tgt) + ' t/h: pick Max throughput — surge cadence and lift payloads to the policy ceiling. Reaches ~' + fmt(cap) + ' t/h, fuel ' + m.strategies['max-throughput'].fuel + '. Watch the queue and hopper buffer.';
+    return 'Target ' + fmt(tgt) + ' t/h is above the achievable ceiling (~' + fmt(cap) + ' t/h) given ' + m.binding.toUpperCase() + ' as the binding constraint. Clear that constraint first (e.g. restore a loader / dry the ramp).';
+  }
+  return 'Circuit: ' + fmt(m.delivered) + ' t/h vs ' + fmt(m.demand) + ' demand, MF ' + m.mf.toFixed(2) + ', hopper buffer ' + m.hopMin + ' min. Binding constraint: ' + m.binding.toUpperCase() + '.';
 }
-function truckGeo(t) {
-  if (t.state === 'down') return [G.jetty[0] + 0.0012, G.jetty[1] - 0.0016];
-  if (t.state === 'loading' || t.state === 'qloader') { const lp = t.loader === 'LD-1' ? G.ld1 : G.ld2; return [lp[0] + 0.0007, lp[1]]; }
-  if (t.state === 'dumping' || t.state === 'qhopper') return [G.jetty[0] - 0.0007, G.jetty[1]];
-  if (t.state === 'hauling') return geoLerp(t.loader === 'LD-1' ? G.loadedLD1 : G.loadedLD2, t.prog);
-  return geoLerp(t.loader === 'LD-1' ? G.returnLD1 : G.returnLD2, t.prog);
+async function askCopilot(q) {
+  q = (q || '').trim(); if (!q) return;
+  el('cpInput').value = '';
+  el('copilotAnswer').textContent = '…';
+  try { const r = await postJSON('/api/haul/copilot', { question: q, state: planState() }); el('copilotAnswer').textContent = r.answer || copilotLocal(q); }
+  catch { el('copilotAnswer').textContent = copilotLocal(q); }
 }
-const hexRgb = (h) => { h = h.replace('#', ''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; };
-function squarePoly(c, mtr) { const dLat = mtr / 111320, dLng = mtr / (111320 * Math.cos(c[1] * Math.PI / 180)); return [[c[0] - dLng, c[1] - dLat], [c[0] + dLng, c[1] - dLat], [c[0] + dLng, c[1] + dLat], [c[0] - dLng, c[1] + dLat], [c[0] - dLng, c[1] - dLat]]; }
-function loadScript(src) { return new Promise((res, rej) => { if ([...document.scripts].some((s) => s.src === src)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); }
-function fail3D() { view3dFailed = true; const b = document.querySelector('.haul-viewbtn[data-view="3d"]'); if (b) b.disabled = true; el('view3dNote').textContent = '3D map unavailable — showing schematic.'; setView('2d'); }
-async function init3D() {
-  if (map3d || view3dFailed) return;
-  el('view3dNote').textContent = 'Loading 3D map…';
-  try {
-    if (!document.getElementById('mlcss')) { const lk = document.createElement('link'); lk.id = 'mlcss'; lk.rel = 'stylesheet'; lk.href = 'https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.css'; document.head.appendChild(lk); }
-    await loadScript('https://unpkg.com/maplibre-gl@4/dist/maplibre-gl.js');
-    await loadScript('https://unpkg.com/deck.gl@9/dist.min.js');
-    const maplibregl = window.maplibregl, deck = window.deck;
-    if (!maplibregl || !deck) throw new Error('libs');
-    const satStyle = {
-      version: 8,
-      sources: { sat: { type: 'raster', tileSize: 256, attribution: '© Esri World Imagery', tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'] } },
-      layers: [{ id: 'sat', type: 'raster', source: 'sat' }],
-    };
-    map3d = new maplibregl.Map({ container: 'haul3d', style: satStyle, center: [122.190, -2.860], zoom: 15.4, pitch: 0, bearing: 0, attributionControl: false, interactive: false });
-    deck3d = new deck.MapboxOverlay({ interleaved: false, layers: [] });
-    map3d.addControl(deck3d);
-    map3d.on('load', () => { view3dReady = true; el('view3dNote').textContent = 'Live · Morowali port · Esri imagery'; loop3d(); });
-    setTimeout(() => { if (!view3dReady) fail3D(); }, 9000);
-  } catch { fail3D(); }
-}
-function loop3d() {
-  if (!view3dReady || !deck3d || !window.deck) return;
-  const D = window.deck;
-  const roads = [{ path: G.loadedLD1, c: [235, 185, 70] }, { path: G.loadedLD2, c: [235, 185, 70] }, { path: G.returnLD1, c: [210, 215, 205] }, { path: G.returnLD2, c: [210, 215, 205] }];
-  const nodes = [
-    { pos: G.ld1, c: [14, 116, 144], r: 36, t: 'SP-1 · LD-1' }, { pos: G.ld2, c: [14, 116, 144], r: 36, t: 'SP-2 · LD-2' },
-    { pos: G.jetty, c: [21, 128, 61], r: 40, t: 'JETTY HOPPER' }, { pos: G.barge, c: [63, 169, 196], r: 28, t: 'BARGE' },
-  ];
-  const truckData = trucks.map((t) => { const st = (t.state === 'qloader' || t.state === 'qhopper') ? 'queuing' : t.state; return { pos: truckGeo(t), col: hexRgb(t.state === 'down' ? '#6b7280' : (STATE_COLOR[st] || '#64748b')), id: t.num }; });
-  deck3d.setProps({ layers: [
-    new D.PathLayer({ id: 'roads', data: roads, getPath: (d) => d.path, getColor: (d) => d.c, getWidth: 7, widthUnits: 'meters', widthMinPixels: 3, capRounded: true, jointRounded: true, opacity: 0.9 }),
-    new D.ScatterplotLayer({ id: 'nodes', data: nodes, getPosition: (d) => d.pos, getRadius: (d) => d.r, radiusUnits: 'meters', radiusMinPixels: 6, getFillColor: (d) => [...d.c, 45], stroked: true, getLineColor: (d) => d.c, lineWidthMinPixels: 2 }),
-    new D.ScatterplotLayer({ id: 'trucks', data: truckData, getPosition: (d) => d.pos, getFillColor: (d) => d.col, getRadius: 15, radiusUnits: 'meters', radiusMinPixels: 4, stroked: true, getLineColor: [255, 255, 255], lineWidthMinPixels: 1.6 }),
-    new D.TextLayer({ id: 'labels', data: nodes, getPosition: (d) => d.pos, getText: (d) => d.t, getSize: 11, getColor: [255, 255, 255], background: true, getBackgroundColor: [16, 21, 15, 205], backgroundPadding: [5, 3], getPixelOffset: [0, -26], getTextAnchor: 'middle', fontFamily: 'JetBrains Mono, monospace' }),
-  ] });
-  requestAnimationFrame(loop3d);
-}
-function setView(v) {
-  if (v === '3d' && view3dFailed) return;
-  el('haul3d').style.display = v === '3d' ? '' : 'none';
-  el('haul2d').style.display = v === '3d' ? 'none' : '';
-  document.querySelectorAll('.haul-viewbtn').forEach((b) => b.classList.toggle('active', b.dataset.view === v));
-  if (v === '3d') { if (!map3d) init3D(); else map3d.resize(); }
-}
-document.querySelectorAll('.haul-viewbtn').forEach((b) => b.addEventListener('click', () => { if (b.dataset.view === '3d' && view3dFailed) return; setView(b.dataset.view); }));
-function webglOK() { try { const c = document.createElement('canvas'); return !!(c.getContext('webgl2') || c.getContext('webgl')); } catch { return false; } }
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 initSim();
 applySimFlags(m, true);
 hopDisp = m.hopPct;
-renderKPIs(); renderConstraint(); renderAIPanel(); renderOptions(); renderCopilot(); renderPredictive();
-for (let i = 0; i < 28; i++) history.push({ d: m.delivered + Math.sin(i / 3) * 40, dem: m.demand });
-drawTrends();
+syncToggles();
+applyView('schematic');
+renderAll();
 last = performance.now();
 requestAnimationFrame(frame);
 setInterval(tick, 550);
 setInterval(() => { el('witaClock').textContent = witaTime(); }, 1000);
 el('witaClock').textContent = witaTime();
-
-// Lead with the 3D map when WebGL is available; otherwise keep the schematic.
-if (webglOK()) setView('3d');
-else { const b = document.querySelector('.haul-viewbtn[data-view="3d"]'); if (b) { b.disabled = true; b.title = 'WebGL unavailable'; } }
