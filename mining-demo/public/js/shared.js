@@ -4,14 +4,27 @@
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
-export async function postJSON(url, body) {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
-  return res.json();
+// POST JSON with an automatic timeout. The AI endpoints can be slow (or stall),
+// so we abort after `timeoutMs` and surface a clean error — every caller already
+// wraps this in a try/catch that degrades to the deterministic fallback.
+export async function postJSON(url, body, { timeoutMs = 12000 } = {}) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || `HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    if (err.name === 'AbortError') throw new Error(`Request timed out after ${timeoutMs}ms`);
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export function renderNav(active = '') {
