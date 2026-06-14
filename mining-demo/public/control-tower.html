@@ -133,6 +133,41 @@
     .ct-tip .r{display:flex;justify-content:space-between;gap:14px;}
     .ct-tip .r span:first-child{color:var(--muted);}
     .ct-tip .r span:last-child{font-family:'IBM Plex Mono',monospace;}
+    /* disruptions + AI duty controller */
+    .ct-disrupt{display:flex;align-items:center;gap:8px;background:var(--elevated);border:1px solid var(--border);border-radius:10px;padding:7px 10px;box-shadow:0 6px 22px rgba(16,24,40,.18);max-width:92vw;flex-wrap:wrap;justify-content:center;}
+    .ct-dcap{font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600;}
+    .ct-dtoggles{display:flex;gap:5px;flex-wrap:wrap;}
+    .ct-dtoggle{display:inline-flex;align-items:center;gap:6px;background:var(--inset);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:11.5px;font-weight:600;padding:5px 10px;border-radius:999px;cursor:pointer;}
+    .ct-dtoggle .dot{width:7px;height:7px;border-radius:50%;}
+    .ct-dtoggle:hover{border-color:var(--accent);}
+    .ct-dtoggle.active{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);}
+    .ct-disrupt input{width:158px;background:var(--inset);border:1px solid var(--border);border-radius:7px;padding:5px 9px;font-family:inherit;font-size:12px;color:var(--text);outline:none;}
+    .ct-disrupt input:focus{border-color:var(--accent);}
+    .ct-disrupt button{border:none;background:var(--accent);color:#fff;border-radius:7px;padding:5px 10px;font-weight:700;cursor:pointer;font-size:12px;}
+    .ct-disrupt button#ctDReset{background:var(--inset);border:1px solid var(--border);color:var(--muted);}
+    .ct-duty{position:absolute;top:54px;right:12px;width:330px;bottom:64px;overflow-y:auto;z-index:9;background:var(--elevated);border:1px solid var(--border);border-radius:10px;box-shadow:0 10px 34px rgba(16,24,40,.22);padding:13px;}
+    .ct-duty-head{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600;}
+    .ct-duty-badge{width:20px;height:20px;border-radius:5px;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+    .ct-duty-x{margin-left:auto;cursor:pointer;color:var(--muted);}
+    .ct-duty-hl{font-size:14px;font-weight:600;line-height:1.35;color:var(--text);margin:10px 0 12px;}
+    .ct-duty-impact{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:12px;}
+    .ct-duty-impact>div{background:var(--inset);border:1px solid var(--border);border-radius:8px;padding:7px 9px;}
+    .ct-duty-impact .l{display:block;font-size:9px;letter-spacing:.4px;text-transform:uppercase;color:var(--muted);}
+    .ct-duty-impact .v{font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:600;color:var(--text);}
+    .ct-duty-sec{font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:600;margin:10px 0 5px;}
+    .ct-duty-rc{font-size:12px;line-height:1.45;color:var(--text);}
+    .ct-duty-actions{display:flex;flex-direction:column;gap:6px;}
+    .ct-act{background:var(--inset);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:7px;padding:7px 9px;}
+    .ct-act-a{font-size:12.5px;font-weight:600;color:var(--text);line-height:1.3;}
+    .ct-act-m{font-size:11px;color:var(--muted);margin-top:2px;}
+    .ct-duty-comms{font-size:12px;font-family:'IBM Plex Mono',monospace;color:var(--text);background:var(--accent-soft);border:1px solid var(--border);border-radius:7px;padding:8px 10px;line-height:1.4;}
+    .ct-duty-narr{font-size:11.5px;line-height:1.5;color:var(--muted);border-top:1px solid var(--border);margin-top:11px;padding-top:10px;}
+    .ct-predwrap{margin-top:6px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:7px 9px;box-shadow:var(--shadow);}
+    .ct-pred-cap{font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);font-weight:600;margin-bottom:5px;}
+    .ct-pred-row{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--text);padding:2px 0;}
+    .ct-pred-p{font-family:'IBM Plex Mono',monospace;font-weight:600;min-width:32px;}
+    .ct-pred-p.hi{color:var(--red);}.ct-pred-p.med{color:var(--amber);}.ct-pred-p.lo{color:var(--green);}
+    .ct-triage{font-size:11px;color:var(--accent);background:var(--accent-soft);border:1px solid var(--border);border-radius:6px;padding:6px 8px;margin-bottom:8px;font-weight:600;}
   </style>
 </head>
 <body>
