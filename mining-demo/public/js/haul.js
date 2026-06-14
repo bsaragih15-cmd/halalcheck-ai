@@ -1,11 +1,8 @@
 // Hauling Optimisation — stockpile→jetty haul-circuit dispatch console.
 // Deterministic simulation drives the live route map (always runs); the AI
 // dispatch rationale comes from /api/haul/analyze with an unbreakable fallback.
-import { renderNav, renderFooter, postJSON, esc, $ } from './shared.js';
+import { postJSON, esc } from './shared.js';
 import { witaTime } from './sim.js';
-
-renderNav('haul');
-renderFooter();
 
 const el = (id) => document.getElementById(id);
 const fmt = (n) => Math.round(n).toLocaleString('en-US');
@@ -175,15 +172,16 @@ function tick() {
   el('hopMin').textContent = m.hopMin + ' min';
   el('hopDemand').textContent = 'DEMAND ' + fmt(m.demand) + ' t/h';
   drawTrends();
-  if (el('pane-dispatch').style.display !== 'none') renderDispatch();
 }
 
 function drawTrends() {
-  const w = 420, h = 150, lo = 1400, hi = 2300;
-  const sx = (i) => i / (history.length - 1) * w, sy = (v) => h - ((v - lo) / (hi - lo)) * h;
-  el('deliveredLine').setAttribute('points', history.map((p, i) => sx(i).toFixed(1) + ',' + sy(p.d).toFixed(1)).join(' '));
-  el('demandLine').setAttribute('points', history.map((p, i) => sx(i).toFixed(1) + ',' + sy(p.dem).toFixed(1)).join(' '));
-  el('trendNow').textContent = fmt(m.delivered); el('trendDemand').textContent = fmt(m.demand);
+  if (el('deliveredLine')) {
+    const w = 420, h = 150, lo = 1400, hi = 2300;
+    const sx = (i) => i / (history.length - 1) * w, sy = (v) => h - ((v - lo) / (hi - lo)) * h;
+    el('deliveredLine').setAttribute('points', history.map((p, i) => sx(i).toFixed(1) + ',' + sy(p.d).toFixed(1)).join(' '));
+    el('demandLine').setAttribute('points', history.map((p, i) => sx(i).toFixed(1) + ',' + sy(p.dem).toFixed(1)).join(' '));
+    el('trendNow').textContent = fmt(m.delivered); el('trendDemand').textContent = fmt(m.demand);
+  }
   const frac = Math.max(0, Math.min(1, (m.mf - 0.7) / 0.6)), ang = (-90 + frac * 180) * Math.PI / 180;
   const nd = el('mfNeedle'); nd.setAttribute('x2', (100 + Math.sin(ang) * 64).toFixed(1)); nd.setAttribute('y2', (120 - Math.cos(ang) * 64).toFixed(1));
   const mv = el('mfVal'); mv.textContent = m.mf.toFixed(2); mv.style.color = (m.mf >= 0.95 && m.mf <= 1.05) ? '#5cc77e' : '#e0a44a';
@@ -231,7 +229,7 @@ function renderConstraint() {
   el('cstBars').innerHTML = Object.entries(m.bars).map(([name, pct]) => {
     const isB = name === m.binding;
     const col = isB ? c.color : (pct >= 92 ? '#b45309' : pct >= 80 ? '#0e7490' : '#15803d');
-    return `<div class="hcb"><div class="hcb-top"><span style="color:${isB ? c.color : '#8b9182'}">${name.replace('-', ' ')}</span><span style="color:${isB ? c.color : '#1a1f17'}">${pct}%</span></div><div class="hcb-bar"><div style="width:${pct}%;background:${col}"></div></div></div>`;
+    return `<div class="hcb"><div class="hcb-top"><span style="color:${isB ? c.color : '#8fa18f'}">${name.replace('-', ' ')}</span><span style="color:${isB ? c.color : '#cdd6c6'}">${pct}%</span></div><div class="hcb-bar"><div style="width:${pct}%;background:${col}"></div></div></div>`;
   }).join('');
 }
 
@@ -327,6 +325,18 @@ function mfRecommendation() {
     : { level: 'UNDER', color: '#b45309', text: `Under-trucked (MF ${m.mf.toFixed(2)}): add ${delta} truck${delta > 1 ? 's' : ''} / end a crib break to refill cadence.` };
 }
 function planState() { return { binding: m.binding, deliveredTph: m.delivered, demandTph: m.demand, matchFactor: +m.mf.toFixed(2), fleetUtilPct: m.util, hopperBufferMin: m.hopMin, hopperPct: m.hopPct, downTrucks: m.down || [], wet: !!m.wet, activeStrategy: currentStrategy || 'base' }; }
+// Predictive chips on the map gauge overlay.
+function renderPredictive() {
+  const sp = Math.round(starveProbability() * 100);
+  const spc = sp > 50 ? '#b91c1c' : sp > 25 ? '#b45309' : '#5cc77e';
+  el('starveDot').style.background = spc; el('starveChip').style.color = spc;
+  el('starveChip').textContent = `Hopper-starve 4h: ${sp}%`;
+  const mfr = mfRecommendation();
+  const lbl = mfr.level === 'OK' ? 'balanced — hold 9' : mfr.level === 'OVER' ? 'over-trucked' : 'under-trucked';
+  el('mfDot').style.background = mfr.color === '#15803d' ? '#5cc77e' : mfr.color;
+  el('mfChip').style.color = mfr.color === '#15803d' ? '#cdd6c6' : mfr.color;
+  el('mfChip').textContent = `MF ${m.mf.toFixed(2)} · ${lbl}`;
+}
 
 // Trade-off strategies — three objectives derived from the scenario metrics.
 const STRATEGIES = [
@@ -362,7 +372,7 @@ async function applyScenario(key) {
   m = buildMetrics(key);
   applySimFlags(m, false);
   currentStrategy = null;
-  renderKPIs(); renderConstraint(); renderAIPanel(); renderOptions(); renderRisks(); renderDispatch();
+  renderKPIs(); renderConstraint(); renderAIPanel(); renderOptions(); renderPredictive();
   // solving flash + shift indicator
   const solve = el('haulSolve'); solve.style.opacity = '1'; setTimeout(() => { solve.style.opacity = '0'; }, 1400);
   el('cstShift').textContent = (prev !== m.binding && key !== 'optimise') ? `⟳ constraint shifted ${prev.toUpperCase()} → ${m.binding.toUpperCase()}` : '';
@@ -413,15 +423,6 @@ async function submitFree() {
 }
 el('haulFreeBtn').addEventListener('click', submitFree);
 el('haulFree').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitFree(); });
-
-document.querySelectorAll('.haul-tab').forEach((tab) => tab.addEventListener('click', () => {
-  document.querySelectorAll('.haul-tab').forEach((t) => t.classList.toggle('active', t === tab));
-  for (const p of ['fleet', 'dispatch', 'trends']) el('pane-' + p).style.display = p === tab.dataset.tab ? '' : 'none';
-  if (tab.dataset.tab === 'dispatch') renderDispatch();
-}));
-document.querySelectorAll('.haul-table th[data-sort]').forEach((th) => th.addEventListener('click', () => {
-  const k = th.dataset.sort; if (state.sort === k) state.sortDir *= -1; else { state.sort = k; state.sortDir = 1; } renderDispatch();
-}));
 
 // ── 3D map (deck.gl + MapLibre, real Morowali geography) ──────────────────────
 // Lazy-loaded via CDN; the 2D schematic is the automatic fallback if WebGL or
@@ -500,7 +501,7 @@ function webglOK() { try { const c = document.createElement('canvas'); return !!
 initSim();
 applySimFlags(m, true);
 hopDisp = m.hopPct;
-renderKPIs(); renderConstraint(); renderAIPanel(); renderOptions(); renderRisks(); renderCopilot(); renderDispatch();
+renderKPIs(); renderConstraint(); renderAIPanel(); renderOptions(); renderCopilot(); renderPredictive();
 for (let i = 0; i < 28; i++) history.push({ d: m.delivered + Math.sin(i / 3) * 40, dem: m.demand });
 drawTrends();
 last = performance.now();

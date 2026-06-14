@@ -9,182 +9,119 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/styles.css" />
 </head>
-<body>
+<body class="hx">
 
-  <div class="container" style="padding-top:18px;">
-    <div class="breadcrumb"><a href="/index.html#matrix">Value Chain</a><span class="sep">/</span><span>Load &amp; haul</span><span class="sep">/</span><span class="cur">Hauling Optimisation</span></div>
-
-    <!-- demo head -->
-    <div class="demo-head haul-head">
-      <div>
-        <div class="haul-eyebrow">Port haul circuit · Morowali, Central Sulawesi</div>
-        <h1>Hauling Optimisation <span class="badge-live">▶ LIVE DEMO</span></h1>
-        <p class="pitch">Nine HD785-7 haul trucks shuttle nickel ore from the port stockpiles to the jetty surge hopper that feeds the barge loadout. The AI dispatch brain names the binding constraint, re-allocates the fleet, and re-solves live when a disruption hits.</p>
-      </div>
-      <div class="haul-clock-box">
-        <div class="haul-clock" id="witaClock">--:--:--</div>
-        <div class="haul-clock-sub">WITA · Shift A 07:00–19:00</div>
-        <div class="haul-live-pill"><span class="dot"></span>Live dispatch</div>
-      </div>
+  <header class="hx-nav">
+    <a class="hx-brand" href="/index.html#matrix"><span class="hx-logo">OS</span><span>Ore<em>Sight</em>&nbsp;AI</span></a>
+    <span class="hx-title">Hauling Optimisation</span>
+    <span class="hx-eyebrow">Morowali port · 9× HD785-7 · stockpile → jetty</span>
+    <span class="hx-spacer"></span>
+    <div class="hx-toggle">
+      <button class="haul-viewbtn" data-view="3d">🛰 Satellite</button>
+      <button class="haul-viewbtn active" data-view="2d">◫ Schematic</button>
     </div>
+    <span class="hx-clock mono" id="witaClock">--:--:--</span>
+  </header>
 
-    <!-- KPI row -->
-    <div class="haul-kpis" id="kpiRow"></div>
-
-    <!-- constraint (drum) strip -->
-    <div class="haul-constraint">
-      <div class="hc-left">
-        <div class="hc-cap">Binding constraint</div>
-        <div class="hc-name-row"><span class="hc-square" id="cstSquare"></span><span class="hc-name" id="cstName">Fleet</span></div>
-        <div class="hc-shift" id="cstShift"></div>
-      </div>
-      <div class="hc-div"></div>
-      <div class="hc-bars" id="cstBars"></div>
-      <div class="hc-note" id="cstNote"></div>
-    </div>
-
-    <!-- control-room screen -->
-    <div class="haul-screen">
-      <div class="haul-tabbar">
-        <div class="haul-tabs">
-          <button class="haul-tab active" data-tab="fleet">Fleet board</button>
-          <button class="haul-tab" data-tab="dispatch">Dispatch</button>
-          <button class="haul-tab" data-tab="trends">Trends</button>
-        </div>
-        <div class="haul-tabmeta">
-          <span class="mono">9 trucks · 2 loaders · 91 t rated</span>
-          <span class="haul-circ"><span class="dot"></span>Circulating</span>
-        </div>
-      </div>
-
-      <!-- FLEET BOARD -->
-      <div class="haul-pane" id="pane-fleet">
-        <div class="haul-viewbar">
-          <button class="haul-viewbtn" data-view="3d">🛰 Satellite</button>
-          <button class="haul-viewbtn active" data-view="2d">◫ Schematic</button>
-          <span class="haul-viewnote" id="view3dNote"></span>
-        </div>
-        <div id="haul3d"></div>
-        <div id="haul2d" style="padding:8px 8px 0;">
-          <svg id="haulMap" viewBox="0 0 960 440" style="width:100%;height:auto;display:block;">
-            <defs>
-              <pattern id="haulgrid" width="34" height="34" patternUnits="userSpaceOnUse"><path d="M34 0 L0 0 0 34" fill="none" stroke="#18201620" stroke-width="1"/></pattern>
-              <radialGradient id="hopglow" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#15803d" stop-opacity="0.20"/><stop offset="1" stop-color="#15803d" stop-opacity="0"/></radialGradient>
-            </defs>
-            <rect x="0" y="0" width="960" height="440" fill="url(#haulgrid)"/>
-            <path d="M120 130 L250 150 L340 175 L700 175 L840 185" fill="none" stroke="#222c1f" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M120 320 L250 235 L340 175 L700 175 L840 185" fill="none" stroke="#222c1f" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M840 235 L700 250 L340 250 L250 165 L120 130" fill="none" stroke="#1c241a" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M840 235 L700 250 L340 250 L250 300 L120 320" fill="none" stroke="#1c241a" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M345 175 L700 175" fill="none" stroke="#3a4a34" stroke-width="2" stroke-dasharray="10 12" style="animation:osDash 1.4s linear infinite;"/>
-            <path d="M700 250 L345 250" fill="none" stroke="#2c3a28" stroke-width="2" stroke-dasharray="10 12" style="animation:osDash 2.1s linear infinite;"/>
-            <text x="520" y="143" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" letter-spacing="2" fill="#566350">RAMP ~8% · 4.2 KM</text>
-            <text x="520" y="285" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9.5" letter-spacing="1.5" fill="#3f4c3a">RETURN EMPTY</text>
-            <g>
-              <rect x="64" y="104" width="104" height="52" rx="10" fill="#171f15" stroke="#2c3727" stroke-width="1.5"/>
-              <text x="116" y="124" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#cdd6c6">LD-1</text>
-              <text x="116" y="139" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1" fill="#6f7c68">SP-1 · CAT 992K</text>
-              <text x="116" y="150" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="7.5" letter-spacing="1" fill="#566350">SAPROLITE</text>
-            </g>
-            <g>
-              <rect x="64" y="294" width="104" height="52" rx="10" fill="#171f15" stroke="#2c3727" stroke-width="1.5"/>
-              <text x="116" y="314" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#cdd6c6">LD-2</text>
-              <text x="116" y="329" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1" fill="#6f7c68">SP-2 · EX1900</text>
-              <text x="116" y="340" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="7.5" letter-spacing="1" fill="#566350">LIMONITE</text>
-            </g>
-            <rect id="ld2Down" x="64" y="294" width="104" height="52" rx="10" fill="#b91c1c" opacity="0" stroke="#b91c1c" stroke-width="1.5"/>
-            <g id="q1Badge" opacity="0"><circle cx="196" cy="120" r="12" fill="#b45309"/><text id="q1Text" x="196" y="124" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fff">0</text></g>
-            <g id="q2Badge" opacity="0"><circle cx="196" cy="310" r="12" fill="#b45309"/><text id="q2Text" x="196" y="314" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fff">0</text></g>
-            <g id="qhBadge" opacity="0"><circle cx="770" cy="150" r="12" fill="#b45309"/><text id="qhText" x="770" y="154" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fff">0</text></g>
-            <ellipse cx="868" cy="205" rx="120" ry="120" fill="url(#hopglow)"/>
-            <rect x="836" y="150" width="62" height="104" rx="7" fill="#0c110b" stroke="#2c3727" stroke-width="1.5"/>
-            <rect id="hopFill" x="838" y="250" width="58" height="2" rx="4" fill="#15803d"/>
-            <line x1="836" y1="187" x2="898" y2="187" stroke="#3a2a14" stroke-width="1.5" stroke-dasharray="3 3"/>
-            <text x="903" y="190" font-family="'JetBrains Mono',monospace" font-size="7.5" fill="#7a5a2a">10m</text>
-            <path d="M848 254 L886 254 L874 280 L860 280 Z" fill="#171f15" stroke="#2c3727" stroke-width="1.5"/>
-            <rect x="824" y="298" width="92" height="26" rx="5" fill="#12211f" stroke="#0e7490" stroke-width="1.5"/>
-            <text x="870" y="315" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" letter-spacing="1" fill="#3fa9c4">BARGE LOADOUT</text>
-            <text x="867" y="142" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10.5" font-weight="700" letter-spacing="1" fill="#cdd6c6">JETTY HOPPER</text>
-            <text id="hopPct" x="867" y="208" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="18" font-weight="700" fill="#fff">68%</text>
-            <text id="hopMin" x="867" y="225" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="0.5" fill="#8a9384">13 min</text>
-            <text id="hopDemand" x="867" y="343" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" letter-spacing="0.5" fill="#6f7c68">DEMAND 1,900 t/h</text>
-            <text x="40" y="402" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1.5" fill="#5a4242">DOWN / PARKED</text>
-            <g id="truckLayer"></g>
-          </svg>
-        </div>
-        <div class="haul-legend" id="haulLegend"></div>
+  <div class="hx-body">
+    <!-- LHS — live map + fleet/loaders -->
+    <div class="hx-map">
+      <div id="haul3d"></div>
+      <div id="haul2d">
+        <svg id="haulMap" viewBox="0 0 960 440" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <pattern id="haulgrid" width="34" height="34" patternUnits="userSpaceOnUse"><path d="M34 0 L0 0 0 34" fill="none" stroke="#18201620" stroke-width="1"/></pattern>
+            <radialGradient id="hopglow" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#15803d" stop-opacity="0.20"/><stop offset="1" stop-color="#15803d" stop-opacity="0"/></radialGradient>
+          </defs>
+          <rect x="0" y="0" width="960" height="440" fill="url(#haulgrid)"/>
+          <path d="M120 130 L250 150 L340 175 L700 175 L840 185" fill="none" stroke="#222c1f" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M120 320 L250 235 L340 175 L700 175 L840 185" fill="none" stroke="#222c1f" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M840 235 L700 250 L340 250 L250 165 L120 130" fill="none" stroke="#1c241a" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M840 235 L700 250 L340 250 L250 300 L120 320" fill="none" stroke="#1c241a" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M345 175 L700 175" fill="none" stroke="#3a4a34" stroke-width="2" stroke-dasharray="10 12" style="animation:osDash 1.4s linear infinite;"/>
+          <path d="M700 250 L345 250" fill="none" stroke="#2c3a28" stroke-width="2" stroke-dasharray="10 12" style="animation:osDash 2.1s linear infinite;"/>
+          <text x="520" y="143" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" letter-spacing="2" fill="#566350">RAMP ~8% · 4.2 KM</text>
+          <text x="520" y="285" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9.5" letter-spacing="1.5" fill="#3f4c3a">RETURN EMPTY</text>
+          <g>
+            <rect x="64" y="104" width="104" height="52" rx="10" fill="#171f15" stroke="#2c3727" stroke-width="1.5"/>
+            <text x="116" y="124" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#cdd6c6">LD-1</text>
+            <text x="116" y="139" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1" fill="#6f7c68">SP-1 · CAT 992K</text>
+            <text x="116" y="150" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="7.5" letter-spacing="1" fill="#566350">SAPROLITE</text>
+          </g>
+          <g>
+            <rect x="64" y="294" width="104" height="52" rx="10" fill="#171f15" stroke="#2c3727" stroke-width="1.5"/>
+            <text x="116" y="314" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#cdd6c6">LD-2</text>
+            <text x="116" y="329" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1" fill="#6f7c68">SP-2 · EX1900</text>
+            <text x="116" y="340" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="7.5" letter-spacing="1" fill="#566350">LIMONITE</text>
+          </g>
+          <rect id="ld2Down" x="64" y="294" width="104" height="52" rx="10" fill="#b91c1c" opacity="0" stroke="#b91c1c" stroke-width="1.5"/>
+          <g id="q1Badge" opacity="0"><circle cx="196" cy="120" r="12" fill="#b45309"/><text id="q1Text" x="196" y="124" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fff">0</text></g>
+          <g id="q2Badge" opacity="0"><circle cx="196" cy="310" r="12" fill="#b45309"/><text id="q2Text" x="196" y="314" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fff">0</text></g>
+          <g id="qhBadge" opacity="0"><circle cx="770" cy="150" r="12" fill="#b45309"/><text id="qhText" x="770" y="154" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fff">0</text></g>
+          <ellipse cx="868" cy="205" rx="120" ry="120" fill="url(#hopglow)"/>
+          <rect x="836" y="150" width="62" height="104" rx="7" fill="#0c110b" stroke="#2c3727" stroke-width="1.5"/>
+          <rect id="hopFill" x="838" y="250" width="58" height="2" rx="4" fill="#15803d"/>
+          <line x1="836" y1="187" x2="898" y2="187" stroke="#3a2a14" stroke-width="1.5" stroke-dasharray="3 3"/>
+          <text x="903" y="190" font-family="'JetBrains Mono',monospace" font-size="7.5" fill="#7a5a2a">10m</text>
+          <path d="M848 254 L886 254 L874 280 L860 280 Z" fill="#171f15" stroke="#2c3727" stroke-width="1.5"/>
+          <rect x="824" y="298" width="92" height="26" rx="5" fill="#12211f" stroke="#0e7490" stroke-width="1.5"/>
+          <text x="870" y="315" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" letter-spacing="1" fill="#3fa9c4">BARGE LOADOUT</text>
+          <text x="867" y="142" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10.5" font-weight="700" letter-spacing="1" fill="#cdd6c6">JETTY HOPPER</text>
+          <text id="hopPct" x="867" y="208" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="18" font-weight="700" fill="#fff">68%</text>
+          <text id="hopMin" x="867" y="225" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="0.5" fill="#8a9384">13 min</text>
+          <text id="hopDemand" x="867" y="343" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="9" letter-spacing="0.5" fill="#6f7c68">DEMAND 1,900 t/h</text>
+          <text x="40" y="402" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1.5" fill="#5a4242">DOWN / PARKED</text>
+          <g id="truckLayer"></g>
+        </svg>
       </div>
 
-      <!-- DISPATCH -->
-      <div class="haul-pane" id="pane-dispatch" style="display:none;">
-        <table class="haul-table">
-          <thead><tr>
-            <th data-sort="id">Unit</th><th data-sort="state">State</th><th data-sort="loader">Loader</th>
-            <th data-sort="cycle" class="r">Cycle</th><th data-sort="payload" class="r">Payload</th><th>Next AI action</th>
-          </tr></thead>
-          <tbody id="dispatchBody"></tbody>
-        </table>
+      <!-- overlays -->
+      <div class="hx-ovl tl"><div class="haul-kpis" id="kpiRow"></div></div>
+
+      <div class="hx-ovl tr">
+        <div class="hx-card hx-cst">
+          <div class="hc-cap">Binding constraint <span class="hc-shift" id="cstShift"></span></div>
+          <div class="hc-name-row"><span class="hc-square" id="cstSquare"></span><span class="hc-name" id="cstName">Fleet</span></div>
+          <div class="hc-bars" id="cstBars"></div>
+          <div class="hc-note" id="cstNote"></div>
+        </div>
       </div>
 
-      <!-- TRENDS -->
-      <div class="haul-pane" id="pane-trends" style="display:none;">
-        <div class="haul-trends">
-          <div class="haul-sub">
-            <div class="hs-cap">Delivered t/h vs demand · shift</div>
-            <div class="hs-now"><span id="trendNow">1,985</span><span class="mono">vs <span id="trendDemand">1,900</span> demand</span></div>
-            <svg viewBox="0 0 420 150" style="width:100%;height:auto;display:block;">
-              <line x1="0" y1="40" x2="420" y2="40" stroke="#1d251a" stroke-width="1"/>
-              <line x1="0" y1="80" x2="420" y2="80" stroke="#1d251a" stroke-width="1"/>
-              <line x1="0" y1="120" x2="420" y2="120" stroke="#1d251a" stroke-width="1"/>
-              <polyline id="demandLine" fill="none" stroke="#b45309" stroke-width="2" stroke-dasharray="5 4" points=""/>
-              <polyline id="deliveredLine" fill="none" stroke="#15803d" stroke-width="2.5" points=""/>
-            </svg>
-            <div class="hs-leg"><span><i style="background:#15803d"></i>DELIVERED</span><span><i style="background:#b45309"></i>DEMAND</span></div>
-          </div>
-          <div class="haul-sub center">
-            <div class="hs-cap left">Match factor</div>
-            <svg viewBox="0 0 200 130" style="width:100%;max-width:200px;margin-top:6px;">
+      <div class="hx-ovl bl">
+        <div class="hx-card hx-gauges">
+          <div class="hx-g">
+            <div class="hc-cap">Match factor</div>
+            <svg viewBox="0 0 200 130">
               <path d="M20 120 A80 80 0 0 1 180 120" fill="none" stroke="#1d251a" stroke-width="13" stroke-linecap="round"/>
               <path d="M82 49 A80 80 0 0 1 118 49" fill="none" stroke="#15803d" stroke-width="13" stroke-linecap="round"/>
               <line id="mfNeedle" x1="100" y1="120" x2="100" y2="56" stroke="#e7ece3" stroke-width="3" stroke-linecap="round"/>
               <circle cx="100" cy="120" r="6" fill="#e7ece3"/>
-              <text x="20" y="120" font-family="'JetBrains Mono',monospace" font-size="8" fill="#566350">0.7</text>
-              <text x="172" y="120" font-family="'JetBrains Mono',monospace" font-size="8" fill="#566350">1.3</text>
             </svg>
             <div class="hs-val" id="mfVal">1.01</div>
-            <div class="hs-cap2">TARGET 0.95–1.05</div>
           </div>
-          <div class="haul-sub center">
-            <div class="hs-cap left">Hopper buffer</div>
-            <svg viewBox="0 0 200 130" style="width:100%;max-width:200px;margin-top:6px;">
+          <div class="hx-g">
+            <div class="hc-cap">Hopper buffer</div>
+            <svg viewBox="0 0 200 130">
               <path d="M20 120 A80 80 0 0 1 180 120" fill="none" stroke="#1d251a" stroke-width="13" stroke-linecap="round"/>
               <path id="bufArc" d="M20 120 A80 80 0 0 1 100 40" fill="none" stroke="#15803d" stroke-width="13" stroke-linecap="round"/>
-              <text x="20" y="120" font-family="'JetBrains Mono',monospace" font-size="8" fill="#566350">0</text>
-              <text x="172" y="120" font-family="'JetBrains Mono',monospace" font-size="8" fill="#566350">20m</text>
             </svg>
             <div class="hs-val" id="bufVal">13<span> min</span></div>
-            <div class="hs-cap2">WARN &lt; 10 MIN TO STARVE</div>
           </div>
         </div>
+        <div class="hx-card hx-pred">
+          <div class="hx-predrow"><span class="dot" id="starveDot"></span><span id="starveChip">Hopper-starve 4h: —</span></div>
+          <div class="hx-predrow"><span class="dot" id="mfDot"></span><span id="mfChip">Match factor: —</span></div>
+        </div>
+      </div>
+
+      <div class="hx-ovl br">
+        <div class="hx-card"><div class="haul-legend" id="haulLegend"></div></div>
+        <span class="hx-viewnote mono" id="view3dNote"></span>
       </div>
     </div>
 
-    <!-- disruption controls -->
-    <div class="haul-disrupt">
-      <div class="hd-head">
-        <span class="hd-cap">Disruption · trigger a live re-dispatch</span>
-        <button class="hd-reset" id="haulReset">↺ Reset to balanced</button>
-      </div>
-      <div class="hd-presets" id="haulPresets"></div>
-      <div class="hd-free">
-        <input id="haulFree" placeholder='Describe a disruption — e.g. "HT-105 down, ramp wet"' />
-        <button id="haulFreeBtn">Re-dispatch →</button>
-      </div>
-      <div class="hd-parsed" id="haulParsed"></div>
-    </div>
-
-    <!-- AI panel + risk/copilot -->
-    <div class="haul-bottom">
+    <!-- RHS — AI output + optimisation -->
+    <aside class="hx-rail">
       <div class="haul-ai">
         <div class="ha-head"><span class="ha-badge">AI</span><span class="ha-cap">OreSight dispatch optimiser</span><span class="ha-solve" id="haulSolve">● re-solving…</span></div>
         <div class="ha-headline" id="aiHeadline"></div>
@@ -192,7 +129,7 @@
           <div class="ha-dcard"><div class="l">Current</div><div class="v" id="aiCurrent">—<span> t/h</span></div></div>
           <div class="ha-arrow">→</div>
           <div class="ha-dcard opt"><div class="l">Optimised</div><div class="v" id="aiOptimised">—<span> t/h</span></div></div>
-          <div class="ha-dcard"><div class="l">Value protected / yr</div><div class="v" id="aiValue">—</div></div>
+          <div class="ha-dcard"><div class="l">Value / yr</div><div class="v" id="aiValue">—</div></div>
         </div>
         <div class="ha-sec">Strategy <span style="color:#5f6b59;font-weight:400;text-transform:none;letter-spacing:0">· pick the trade-off</span></div>
         <div class="ha-options" id="aiOptions"></div>
@@ -202,21 +139,27 @@
         <div class="ha-recs" id="aiRecs"></div>
         <div class="ha-narr" id="aiNarrative"></div>
       </div>
-      <div class="haul-side">
-        <div class="haul-risk">
-          <div class="hr-cap">Risk radar · next 4h</div>
-          <div id="riskList"></div>
-        </div>
-        <div class="haul-copilot">
-          <div class="hr-cap">Copilot · ask the fleet</div>
-          <div class="cp-qs" id="copilotQs"></div>
-          <div class="cp-row"><input id="cpInput" placeholder="Ask, or set a target — e.g. &quot;get me to 2000 t/h&quot;" /><button id="cpBtn">Ask</button></div>
-          <div class="cp-ans" id="copilotAnswer">Ask about the binding constraint, hopper buffer, match factor — or set a target rate. Answers come from the live circuit.</div>
-        </div>
-      </div>
-    </div>
 
-    <div class="haul-foot">OreSight AI · upstream feeder of the Future Scheduling Platform</div>
+      <div class="haul-disrupt">
+        <div class="hd-head">
+          <span class="hd-cap">Disruption · live re-dispatch</span>
+          <button class="hd-reset" id="haulReset">↺ Reset</button>
+        </div>
+        <div class="hd-presets" id="haulPresets"></div>
+        <div class="hd-free">
+          <input id="haulFree" placeholder='Describe a disruption — e.g. "HT-105 down, ramp wet"' />
+          <button id="haulFreeBtn">Re-dispatch →</button>
+        </div>
+        <div class="hd-parsed" id="haulParsed"></div>
+      </div>
+
+      <div class="haul-copilot">
+        <div class="hr-cap">Copilot · ask the fleet</div>
+        <div class="cp-qs" id="copilotQs"></div>
+        <div class="cp-row"><input id="cpInput" placeholder="Ask, or set a target — e.g. &quot;get me to 2000 t/h&quot;" /><button id="cpBtn">Ask</button></div>
+        <div class="cp-ans" id="copilotAnswer">Ask about the binding constraint, hopper buffer, match factor — or set a target rate. Answers come from the live circuit.</div>
+      </div>
+    </aside>
   </div>
 
   <script type="module" src="/js/haul.js"></script>
