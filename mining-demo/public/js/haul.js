@@ -78,21 +78,28 @@ let liveDelivered = 1980;
 let chosen = 'protect-demand';
 let currentScenarioKey = 'optimise';
 
-// A rigid mining haul-truck glyph (tall dump tray + rear overhang, front
-// rock-guard canopy over the cab, big tyres), coloured by state. The body sits
-// in an inner group that flips to face the direction of travel.
+// A rigid mining haul-truck glyph (chunky dump tray with an ore load, front
+// rock-guard canopy + cab window, big mining tyres). Body stays haul-truck
+// yellow; a status pip shows state. The body group flips + scales (~1.4×) and
+// faces the direction of travel.
 function truckNode(num) {
   const g = document.createElementNS(NS, 'g');
   const inner = document.createElementNS(NS, 'g'); inner.setAttribute('class', 'tbodyG');
   const body = document.createElementNS(NS, 'path');
   body.setAttribute('class', 'tbody');
-  body.setAttribute('d', 'M-11 -2 L-10 -8 L4 -8 L11 -7 L11 -4 L6 -4 L6 -2 Z');
-  body.setAttribute('fill', '#64748b'); body.setAttribute('stroke', 'rgba(255,255,255,0.55)'); body.setAttribute('stroke-width', '0.8'); body.setAttribute('stroke-linejoin', 'round');
-  const mk = (cx, r) => { const c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', cx); c.setAttribute('cy', '1.6'); c.setAttribute('r', r); c.setAttribute('fill', '#10150f'); return c; };
-  const hub = (cx) => { const c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', cx); c.setAttribute('cy', '1.6'); c.setAttribute('r', '0.9'); c.setAttribute('fill', '#46603f'); return c; };
-  inner.append(body, mk(-6, 2.9), mk(6, 2.6), hub(-6), hub(6));
-  const tx = document.createElementNS(NS, 'text'); tx.setAttribute('text-anchor', 'middle'); tx.setAttribute('y', '-10'); tx.setAttribute('font-family', "'JetBrains Mono',monospace"); tx.setAttribute('font-size', '8'); tx.setAttribute('font-weight', '700'); tx.setAttribute('fill', '#aeb6a5'); tx.textContent = num;
-  g.append(inner, tx);
+  body.setAttribute('d', 'M-12 -1 L-12 -8 L-9 -9 L4 -9 L12 -8 L12 -4 L7 -4 L7 -1 Z');
+  body.setAttribute('fill', '#f5b81c'); body.setAttribute('stroke', '#20200f'); body.setAttribute('stroke-width', '0.9'); body.setAttribute('stroke-linejoin', 'round');
+  const ore = document.createElementNS(NS, 'path');
+  ore.setAttribute('d', 'M-11 -8.4 Q-7 -11.4 -3 -9.4 Q1 -11.4 5 -9.4 Q8 -10.2 10.5 -8.4 Z');
+  ore.setAttribute('fill', '#8a7651'); ore.setAttribute('stroke', '#20200f'); ore.setAttribute('stroke-width', '0.4');
+  const win = document.createElementNS(NS, 'path');
+  win.setAttribute('d', 'M8 -3.7 L10.6 -3.7 L10.6 -1.8 L8 -1.8 Z'); win.setAttribute('fill', '#0d1a22');
+  const mk = (cx, r) => { const c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', cx); c.setAttribute('cy', '1.8'); c.setAttribute('r', r); c.setAttribute('fill', '#14130b'); return c; };
+  const hub = (cx, r) => { const c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', cx); c.setAttribute('cy', '1.8'); c.setAttribute('r', r); c.setAttribute('fill', '#c9a227'); return c; };
+  inner.append(body, ore, win, mk(-6.5, 3.2), mk(7, 2.9), hub(-6.5, 1.1), hub(7, 1));
+  const pip = document.createElementNS(NS, 'circle'); pip.setAttribute('class', 'tpip'); pip.setAttribute('cx', '13'); pip.setAttribute('cy', '-11'); pip.setAttribute('r', '2.4'); pip.setAttribute('fill', '#cdd6c6'); pip.setAttribute('stroke', '#0e140d'); pip.setAttribute('stroke-width', '0.8');
+  const tx = document.createElementNS(NS, 'text'); tx.setAttribute('text-anchor', 'middle'); tx.setAttribute('y', '-15'); tx.setAttribute('font-family', "'JetBrains Mono',monospace"); tx.setAttribute('font-size', '8'); tx.setAttribute('font-weight', '700'); tx.setAttribute('fill', '#aeb6a5'); tx.textContent = num;
+  g.append(inner, pip, tx);
   return g;
 }
 
@@ -147,13 +154,15 @@ function step(ts) {
     const st = (t.state === 'qloader' || t.state === 'qhopper') ? 'queuing' : t.state;
     const node = tnodes[i];
     node.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
-    // Face the direction of travel: nose left when returning/at the jetty.
+    // Face the direction of travel (nose left when returning/at the jetty), ~1.4× size.
     const faceLeft = (t.state === 'returning' || t.state === 'qhopper' || t.state === 'dumping');
-    node.querySelector('.tbodyG').setAttribute('transform', faceLeft ? 'scale(-1,1)' : 'scale(1,1)');
+    node.querySelector('.tbodyG').setAttribute('transform', faceLeft ? 'scale(-1.4,1.4)' : 'scale(1.4,1.4)');
+    const down = t.state === 'down';
     const body = node.querySelector('.tbody');
-    body.setAttribute('fill', t.state === 'down' ? '#0e140d' : (STATE_COLOR[st] || '#64748b'));
-    body.setAttribute('stroke', t.state === 'down' ? '#c0392b' : 'rgba(255,255,255,0.55)');
-    body.setAttribute('stroke-width', t.state === 'down' ? '1.6' : '0.8');
+    body.setAttribute('fill', down ? '#3a3a28' : '#f5b81c');           // yellow body; muted when parked
+    body.setAttribute('stroke', down ? '#c0392b' : '#20200f');
+    body.setAttribute('stroke-width', down ? '1.5' : '0.9');
+    node.querySelector('.tpip').setAttribute('fill', STATE_COLOR[st] || '#64748b'); // state via status pip
   });
   setBadge('q1Badge', 'q1Text', qlc['LD-1']); setBadge('q2Badge', 'q2Text', qlc['LD-2']); setBadge('qhBadge', 'qhText', qhc);
 
