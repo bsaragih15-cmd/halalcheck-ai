@@ -379,7 +379,7 @@ function paint() {
   el('vizTabs').querySelectorAll('button').forEach((b) => {
     const on = b.dataset.viz === state.viz;
     b.style.background = on ? '#15803d' : 'transparent';
-    b.style.color = on ? '#fff' : '#7a7768';
+    b.style.color = on ? '#fff' : '#8b9182';
   });
   el('scenarios').querySelectorAll('button').forEach((b) => {
     const on = b.dataset.sc === state.scenario;
