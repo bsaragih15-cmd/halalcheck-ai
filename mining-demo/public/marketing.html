@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Nickel Marketing Optimiser — Oresight AI</title>
+<style>
+  :root{
+    --bg:#080b09;
+    --panel:#0e1310;
+    --panel-2:#121916;
+    --line:rgba(120,160,135,.14);
+    --line-strong:rgba(120,160,135,.28);
+    --txt:#d6e4da;
+    --txt-dim:#7e9387;
+    --txt-faint:#566359;
+    --green:#16a34a;
+    --green-bright:#22c55e;
+    --green-pale:#86efac;
+    --green-glow:rgba(34,197,94,.10);
+    --amber:#d9a441;
+    --rust:#c2682f;
+    --blue:#5a8bbf;
+    --red:#d6493b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:ui-monospace,'SF Mono','Menlo','Consolas',monospace;
+    background:var(--bg);
+    color:var(--txt);
+    font-size:13px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1760px;margin:0 auto;padding:18px 22px 60px}
+
+  /* ── TOP BAR ── */
+  .topbar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px}
+  .brand{display:flex;align-items:flex-start;gap:12px}
+  .logo{width:34px;height:34px;border-radius:8px;background:var(--green);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#04130a;letter-spacing:-.5px}
+  .brand h1{font-size:19px;font-weight:700;letter-spacing:-.3px;color:#eef6f1}
+  .brand h1 .sub{color:var(--txt-faint);font-weight:500;font-size:12px;letter-spacing:1.5px;margin-left:10px;text-transform:uppercase}
+  .brand .ctx{font-size:11.5px;color:var(--txt-dim);margin-top:3px;letter-spacing:.3px}
+  .topright{display:flex;align-items:center;gap:14px}
+  .toggle{display:flex;border:1px solid var(--line-strong);border-radius:8px;overflow:hidden}
+  .toggle button{background:transparent;border:none;color:var(--txt-dim);font-family:inherit;font-size:11.5px;padding:7px 14px;cursor:pointer;letter-spacing:.4px}
+  .toggle button.on{background:var(--green);color:#04130a;font-weight:700}
+  .clock{text-align:right}
+  .clock .t{font-size:21px;font-weight:700;color:#eef6f1;letter-spacing:1px}
+  .clock .z{font-size:10px;color:var(--txt-faint);letter-spacing:1.5px;text-transform:uppercase}
+  .live{display:flex;align-items:center;gap:6px;border:1px solid var(--line-strong);border-radius:20px;padding:5px 12px;font-size:11px;letter-spacing:1px;color:var(--green-pale)}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green-bright);box-shadow:0 0 8px var(--green-bright);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+  /* ── LAYOUT ── */
+  .grid{display:grid;grid-template-columns:1fr 560px;gap:18px;align-items:start}
+
+  /* ── METRIC CARDS ── */
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+  .metric{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .metric .head{display:flex;justify-content:space-between;align-items:baseline}
+  .metric .label{font-size:10px;letter-spacing:1.4px;color:var(--txt-dim);text-transform:uppercase}
+  .metric .tag{font-size:10.5px;letter-spacing:.5px}
+  .tag.good{color:var(--green-pale)}.tag.warn{color:var(--amber)}.tag.pos{color:var(--green-bright)}
+  .metric .val{font-size:30px;font-weight:700;color:#eef6f1;margin:6px 0 2px;letter-spacing:-.5px}
+  .metric .val .u{font-size:13px;font-weight:500;color:var(--txt-dim);margin-left:4px;letter-spacing:0}
+  .metric .bar{height:3px;border-radius:3px;background:rgba(255,255,255,.05);margin-top:9px;overflow:hidden}
+  .metric .bar i{display:block;height:100%;background:var(--green);border-radius:3px}
+  .metric .foot{font-size:10.5px;color:var(--txt-faint);margin-top:8px;letter-spacing:.3px}
+
+  /* ── SCHEMATIC ── */
+  .schematic{background:#040806;border:1px solid var(--line);border-radius:14px;position:relative;height:520px;overflow:hidden;
+    background-image:radial-gradient(circle at 78% 46%,rgba(34,197,94,.10),transparent 42%),
+      linear-gradient(rgba(120,160,135,.05) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(120,160,135,.05) 1px,transparent 1px);
+    background-size:100% 100%,34px 34px,34px 34px}
+  .lane{position:absolute;height:30px;background:rgba(120,160,135,.06);border-radius:4px}
+  svg.links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .node{position:absolute;background:rgba(10,18,13,.92);border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;min-width:118px;backdrop-filter:blur(2px)}
+  .node .n-top{display:flex;align-items:center;gap:6px}
+  .node .pill{font-size:9.5px;font-weight:700;letter-spacing:.5px;padding:1px 6px;border-radius:4px;background:rgba(34,197,94,.16);color:var(--green-pale)}
+  .node .pill.lim{background:rgba(90,139,191,.16);color:#9cc2e8}
+  .node .pill.cust{background:rgba(217,164,65,.16);color:#e9cd86}
+  .node .nm{font-size:12px;font-weight:700;color:#eef6f1}
+  .node .meta{font-size:9.5px;color:var(--txt-dim);margin-top:3px;letter-spacing:.2px}
+  .node.blend{border-color:rgba(34,197,94,.5);box-shadow:0 0 22px rgba(34,197,94,.12)}
+  .parcel{position:absolute;width:26px;height:16px;border-radius:3px;background:var(--green-bright);display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#04130a;box-shadow:0 0 10px rgba(34,197,94,.5)}
+  .parcel.lim{background:#7fb2e6;box-shadow:0 0 10px rgba(127,178,230,.5);color:#06121f}
+  .cargo{position:absolute;right:34px;top:150px;width:120px;height:230px;border:1px solid rgba(34,197,94,.4);border-radius:10px;background:linear-gradient(180deg,rgba(34,197,94,.05),rgba(34,197,94,.02));display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:14px 0}
+  .cargo .fill{width:100%;background:linear-gradient(180deg,rgba(34,197,94,.34),rgba(34,197,94,.14));border-radius:0 0 9px 9px;position:absolute;bottom:0;transition:height .6s}
+  .cargo .ftxt{position:relative;z-index:2;text-align:center}
+  .cargo .ftxt .pct{font-size:32px;font-weight:700;color:#eef6f1}
+  .cargo .ftxt .lab{font-size:10px;color:var(--green-pale);letter-spacing:.5px;margin-top:2px}
+  .sch-cap{position:absolute;left:18px;top:14px;font-size:11px;letter-spacing:1.5px;color:var(--txt-faint);text-transform:uppercase}
+  .sch-foot{position:absolute;right:16px;bottom:12px;font-size:10px;color:var(--txt-faint);letter-spacing:.5px}
+  .legend{position:absolute;left:18px;bottom:12px;display:flex;gap:16px;font-size:10px;color:var(--txt-dim)}
+  .legend span{display:flex;align-items:center;gap:5px}
+  .legend i{width:8px;height:8px;border-radius:50%}
+
+  /* ── BOTTOM TRIO ── */
+  .trio{display:grid;grid-template-columns:1fr 1fr 1.15fr;gap:12px;margin-top:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .card .ctitle{font-size:10px;letter-spacing:1.4px;color:var(--txt-dim);text-transform:uppercase;margin-bottom:12px}
+  .constraint .binding{font-size:18px;font-weight:700;color:#eef6f1;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .constraint .binding::before{content:'';width:9px;height:9px;border-radius:2px;background:var(--green-bright);box-shadow:0 0 8px var(--green-bright)}
+  .crow{display:grid;grid-template-columns:92px 1fr 38px;align-items:center;gap:8px;margin-bottom:9px;font-size:11px}
+  .crow .cl{color:var(--txt-dim);letter-spacing:.3px}
+  .crow .cb{height:6px;background:rgba(255,255,255,.05);border-radius:4px;overflow:hidden}
+  .crow .cb i{display:block;height:100%;border-radius:4px;background:var(--green)}
+  .crow.bind .cb i{background:var(--green-bright);box-shadow:0 0 8px rgba(34,197,94,.5)}
+  .crow .cv{text-align:right;color:var(--txt);font-weight:600}
+  .crow.bind .cv{color:var(--green-bright)}
+
+  .gauges{display:flex;gap:18px;justify-content:space-around;text-align:center}
+  .gauge .arc{position:relative;width:104px;height:60px;margin:0 auto;overflow:hidden}
+  .gauge svg{transform:rotate(0)}
+  .gauge .gnum{font-size:24px;font-weight:700;color:#eef6f1;margin-top:-4px}
+  .gauge .gunit{font-size:10px;color:var(--txt-dim)}
+  .gauge .glab{font-size:10px;letter-spacing:1px;color:var(--txt-faint);text-transform:uppercase;margin-bottom:6px}
+  .notes{margin-top:12px;font-size:10.5px;color:var(--txt-dim);line-height:1.7}
+  .notes b{color:var(--green-pale);font-weight:600}
+
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px}
+  .chip{background:var(--panel-2);border:1px solid var(--line-strong);border-radius:18px;padding:6px 12px;font-size:11px;color:var(--txt);cursor:pointer;display:flex;align-items:center;gap:6px;transition:.15s}
+  .chip:hover{border-color:var(--green);color:#eef6f1}
+  .chip i{width:7px;height:7px;border-radius:50%}
+  .chip.c-blue i{background:var(--blue)}.chip.c-red i{background:var(--red)}.chip.c-rust i{background:var(--rust)}.chip.c-green i{background:var(--green-bright)}
+  .disrow{display:flex;gap:8px}
+  .disrow input{flex:1;background:var(--panel-2);border:1px solid var(--line-strong);border-radius:8px;color:var(--txt);font-family:inherit;font-size:12px;padding:9px 12px;outline:none}
+  .disrow input:focus{border-color:var(--green)}
+  .disrow button{background:var(--green);border:none;color:#04130a;border-radius:8px;width:42px;font-size:15px;font-weight:700;cursor:pointer}
+  .disrow .reset{background:var(--panel-2);border:1px solid var(--line-strong);color:var(--txt-dim);width:42px;border-radius:8px;cursor:pointer;font-size:14px}
+
+  /* ── RIGHT: AI PANEL ── */
+  .ai{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 20px}
+  .ai-head{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+  .ai-badge{width:26px;height:26px;border-radius:7px;background:var(--green);color:#04130a;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .ai-head .ttl{font-size:11px;letter-spacing:1.4px;color:var(--txt-dim);text-transform:uppercase}
+  .ai-lead{font-size:17px;font-weight:700;color:#eef6f1;line-height:1.38;margin-bottom:16px;letter-spacing:-.2px}
+  .ai-lead em{color:var(--green-bright);font-style:normal}
+
+  .cmp{display:grid;grid-template-columns:1fr auto 1fr 1fr;gap:10px;align-items:stretch;margin-bottom:18px}
+  .cmp .box{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+  .cmp .box.opt{background:var(--green-glow);border-color:rgba(34,197,94,.4)}
+  .cmp .k{font-size:9.5px;letter-spacing:1.2px;color:var(--txt-dim);text-transform:uppercase}
+  .cmp .v{font-size:21px;font-weight:700;color:#eef6f1;margin-top:5px}
+  .cmp .v .u{font-size:11px;color:var(--txt-dim);font-weight:500;margin-left:3px}
+  .cmp .box.opt .v{color:var(--green-bright)}
+  .cmp .arrow{display:flex;align-items:center;color:var(--txt-faint);font-size:18px}
+
+  .sec-cap{font-size:10px;letter-spacing:1.4px;color:var(--txt-dim);text-transform:uppercase;margin-bottom:9px}
+  .sec-cap .hint{color:var(--txt-faint);text-transform:none;letter-spacing:.3px;font-size:10px}
+  .strat{border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:9px;cursor:pointer;transition:.15s}
+  .strat:hover{border-color:var(--line-strong)}
+  .strat.on{background:var(--green-glow);border-color:rgba(34,197,94,.45)}
+  .strat .s-top{display:flex;justify-content:space-between;align-items:baseline}
+  .strat .s-name{font-size:14px;font-weight:700;color:#eef6f1}
+  .strat .s-flag{font-size:9.5px;letter-spacing:1px;color:var(--green-pale)}
+  .strat .s-flag.opt{color:var(--txt-faint)}
+  .strat .s-desc{font-size:11px;color:var(--txt-dim);margin:5px 0 8px;line-height:1.5}
+  .strat .s-stats{display:flex;gap:18px;font-size:11px}
+  .strat .s-stats b{color:#eef6f1}
+  .strat .s-stats .lab{color:var(--txt-faint);margin-right:5px}
+
+  .actions{margin-top:18px}
+  .act{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:8px}
+  .act .a-pill{font-size:9.5px;font-weight:700;letter-spacing:.5px;padding:2px 7px;border-radius:5px}
+  .a-pill.blend{background:rgba(217,164,65,.18);color:#e9cd86}
+  .a-pill.hold{background:rgba(194,104,47,.2);color:#e3a06f}
+  .a-pill.alloc{background:rgba(34,197,94,.18);color:var(--green-pale)}
+  .act .a-body{flex:1}
+  .act .a-id{font-size:12px;font-weight:700;color:#eef6f1}
+  .act .a-desc{font-size:10.5px;color:var(--txt-dim);margin-top:2px}
+  .act .a-desc .crd{color:var(--txt-faint)}
+  .act .a-delta{font-size:12px;font-weight:700;color:var(--green-bright);white-space:nowrap}
+  .act .a-delta.zero{color:var(--txt-faint)}
+
+  .narr{font-size:12px;color:var(--txt-dim);line-height:1.65;margin-top:16px;padding-top:15px;border-top:1px solid var(--line)}
+  .narr b{color:var(--green-pale);font-weight:600}
+
+  .copilot{margin-top:18px;padding-top:15px;border-top:1px solid var(--line)}
+  .copilot .ttl{font-size:10px;letter-spacing:1.4px;color:var(--txt-dim);text-transform:uppercase;margin-bottom:10px}
+  .q-chips{display:flex;flex-wrap:wrap;gap:7px}
+  .q-chips .qc{background:var(--panel-2);border:1px solid var(--line);border-radius:18px;padding:6px 12px;font-size:11px;color:var(--txt-dim);cursor:pointer}
+  .q-chips .qc:hover{border-color:var(--green);color:#eef6f1}
+
+  .footnote{margin-top:22px;font-size:10px;color:var(--txt-faint);line-height:1.6;letter-spacing:.2px;border-top:1px solid var(--line);padding-top:12px}
+  .footnote b{color:var(--txt-dim)}
+
+  /* ── OBJECTIVE SELECTOR ── */
+  .objsel{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+  .objsel button{flex:1;min-width:96px;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;color:var(--txt-dim);font-family:inherit;font-size:11px;padding:8px 6px;cursor:pointer;text-align:center;letter-spacing:.2px;transition:.15s;line-height:1.25}
+  .objsel button .ob-sub{display:block;font-size:9px;color:var(--txt-faint);margin-top:2px}
+  .objsel button:hover{border-color:var(--line-strong);color:var(--txt)}
+  .objsel button.on{background:var(--green-glow);border-color:rgba(34,197,94,.5);color:#eef6f1}
+  .objsel button.on .ob-sub{color:var(--green-pale)}
+  .obj-note{font-size:11px;color:var(--green-pale);margin:-6px 0 14px;padding:8px 11px;background:var(--green-glow);border:1px solid rgba(34,197,94,.28);border-radius:8px;line-height:1.45}
+  .obj-note b{color:#eef6f1;font-weight:700}
+
+  /* ── CONTRACTING PANEL ── */
+  .contracting{display:grid;grid-template-columns:300px 1fr;gap:18px;margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .dialwrap .ctitle{margin-bottom:14px}
+  .mixbar{position:relative;height:26px;border-radius:7px;overflow:hidden;display:flex;border:1px solid var(--line-strong)}
+  .mixbar .mc{background:linear-gradient(180deg,rgba(34,197,94,.42),rgba(34,197,94,.2));display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#eef6f1;transition:width .35s}
+  .mixbar .ms{background:rgba(90,139,191,.22);flex:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#bcd6f0}
+  .p90{position:relative;height:14px;margin-top:4px}
+  .p90 .tick{position:absolute;top:0;width:2px;height:14px;background:var(--amber);transition:left .35s}
+  .p90 .tick::after{content:'P90 supply';position:absolute;top:-1px;left:6px;font-size:9px;color:var(--amber);white-space:nowrap}
+  input[type=range].slider{-webkit-appearance:none;width:100%;height:4px;border-radius:3px;background:var(--line-strong);outline:none;margin:14px 0 6px}
+  input[type=range].slider::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--green-bright);cursor:pointer;box-shadow:0 0 8px rgba(34,197,94,.6)}
+  .mixrow{display:flex;justify-content:space-between;font-size:10px;color:var(--txt-faint);letter-spacing:.4px}
+  .mixstats{display:flex;gap:18px;margin-top:14px}
+  .mixstat .k{font-size:9.5px;letter-spacing:1px;color:var(--txt-faint);text-transform:uppercase}
+  .mixstat .v{font-size:18px;font-weight:700;color:#eef6f1;margin-top:3px}
+  .mixstat .v.warn{color:var(--amber)}
+  .safetag{margin-top:12px;font-size:10.5px;padding:6px 10px;border-radius:7px;letter-spacing:.3px}
+  .safetag.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--green-pale)}
+  .safetag.warn{background:rgba(217,164,65,.12);border:1px solid rgba(217,164,65,.4);color:#e9cd86}
+  .book{width:100%;border-collapse:collapse;font-size:10.5px}
+  .book th{text-align:left;font-size:9px;letter-spacing:.8px;color:var(--txt-faint);text-transform:uppercase;padding:0 8px 7px 0;font-weight:600;border-bottom:1px solid var(--line)}
+  .book td{padding:7px 8px 7px 0;border-bottom:1px solid var(--line);color:var(--txt-dim)}
+  .book td .cu{color:#eef6f1;font-weight:700}
+  .book tr:last-child td{border-bottom:none}
+  .book .spot td .cu{color:#bcd6f0}
+  .book .bp{font-size:9px;padding:1px 6px;border-radius:4px;background:rgba(34,197,94,.16);color:var(--green-pale)}
+  .book .bp.spot{background:rgba(90,139,191,.18);color:#9cc2e8}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand">
+      <a class="logo" href="/index.html#matrix" title="Back to use-case matrix" style="text-decoration:none">OS</a>
+      <div>
+        <h1>Nickel Marketing Optimiser <span class="sub">Oresight AI</span></h1>
+        <div class="ctx">Morowali · 2 stockpiles · saprolite + limonite · mine → blend → product → cargo</div>
+      </div>
+    </div>
+    <div class="topright">
+      <div class="toggle">
+        <button class="on">▦ Desk view</button>
+        <button>◷ Mine plan</button>
+      </div>
+      <div class="clock"><div class="t" id="clock">16:23:55</div><div class="z">WITA · CARGO WINDOW 14</div></div>
+      <div class="live"><span class="dot"></span>LIVE</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT COLUMN -->
+    <div>
+      <!-- METRICS -->
+      <div class="metrics">
+        <div class="metric">
+          <div class="head"><span class="label">Realised value</span><span class="tag pos">+4.1</span></div>
+          <div class="val">78.4<span class="u">$/wmt</span></div>
+          <div class="bar"><i style="width:82%"></i></div>
+          <div class="foot">HPM floor 70.83 · 1.6% sap</div>
+        </div>
+        <div class="metric">
+          <div class="head"><span class="label">Payable capture</span><span class="tag good">balanced</span></div>
+          <div class="val">0.92<span class="u">ratio</span></div>
+          <div class="bar"><i style="width:74%"></i></div>
+          <div class="foot">target 0.88–0.94</div>
+        </div>
+        <div class="metric">
+          <div class="head"><span class="label">Spec compliance</span><span class="tag pos">+2</span></div>
+          <div class="val">98<span class="u">%</span></div>
+          <div class="bar"><i style="width:98%"></i></div>
+          <div class="foot">cargoes in-window</div>
+        </div>
+        <div class="metric">
+          <div class="head"><span class="label">Offtake fill</span><span class="tag good">safe</span></div>
+          <div class="val">91<span class="u">%</span></div>
+          <div class="bar"><i style="width:91%"></i></div>
+          <div class="foot">9% to spot · committed vs avail</div>
+        </div>
+      </div>
+
+      <!-- SCHEMATIC -->
+      <div class="schematic">
+        <div class="sch-cap">Blend & allocation flow — live</div>
+        <svg class="links" viewBox="0 0 1000 520" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="rgba(34,197,94,.05)"/><stop offset="1" stop-color="rgba(34,197,94,.28)"/></linearGradient>
+          </defs>
+          <!-- sap -> blend -->
+          <path d="M150,150 C260,150 300,210 380,235" stroke="url(#g1)" stroke-width="16" fill="none"/>
+          <!-- lim -> blend -->
+          <path d="M150,380 C260,380 300,300 380,265" stroke="rgba(127,178,230,.22)" stroke-width="16" fill="none"/>
+          <!-- blend -> NPI -->
+          <path d="M500,235 C560,210 600,180 660,175" stroke="url(#g1)" stroke-width="14" fill="none"/>
+          <!-- blend -> MHP -->
+          <path d="M500,265 C560,300 600,330 660,345" stroke="rgba(127,178,230,.2)" stroke-width="14" fill="none"/>
+          <!-- NPI -> cargo -->
+          <path d="M780,175 C820,175 830,210 845,235" stroke="url(#g1)" stroke-width="12" fill="none"/>
+          <!-- MHP -> cargo (battery, separate) -->
+          <path d="M780,345 C810,345 820,320 838,300" stroke="rgba(127,178,230,.18)" stroke-width="10" fill="none"/>
+        </svg>
+
+        <!-- stockpiles -->
+        <div class="node" style="left:34px;top:128px">
+          <div class="n-top"><span class="pill">SAP-1</span><span class="nm">1.82% Ni</span></div>
+          <div class="meta">saprolite · Fe/Ni 4.1 · 240 kt</div>
+        </div>
+        <div class="node" style="left:34px;top:358px">
+          <div class="n-top"><span class="pill lim">LIM-1</span><span class="nm">1.12% Ni</span></div>
+          <div class="meta">limonite · Co 0.12% · 180 kt</div>
+        </div>
+
+        <!-- blend pad -->
+        <div class="node blend" style="left:380px;top:212px;min-width:128px">
+          <div class="n-top"><span class="pill">BLEND PAD</span></div>
+          <div class="nm" style="margin-top:4px">Ni 1.65% · MgO 1.9</div>
+          <div class="meta">target spec · SiO₂/MgO 2.0 · S 0.4%</div>
+        </div>
+
+        <!-- products -->
+        <div class="node" style="left:660px;top:152px">
+          <div class="n-top"><span class="pill">RKEF → NPI</span></div>
+          <div class="nm" style="margin-top:4px">NPI 12% Ni</div>
+          <div class="meta">stainless feed · line A</div>
+        </div>
+        <div class="node" style="left:660px;top:322px">
+          <div class="n-top"><span class="pill lim">HPAL → MHP</span></div>
+          <div class="nm" style="margin-top:4px">MHP 38% Ni</div>
+          <div class="meta">battery feed · acid-limited</div>
+        </div>
+
+        <!-- customers small -->
+        <div class="node" style="left:838px;top:60px;min-width:104px">
+          <div class="n-top"><span class="pill cust">CUST</span><span class="nm">Tsingshan</span></div>
+          <div class="meta">304/316L · QP M+1</div>
+        </div>
+
+        <!-- moving parcels -->
+        <div class="parcel" id="p1" style="left:200px;top:152px">82</div>
+        <div class="parcel" id="p2" style="left:300px;top:200px">14</div>
+        <div class="parcel lim" id="p3" style="left:230px;top:362px">L1</div>
+        <div class="parcel" id="p4" style="left:560px;top:178px">A</div>
+
+        <!-- cargo loadout -->
+        <div class="cargo">
+          <div class="fill" id="cargoFill" style="height:74%"></div>
+          <div class="ftxt"><div class="pct" id="cargoPct">74%</div><div class="lab" id="cargoLab">C-14 · laycan 2d</div></div>
+        </div>
+        <div style="position:absolute;right:30px;top:392px;font-size:10px;color:var(--txt-faint);width:128px;text-align:center">CARGO LOADOUT — 55 kt Panamax</div>
+
+        <div class="legend">
+          <span><i style="background:var(--green-bright)"></i>saprolite</span>
+          <span><i style="background:#7fb2e6"></i>limonite</span>
+          <span><i style="background:var(--amber)"></i>blended product</span>
+        </div>
+        <div class="sch-foot">Live · Morowali jetty · IMIP</div>
+      </div>
+
+      <!-- BOTTOM TRIO -->
+      <div class="trio">
+        <!-- binding constraint -->
+        <div class="card constraint">
+          <div class="ctitle">Binding constraint</div>
+          <div class="binding" id="bindName">Saprolite supply</div>
+          <div class="crow bind"><span class="cl">SAP SUPPLY</span><span class="cb"><i style="width:90%"></i></span><span class="cv">90%</span></div>
+          <div class="crow"><span class="cl">BLEND CAP</span><span class="cb"><i style="width:71%"></i></span><span class="cv">71%</span></div>
+          <div class="crow"><span class="cl">SMELT OFFTAKE</span><span class="cb"><i style="width:64%"></i></span><span class="cv">64%</span></div>
+          <div class="crow"><span class="cl">HPAL ACID</span><span class="cb"><i style="width:41%"></i></span><span class="cv">41%</span></div>
+          <div class="crow"><span class="cl">LAYCAN</span><span class="cb"><i style="width:56%"></i></span><span class="cv">56%</span></div>
+        </div>
+
+        <!-- gauges -->
+        <div class="card">
+          <div class="ctitle">Spec match · inventory</div>
+          <div class="gauges">
+            <div class="gauge">
+              <div class="glab">Blend ratio</div>
+              <div class="arc"><svg width="104" height="60" viewBox="0 0 104 60"><path d="M8,56 A44,44 0 0 1 96,56" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="8" stroke-linecap="round"/><path d="M8,56 A44,44 0 0 1 96,56" fill="none" stroke="var(--green-bright)" stroke-width="8" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="69"/></svg></div>
+              <div class="gnum">1.00</div><div class="gunit">balanced</div>
+            </div>
+            <div class="gauge">
+              <div class="glab">Stockpile</div>
+              <div class="arc"><svg width="104" height="60" viewBox="0 0 104 60"><path d="M8,56 A44,44 0 0 1 96,56" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="8" stroke-linecap="round"/><path d="M8,56 A44,44 0 0 1 96,56" fill="none" stroke="var(--green)" stroke-width="8" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="48"/></svg></div>
+              <div class="gnum">11<span style="font-size:13px"> d</span></div><div class="gunit">cover</div>
+            </div>
+          </div>
+          <div class="notes">
+            <div>• Spec-reject 30d: <b>0.4%</b></div>
+            <div>• Blend 1.00 · Ni 1.65% — on target</div>
+          </div>
+        </div>
+
+        <!-- disruption -->
+        <div class="card">
+          <div class="ctitle">Disruption · re-allocate</div>
+          <div class="chips">
+            <div class="chip c-blue" data-d="lme"><i></i>LME −5%</div>
+            <div class="chip c-red" data-d="reject"><i></i>Cargo rejected</div>
+            <div class="chip c-rust" data-d="laycan"><i></i>Laycan slip</div>
+            <div class="chip c-green" data-d="acid"><i></i>Acid shortage</div>
+          </div>
+          <div class="disrow">
+            <input id="disInput" placeholder="or type a disruption…" />
+            <button id="disGo">→</button>
+            <button class="reset" id="disReset" title="reset">↺</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONTRACTING PANEL -->
+      <div class="contracting">
+        <div class="dialwrap">
+          <div class="ctitle">Spot / contract mix</div>
+          <div class="mixbar">
+            <div class="mc" id="mixC" style="width:72%">CONTRACT 72%</div>
+            <div class="ms" id="mixS">SPOT 28%</div>
+          </div>
+          <div class="p90"><div class="tick" id="p90tick" style="left:82%"></div></div>
+          <input type="range" min="40" max="95" value="72" class="slider" id="mixSlider" />
+          <div class="mixrow"><span>more spot · premium</span><span>more contract · floor</span></div>
+          <div class="mixstats">
+            <div class="mixstat"><div class="k">Realised prem</div><div class="v" id="premV">$1,950<span style="font-size:10px;color:var(--txt-dim)">/wmt</span></div></div>
+            <div class="mixstat"><div class="k">Floor cover</div><div class="v" id="coverV">84%</div></div>
+          </div>
+          <div class="safetag ok" id="safeTag">✓ Within P90 supply cover — no over-contract risk</div>
+        </div>
+        <div>
+          <div class="ctitle">Contract book — 50 kt cargo window</div>
+          <table class="book">
+            <thead><tr><th>Counterparty</th><th>Product</th><th>kt</th><th>Pricing basis</th><th>QP</th><th>Spec</th><th>ToP</th></tr></thead>
+            <tbody>
+              <tr><td><span class="bp">CONTRACT</span> <span class="cu">Tsingshan</span></td><td>NPI 12% Ni</td><td>22</td><td>LME ×12% payable +$1,800</td><td>M+1</td><td>Ni ≥1.6</td><td>90%</td></tr>
+              <tr><td><span class="bp">CONTRACT</span> <span class="cu">QMB battery</span></td><td>MHP 38% Ni</td><td>10</td><td>LME ×0.80 + Co credit</td><td>M</td><td>Co ≥0.10</td><td>80%</td></tr>
+              <tr><td><span class="bp">CONTRACT</span> <span class="cu">GEM matte</span></td><td>Ni matte 75%</td><td>4</td><td>LME ×0.78 +$2,400</td><td>M+1</td><td>loose</td><td>70%</td></tr>
+              <tr class="spot"><td><span class="bp spot">SPOT</span> <span class="cu">Open pool</span></td><td>NPI / sap ore</td><td>14</td><td>negotiated prompt</td><td>prompt</td><td>flex</td><td>—</td></tr>
+            </tbody>
+          </table>
+          <div style="font-size:10px;color:var(--txt-faint);margin-top:9px;line-height:1.5">Take-or-pay (ToP) on the buyer; supply-or-pay on the seller. Contracting above P90 reliable supply exposes the book to cover-buying if the mine plan slips.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: AI -->
+    <div class="ai">
+      <div class="ai-head"><div class="ai-badge">AI</div><div class="ttl">Oresight marketing optimiser</div></div>
+      <div class="ai-lead" id="aiLead">Realised <em>78.4 $/wmt</em> vs 70.83 HPM floor — capturing premium with spec headroom — optimiser lifts to <em>81.2 $/wmt</em>.</div>
+
+      <div class="cmp">
+        <div class="box"><div class="k">Current</div><div class="v" id="curVal">78.4<span class="u">$/wmt</span></div></div>
+        <div class="arrow">→</div>
+        <div class="box opt"><div class="k">Optimised</div><div class="v" id="optVal">81.2<span class="u">$/wmt</span></div></div>
+        <div class="box"><div class="k">Value / yr</div><div class="v" id="valYr">$4.2M</div></div>
+      </div>
+
+      <div class="sec-cap">Optimise for <span class="hint">· objective function</span></div>
+      <div class="objsel" id="objSel">
+        <button data-o="netback" class="on">Netback<span class="ob-sub">$/wmt margin</span></button>
+        <button data-o="revenue">Revenue<span class="ob-sub">top line</span></button>
+        <button data-o="constraint">Margin / <span id="denomLab">t sap</span><span class="ob-sub">per constraint</span></button>
+        <button data-o="riskadj">Risk-adj<span class="ob-sub">floor-secured</span></button>
+      </div>
+      <div class="obj-note" id="objNote"><b>Netback to mine gate</b> — revenue less freight, TC/RC, royalty &amp; penalties. The marketing-native objective; balances price capture against cost-to-serve.</div>
+
+      <div class="sec-cap">Contracting strategy <span class="hint">· sets the spot/contract mix</span></div>
+      <div id="stratWrap">
+        <div class="strat on" data-s="balanced">
+          <div class="s-top"><span class="s-name">Balanced hedge</span><span class="s-flag">✓ Recommended</span></div>
+          <div class="s-desc">Contract to ~P90 reliable supply, spot the swing. Captures premium without over-committing scarce grade.</div>
+          <div class="s-stats"><span><span class="lab">mix</span><b>72/28</b></span><span><span class="lab">opt</span><b>81.2</b></span><span><span class="lab">value</span><b>$4.2M</b></span></div>
+        </div>
+        <div class="strat" data-s="lock">
+          <div class="s-top"><span class="s-name">Lock the book</span><span class="s-flag opt">Option</span></div>
+          <div class="s-desc">Maximise contracted tonnes to secure the revenue floor. Gives up spot upside; risks over-contracting vs supply.</div>
+          <div class="s-stats"><span><span class="lab">mix</span><b>88/12</b></span><span><span class="lab">opt</span><b>79.8</b></span><span><span class="lab">value</span><b>$3.6M</b></span></div>
+        </div>
+        <div class="strat" data-s="spot">
+          <div class="s-top"><span class="s-name">Ride spot</span><span class="s-flag opt">Option</span></div>
+          <div class="s-desc">Minimise commitment, chase premium. Higher expected realisation, higher variance — HPM floor caps the downside.</div>
+          <div class="s-stats"><span><span class="lab">mix</span><b>52/48</b></span><span><span class="lab">opt</span><b>83.2</b></span><span><span class="lab">value</span><b>$4.7M</b></span></div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <div class="sec-cap">Recommended actions <span class="hint" id="actCap">· netback-ranked</span></div>
+        <div id="actWrap"></div>
+      </div>
+
+      <div class="narr" id="narr">
+        The book is running balanced — blend ratio 1.00, realised price <b>7.6 $/wmt above the HPM floor</b>, cargo C-14 spec-safe with a 2-day laycan. The optimiser's moves bank premium: holding the limonite parcel for the acid-tight HPAL window and shifting marginal saprolite from NPI toward the higher-payable matte customer keep capture near 0.92 ahead of the QP M+1 fixing.
+      </div>
+
+      <div class="copilot">
+        <div class="ttl">Copilot · ask the desk</div>
+        <div class="q-chips">
+          <div class="qc">What if LME drops to $17k?</div>
+          <div class="qc">Cheapest path to spec on C-14?</div>
+          <div class="qc">Cobalt value at risk?</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footnote">
+    <b>Prototype · illustrative.</b> Concept demo for a mining commodity-marketing AI use case (nickel sales &amp; blend allocation), styled after the Oresight hauling optimiser. Domain figures grounded in 2026 market context: HPM benchmark reform effective 15 Apr 2026 (cobalt/iron/chromium added, CF 17%→30%, WMT basis); saprolite 1.5–2.0% Ni → RKEF/NPI for stainless, limonite 0.8–1.2% Ni → HPAL/MHP for battery; LME nickel ≈ $18.4k/t, saprolite ≈ $69–80/wmt, HPAL acid tight on sulphur. Numbers are synthetic for demonstration, not investment advice.
+  </div>
+</div>
+
+<script>
+  // clock
+  function tick(){
+    const d=new Date();
+    const p=n=>String(n).padStart(2,'0');
+    document.getElementById('clock').textContent=`${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+  }
+  tick(); setInterval(tick,1000);
+
+  // animate parcels along lanes
+  const parcels=[
+    {el:'p1',from:[200,152],to:[360,228],dur:5200},
+    {el:'p2',from:[300,205],to:[150,150],dur:6000},
+    {el:'p3',from:[230,362],to:[360,258],dur:6400},
+    {el:'p4',from:[560,178],to:[660,170],dur:4600},
+  ];
+  parcels.forEach(p=>{
+    const node=document.getElementById(p.el);
+    let start=null;
+    function frame(t){
+      if(!start)start=t;
+      let k=((t-start)%p.dur)/p.dur;
+      const x=p.from[0]+(p.to[0]-p.from[0])*k;
+      const y=p.from[1]+(p.to[1]-p.from[1])*k;
+      node.style.left=(x/1000*100)+'%';
+      node.style.top=y+'px';
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  });
+
+  // ── state-driven optimiser: objective × contracting strategy ──
+  const state={obj:'netback',strat:'balanced',mix:72,bindDenom:'t sap'};
+
+  const stratBase={
+    balanced:{opt:81.2,yr:4.2,cargo:74,mix:72},
+    lock:{opt:79.8,yr:3.6,cargo:66,mix:88},
+    spot:{opt:83.2,yr:4.7,cargo:86,mix:52},
+  };
+  const objAdj={
+    netback:{dOpt:0,mYr:1.00,unit:'$/wmt'},
+    revenue:{dOpt:2.4,mYr:1.28,unit:'$/wmt gross'},
+    constraint:{dOpt:-0.9,mYr:1.08,unit:'$/wmt'},
+    riskadj:{dOpt:-2.3,mYr:0.90,unit:'$/wmt'},
+  };
+  const A=(pill,cls,id,desc,crd,delta,zero)=>({pill,cls,id,desc,crd,delta,zero});
+  const objMeta={
+    netback:{cap:'· netback-ranked',
+      note:'<b>Netback to mine gate</b> — revenue less freight, TC/RC, royalty &amp; penalties. The marketing-native objective; balances price capture against cost-to-serve.',
+      lead:o=>'Netback <em>'+o+' $/wmt</em> vs 70.83 HPM floor — capturing premium net of cost-to-serve — optimiser holds margin with spec headroom.',
+      narr:'Optimising <b>netback to mine gate</b>: every cargo is ranked on price less freight, treatment charges, the grade-linked PNBP royalty and penalties. The book stays balanced at blend 1.00, ~7.6 $/wmt above the HPM floor, with the limonite parcel held for the acid-tight HPAL window.',
+      acts:[A('BLEND','blend','Cargo C-14','Lift MgO toward 2.0 to raise payable Ni','rolling','+0.0',true),
+            A('HOLD','hold','LIM-1','Hold limonite parcel for HPAL premium window','6h','+0.3'),
+            A('ALLOCATE','alloc','SAP-1','Re-allocate 8 kt saprolite NPI → matte customer','now','+0.4')]},
+    revenue:{cap:'· top-line-ranked',
+      note:'<b>Revenue / top line</b> — maximise price × volume, ignoring cost-to-serve. Pushes spot &amp; volume; <b>margin runs ~$0.7M below netback</b> on freight + penalties.',
+      lead:o=>'Top-line mode — realised <em>'+o+' $/wmt gross</em>, chasing peak premium and volume. Margin trails netback; use only when cash-in, not margin, is the goal.',
+      narr:'Optimising <b>revenue</b>: the solver pushes the highest-premium spot stainless and lifts MHP volume regardless of cost-to-serve. Top line climbs, but distant-port freight and a +0.5 spec penalty erode margin by ~$0.7M versus the netback plan — a deliberate volume-over-margin call.',
+      acts:[A('ALLOCATE','alloc','Spot pool','Push 12 kt to peak-premium spot stainless','now','+1.9'),
+            A('BLEND','blend','Cargo C-19','Max-volume blend, accept +0.5 penalty','rolling','+1.1'),
+            A('HOLD','hold','Matte slack','Defer matte nomination, reopen to spot','8h','+0.6')]},
+    constraint:{cap:'· margin-per-constraint',
+      note:'<b>Margin per tonne of the binding constraint</b> — saprolite supply today. Result: <b>lock the cheap tonnes, sell the scarce grade to spot.</b>',
+      lead:o=>'Per-constraint mode — maximising margin on each tonne of the <em>binding</em> resource. Net realisation '+o+' $/wmt, but the routing flips toward scarce-grade spot.',
+      narr:'Optimising <b>margin per tonne of saprolite</b> (the binding constraint): the solver values the scarce high-grade ore at its shadow price, so it <b>sells the 1.9% saprolite to spot</b> rather than locking it cheap, and contracts the low-grade and limonite tonnes instead. Counter-intuitive but correct — it banks the constraint\'s opportunity value.',
+      acts:[A('SPOT','alloc','SAP-1 hi-grade','Sell scarce 1.9% saprolite to spot, not contract','now','+0.6'),
+            A('CONTRACT','hold','Low-grade + LIM','Lock low-grade & limonite tonnes on offtake','—','+0.2'),
+            A('ROUTE','blend','Avoid acid','Favour RKEF cargoes while acid binds','rolling','+0.3')]},
+    riskadj:{cap:'· floor-secured',
+      note:'<b>Risk-adjusted margin</b> — maximise expected margin subject to a revenue floor. Trades premium for certainty; <b>revenue-at-risk −38%.</b>',
+      lead:o=>'Risk-adjusted — realised <em>'+o+' $/wmt</em>, premium traded for a secured floor. Best when covenants or cash cover demand revenue certainty.',
+      narr:'Optimising <b>risk-adjusted margin</b>: the solver caps spot exposure and hedges QP M+1 to hold a revenue floor that covers cash opex. Expected realisation steps down, but revenue-at-risk falls ~38% — the right call into volatile windows or when financing covenants require certainty.',
+      acts:[A('CONTRACT','alloc','Tsingshan +','Extend NPI offtake +10 kt, lock the floor','now','+0.0',true),
+            A('HEDGE','hold','QP M+1','Hedge 60% of spot exposure on LME','now','−0.2'),
+            A('HOLD','blend','Spot cap','Cap spot at 16% of book','now','+0.0',true)]},
+  };
+
+  function fmtPrem(mix){const p=Math.round((1500+(100-mix)*16)/10)*10;return '$'+p.toLocaleString();}
+  function renderMix(){
+    const c=state.mix,s=100-c;
+    document.getElementById('mixC').style.width=c+'%';
+    document.getElementById('mixC').textContent='CONTRACT '+c+'%';
+    document.getElementById('mixS').textContent='SPOT '+s+'%';
+    document.getElementById('premV').innerHTML=fmtPrem(c)+'<span style="font-size:10px;color:var(--txt-dim)">/wmt</span>';
+    const cover=Math.min(98,c+12);
+    document.getElementById('coverV').textContent=cover+'%';
+    const tag=document.getElementById('safeTag');
+    if(c>82){tag.className='safetag warn';tag.innerHTML='⚠ Contracted '+c+'% &gt; P90 supply (82%) — cover-buying risk if mine plan slips';}
+    else{tag.className='safetag ok';tag.innerHTML='✓ Within P90 supply cover — no over-contract risk';}
+  }
+  function render(){
+    const b=stratBase[state.strat],adj=objAdj[state.obj],m=objMeta[state.obj];
+    const opt=(b.opt+adj.dOpt).toFixed(1);
+    document.getElementById('optVal').innerHTML=opt+'<span class="u">'+adj.unit+'</span>';
+    document.getElementById('valYr').textContent='$'+(b.yr*adj.mYr).toFixed(1)+'M';
+    document.getElementById('aiLead').innerHTML=m.lead(opt);
+    document.getElementById('objNote').innerHTML=m.note;
+    document.getElementById('narr').innerHTML=m.narr;
+    document.getElementById('actCap').textContent=m.cap;
+    document.getElementById('denomLab').textContent=state.bindDenom;
+    document.getElementById('cargoFill').style.height=b.cargo+'%';
+    document.getElementById('cargoPct').textContent=b.cargo+'%';
+    document.getElementById('actWrap').innerHTML=m.acts.map(a=>
+      '<div class="act"><span class="a-pill '+a.cls+'">'+a.pill+'</span>'+
+      '<div class="a-body"><div class="a-id">'+a.id+'</div><div class="a-desc">'+a.desc+' <span class="crd">· '+a.crd+'</span></div></div>'+
+      '<div class="a-delta'+(a.zero?' zero':'')+'">'+a.delta+' $/wmt</div></div>').join('');
+    // sync pill / strat highlight
+    document.querySelectorAll('#objSel button').forEach(x=>x.classList.toggle('on',x.dataset.o===state.obj));
+    document.querySelectorAll('.strat').forEach(x=>x.classList.toggle('on',x.dataset.s===state.strat));
+  }
+  document.querySelectorAll('#objSel button').forEach(btn=>btn.addEventListener('click',()=>{state.obj=btn.dataset.o;render();}));
+  document.querySelectorAll('.strat').forEach(s=>s.addEventListener('click',()=>{
+    state.strat=s.dataset.s;state.mix=stratBase[s.dataset.s].mix;
+    document.getElementById('mixSlider').value=state.mix;renderMix();render();
+  }));
+  document.getElementById('mixSlider').addEventListener('input',e=>{
+    state.mix=+e.target.value;state.strat='custom';
+    document.querySelectorAll('.strat').forEach(x=>x.classList.remove('on'));
+    renderMix();
+  });
+  renderMix();render();
+
+  // disruptions
+  const DIS={
+    lme:'<b>LME −5% → $17.5k/t.</b> Payable capture slips to 0.89; optimiser pivots toward <b>contract-protected tonnes</b> and defers spot saprolite. Cobalt-rich limonite cushions realised by ~0.6 $/wmt. Recommend holding QP fixing for the rebound.',
+    reject:'<b>Cargo rejected — MgO above 2.2 spec.</b> Re-blend SAP-1 with 12% limonite to pull MgO to 1.9; C-14 re-clears in 4h. Demurrage exposure $38k if laycan slips — prioritise blend over throughput now.',
+    laycan:'<b>Vessel laycan slip 36h.</b> Stockpile cover still 11d, no starve risk. Optimiser re-sequences: load battery MHP cargo first, hold NPI parcel — preserves premium and avoids $52k demurrage.',
+    acid:'<b>Sulphuric acid shortage — HPAL throughput −18%.</b> Binding constraint shifts to <b>HPAL acid</b>. Re-allocate limonite to stockpile, lift saprolite→NPI to defend offtake fill. MHP premium window deferred; realised holds at 77.9 $/wmt.',
+  };
+  function applyDis(txt){ document.getElementById('narr').innerHTML=txt; }
+  document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{
+    applyDis(DIS[c.dataset.d]);
+    // binding constraint follows the shock: acid shortage makes HPAL acid the binding resource
+    if(c.dataset.d==='acid'){
+      state.bindDenom='unit acid';
+      document.getElementById('bindName').textContent='HPAL acid';
+      if(state.obj==='constraint')document.getElementById('denomLab').textContent=state.bindDenom;
+    }
+  }));
+  document.getElementById('disGo').addEventListener('click',()=>{
+    const v=document.getElementById('disInput').value.trim();
+    if(v) applyDis('<b>Re-dispatch · "'+v.replace(/</g,'&lt;')+'"</b> — optimiser re-solves the blend and allocation against current specs, offtake commitments and laycan windows, then re-ranks the recommended actions to defend realised price above the HPM floor.');
+  });
+  document.getElementById('disInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('disGo').click();});
+  document.getElementById('disReset').addEventListener('click',()=>{
+    document.getElementById('disInput').value='';
+    state.bindDenom='t sap';
+    document.getElementById('bindName').textContent='Saprolite supply';
+    render();
+  });
+  document.querySelectorAll('.toggle button').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('.toggle button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  }));
+</script>
+</body>
+</html>

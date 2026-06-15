@@ -499,7 +499,7 @@ export const USE_CASES = {
   'marketing': {
     title: 'Marketing Optimisation',
     decisions: 'spot volume / contracts',
-    stage: 'Marketing', horizon: '4w', drivers: ['margin'],
+    stage: 'Marketing', horizon: '4w', drivers: ['margin'], href: '/marketing.html',
     pitch: 'AI balances the contract book against the spot market — placing each parcel where realised price, counterparty risk and logistics cost net out best.',
     site: 'FeNi & ore sales book — Singapore trading desk',
     kpis: [
