@@ -36,6 +36,7 @@ export function renderNav(active = '') {
       <nav class="nav-links">
         <a href="/index.html#matrix" ${active === 'matrix' ? 'class="active"' : ''}>Value Chain</a>
         <a href="/fsp.html" ${active === 'fsp' ? 'class="active"' : ''}>Scheduler (FSP)</a>
+        <a href="/blast.html" ${active === 'blast' ? 'class="active"' : ''}>Blast</a>
         <a href="/haul.html" ${active === 'haul' ? 'class="active"' : ''}>Hauling</a>
         <a href="/control-tower.html" ${active === 'control-tower' ? 'class="active"' : ''}>Control Tower</a>
         <a href="/maintenance.html" ${active === 'maintenance' ? 'class="active"' : ''}>Maintenance</a>

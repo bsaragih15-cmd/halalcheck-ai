@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OreSight AI — Blast Optimisation</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *{box-sizing:border-box;}
+    html,body{margin:0;padding:0;background:#eeece3;}
+    body{font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;color:#1a1f17;}
+    @keyframes osBlink{0%,100%{opacity:1;}50%{opacity:.25;}}
+    @keyframes osFlash{0%,100%{opacity:1;}50%{opacity:.35;}}
+    @keyframes osDash{to{stroke-dashoffset:-32;}}
+    input::placeholder{color:#9aa091;}
+    input:focus{outline:none;}
+    button{cursor:pointer;font-family:inherit;}
+    a{text-decoration:none;color:inherit;}
+    .rail::-webkit-scrollbar{width:8px;}
+    .rail::-webkit-scrollbar-thumb{background:#dcdac9;border-radius:6px;}
+    .b-tab{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;letter-spacing:.04em;background:transparent;color:#8fa18f;border:1px solid #2c382a;border-radius:8px;padding:6px 13px;transition:all .16s;}
+    .b-tab:hover{color:#dfe5da;border-color:#3c5238;}
+    .b-tab.active{background:#15803d;color:#fff;border-color:#15803d;}
+    .b-preset{border:1px solid #e7e4d8;background:#faf9f3;color:#3a4133;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.01em;font-weight:600;padding:8px 11px;border-radius:9px;display:inline-flex;align-items:center;gap:6px;transition:all .16s;}
+    .b-preset:hover{border-color:#cdd3bf;background:#f3f1e6;}
+    .b-preset.active{border-color:#15803d;background:#eef6ef;color:#15803d;}
+    .b-cpq{border:1px solid #e7e4d8;background:#faf9f3;color:#3a4133;font-family:'Inter',sans-serif;font-size:12.5px;padding:7px 11px;border-radius:9px;transition:all .16s;text-align:left;}
+    .b-cpq:hover{border-color:#cdd3bf;background:#f3f1e6;}
+    .b-rng{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;background:#2c382a;outline:none;margin:0;}
+    .b-rng::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:15px;height:15px;border-radius:50%;background:#dfe5da;border:2px solid #15803d;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+    .b-rng::-webkit-slider-thumb:active{cursor:grabbing;background:#15803d;}
+    .b-rng::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:#dfe5da;border:2px solid #15803d;cursor:grab;}
+  </style>
+</head>
+<body>
+<div style="height:100vh;min-height:902px;overflow:hidden;display:flex;flex-direction:column;background:#eeece3;padding:15px 19px 13px;">
+
+  <!-- HEADER -->
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-shrink:0;margin-bottom:13px;">
+    <div style="display:flex;align-items:center;gap:13px;">
+      <a href="/index.html#matrix" title="Back to use-case matrix" style="width:34px;height:34px;border-radius:9px;background:#15803d;display:inline-flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;">OS</a>
+      <div style="white-space:nowrap;">
+        <div style="display:flex;align-items:baseline;gap:10px;">
+          <span style="font-size:19px;font-weight:800;letter-spacing:-0.015em;color:#161b13;">Blast Optimisation</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9aa091;">OreSight AI</span>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.03em;color:#7c8473;margin-top:3px;">Batu Hijau · Bench 4180-W · 229 mm · bulk emulsion + electronic dets</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <a href="/control-tower.html" style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:#7c8473;border:1px solid #e7e4d8;border-radius:8px;padding:7px 12px;background:#fff;">↗ Control Tower</a>
+      <div style="text-align:right;">
+        <div id="blastClock" style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:#161b13;line-height:1;">--:--:--</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#9aa091;margin-top:4px;">WITA · Shift A</div>
+      </div>
+      <span style="display:inline-flex;align-items:center;gap:8px;padding:7px 13px;border-radius:999px;background:#eaf2ea;border:1px solid #cfe1cf;">
+        <span style="width:8px;height:8px;border-radius:50%;background:#15803d;animation:osBlink 1.7s infinite;"></span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#15803d;font-weight:600;">Live</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div style="flex:1;min-height:0;display:grid;grid-template-columns:1.42fr 1fr;gap:14px;">
+
+    <!-- LEFT -->
+    <div style="display:flex;flex-direction:column;gap:12px;min-height:0;">
+
+      <!-- KPI ROW -->
+      <div id="kpiRow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;flex-shrink:0;"></div>
+
+      <!-- DARK CONTROL-ROOM SCREEN -->
+      <div style="flex:1;min-height:0;background:#10150f;border:1px solid #283226;border-radius:16px;padding:14px 15px;display:flex;flex-direction:column;gap:11px;box-shadow:0 1px 2px rgba(20,30,15,0.04);">
+
+        <!-- tabs + status -->
+        <div style="display:flex;align-items:center;gap:9px;flex-shrink:0;">
+          <button class="b-tab active" data-tab="frag">◷ Fragmentation</button>
+          <button class="b-tab" data-tab="pattern">⬡ Pattern</button>
+          <button class="b-tab" data-tab="recon">↺ Reconciliation</button>
+          <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#7fc796;display:inline-flex;align-items:center;gap:7px;"><span id="solveDot" style="width:7px;height:7px;border-radius:50%;background:#7fc796;"></span><span id="solveLabel">optimal</span></span>
+        </div>
+
+        <!-- constraint strip -->
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#141a12;border:1px solid #283226;border-radius:10px;padding:9px 13px;flex-shrink:0;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.08em;color:#8fa18f;text-transform:uppercase;">Binding constraint</span>
+          <span style="display:inline-flex;align-items:center;gap:7px;"><span id="bindDot" style="width:9px;height:9px;border-radius:2px;background:#15803d;"></span><span id="bindName" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:#15803d;text-transform:capitalize;">fragmentation</span></span>
+          <span id="bindNote" style="font-size:11.5px;color:#9fb09c;line-height:1.35;flex:1;min-width:160px;"></span>
+        </div>
+
+        <!-- content grid: main area | safety -->
+        <div style="flex:1;min-height:318px;display:grid;grid-template-columns:1.85fr 1fr;gap:12px;">
+
+          <!-- MAIN AREA -->
+          <div style="min-height:0;background:#0c110b;border:1px solid #20291d;border-radius:12px;padding:11px 12px;display:flex;flex-direction:column;">
+
+            <!-- FRAGMENTATION -->
+            <div id="panelFrag" style="display:flex;flex-direction:column;flex:1;min-height:0;">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#8fa18f;font-weight:700;">Size distribution · cumulative % passing</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#cdd6c6;">P80 <span id="fragP80Lbl" style="color:#5fbf86;font-weight:800;">— mm</span> · target <span id="fragTargetLbl">—</span></span>
+              </div>
+              <svg viewBox="0 0 600 270" preserveAspectRatio="xMidYMid meet" style="width:100%;flex:1;min-height:0;">
+                <rect x="54" y="16" width="186.5" height="234" fill="#b45309" opacity="0.10"></rect>
+                <rect x="240.5" y="16" width="227.5" height="234" fill="#15803d" opacity="0.12"></rect>
+                <rect x="468" y="16" width="57.3" height="234" fill="#d97706" opacity="0.13"></rect>
+                <rect x="525.3" y="16" width="56.7" height="234" fill="#b91c1c" opacity="0.13"></rect>
+                <text x="147" y="29" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1" fill="#c98a4e">FINES</text>
+                <text x="354" y="29" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1" fill="#4fae6f">ON-SPEC · MILL FEED</text>
+                <text x="496" y="29" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1" fill="#e09a45">OVERSIZE</text>
+                <text x="553" y="29" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="0.5" fill="#d56a6a">BLDR</text>
+                <g stroke="#1c241a" stroke-width="1">
+                  <line x1="54" y1="250" x2="582" y2="250"></line><line x1="54" y1="203.2" x2="582" y2="203.2"></line><line x1="54" y1="156.4" x2="582" y2="156.4"></line><line x1="54" y1="109.6" x2="582" y2="109.6"></line><line x1="54" y1="62.8" x2="582" y2="62.8"></line><line x1="54" y1="16" x2="582" y2="16"></line>
+                </g>
+                <g font-family="'JetBrains Mono',monospace" font-size="8" fill="#5a6555" text-anchor="end">
+                  <text x="49" y="253">0</text><text x="49" y="206">20</text><text x="49" y="159">40</text><text x="49" y="112">60</text><text x="49" y="65.5">80</text><text x="49" y="19">100</text>
+                </g>
+                <g font-family="'JetBrains Mono',monospace" font-size="8" fill="#5a6555" text-anchor="middle">
+                  <text x="138.8" y="263">10</text><text x="240.5" y="263">30</text><text x="352" y="263">100</text><text x="453.6" y="263">300</text><text x="565.2" y="263">1000</text>
+                </g>
+                <line id="fragTarget" x1="240" y1="16" x2="240" y2="250" stroke="#7fc796" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.85"></line>
+                <polyline id="fragCurve" points="" fill="none" stroke="#5fbf86" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"></polyline>
+                <line id="fragCrossH" x1="54" y1="62.8" x2="240" y2="62.8" stroke="#cdd6c6" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"></line>
+                <line id="fragCrossV" x1="240" y1="62.8" x2="240" y2="250" stroke="#cdd6c6" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"></line>
+                <circle id="fragP80Dot" cx="240" cy="62.8" r="4.5" fill="#5fbf86" stroke="#0c110b" stroke-width="1.5"></circle>
+              </svg>
+              <div id="fragChips" style="display:flex;gap:7px;margin-top:6px;flex-shrink:0;"></div>
+            </div>
+
+            <!-- PATTERN -->
+            <div id="panelPattern" style="display:none;flex-direction:column;flex:1;min-height:0;">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#8fa18f;font-weight:700;">Bench plan · <span id="patDims">—</span></span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#cdd6c6;">Δ<span id="patTiming">—</span> ms inter-hole · <span id="patCharge">—</span> kg/hole</span>
+              </div>
+              <svg viewBox="0 0 600 270" preserveAspectRatio="xMidYMid meet" style="width:100%;flex:1;min-height:0;">
+                <defs><pattern id="benchgrid" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0 L0 0 0 30" fill="none" stroke="#ffffff08" stroke-width="1"></path></pattern></defs>
+                <rect x="0" y="0" width="600" height="270" fill="url(#benchgrid)"></rect>
+                <line x1="40" y1="34" x2="560" y2="34" stroke="#3c5238" stroke-width="2.5" stroke-dasharray="2 5"></line>
+                <text x="44" y="28" font-family="'JetBrains Mono',monospace" font-size="8.5" letter-spacing="1" fill="#5d7257">FREE FACE</text>
+                <g id="timingLayer"></g>
+                <g id="holeLayer"></g>
+                <circle id="initRing" cx="70" cy="240" r="6" fill="none" stroke="#e8c46a" stroke-width="2"></circle>
+                <text id="initLabel" x="68" y="258" font-family="'JetBrains Mono',monospace" font-size="8.5" fill="#e8c46a">INIT</text>
+              </svg>
+              <div style="display:flex;align-items:center;gap:6px 16px;flex-wrap:wrap;margin-top:6px;flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#9fb09c;">
+                <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#2f7d4f;"></span>SOFT</span>
+                <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#c97a1e;"></span>MEDIUM</span>
+                <span style="display:inline-flex;align-items:center;gap:5px;"><span style="width:10px;height:10px;border-radius:50%;background:#7c3aed;"></span>MWD HARD ZONE</span>
+                <span style="margin-left:auto;color:#6f7c68;">○ size = charge · ┄ = timing contour</span>
+              </div>
+            </div>
+
+            <!-- RECONCILIATION -->
+            <div id="panelRecon" style="display:none;flex-direction:column;flex:1;min-height:0;">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:4px;">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#8fa18f;font-weight:700;">Post-blast · planned vs image-measured</span>
+                <span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#cdd6c6;">WipFrag · last fired bench</span>
+              </div>
+              <svg viewBox="0 0 600 270" preserveAspectRatio="xMidYMid meet" style="width:100%;flex:1;min-height:0;">
+                <rect x="240.5" y="16" width="227.5" height="234" fill="#15803d" opacity="0.10"></rect>
+                <g stroke="#1c241a" stroke-width="1"><line x1="54" y1="250" x2="582" y2="250"></line><line x1="54" y1="133" x2="582" y2="133"></line><line x1="54" y1="16" x2="582" y2="16"></line></g>
+                <g font-family="'JetBrains Mono',monospace" font-size="8" fill="#5a6555" text-anchor="middle">
+                  <text x="138.8" y="263">10</text><text x="240.5" y="263">30</text><text x="352" y="263">100</text><text x="453.6" y="263">300</text><text x="565.2" y="263">1000</text>
+                </g>
+                <polyline id="reconPlanned" points="" fill="none" stroke="#7fc796" stroke-width="2.4" stroke-linejoin="round"></polyline>
+                <polyline id="reconActual" points="" fill="none" stroke="#e8c46a" stroke-width="2.2" stroke-dasharray="5 4" stroke-linejoin="round"></polyline>
+              </svg>
+              <div style="display:flex;gap:7px;margin-top:6px;flex-shrink:0;">
+                <div style="flex:1;background:#141a12;border:1px solid #283226;border-radius:8px;padding:6px 9px;"><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;text-transform:uppercase;color:#7c8a78;">Planned P80 <span style="color:#7fc796;">▬</span></div><div id="reconPlannedP80" style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:800;color:#cdd6c6;margin-top:2px;">— mm</div></div>
+                <div style="flex:1;background:#141a12;border:1px solid #283226;border-radius:8px;padding:6px 9px;"><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;text-transform:uppercase;color:#7c8a78;">Measured P80 <span style="color:#e8c46a;">┄</span></div><div id="reconActualP80" style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:800;color:#e8c46a;margin-top:2px;">— mm</div></div>
+                <div style="flex:1;background:#141a12;border:1px solid #283226;border-radius:8px;padding:6px 9px;"><div style="font-family:'JetBrains Mono',monospace;font-size:8.5px;text-transform:uppercase;color:#7c8a78;">Reconciliation</div><div id="reconErr" style="font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:800;color:#5fbf86;margin-top:2px;">—</div></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- SAFETY (always visible) -->
+          <div style="min-height:0;display:flex;flex-direction:column;gap:9px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#8fa18f;font-weight:700;flex-shrink:0;">Safety gate · always on</div>
+            <div id="ppvCard" style="background:#0c110b;border:1px solid #283226;border-radius:11px;padding:9px 11px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:#8b9182;align-self:flex-start;">Ground vibration · PPV</div>
+              <svg viewBox="0 0 200 116" style="width:100%;max-width:118px;">
+                <path d="M22 108 A78 78 0 0 1 178 108" fill="none" stroke="#222c1f" stroke-width="11" stroke-linecap="round"></path>
+                <path id="ppvLimArc" d="" fill="none" stroke="#5a2a2a" stroke-width="11" stroke-linecap="round"></path>
+                <line id="ppvNeedle" x1="100" y1="108" x2="100" y2="36" stroke="#5fbf86" stroke-width="3" stroke-linecap="round"></line>
+                <circle id="ppvHub" cx="100" cy="108" r="5" fill="#5fbf86"></circle>
+              </svg>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:800;line-height:1;margin-top:-1px;"><span id="ppvVal" style="color:#5fbf86;">—</span><span style="font-size:10px;color:#7c8a78;font-weight:500;"> mm/s</span></div>
+              <div id="ppvCap" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#8b9182;margin-top:3px;">limit — · —</div>
+            </div>
+            <div id="flyCard" style="background:#0c110b;border:1px solid #283226;border-radius:11px;padding:9px 11px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:#8b9182;align-self:flex-start;">Flyrock range</div>
+              <svg viewBox="0 0 200 116" style="width:100%;max-width:118px;">
+                <path d="M22 108 A78 78 0 0 1 178 108" fill="none" stroke="#222c1f" stroke-width="11" stroke-linecap="round"></path>
+                <path id="flyLimArc" d="" fill="none" stroke="#5a2a2a" stroke-width="11" stroke-linecap="round"></path>
+                <line id="flyNeedle" x1="100" y1="108" x2="100" y2="36" stroke="#5fbf86" stroke-width="3" stroke-linecap="round"></line>
+                <circle id="flyHub" cx="100" cy="108" r="5" fill="#5fbf86"></circle>
+              </svg>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:800;line-height:1;margin-top:-1px;"><span id="flyVal" style="color:#5fbf86;">—</span><span style="font-size:10px;color:#7c8a78;font-weight:500;"> m</span></div>
+              <div id="flyCap" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#8b9182;margin-top:3px;">exclusion — · —</div>
+            </div>
+            <div id="rejectBanner" style="display:none;background:#991b1b;border-radius:9px;padding:8px 10px;text-align:center;animation:osFlash 0.9s infinite;flex-shrink:0;">
+              <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:800;letter-spacing:.05em;color:#fff;">⚠ DESIGN REJECTED</div>
+              <div id="rejectReason" style="font-family:'JetBrains Mono',monospace;font-size:8.5px;color:#fbcaca;margin-top:2px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- DESIGN SLIDERS -->
+        <div style="flex-shrink:0;background:#141a12;border:1px solid #283226;border-radius:11px;padding:10px 13px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#8fa18f;font-weight:700;">Design controls</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#6f7c68;">drag to redesign — curve &amp; gates react live</span>
+          </div>
+          <div id="sliders" style="display:grid;grid-template-columns:repeat(6,1fr);gap:13px;"></div>
+        </div>
+      </div>
+
+      <!-- SCENARIO INJECTS -->
+      <div style="flex-shrink:0;background:#fff;border:1px solid #e7e4d8;border-radius:14px;padding:12px 15px;box-shadow:0 1px 2px rgba(20,30,15,0.04);display:flex;align-items:center;gap:13px;flex-wrap:wrap;">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:#8b9182;font-weight:600;">Scenario inject</span>
+        <div id="presets" style="display:flex;gap:7px;flex-wrap:wrap;"></div>
+        <div style="display:flex;gap:7px;align-items:center;background:#faf9f3;border:1px solid #e7e4d8;border-radius:10px;padding:4px 5px 4px 12px;margin-left:auto;flex:1;min-width:230px;">
+          <input id="blastFree" placeholder='or type a condition — e.g. "hard band north wall, house at 330 m"' style="flex:1;min-width:0;background:transparent;border:none;color:#1a1f17;font-family:'Inter',sans-serif;font-size:12.5px;padding:5px 0;" />
+          <button id="blastFreeBtn" title="Re-design" style="border:none;background:#15803d;color:#fff;font-size:14px;font-weight:700;padding:6px 12px;border-radius:8px;">→</button>
+        </div>
+        <span id="parsedNote" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.02em;color:#0e7490;width:100%;min-height:11px;"></span>
+      </div>
+    </div>
+
+    <!-- RIGHT — AI RAIL -->
+    <aside class="rail" style="min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:12px;padding-right:3px;">
+      <div style="background:#fff;border:1px solid #e7e4d8;border-radius:16px;padding:19px 21px;box-shadow:0 1px 2px rgba(20,30,15,0.04);">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:13px;">
+          <span style="width:26px;height:26px;border-radius:8px;background:#15803d;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;font-family:'JetBrains Mono',monospace;">AI</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8b9182;font-weight:600;">OreSight blast engineer</span>
+          <span id="aiTag" style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:#15803d;">optimised</span>
+        </div>
+        <div id="aiHeadline" style="font-size:19px;font-weight:700;line-height:1.4;letter-spacing:-0.01em;margin-bottom:16px;color:#161b13;">Solving bench…</div>
+        <div style="display:flex;gap:10px;margin-bottom:17px;">
+          <div style="flex:1;background:#faf9f3;border:1px solid #eeece1;border-radius:12px;padding:12px 14px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#9aa091;margin-bottom:5px;">As-drilled P80</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;color:#3a4133;"><span id="baseP80">—</span><span style="font-size:11px;color:#9aa091;font-weight:500;"> mm</span></div>
+          </div>
+          <div style="display:flex;align-items:center;font-size:18px;color:#15803d;">→</div>
+          <div style="flex:1;background:#eef6ef;border:1px solid #cfe3d3;border-radius:12px;padding:12px 14px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#2f8a52;margin-bottom:5px;">Optimised P80</div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;color:#15803d;"><span id="optP80">—</span><span style="font-size:11px;color:#2f8a52;font-weight:500;"> mm</span></div>
+          </div>
+          <div style="flex:1;background:#faf9f3;border:1px solid #eeece1;border-radius:12px;padding:12px 14px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#9aa091;margin-bottom:5px;">Value / yr</div>
+            <div id="valueDisp" style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;color:#161b13;">—</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:17px;">
+          <div style="flex:1;background:#faf9f3;border:1px solid #eeece1;border-radius:10px;padding:9px 12px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;color:#9aa091;letter-spacing:.04em;">Powder factor</div><div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:#3a4133;margin-top:3px;"><span id="pfDisp">—</span> kg/m³</div></div>
+          <div style="flex:1;background:#faf9f3;border:1px solid #eeece1;border-radius:10px;padding:9px 12px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;color:#9aa091;letter-spacing:.04em;">Mine-to-mill</div><div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:#15803d;margin-top:3px;">+<span id="upliftDisp">—</span> t/h</div></div>
+          <div style="flex:1;background:#faf9f3;border:1px solid #eeece1;border-radius:10px;padding:9px 12px;"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;color:#9aa091;letter-spacing:.04em;">Dig rate</div><div style="font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:800;color:#3a4133;margin-top:3px;"><span id="digDisp">—</span> bcm/h</div></div>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8b9182;font-weight:600;margin-bottom:10px;">Design actions</div>
+        <div id="aiActions" style="display:flex;flex-direction:column;gap:8px;margin-bottom:17px;"></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8b9182;font-weight:600;margin-bottom:10px;">Recommendations</div>
+        <div id="aiRecs" style="display:flex;flex-direction:column;gap:9px;margin-bottom:14px;"></div>
+        <div id="aiNarrative" style="font-size:12.5px;line-height:1.55;color:#6b7264;border-top:1px solid #eeece1;padding-top:12px;"></div>
+      </div>
+
+      <!-- COPILOT -->
+      <div style="background:#fff;border:1px solid #e7e4d8;border-radius:16px;padding:17px 19px;box-shadow:0 1px 2px rgba(20,30,15,0.04);">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:#8b9182;font-weight:600;margin-bottom:12px;">Copilot · ask the bench</div>
+        <div id="copilotQs" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px;"></div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+          <input id="cpInput" placeholder="Ask about the design, limits or value…" style="flex:1;min-width:0;background:#faf9f3;border:1px solid #e7e4d8;color:#1a1f17;font-family:'Inter',sans-serif;font-size:13px;padding:10px 13px;border-radius:10px;" />
+          <button id="cpBtn" style="border:none;background:#15803d;color:#fff;font-size:13px;font-weight:700;padding:10px 17px;border-radius:10px;">Ask</button>
+        </div>
+        <div id="copilotAnswer" style="font-size:13px;line-height:1.55;color:#4a5142;background:#faf9f3;border:1px solid #eeece1;border-radius:11px;padding:13px 15px;">Ask about the binding constraint, the PPV / flyrock gates, why the powder factor sits where it does, or the mine-to-mill value — every answer is read off the live design.</div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+  <script type="module" src="/js/blast.js"></script>
+</body>
+</html>

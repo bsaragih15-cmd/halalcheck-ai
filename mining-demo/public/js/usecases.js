@@ -203,7 +203,7 @@ export const USE_CASES = {
   'blast': {
     title: 'Blast Optimisation',
     decisions: 'drill spacing & powder factor',
-    stage: 'Drill & Blast', horizon: '4w', drivers: ['throughput'],
+    stage: 'Drill & Blast', horizon: '4w', drivers: ['throughput'], href: '/blast.html',
     pitch: 'AI links drill-and-blast design to downstream crusher performance: fragmentation predicted per blast, powder factor tuned per domain, and redrill rates driven down.',
     site: 'Pit 2 saprolite & waste domains — Morowali Nickel Operations',
     kpis: [

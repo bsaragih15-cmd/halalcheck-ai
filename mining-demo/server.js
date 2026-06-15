@@ -7,6 +7,7 @@ import { maintenanceFallback, safetyFallback, productionFallback } from './data/
 import { parseDisruptionFallback, copilotFallback } from './data/fsp.js';
 import { haulFallback, haulParseFallback, haulCopilotFallback } from './data/haul.js';
 import { irocFallback, irocParseFallback, irocCopilotFallback } from './data/iroc.js';
+import { blastFallback, blastParseFallback, blastCopilotFallback } from './data/blast.js';
 import { USE_CASES } from './public/js/usecases.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -322,6 +323,58 @@ Return JSON with EXACTLY this structure:
 
 IMPORTANT: Return ONLY valid JSON, no other text.`;
 
+const BLAST_PROMPT = `You are OreSight AI's drill-and-blast engineer for the Batu Hijau copper-gold open pit (hard rock), Sumbawa, Indonesia. Benches are ~15 m, drilled on 229 mm holes and charged with bulk emulsion and electronic detonators. Bench geology is logged by MWD (rock hardness / specific energy). Downstream is a primary gyratory crusher feeding a SAG mill — fragmentation drives shovel dig rate and mill throughput (mine-to-mill). Safety governors: a ground-vibration PPV limit at the nearest structure, a flyrock exclusion zone, and airblast.
+
+Given a JSON bench/blast snapshot (MWD hardness, current design: burden, spacing, hole diameter, bench height, stemming, sub-drill, powder factor, timing; target P80; downstream demand; nearest-structure distance and PPV limit) — and optionally a scenario — optimise the blast. Return JSON with EXACTLY this structure:
+
+{
+  "headline": "<conclusion: predicted fragmentation vs target and the move>",
+  "powderFactorKgM3": <number>,
+  "predictedP80mm": <number, 80%-passing fragment size>,
+  "fragmentation": {"pctOversize": <number>, "pctFines": <number>, "targetP80mm": <number>},
+  "bindingConstraint": "fragmentation" | "vibration" | "flyrock" | "cost",
+  "constraintNote": "<what governs this design, one line>",
+  "designActions": [{"param": "burden|spacing|hole-diameter|stemming|sub-drill|charge|timing", "change": "<from -> to>", "reason": "<short>", "effect": "<short>"}],
+  "vibration": {"predictedPpvMmS": <number>, "limitMmS": <number>, "status": "OK" | "WATCH" | "BREACH"},
+  "flyrock": {"predictedRangeM": <number>, "exclusionM": <number>, "status": "OK" | "WATCH" | "BREACH"},
+  "downstreamUpliftTph": <integer, crusher/mill throughput gain>,
+  "recommendations": [{"action": "<specific>", "impact": "<quantified: P80, t/h, US$, mm/s>", "timeframe": "<when>"}],
+  "valueImpactUSD": <integer, annualised mine-to-mill value net of explosive cost>,
+  "narrative": "<3-4 sentences linking design, fragmentation and downstream within the vibration / flyrock limits>"
+}
+
+Domain rules:
+- Fragmentation is the product: tune powder factor, burden/spacing and timing toward the target P80. Finer (within reason) lifts dig rate and mill throughput, but watch fines — over-blasting wastes energy and can cause ore loss / dilution. Aim for the band.
+- Match charge to rock: use MWD hardness to vary powder factor hole-by-hole (heavier in hard zones, lighter in soft).
+- Safety governs absolutely: never recommend a design whose predicted PPV exceeds the structure limit or whose flyrock range exceeds the exclusion zone. Name the binding constraint and back off powder factor / re-time / add stemming instead.
+- Electronic-detonator timing controls fragmentation AND vibration: stagger inter-hole delays to lower peak particle velocity while improving breakage.
+- Quantify the downstream: tie value to crusher/mill throughput uplift and avoided oversize re-handling, net of the marginal explosive cost.
+- 3-5 designActions and 3-4 recommendations, each concrete and quantified.
+
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
+const BLAST_PARSE_PROMPT = `You convert a drill-and-blast engineer's free-text note into ONE of five scenarios the OreSight blast engine can run, for the Batu Hijau hard-rock open pit (15 m benches, 229 mm holes, bulk emulsion + electronic detonators, MWD-logged geology; target P80 ~250 mm feeding a gyratory crusher + SAG mill).
+
+Choose the single best scenarioKey:
+- "harder-seam" — MWD logs a hard / stiff band or seam (charge-to-geology constraint)
+- "structure-near" — a house / structure / wall / village near the bench tightens the PPV cap (vibration constraint)
+- "wet-holes" — water / groundwater / flooded holes forcing emulsion + re-deck (flyrock / cost constraint)
+- "finer-feed" — the plant / SAG / crusher pulls a finer feed / more throughput (fragmentation target drops)
+- "optimise" — no material change; hold the balanced design
+
+Return JSON with EXACTLY this structure:
+{
+  "scenarioKey": "harder-seam" | "structure-near" | "wet-holes" | "finer-feed" | "optimise",
+  "interpretation": "<one-line restatement starting with 'Parsed:' of what was understood and the design response>"
+}
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
+const BLAST_COPILOT_PROMPT = `You are the OreSight Blast Optimisation copilot for the Batu Hijau hard-rock open pit (15 m benches, 229 mm holes, bulk emulsion + electronic dets; fragmentation feeds a gyratory crusher + SAG mill; target P80 with PPV and flyrock safety gates). Answer the engineer's question in 2-3 sentences, grounded ONLY in the provided live-design JSON (predicted P80, target, powder factor, PPV vs limit, flyrock vs exclusion, % fines / oversize, mine-to-mill value). Be concrete and quantified. Never propose a design that breaches the PPV or flyrock limit.
+
+Return JSON with EXACTLY this structure:
+{ "answer": "<2-3 sentence grounded answer>" }
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
 // ── Endpoints ─────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, aiMode: aiMode() }));
 
@@ -471,6 +524,45 @@ app.post('/api/iroc/copilot', async (req, res) => {
     systemPrompt: IROC_COPILOT_PROMPT,
     userMessage: `Live state:\n${JSON.stringify(state || {}, null, 2)}\n\nController question: ${question.trim().slice(0, 400)}\n\nReturn only valid JSON.`,
     fallback: irocCopilotFallback({ question, state }),
+  });
+  res.json(result);
+});
+
+// Blast: drill-and-blast design optimisation for a scenario / live design.
+app.post('/api/blast/analyze', async (req, res) => {
+  const { design, scenario } = req.body || {};
+  const key = scenario?.scenarioKey || scenario?.disruptionId || 'optimise';
+  const result = await askClaude({
+    label: `blast:${key}`,
+    systemPrompt: BLAST_PROMPT,
+    userMessage: `Optimise this blast design + scenario:\n${JSON.stringify({ design, scenario }, null, 2)}\n\nReturn only valid JSON.`,
+    fallback: blastFallback({ ...(scenario || {}), design }),
+  });
+  res.json(result);
+});
+
+// Blast: parse a free-text bench note into a runnable scenario.
+app.post('/api/blast/parse', async (req, res) => {
+  const { text } = req.body || {};
+  if (!text || !text.trim()) return res.status(400).json({ error: 'Bench note text is required' });
+  const result = await askClaude({
+    label: 'blast:parse',
+    systemPrompt: BLAST_PARSE_PROMPT,
+    userMessage: `Engineer note:\n"""${text.trim().slice(0, 500)}"""\n\nReturn only valid JSON.`,
+    fallback: blastParseFallback(text),
+  });
+  res.json(result);
+});
+
+// Blast: design copilot Q&A grounded in the live design state.
+app.post('/api/blast/copilot', async (req, res) => {
+  const { question, state } = req.body || {};
+  if (!question || !question.trim()) return res.status(400).json({ error: 'A question is required' });
+  const result = await askClaude({
+    label: 'blast:copilot',
+    systemPrompt: BLAST_COPILOT_PROMPT,
+    userMessage: `Live design state:\n${JSON.stringify(state || {}, null, 2)}\n\nEngineer question: ${question.trim().slice(0, 400)}\n\nReturn only valid JSON.`,
+    fallback: blastCopilotFallback({ question, state }),
   });
   res.json(result);
 });
