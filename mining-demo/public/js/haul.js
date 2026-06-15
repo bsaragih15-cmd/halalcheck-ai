@@ -78,17 +78,21 @@ let liveDelivered = 1980;
 let chosen = 'protect-demand';
 let currentScenarioKey = 'optimise';
 
-// A small haul-truck glyph (body + bed + wheels), coloured by state.
+// A rigid mining haul-truck glyph (tall dump tray + rear overhang, front
+// rock-guard canopy over the cab, big tyres), coloured by state. The body sits
+// in an inner group that flips to face the direction of travel.
 function truckNode(num) {
   const g = document.createElementNS(NS, 'g');
+  const inner = document.createElementNS(NS, 'g'); inner.setAttribute('class', 'tbodyG');
   const body = document.createElementNS(NS, 'path');
   body.setAttribute('class', 'tbody');
-  body.setAttribute('d', 'M-9 1 L-9 -3 L-2 -3 L-1 -6 L4 -6 L6 -3 L9 -3 L9 1 Z');
-  body.setAttribute('fill', '#64748b'); body.setAttribute('stroke', 'rgba(255,255,255,0.5)'); body.setAttribute('stroke-width', '0.8');
-  const w1 = document.createElementNS(NS, 'circle'); w1.setAttribute('cx', '-5'); w1.setAttribute('cy', '2.2'); w1.setAttribute('r', '1.9'); w1.setAttribute('fill', '#10150f');
-  const w2 = document.createElementNS(NS, 'circle'); w2.setAttribute('cx', '5'); w2.setAttribute('cy', '2.2'); w2.setAttribute('r', '1.9'); w2.setAttribute('fill', '#10150f');
-  const tx = document.createElementNS(NS, 'text'); tx.setAttribute('text-anchor', 'middle'); tx.setAttribute('y', '-9'); tx.setAttribute('font-family', "'JetBrains Mono',monospace"); tx.setAttribute('font-size', '8'); tx.setAttribute('font-weight', '700'); tx.setAttribute('fill', '#aeb6a5'); tx.textContent = num;
-  g.append(body, w1, w2, tx);
+  body.setAttribute('d', 'M-11 -2 L-10 -8 L4 -8 L11 -7 L11 -4 L6 -4 L6 -2 Z');
+  body.setAttribute('fill', '#64748b'); body.setAttribute('stroke', 'rgba(255,255,255,0.55)'); body.setAttribute('stroke-width', '0.8'); body.setAttribute('stroke-linejoin', 'round');
+  const mk = (cx, r) => { const c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', cx); c.setAttribute('cy', '1.6'); c.setAttribute('r', r); c.setAttribute('fill', '#10150f'); return c; };
+  const hub = (cx) => { const c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', cx); c.setAttribute('cy', '1.6'); c.setAttribute('r', '0.9'); c.setAttribute('fill', '#46603f'); return c; };
+  inner.append(body, mk(-6, 2.9), mk(6, 2.6), hub(-6), hub(6));
+  const tx = document.createElementNS(NS, 'text'); tx.setAttribute('text-anchor', 'middle'); tx.setAttribute('y', '-10'); tx.setAttribute('font-family', "'JetBrains Mono',monospace"); tx.setAttribute('font-size', '8'); tx.setAttribute('font-weight', '700'); tx.setAttribute('fill', '#aeb6a5'); tx.textContent = num;
+  g.append(inner, tx);
   return g;
 }
 
@@ -143,9 +147,12 @@ function step(ts) {
     const st = (t.state === 'qloader' || t.state === 'qhopper') ? 'queuing' : t.state;
     const node = tnodes[i];
     node.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
+    // Face the direction of travel: nose left when returning/at the jetty.
+    const faceLeft = (t.state === 'returning' || t.state === 'qhopper' || t.state === 'dumping');
+    node.querySelector('.tbodyG').setAttribute('transform', faceLeft ? 'scale(-1,1)' : 'scale(1,1)');
     const body = node.querySelector('.tbody');
     body.setAttribute('fill', t.state === 'down' ? '#0e140d' : (STATE_COLOR[st] || '#64748b'));
-    body.setAttribute('stroke', t.state === 'down' ? '#c0392b' : 'rgba(255,255,255,0.5)');
+    body.setAttribute('stroke', t.state === 'down' ? '#c0392b' : 'rgba(255,255,255,0.55)');
     body.setAttribute('stroke-width', t.state === 'down' ? '1.6' : '0.8');
   });
   setBadge('q1Badge', 'q1Text', qlc['LD-1']); setBadge('q2Badge', 'q2Text', qlc['LD-2']); setBadge('qhBadge', 'qhText', qhc);
