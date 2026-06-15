@@ -245,6 +245,7 @@ export const USE_CASES = {
   'payload': {
     title: 'Payload Optimisation',
     decisions: 'under/over loading feedback',
+    href: '/payload.html',
     stage: 'Excavate', horizon: '4w', drivers: ['throughput'],
     pitch: 'Per-pass payload analytics close the loop between shovel operators and truck payload meters — killing both underloading (lost tonnes) and overloading (frame damage, tyre life).',
     site: 'EX-201/EX-202 backhoes loading HD785-7 fleet — Pit 2',
