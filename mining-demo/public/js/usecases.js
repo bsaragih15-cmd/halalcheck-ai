@@ -26,7 +26,6 @@ export const VALUE_DRIVERS = {
 // Matrix rows: horizon label + cells. span = [firstStageCol, lastStageCol], 1-based.
 // A cell is either {case} or {stack:[caseA, caseB]} (two half-height cells).
 export const MATRIX_ROWS = [
-  { horizon: '0h',   cells: [{ case: 'control-tower', span: [1, 10] }] },
   { horizon: '24h',  cells: [{ case: 'command-center', span: [1, 10] }] },
   { horizon: '4w', cells: [
     { case: 'orebody',  span: [1, 2] },
@@ -40,15 +39,6 @@ export const MATRIX_ROWS = [
     { case: 'marketing', span: [10, 10] },
   ]},
   { horizon: '6m',   cells: [{ case: 'maintenance', span: [1, 10] }] },
-  { horizon: '1y',   cells: [
-    { case: 'mine-plan', span: [1, 2] },
-    { case: 'mine-to-market', span: [3, 10] },
-  ]},
-  { horizon: '5y',   cells: [{ case: 'asset-mgmt', span: [1, 10] }] },
-  { horizon: '+10y', cells: [
-    { case: 'lop', span: [1, 2] },
-    { case: 'capex', span: [3, 10] },
-  ]},
 ];
 
 const fmtUSD = (n) => '$' + Math.round(n).toLocaleString('en-US');
