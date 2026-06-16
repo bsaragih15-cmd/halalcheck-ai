@@ -174,6 +174,27 @@
   /* geofence arrival toast */
   .toast{position:fixed;right:18px;bottom:18px;z-index:1200;background:#13301d;color:#eaf3ea;font-family:var(--mono);font-size:.76rem;border-radius:8px;padding:.55rem .8rem;box-shadow:0 6px 18px rgba(0,0,0,.28);opacity:0;transform:translateY(10px);transition:opacity .3s,transform .3s;max-width:340px;border-left:3px solid #5dd08a;pointer-events:none}
   .toast.show{opacity:1;transform:translateY(0)}
+
+  /* HELP DRAWER ("How to read this") */
+  .btn-help{font-family:var(--mono);font-size:.72rem;font-weight:700;border:1px solid #6b7d5f;background:transparent;color:#dfe7da;border-radius:20px;padding:.25rem .7rem;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .btn-help:hover{background:#1c3a26}
+  .help-scrim{position:fixed;inset:0;background:rgba(15,25,18,.45);z-index:2000;opacity:0;pointer-events:none;transition:opacity .2s}
+  .help-scrim.open{opacity:1;pointer-events:auto}
+  .help-drawer{position:fixed;top:0;right:0;height:100vh;width:min(560px,94vw);background:var(--panel);border-left:1px solid var(--line2);box-shadow:-12px 0 40px rgba(0,0,0,.18);z-index:2001;transform:translateX(102%);transition:transform .25s;display:flex;flex-direction:column}
+  .help-drawer.open{transform:none}
+  .help-hd{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);flex:none}
+  .help-hd .ht{font-weight:800;font-size:1.05rem}
+  .help-hd .hx{margin-left:auto;border:none;background:var(--panel2);border-radius:6px;width:28px;height:28px;cursor:pointer;font-size:.95rem;color:var(--mut)}
+  .help-hd .hx:hover{background:#e7e4d8}
+  .help-body{overflow:auto;padding:16px 18px 30px;font-size:.86rem;line-height:1.5;color:var(--ink)}
+  .help-body h3{font-size:.92rem;margin:18px 0 6px;color:var(--green-d)}
+  .help-body h3:first-child{margin-top:0}
+  .help-body p{margin:0 0 8px;color:var(--mut)}
+  .help-body b{color:var(--ink)}
+  .help-body .step{display:flex;gap:9px;margin-bottom:7px}
+  .help-body .step .n{flex:none;width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;font-size:.64rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;font-family:var(--mono)}
+  .help-tag{display:inline-block;font-family:var(--mono);font-size:.62rem;font-weight:700;padding:1px 6px;border-radius:4px;background:#e3f1e8;color:var(--green-d);margin-right:5px}
+  .help-kbd{font-family:var(--mono);font-size:.7rem;background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:0 5px}
 </style>
 </head>
 <body>
@@ -185,9 +206,41 @@
     <a href="/haul.html">Hauling</a><a href="/control-tower.html">Control Tower</a><a href="/production.html">Blending</a><a href="/safety.html">Safety</a>
   </nav>
   <span class="nav-sp"></span>
+  <button class="btn-help" id="helpBtn" title="How to read this screen">&#9432; How to read</button>
   <span class="src" id="srcPill"><b></b><span id="srcLabel">AIS: Demo feed</span></span>
   <button class="btn-pilot" onclick="location.href='/index.html#pilot'">Book a pilot</button>
 </header>
+
+<div class="help-scrim" id="helpScrim"></div>
+<aside class="help-drawer" id="helpDrawer" aria-hidden="true">
+  <div class="help-hd"><span class="ht">How to read this screen</span><button class="hx" id="helpClose" title="Close">&#10005;</button></div>
+  <div class="help-body">
+    <h3>What this is</h3>
+    <p>A control tower for getting ore onto ships. It watches the whole chain — stockpile → jetty → barge → floating crane → ocean vessel — and finds the cheapest way to run it, trading <b>demurrage</b> (ships waiting) against <b>stockpile carrying cost</b>. The goal: <b>ore never waits for ships, ships never wait for ore.</b></p>
+
+    <h3>Read it in three bands</h3>
+    <div class="step"><span class="n">1</span><span><b>Watch (top).</b> The <b>alert rail</b> leads with the single highest-demurrage-risk vessel — name, why, the dollar exposure, and the fix. The <b>KPI strip</b> and <b>value-chain ribbon</b> show health; the red “OGV load · binding” node is today’s bottleneck.</span></div>
+    <div class="step"><span class="n">2</span><span><b>Plan (centre).</b> The <b>Schedule</b> Gantt: laycan window (light band), confirmed loading (green, with %), AIS-predicted loading (hatched), demurrage overrun (red), and the TODAY line. Toggle <b>Tide</b> for the spring–neap curve and the DUKC low-water windows. The <b>Live map</b> tab shows real vessels, amber tugs/barges, and ETAs.</span></div>
+    <div class="step"><span class="n">3</span><span><b>Decide (right).</b> Drag the four <b>Scenario</b> levers and the cost reacts instantly; press <b>Generate AI Recommendation</b> for the optimised plan, the value per year, and the concrete actions.</span></div>
+
+    <h3>The four levers</h3>
+    <p><b>Laycan buffer</b> — safety time you hold (demurrage vs carrying). <b>Floating cranes</b> — loading capacity; the lever that relieves the binding constraint. <b>Sailing draft</b> — how deep you load, capped by the live tide (DUKC ceiling). <b>Weather</b> — auto-set from the live marine forecast; rough weather cuts crane capacity.</p>
+
+    <h3>The cost bar</h3>
+    <p>Annual controllable cost, split into <b>demurrage</b>, <b>buffer carry</b>, <b>crane charter</b> and <b>tide/freight</b>. The note flags when crane capacity is exceeded or the draft is over today’s tide ceiling.</p>
+
+    <h3>Use it in one loop</h3>
+    <p><b>See</b> the ranked alert → <b>open</b> the vessel on the schedule or map → <b>simulate</b> a lever (or Generate) → <b>act</b> on the recommended buffer / crane / draft / hold.</p>
+
+    <h3>Live chips (top-right)</h3>
+    <p><span class="help-tag">Tide</span>live water level + next high/low. <span class="help-tag">Ni</span>nickel reference (Indonesia HMA). <span class="help-tag">Port</span>live congestion from AIS — ships at anchorage / inbound / average ETA. A green chip means it is fed by live data.</p>
+
+    <h3>What’s live vs demo</h3>
+    <p><b>Live:</b> AIS vessel positions, tug/barge detection, OGV ETA &amp; congestion; marine weather; tide &amp; DUKC; the nickel HMA reference. <b>Demo (synthetic but internally consistent):</b> the example vessel line-up, stockpile cover and cost coefficients — these wire to the producer’s stockpile, grade, moisture and charter data on a pilot. <b>Note:</b> AIS carries positions, ETA and draught — not laycan or charter terms.</p>
+
+    <p style="margin-top:14px;font-size:.78rem;color:var(--mut2)">Press <span class="help-kbd">Esc</span> or click outside to close.</p>
+  </div>
+</aside>
 
 <div class="tstrip">
   <span class="crumb">Value Chain&nbsp;/&nbsp;Shipping&nbsp;/</span>
@@ -749,6 +802,12 @@ document.getElementById('genBtn').onclick=generateAI;
 document.querySelectorAll('.tab[data-v]').forEach(t=>t.onclick=()=>showMap(t.dataset.v==='map'));
 document.getElementById('tideToggle').onclick=function(){ SHOW_TIDE=!SHOW_TIDE; this.classList.toggle('on',SHOW_TIDE); renderGantt(); };
 document.getElementById('srcPill').onclick=toggleSource;
+/* help drawer */
+function helpToggle(open){ document.getElementById('helpDrawer').classList.toggle('open',open); document.getElementById('helpScrim').classList.toggle('open',open); }
+document.getElementById('helpBtn').onclick=()=>helpToggle(true);
+document.getElementById('helpClose').onclick=()=>helpToggle(false);
+document.getElementById('helpScrim').onclick=()=>helpToggle(false);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') helpToggle(false); });
 simTimer=setInterval(stepSim,1500); stepSim();
 </script>
 </body>
