@@ -461,7 +461,7 @@ app.get('/api/tide', async (req, res) => {
 app.get('/api/market', async (req, res) => {
   const ref = Number(process.env.NICKEL_REF_USD) || 16500;
   const bunker = Number(process.env.BUNKER_VLSFO_USD) || 600;
-  const fallback = { source: 'model', provider: 'reference', nickelUSD: ref, bunkerVLSFO: bunker };
+  const fallback = { source: 'ref', provider: 'Indonesia HMA', nickelUSD: ref, bunkerVLSFO: bunker };
 
   // 1) metals.dev — free tier, returns base metals in USD/metric-tonne
   const md = process.env.METALS_DEV_API_KEY;

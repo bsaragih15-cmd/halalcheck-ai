@@ -708,7 +708,7 @@ async function loadTide(){
 }
 async function loadMarket(){
   try{ const d=await (await fetch('/api/market')).json(); LIVE_PX=d;
-    const el=document.getElementById('pxChip'); if(el){ el.textContent=`Ni $${(d.nickelUSD||16500).toLocaleString()}/t · VLSFO $${d.bunkerVLSFO||600}${d.source==='live'?' · live':' · model'}`; if(d.source==='live'){el.style.color='var(--green-d)';el.style.borderColor='#bcd6c5';} }
+    const el=document.getElementById('pxChip'); if(el){ const tag=d.source==='live'?' · live':' · '+(d.provider||'ref'); el.textContent=`Ni $${(d.nickelUSD||16500).toLocaleString()}/t · VLSFO $${d.bunkerVLSFO||600}${tag}`; el.title='Nickel '+(d.provider||'reference')+' · bunker reference'; if(d.source==='live'){el.style.color='var(--green-d)';el.style.borderColor='#bcd6c5';} }
   }catch(e){}
 }
 
