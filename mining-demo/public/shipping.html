@@ -199,6 +199,7 @@
   <span class="nav-sp"></span>
   <span class="wx" id="tideChip" title="Live tide / DUKC">Tide · model</span>
   <span class="wx" id="pxChip" title="Live nickel &amp; bunker price">Ni · model</span>
+  <span class="wx" id="congChip" title="Live port congestion (from AIS)">Port · —</span>
 </div>
 
 <div class="alertrail" id="alertRail"></div>
@@ -257,6 +258,7 @@
         <div class="ll"><span class="lname">Sailing draft <i>tide-linked</i></span><span class="lval" id="drVal">12.8<span> m</span></span></div>
         <input type="range" id="draft" min="12.0" max="13.5" step="0.1" value="12.8" />
         <div class="ticks"><span>12.0 m neap-safe</span><span>13.5 m spring-only</span></div>
+        <div class="costnote" id="drDukc" style="margin-top:.3rem"></div>
       </div>
 
       <div class="lever">
@@ -355,6 +357,9 @@ function renderDem(){
   document.getElementById('demChart').innerHTML=g;
 }
 let SHOW_TIDE=false;
+let LIVE_TIDE={high:null,ceiling:null}, LIVE_CONG={atAnchor:0,inbound:0,avgEtaH:null};
+function draftCeiling(){ return LIVE_TIDE.ceiling!=null ? LIVE_TIDE.ceiling : 13.2; }
+const fmtH=h=> h<24? h.toFixed(0)+'h' : (h/24).toFixed(1)+'d';
 const GROWS=[
   {n:'MV Borneo Star',cr:'FC-1',gr:'sap',lcS:0,lcE:5,bS:2,bE:4.2,arr:true,pct:62},
   {n:'MV Sulawesi Dawn',cr:'FC-2',gr:'lim',lcS:2,lcE:7,bS:4.3,bE:6.3,arr:false,pct:18},
@@ -422,13 +427,19 @@ function renderScenario(){
   else if(p.buffer<ob-0.15) note='Lean buffer: demurrage risk dominates. Nudge buffer up to lower total cost.';
   else if(p.buffer>ob+0.15) note='Over-buffered: carrying cost dominates. Trim buffer to lower total cost.';
   else note=`Buffer near optimal · crane util ${(c.util*100).toFixed(0)}%.`;
-  if(p.draft>13.2) note+=' Draft above 13.2 m clears only on a spring tide — neap-window delay risk.';
+  const ceil=draftCeiling();
+  if(p.draft>ceil+0.05) note+=` Draft ${p.draft.toFixed(1)} m exceeds today's DUKC ceiling ${ceil.toFixed(1)} m — only loadable on a higher (spring) tide.`;
   document.getElementById('costNote').textContent=note;
+  const dd=document.getElementById('drDukc');
+  if(dd) dd.innerHTML = LIVE_TIDE.ceiling!=null
+    ? `DUKC ceiling <b>${ceil.toFixed(1)} m</b> on the live tide (high ${LIVE_TIDE.high>=0?'+':''}${(LIVE_TIDE.high??0).toFixed(2)} m) · ${p.draft>ceil+0.05?'<span style="color:var(--red-d)">over ceiling — wait for springs</span>':'within window'}`
+    : `DUKC ceiling ~${ceil.toFixed(1)} m (model tide)`;
 }
 function optimise(wx){
+  const ceil=draftCeiling();
   let best=null;
   for(let fc=1;fc<=3;fc++){
-    const buffer=MODEL.optimumBuffer({cranes:fc,wx}), draft=MODEL.optimumDraft();
+    const buffer=MODEL.optimumBuffer({cranes:fc,wx}), draft=Math.min(MODEL.optimumDraft(),ceil);  // tide-gated (DUKC)
     const p={buffer,cranes:fc,draft,wx}, total=MODEL.cost(p).total;
     if(!best||total<best.total) best={...p,total};
   }
@@ -439,11 +450,12 @@ function generateAI(){
   const costNow=MODEL.cost(p).total;
   const opt=optimise(wx), costOpt=opt.total;
   const basePolicy={...MODEL.base, wx}, costPolicy=MODEL.cost(basePolicy).total, saveVsPolicy=costPolicy-costOpt;
+  const niNow=(LIVE_PX&&LIVE_PX.nickelUSD)?LIVE_PX.nickelUSD:16500, freightVal=Math.round(360000*(niNow/16500)), ceil=draftCeiling();
   const solve=document.getElementById('aiSolve'); solve.textContent='● solving BAP…'; setTimeout(()=>solve.textContent='● solved · BAP',650);
   const actions=[
     `Set laycan buffer to <b>${opt.buffer.toFixed(1)} days</b> (from ${MODEL.base.buffer.toFixed(1)} d practice) to balance demurrage against carrying cost under ${MODEL.wxName[wx].toLowerCase()} weather.`,
     `Run <b>${opt.cranes} floating crane${opt.cranes>1?'s':''}</b> (${MODEL.loadingRate(opt.cranes)} kt/d): ${opt.cranes>p.cranes?'add capacity to clear the OGV queue faster':opt.cranes<p.cranes?'stand down a crane, charter cost outweighs the demurrage saved':'this matches the binding-constraint sweet spot'}.`,
-    `Load to <b>${opt.draft.toFixed(1)} m sailing draft</b> on the spring-tide window, worth ~${fmtK(Math.round(360000*((LIVE_PX&&LIVE_PX.nickelUSD?LIVE_PX.nickelUSD:16500)/16500)))} /yr in freight efficiency at ${LIVE_PX&&LIVE_PX.source==='live'?'live':'ref'} Ni $${(LIVE_PX&&LIVE_PX.nickelUSD?LIVE_PX.nickelUSD:16500).toLocaleString()}/t; hold off when the DUKC overlay shows a neap.`,
+    `Load to <b>${opt.draft.toFixed(1)} m sailing draft</b> — ${opt.draft>=13.15?'the 13.2 m optimum is open on this tide':`capped at today's <b>DUKC ceiling ${ceil.toFixed(1)} m</b> (the 13.2 m optimum needs a higher spring tide)`}; worth ~${fmtK(freightVal)} /yr at ${LIVE_PX&&LIVE_PX.source==='live'?'live':'HMA'} Ni $${niNow.toLocaleString()}/t.`,
     `Hold <b>MV Cape Kendari</b> 8 h, the only late vessel, then pull its FC-2 slot forward once saprolite cover clears 4.0 d.`,
   ];
   document.getElementById('aiBody').innerHTML=`
@@ -586,21 +598,26 @@ function nearestPortKm(lat,lon){ let m=1e9; for(const p of PORTS_NEAR){ const d=
 function shipCat(t){ if(t==null)return 'other'; if([21,22,31,32,52].includes(t))return 'tug';
   if(t>=70&&t<=79)return 'cargo'; if(t>=80&&t<=89)return 'tanker'; return 'other'; }
 function updateMapNote(){
-  const el=document.getElementById('mapnote'); if(!el)return;
+  const cc=document.getElementById('congChip'), el=document.getElementById('mapnote');
   const t=new Date().toLocaleTimeString('en-GB');
   if(LIVE){
-    el.innerHTML = liveShips.size
-      ? `● LIVE AIS · ${t} · <b style="color:#b8860b">${liveCounts.barge} tugs/barges</b> (${liveCounts.bargeNear} ≤50 km) · ${liveCounts.ogv} cargo · ${liveShips.size} total`
+    const lvl=LIVE_CONG.atAnchor>=4?'high':LIVE_CONG.atAnchor>=2?'med':'low';
+    if(cc){ cc.textContent=`Port ${LIVE_CONG.atAnchor} at · ${LIVE_CONG.inbound} in${LIVE_CONG.avgEtaH!=null?` · ETA ~${fmtH(LIVE_CONG.avgEtaH)}`:''} · ${lvl}`;
+      cc.style.color=lvl==='high'?'var(--red-d)':lvl==='med'?'var(--amber)':'var(--green-d)'; cc.style.borderColor=lvl==='high'?'#e9c4c0':lvl==='med'?'#e6cfa3':'#bcd6c5'; }
+    if(el) el.innerHTML = liveShips.size
+      ? `● LIVE AIS · ${t} · <b style="color:#b8860b">${liveCounts.barge} tugs/barges</b> (${liveCounts.bargeNear} ≤50 km) · ${liveCounts.ogv} cargo · queue ${LIVE_CONG.atAnchor}/${LIVE_CONG.inbound} in`
       : `● LIVE AIS · ${t} · waiting for vessels in the Morowali–Kendari box…`;
   } else {
-    el.innerHTML = `● Demo AIS feed · last update ${t} · ${FLEET.length} OGVs, ${BARGES.length} barges`;
+    const atA=FLEET.filter(f=>f.status==='berthed').length, inb=FLEET.filter(f=>f.status!=='berthed'&&!f.arrived).length;
+    if(cc){ cc.textContent=`Port ${atA} at · ${inb} inbound · demo`; cc.style.color='var(--mut)'; cc.style.borderColor='var(--line)'; }
+    if(el) el.innerHTML = `● Demo AIS feed · last update ${t} · ${FLEET.length} OGVs, ${BARGES.length} barges`;
   }
 }
 function renderLiveAIS(){
   if(!mapInited || typeof L==='undefined') return;
   if(!liveLayer) liveLayer=L.layerGroup().addTo(MAP);
   liveLayer.clearLayers();
-  let barge=0,bargeNear=0,ogv=0;
+  let barge=0,bargeNear=0,ogv=0,atAnchor=0,inbound=0,etas=[];
   liveShips.forEach((s,mmsi)=>{
     if(s.lat==null) return;
     const cat=shipCat(s.type), near=nearestPortKm(s.lat,s.lon);
@@ -610,12 +627,17 @@ function renderLiveAIS(){
         .bindTooltip(`🛟 ${s.name||'Tug/Barge'} · ${mmsi}${near<80?` · ${near.toFixed(0)} km from port`:''}`,{permanent:false});
     } else if(cat==='cargo'||cat==='tanker'){
       ogv++;
-      L.circleMarker([s.lat,s.lon],{radius:3.5,color:'#1b3a57',weight:0.8,fillColor:'#2a5f8f',fillOpacity:0.85}).addTo(liveLayer)
-        .bindTooltip(`${s.name||(cat==='tanker'?'Tanker':'Cargo')} · ${mmsi}`,{permanent:false});
+      // predictive ETA + congestion from AIS: distance to anchorage ÷ SOG
+      const dKm=kmTo(s.lat,s.lon,GEO.anchorage); let etaTxt='';
+      if(dKm<=30){ atAnchor++; etaTxt=' · at anchorage'; }
+      else if(dKm<=140 && (s.sog||0)>3){ inbound++; const h=dKm/((s.sog)*1.852); etas.push(h); etaTxt=` · ETA ~${fmtH(h)}`; }
+      L.circleMarker([s.lat,s.lon],{radius:dKm<=30?4.5:3.5,color:'#1b3a57',weight:0.8,fillColor:'#2a5f8f',fillOpacity:0.85}).addTo(liveLayer)
+        .bindTooltip(`${s.name||(cat==='tanker'?'Tanker':'Cargo')} · ${mmsi}${etaTxt}`,{permanent:false});
     } else {
       L.circleMarker([s.lat,s.lon],{radius:2,color:'#0e7490',weight:0.5,fillColor:'#0e7490',fillOpacity:0.45}).addTo(liveLayer);
     }
   });
+  LIVE_CONG={atAnchor,inbound,avgEtaH: etas.length? etas.reduce((a,b)=>a+b,0)/etas.length : null};
   liveCounts={barge,bargeNear,ogv,total:liveShips.size};
   updateMapNote();
 }
@@ -701,9 +723,14 @@ async function loadWeather(){
 }
 async function loadTide(){
   try{ const d=await (await fetch('/api/tide')).json(); const ex=(d.extremes||[])[0];
+    const highs=(d.extremes||[]).filter(e=>e.type==='High').map(e=>+e.height);
+    LIVE_TIDE.high = highs.length? Math.max(...highs) : null;
+    // DUKC: allowable sailing draft ≈ static (12.0 m at datum) + tide-high headroom, capped at the lever max
+    LIVE_TIDE.ceiling = LIVE_TIDE.high!=null ? Math.max(12.0, Math.min(13.5, 12.0 + LIVE_TIDE.high)) : null;
     let t=`Tide ${d.current!=null?(+d.current).toFixed(1)+' m':'—'}`; if(ex) t+=` · next ${ex.type} ${ex.dt}`;
     t+= d.source==='live'?' · live':' · model';
     const el=document.getElementById('tideChip'); if(el){ el.textContent=t; if(d.source==='live'){el.style.color='var(--green-d)';el.style.borderColor='#bcd6c5';} }
+    renderScenario();
   }catch(e){}
 }
 async function loadMarket(){
