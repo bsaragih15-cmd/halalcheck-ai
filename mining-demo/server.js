@@ -431,6 +431,43 @@ app.get('/api/health', (req, res) => res.json({ ok: true, aiMode: aiMode() }));
 // in use; this only keeps it out of source control. Set AISSTREAM_API_KEY in Vercel.
 app.get('/api/aisstream-key', (req, res) => res.json({ key: process.env.AISSTREAM_API_KEY || '' }));
 
+// Small fetch-with-timeout for the external data proxies below.
+async function fetchJSON(url, ms = 6000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try { const r = await fetch(url, { signal: ctrl.signal }); return await r.json(); }
+  finally { clearTimeout(t); }
+}
+const witaHM = (unixSec) => new Date((unixSec + 8 * 3600) * 1000).toISOString().slice(11, 16);
+
+// Tide proxy (WorldTides). Key in env; falls back to a synthetic spring-neap reading.
+app.get('/api/tide', async (req, res) => {
+  const key = process.env.WORLDTIDES_API_KEY;
+  const fallback = { source: 'model', current: 1.4, springNeap: 'neap',
+    extremes: [{ type: 'High', height: 2.1, dt: '14:40' }, { type: 'Low', height: 0.6, dt: '21:10' }] };
+  if (!key) return res.json(fallback);
+  try {
+    const lat = -3.95, lon = 122.72;
+    const d = await fetchJSON(`https://www.worldtides.info/api/v3?heights&extremes&lat=${lat}&lon=${lon}&key=${key}`);
+    const extremes = (d.extremes || []).slice(0, 4).map((e) => ({ type: e.type, height: +(+e.height).toFixed(2), dt: witaHM(e.dt) }));
+    const current = (d.heights && d.heights[0]) ? +(+d.heights[0].height).toFixed(2) : fallback.current;
+    res.json({ source: extremes.length ? 'live' : 'model', current, extremes: extremes.length ? extremes : fallback.extremes });
+  } catch (e) { res.json({ ...fallback, error: String(e.message || e) }); }
+});
+
+// Market proxy (nickel via Metals-API; VLSFO bunker synthetic). Best-effort, synthetic fallback.
+app.get('/api/market', async (req, res) => {
+  const key = process.env.METALS_API_KEY;
+  const fallback = { source: 'model', nickelUSD: 16500, bunkerVLSFO: 600 };
+  if (!key) return res.json(fallback);
+  try {
+    const d = await fetchJSON(`https://metals-api.com/api/latest?access_key=${key}&base=USD&symbols=NI`);
+    const r = d && d.rates ? (d.rates.NI ?? d.rates.XNI) : null;
+    const ni = r ? (r > 100 ? r : 1 / r) : null;           // metals-api may quote inverse
+    res.json({ source: ni ? 'live' : 'model', nickelUSD: ni ? Math.round(ni) : 16500, bunkerVLSFO: 600 });
+  } catch (e) { res.json({ ...fallback, error: String(e.message || e) }); }
+});
+
 app.post('/api/maintenance/analyze', async (req, res) => {
   const { assetId, assetMeta, telemetrySummary } = req.body || {};
   const result = await askClaude({
