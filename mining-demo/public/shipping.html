@@ -194,7 +194,7 @@
     <a href="/maintenance.html">Maintenance</a><a href="/production.html">Blending</a><a href="/safety.html">Safety</a>
   </nav>
   <span class="nav-sp"></span>
-  <span class="pill-demo"><b></b>AI: Demo Mode</span>
+  <span class="pill-demo" id="aiPill"><b></b><span id="aiPillText">AI: Demo Mode</span></span>
   <button class="btn-pilot" onclick="location.href='/index.html#pilot'">Book a pilot</button>
 </header>
 
@@ -325,6 +325,24 @@
 const fmt = n => '$' + Math.round(n).toLocaleString();
 const fmtK = n => '$' + Math.round(n/1000) + 'k';
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+// POST JSON with a timeout. Every caller wraps this in try/catch and degrades
+// to the deterministic in-page model, so the console never breaks offline.
+async function postJSON(url, body, ms=14000){
+  const ctrl=new AbortController(); const timer=setTimeout(()=>ctrl.abort(), ms);
+  try{
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:ctrl.signal});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return await r.json();
+  } finally { clearTimeout(timer); }
+}
+// Flip the nav badge to "AI: Live" when the backend has a key.
+fetch('/api/health').then(r=>r.json()).then(({aiMode})=>{
+  if(aiMode==='live'){
+    const t=document.getElementById('aiPillText'); if(t) t.textContent='AI: Live';
+    const d=document.querySelector('#aiPill b'); if(d) d.style.background='#5dd08a';
+  }
+}).catch(()=>{});
 
 const MODEL = {
   contractRate: 12,            // kt/day contract loading rate
@@ -477,35 +495,70 @@ function renderScenario(){
   : 'Near optimal: demurrage and carrying cost are balanced.';
 }
 
-/* ---------- AI recommendation ---------- */
-function generateAI(){
-  const cur=+document.getElementById('buffer').value;
+/* ---------- AI recommendation (live API, deterministic fallback) ---------- */
+// Snapshot the live model for the optimiser endpoint.
+function shipSnapshot(){
+  const b=+document.getElementById('buffer').value;
   const opt=MODEL.optimumBuffer();
   const policy=MODEL.currentPolicyBuffer;
-  const costNow=MODEL.cost(cur).total;
-  const costOpt=MODEL.cost(opt).total;
-  const costPolicy=MODEL.cost(policy).total;
-  const saveVsPolicy=costPolicy-costOpt;
+  return {
+    buffer:+b.toFixed(1), currentPolicyBuffer:policy, optimumBuffer:+opt.toFixed(2),
+    cost:{ atBuffer:Math.round(MODEL.cost(b).total), atOptimum:Math.round(MODEL.cost(opt).total), atPolicy:Math.round(MODEL.cost(policy).total),
+           curve:'total(b)=900000*exp(-0.45*b)+140000*b' },
+    binding:'Floating-crane rate (~94% util)',
+    vessels: MODEL.vessels.map(v=>({name:v.name,cls:v.cls,status:v.st,grade:v.grade,eta:v.eta,laycan:v.lc,demurrageUSD:v.dem})),
+  };
+}
+// Deterministic in-page recommendation — the unbreakable fallback.
+function localAI(){
+  const cur=+document.getElementById('buffer').value;
+  const opt=MODEL.optimumBuffer(), policy=MODEL.currentPolicyBuffer;
+  const costOpt=MODEL.cost(opt).total, costPolicy=MODEL.cost(policy).total, costNow=MODEL.cost(cur).total;
+  return {
+    headline:`Move the laycan buffer to ${opt.toFixed(1)} days and re-sequence the line-up. Total annualised cost falls to ${fmt(costOpt)}.`,
+    recommendedBufferDays:+opt.toFixed(1),
+    costCurrentUSD:Math.round(costPolicy), costOptimisedUSD:Math.round(costOpt), valueImpactUSD:Math.round(costPolicy-costOpt),
+    actions:[
+      `Set laycan buffer to <b>${opt.toFixed(1)} days</b> (from current practice of ${policy.toFixed(1)} d) to balance demurrage against carrying cost.`,
+      `Hold <b>MV Cape Kendari</b> at anchorage drift 8 h: it is the only late vessel and is driving ${fmt(128000)} of forecast demurrage; pull its FC-2 slot forward only once saprolite cover clears 4.0 d.`,
+      `Prioritise a <b>limonite barge cycle</b> for MV Sulawesi Dawn before the 12th to protect the cover dip, then rebalance FC-2 to saprolite.`,
+    ],
+    narrative:`At your selected buffer of ${cur.toFixed(1)} d the total is ${fmt(costNow)}. The cost-minimising buffer is ${opt.toFixed(1)} d, where a marginal day of buffer saves as much demurrage as it adds in carrying cost. The recommendation is explainable: every figure traces to the live line-up, the tide window, and the cost curve, not a black box.`,
+  };
+}
+// Sanitise model HTML: allow only <b> emphasis, escape everything else.
+function safeRich(s){
+  return String(s??'').replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))
+    .replace(/&lt;b&gt;/g,'<b>').replace(/&lt;\/b&gt;/g,'</b>');
+}
+function renderAI(d, live){
+  const cur=+document.getElementById('buffer').value;
+  const cPol = d.costCurrentUSD ?? MODEL.cost(MODEL.currentPolicyBuffer).total;
+  const cOpt = d.costOptimisedUSD ?? MODEL.cost(MODEL.optimumBuffer()).total;
+  const val  = d.valueImpactUSD ?? (cPol-cOpt);
+  const acts = (d.actions&&d.actions.length?d.actions:localAI().actions).slice(0,3);
+  document.getElementById('aiSolve').textContent = live?'● solved · claude':'● solved · engine';
+  document.getElementById('aiBody').innerHTML=`
+    <div class="ai-headline">${safeRich(d.headline)}</div>
+    <div class="ai-delta">
+      <div class="dcard"><div class="l">Current practice</div><div class="v">${fmtK(cPol)}</div></div>
+      <div class="ai-arrow">&rarr;</div>
+      <div class="dcard opt"><div class="l">Optimised</div><div class="v">${fmtK(cOpt)}</div></div>
+      <div class="dcard"><div class="l">Value / yr</div><div class="v" style="color:var(--green-d)">${fmtK(val)}</div></div>
+    </div>
+    <div class="ai-sec">Fleet actions${live?' · live inference':''}</div>
+    ${acts.map((a,i)=>`<div class="ai-act"><span class="n">${i+1}</span><span>${safeRich(a)}</span></div>`).join('')}
+    <div class="ai-narr">${safeRich(d.narrative||localAI().narrative)}</div>`;
+}
+async function generateAI(){
   const solve=document.getElementById('aiSolve');
   solve.textContent='● re-solving…';
-  setTimeout(()=>{solve.textContent='● solved';},650);
-
-  const actions=[
-    `Set laycan buffer to <b>${opt.toFixed(1)} days</b> (from current practice of ${policy.toFixed(1)} d) to balance demurrage against carrying cost.`,
-    `Hold <b>MV Cape Kendari</b> at anchorage drift 8 h: it is the only late vessel and is driving ${fmt(128000)} of forecast demurrage; pull its FC-2 slot forward only once saprolite cover clears 4.0 d.`,
-    `Prioritise a <b>limonite barge cycle</b> for MV Sulawesi Dawn before the 12th to protect the cover dip, then rebalance FC-2 to saprolite.`,
-  ];
-  document.getElementById('aiBody').innerHTML=`
-    <div class="ai-headline">Move the laycan buffer to ${opt.toFixed(1)} days and re-sequence the line-up. Total annualised cost falls to ${fmt(costOpt)}.</div>
-    <div class="ai-delta">
-      <div class="dcard"><div class="l">Current practice</div><div class="v">${fmtK(costPolicy)}</div></div>
-      <div class="ai-arrow">&rarr;</div>
-      <div class="dcard opt"><div class="l">Optimised</div><div class="v">${fmtK(costOpt)}</div></div>
-      <div class="dcard"><div class="l">Value / yr</div><div class="v" style="color:var(--green-d)">${fmtK(saveVsPolicy)}</div></div>
-    </div>
-    <div class="ai-sec">Fleet actions</div>
-    ${actions.map((a,i)=>`<div class="ai-act"><span class="n">${i+1}</span><span>${a}</span></div>`).join('')}
-    <div class="ai-narr">At your selected buffer of ${cur.toFixed(1)} d the total is ${fmt(costNow)}. The cost-minimising buffer is ${opt.toFixed(1)} d, where a marginal day of buffer saves as much demurrage as it adds in carrying cost. The recommendation is explainable: every figure traces to the live line-up, the tide window, and the cost curve, not a black box.</div>`;
+  try{
+    const r=await postJSON('/api/shipping/analyze',{scenario:shipSnapshot()});
+    renderAI(r, r.source==='live');
+  }catch{
+    renderAI(localAI(), false);
+  }
 }
 function flashSolve(){const s=document.getElementById('aiSolve');s.textContent='● re-solving…';setTimeout(()=>{if(document.querySelector('#aiBody .ai-headline'))s.textContent='● solved';else s.textContent='';},650);}
 
@@ -520,16 +573,30 @@ function renderPresets(){
   document.getElementById('presets').innerHTML=PRESETS.map(p=>`<button class="preset" data-k="${p.k}">${p.t}</button>`).join('');
   document.querySelectorAll('.preset').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('.preset').forEach(x=>x.classList.remove('on'));b.classList.add('on');
-    const p=PRESETS.find(x=>x.k===b.dataset.k);
-    document.getElementById('disParsed').innerHTML=p.txt; flashSolve();
+    runDisruption({scenarioKey:b.dataset.k});
   });
 }
-function disFree(){
-  const q=document.getElementById('disFree').value.toLowerCase();
-  let hit=PRESETS.find(p=> q.includes('fc')||q.includes('crane')?p.k==='fc2': q.includes('rain')||q.includes('moist')||q.includes('wet')?p.k==='rain': q.includes('early')||q.includes('cape')?p.k==='late': q.includes('tide')||q.includes('draft')?p.k==='tide':false);
-  document.getElementById('disParsed').innerHTML = hit? hit.txt : '<b>Parsed.</b> Re-solving the line-up against your disruption. AI holds the binding constraint (floating-crane rate) and protects minimum stockpile cover; check the updated vessel line-up above.';
-  flashSolve();
+function localDisruption({text='',scenarioKey=''}){
+  let k=scenarioKey;
+  if(!k){const q=text.toLowerCase();
+    k = (q.includes('fc')||q.includes('crane'))?'fc2'
+      : (q.includes('rain')||q.includes('moist')||q.includes('wet'))?'rain'
+      : (q.includes('early')||q.includes('cape'))?'late'
+      : (q.includes('tide')||q.includes('draft'))?'tide':'';}
+  const hit=PRESETS.find(p=>p.k===k);
+  return hit? hit.txt : '<b>Parsed.</b> Re-solving the line-up against your disruption. AI holds the binding constraint (floating-crane rate) and protects minimum stockpile cover; check the updated vessel line-up above.';
 }
+async function runDisruption({text='',scenarioKey=''}){
+  const parsed=document.getElementById('disParsed');
+  parsed.innerHTML='<span style="opacity:.6">Re-solving the line-up…</span>'; flashSolve();
+  try{
+    const r=await postJSON('/api/shipping/disruption',{text,scenarioKey});
+    parsed.innerHTML=safeRich(r.text||localDisruption({text,scenarioKey}));
+  }catch{
+    parsed.innerHTML=localDisruption({text,scenarioKey});
+  }
+}
+function disFree(){ runDisruption({text:document.getElementById('disFree').value}); }
 
 /* ---------- Copilot ---------- */
 const CPQS=['What is the binding constraint?','Which vessel is at risk?','What is the optimal buffer?','How much is the tide worth?'];
@@ -537,20 +604,36 @@ function renderCp(){
   document.getElementById('cpQs').innerHTML=CPQS.map(q=>`<button class="cp-q">${q}</button>`).join('');
   document.querySelectorAll('.cp-q').forEach(b=>b.onclick=()=>{document.getElementById('cpInput').value=b.textContent;cpAsk();});
 }
-function cpAsk(){
-  const q=document.getElementById('cpInput').value.toLowerCase();
+function cpState(){
   const opt=MODEL.optimumBuffer();
-  let a;
-  if(q.includes('constraint')||q.includes('binding')) a='The binding constraint over the next 30 days is the <b>floating-crane rate</b> at ~94% utilisation. FC-1 and FC-2 combine for 38 kt/day while OGV demand peaks at 40 kt/day on the 27th. Barge cycle is second at 81%.';
-  else if(q.includes('risk')||q.includes('vessel')||q.includes('late')) a='<b>MV Cape Kendari</b> (Capesize) is the at-risk vessel: it is forecast late against a 25–27 Jun laycan and is driving ~$128k of demurrage. It is gearless, so it needs an FC slot that is contested by the crane constraint.';
-  else if(q.includes('buffer')||q.includes('optimal')) a=`The cost-minimising laycan buffer is <b>${opt.toFixed(1)} days</b>. Below that, demurrage risk dominates; above it, carrying cost dominates. Current practice runs ${MODEL.currentPolicyBuffer.toFixed(1)} d, so trimming the buffer saves ${fmtK(MODEL.cost(MODEL.currentPolicyBuffer).total-MODEL.cost(opt).total)}/yr.`;
-  else if(q.includes('tide')||q.includes('draft')) a='Each extra centimetre of sailing draft is worth ~150 t of ore. At the current DUKC setting that is roughly the value shown in the tide widget; on a Capesize a full +1 m of draft is worth well over $1M of extra cargo per sailing.';
-  else if(q.match(/\d/)&&(q.includes('demurrage')||q.includes('under')||q.includes('target')||q.includes('get'))){
+  return { binding:'Floating-crane rate (~94% util)', optimumBufferDays:+opt.toFixed(2),
+    currentPolicyBufferDays:MODEL.currentPolicyBuffer, costAtOptimumUSD:Math.round(MODEL.cost(opt).total),
+    atRiskVessel:'MV Cape Kendari', atRiskDemurrageUSD:128000,
+    vessels:MODEL.vessels.map(v=>({name:v.name,status:v.st,grade:v.grade,demurrageUSD:v.dem})) };
+}
+function cpLocal(q){
+  const opt=MODEL.optimumBuffer();
+  if(q.includes('constraint')||q.includes('binding')) return 'The binding constraint over the next 30 days is the <b>floating-crane rate</b> at ~94% utilisation. FC-1 and FC-2 combine for 38 kt/day while OGV demand peaks at 40 kt/day on the 27th. Barge cycle is second at 81%.';
+  if(q.includes('risk')||q.includes('vessel')||q.includes('late')) return '<b>MV Cape Kendari</b> (Capesize) is the at-risk vessel: it is forecast late against a 25–27 Jun laycan and is driving ~$128k of demurrage. It is gearless, so it needs an FC slot that is contested by the crane constraint.';
+  if(q.includes('buffer')||q.includes('optimal')) return `The cost-minimising laycan buffer is <b>${opt.toFixed(1)} days</b>. Below that, demurrage risk dominates; above it, carrying cost dominates. Current practice runs ${MODEL.currentPolicyBuffer.toFixed(1)} d, so trimming the buffer saves ${fmtK(MODEL.cost(MODEL.currentPolicyBuffer).total-MODEL.cost(opt).total)}/yr.`;
+  if(q.includes('tide')||q.includes('draft')) return 'Each extra centimetre of sailing draft is worth ~150 t of ore. At the current DUKC setting that is roughly the value shown in the tide widget; on a Capesize a full +1 m of draft is worth well over $1M of extra cargo per sailing.';
+  if(q.match(/\d/)&&(q.includes('demurrage')||q.includes('under')||q.includes('target')||q.includes('get'))){
     const m=q.match(/(\d[\d,\.]*)\s*(k|m)?/); let tgt=m?parseFloat(m[1].replace(/,/g,'')):500; if(m&&m[2]==='m')tgt*=1e6; else if((m&&m[2]==='k')||tgt<10000)tgt*=1000;
-    a=`To target a total annualised cost of <b>${fmt(tgt)}</b>: the floor at the optimal ${opt.toFixed(1)}-day buffer is ${fmt(MODEL.cost(opt).total)}. ${tgt<MODEL.cost(opt).total? 'That is below the achievable floor with the current fleet; you would need an extra floating crane or a tighter barge cycle to go lower.':'Achievable — set the buffer to ~'+opt.toFixed(1)+' d and re-sequence MV Cape Kendari as recommended.'}`;
+    return `To target a total annualised cost of <b>${fmt(tgt)}</b>: the floor at the optimal ${opt.toFixed(1)}-day buffer is ${fmt(MODEL.cost(opt).total)}. ${tgt<MODEL.cost(opt).total? 'That is below the achievable floor with the current fleet; you would need an extra floating crane or a tighter barge cycle to go lower.':'Achievable — set the buffer to ~'+opt.toFixed(1)+' d and re-sequence MV Cape Kendari as recommended.'}`;
   }
-  else a='I read the live line-up, the binding constraint, the tide window and the cost curve. Try asking about the binding constraint, the at-risk vessel, the optimal buffer, or set a demurrage target.';
-  document.getElementById('cpAns').innerHTML=a;
+  return 'I read the live line-up, the binding constraint, the tide window and the cost curve. Try asking about the binding constraint, the at-risk vessel, the optimal buffer, or set a demurrage target.';
+}
+async function cpAsk(){
+  const raw=document.getElementById('cpInput').value;
+  const q=raw.toLowerCase(); if(!raw.trim()) return;
+  const ans=document.getElementById('cpAns');
+  ans.innerHTML='<span style="opacity:.6">Reading the live line-up…</span>';
+  try{
+    const r=await postJSON('/api/shipping/copilot',{question:raw,state:cpState()});
+    ans.innerHTML=safeRich(r.answer||cpLocal(q));
+  }catch{
+    ans.innerHTML=cpLocal(q);
+  }
 }
 
 /* ---------- wire up ---------- */
