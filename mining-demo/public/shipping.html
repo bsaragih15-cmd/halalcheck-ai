@@ -282,6 +282,18 @@ const dnum=s=>{const m=s.match(/(\d+)\s+Jun(?:\s+(\d+):(\d+))?/);if(!m)return nu
 const lnum=s=>{const m=s.match(/(\d+)[–-](\d+)\s+Jun/);return m?[+m[1]-HSTART,+m[2]-HSTART+1]:null;};
 const ST={ontime:{c:'#34d27f',l:'On time'},early:{c:'#5aa9e6',l:'Early'},late:{c:'#e0655e',l:'Late'}};
 
+/* date / horizon helpers — timeline & table run off real dates so live AIS ETAs slot in */
+const DAY=86400000, MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const startOfDay=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x;};
+const etaMs=e=>new Date(new Date().getFullYear(),(e.Month||1)-1,e.Day||1,e.Hour||0,e.Minute||0).getTime();
+const fmtEtaShort=d=>`${d.getDate()} ${MON[d.getMonth()]} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+const fmtRange=(a,b)=>`${a.getDate()}–${new Date(b.getTime()-DAY).getDate()} ${MON[a.getMonth()]}`;
+const _ed=s=>{const m=s.match(/(\d+)\s+Jun(?:\s+(\d+):(\d+))?/);return m?new Date(2026,5,+m[1],+(m[2]||0),+(m[3]||0)):null;};
+const _ld=s=>{const m=s.match(/(\d+)[–-](\d+)\s+Jun/);return m?[new Date(2026,5,+m[1]),new Date(2026,5,+m[2]+1)]:null;};
+MODEL.vessels.forEach(v=>{v.etaDate=_ed(v.eta);v.lcD=_ld(v.lc);v.draught=v.dwt>120?16.5:12.4;});
+function horizon(vs){let lo=Infinity,hi=-Infinity;vs.forEach(v=>{if(v.etaDate){lo=Math.min(lo,v.etaDate.getTime());hi=Math.max(hi,v.etaDate.getTime());}if(v.lcD){lo=Math.min(lo,v.lcD[0].getTime());hi=Math.max(hi,v.lcD[1].getTime());}});
+  if(!isFinite(lo)){lo=Date.now();hi=lo+28*DAY;}const H0=startOfDay(new Date(lo)).getTime()-DAY;return {H0,span:Math.max(28,Math.ceil((hi-H0)/DAY)+2)};}
+
 /* ---------- KPI strip ---------- */
 function renderKpis(){
   const cards=[
@@ -307,44 +319,35 @@ function renderHero(){
   ({timeline:heroTimeline,schematic:heroSchematic,table:heroTable,map:heroMap}[heroView]||heroTimeline)();
 }
 function heroTimeline(){
-  const W=1000,H=520,padL=158,padR=74,padT=24,laneH=58,covH=120;
-  const nV=MODEL.vessels.length, plotW=W-padL-padR;
-  const laneTop=padT+14, laneArea=nV*laneH, covTop=laneTop+laneArea+18;
-  const x=d=>padL+plotW*(clamp(d,0,HDAYS)/HDAYS);
+  const vs=displayVessels(), {H0,span}=horizon(vs);
+  const W=1000,padL=158,padR=80,laneTop=40,covH=118;
+  const nV=Math.max(1,vs.length), plotW=W-padL-padR, laneH=Math.min(58,Math.floor(330/nV)), covTop=laneTop+nV*laneH+18;
+  const x=t=>padL+plotW*clamp((t-H0)/(span*DAY),0,1);
   let g='';
-  // weekly grid + date labels
-  for(let d=0;d<=HDAYS;d+=7){const xx=x(d);g+=`<line x1="${xx}" y1="${laneTop-6}" x2="${xx}" y2="${covTop+covH}" stroke="#1c3326" stroke-width="1"/>
-    <text x="${xx}" y="${laneTop-11}" text-anchor="middle" font-size="10" fill="#5f7d68" font-family="var(--mono)">${HSTART+d} Jun</text>`;}
-  // lanes
-  MODEL.vessels.forEach((v,i)=>{
-    const y=laneTop+i*laneH+laneH/2, col=ST[v.st].c;
-    const lc=lnum(v.lc), eta=dnum(v.eta);
-    g+=`<text x="14" y="${y-3}" font-size="12" font-weight="700" fill="#dcefe2" font-family="var(--sans)">${v.name}</text>
-        <text x="14" y="${y+11}" font-size="9.5" fill="#6f9580" font-family="var(--mono)">${v.cls} · ${v.dwt}k · ${v.geared?'geared':'gearless'} · ${v.crane}</text>`;
-    if(lc){g+=`<rect x="${x(lc[0])}" y="${y-16}" width="${x(lc[1])-x(lc[0])}" height="32" rx="6" fill="#ffffff10" stroke="#ffffff22"/>
-      <text x="${x(lc[0])+3}" y="${y-19}" font-size="8.5" fill="#5f7d68" font-family="var(--mono)">laycan</text>`;}
-    if(eta!=null){
-      const dur=v.load>0?2.4:2.0, bx=x(eta), bw=Math.max(10,x(eta+dur)-bx);
+  for(let d=0;d<=span;d+=7){const t=H0+d*DAY,xx=x(t),dt=new Date(t);
+    g+=`<line x1="${xx}" y1="${laneTop-6}" x2="${xx}" y2="${covTop+covH}" stroke="#1c3326"/>
+        <text x="${xx}" y="${laneTop-11}" text-anchor="middle" font-size="10" fill="#5f7d68" font-family="var(--mono)">${dt.getDate()} ${MON[dt.getMonth()]}</text>`;}
+  vs.forEach((v,i)=>{const y=laneTop+i*laneH+laneH/2, col=ST[v.st].c;
+    g+=`<text x="14" y="${y-3}" font-size="12" font-weight="700" fill="#dcefe2">${v.name}</text>
+        <text x="14" y="${y+11}" font-size="9.5" fill="#6f9580" font-family="var(--mono)">${v.cls} · ${v.dwt}k · ${v.geared?'geared':'gearless'} · ${v.crane||''}</text>`;
+    if(v.lcD){g+=`<rect x="${x(v.lcD[0])}" y="${y-16}" width="${Math.max(2,x(v.lcD[1])-x(v.lcD[0]))}" height="32" rx="6" fill="#ffffff10" stroke="#ffffff22"/>
+      <text x="${x(v.lcD[0])+3}" y="${y-19}" font-size="8.5" fill="#5f7d68" font-family="var(--mono)">laycan</text>`;}
+    if(v.etaDate){const dur=(v.load>0?2.4:2.0)*DAY, bx=x(v.etaDate), bw=Math.max(10,x(v.etaDate.getTime()+dur)-bx);
       g+=`<rect x="${bx}" y="${y-8}" width="${bw}" height="16" rx="4" fill="${col}" opacity="0.92"/>`;
       if(v.load>0)g+=`<rect x="${bx}" y="${y-8}" width="${bw*v.load/100}" height="16" rx="4" fill="#ffffff55"/>`;
       g+=`<path d="M${bx},${y-13} l5,-7 l-10,0 z" fill="${col}"/>`;
-      const demTxt=v.dem>0?fmt(v.dem)+' demurrage':v.dem<0?fmt(-v.dem)+' despatch':'on plan';
-      const demCol=v.dem>0?'#e0655e':v.dem<0?'#34d27f':'#7fa389';
-      g+=`<text x="${W-padR+8}" y="${y-1}" font-size="10.5" font-weight="700" fill="${demCol}" font-family="var(--mono)">${demTxt}</text>
-          <text x="${W-padR+8}" y="${y+12}" font-size="9" fill="#6f9580" font-family="var(--mono)">${ST[v.st].l} · ${v.eta.split(' ').slice(0,2).join(' ')}</text>`;
-    }
+      const dt=v.dem>0?fmt(v.dem)+' demurrage':v.dem<0?fmt(-v.dem)+' despatch':'on plan', dc=v.dem>0?'#e0655e':v.dem<0?'#34d27f':'#7fa389';
+      g+=`<text x="${W-padR+8}" y="${y-1}" font-size="10.5" font-weight="700" fill="${dc}" font-family="var(--mono)">${dt}</text>
+          <text x="${W-padR+8}" y="${y+12}" font-size="9" fill="#6f9580" font-family="var(--mono)">${ST[v.st].l} · ${v.eta}</text>`;}
   });
-  // cover overlay
-  const cy=v=>covTop+covH*(1-(clamp(v,2,8)-2)/6);
+  const cy=val=>covTop+covH*(1-(clamp(val,2,8)-2)/6);
   g+=`<text x="14" y="${covTop+12}" font-size="10" font-weight="700" fill="#cdbf9a" font-family="var(--mono)">STOCKPILE COVER (days)</text>`;
   [4,6,8].forEach(t=>g+=`<line x1="${padL}" y1="${cy(t)}" x2="${W-padR}" y2="${cy(t)}" stroke="#1c3326"/><text x="${padL-6}" y="${cy(t)+3}" text-anchor="end" font-size="9" fill="#5f7d68" font-family="var(--mono)">${t}</text>`);
   g+=`<line x1="${padL}" y1="${cy(MINSAFE)}" x2="${W-padR}" y2="${cy(MINSAFE)}" stroke="#e0655e" stroke-width="1.4" stroke-dasharray="6 5"/><text x="${W-padR+8}" y="${cy(MINSAFE)+3}" font-size="9" fill="#e0655e" font-family="var(--mono)">min 4.0</text>`;
-  const path=MODEL.cover.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)} ${cy(v).toFixed(1)}`).join(' ');
+  const path=MODEL.cover.map((val,i)=>`${i?'L':'M'}${x(H0+i*DAY).toFixed(1)} ${cy(val).toFixed(1)}`).join(' ');
   g+=`<path d="${path}" fill="none" stroke="#e0a23c" stroke-width="2.4"/>`;
-  g+=`<path d="${path} L${x(HDAYS)} ${covTop+covH} L${padL} ${covTop+covH} Z" fill="#e0a23c14"/>`;
-  // arrival ticks on cover
-  MODEL.vessels.forEach(v=>{const e=dnum(v.eta);if(e!=null)g+=`<line x1="${x(e)}" y1="${covTop+8}" x2="${x(e)}" y2="${covTop+covH}" stroke="${ST[v.st].c}" stroke-width="1" stroke-dasharray="2 3" opacity="0.7"/><circle cx="${x(e)}" cy="${covTop+8}" r="3" fill="${ST[v.st].c}"/>`;});
-  $('heroSvg').innerHTML=g;
+  vs.forEach(v=>{if(v.etaDate){const xx=x(v.etaDate);g+=`<line x1="${xx}" y1="${covTop+8}" x2="${xx}" y2="${covTop+covH}" stroke="${ST[v.st].c}" stroke-width="1" stroke-dasharray="2 3" opacity="0.65"/><circle cx="${xx}" cy="${covTop+8}" r="3" fill="${ST[v.st].c}"/>`;}});
+  $('heroSvg').innerHTML=`<g font-family="var(--sans)">${g}</g>`;
 }
 function heroSchematic(){
   const W=1000,H=520;let g='';
@@ -367,24 +370,22 @@ function heroSchematic(){
   $('heroSvg').innerHTML=`<g font-family="var(--sans)">${g}</g>`;
 }
 function heroTable(){
-  const grd={sap:'Saprolite',lim:'Limonite'};
-  let rows=MODEL.vessels.map(v=>{
+  const vs=displayVessels().slice(0,6), grd={sap:'Saprolite',lim:'Limonite'};
+  const colY=66, rh=Math.min(90,(520-colY-10)/Math.max(1,vs.length));let g=`<g font-family="var(--sans)">`;
+  const cols=[['VESSEL',20],['CLASS',250],['ETA',430],['LAYCAN',590],['STATUS',710],['GRADE',808],['DEMURRAGE',898]];
+  cols.forEach(([t,xx])=>g+=`<text x="${xx}" y="44" font-size="10" font-weight="700" fill="#5f7d68" font-family="var(--mono)" letter-spacing="0.5">${t}</text>`);
+  g+=`<line x1="14" y1="54" x2="986" y2="54" stroke="#243f2e"/>`;
+  vs.forEach((v,i)=>{const y=colY+i*rh+30;
     const dem=v.dem>0?`<tspan fill="#e0655e">${fmt(v.dem)} dem.</tspan>`:v.dem<0?`<tspan fill="#34d27f">${fmt(-v.dem)} desp.</tspan>`:`<tspan fill="#7fa389">on plan</tspan>`;
-    return {v,dem};});
-  const W=1000,colY=70,rh=92;let g=`<g font-family="var(--sans)">`;
-  const cols=[['VESSEL',20],['CLASS',250],['ETA (AIS-ML)',430],['LAYCAN',590],['STATUS',710],['GRADE',810],['DEMURRAGE',900]];
-  cols.forEach(([t,xx])=>g+=`<text x="${xx}" y="46" font-size="10" font-weight="700" fill="#5f7d68" font-family="var(--mono)" letter-spacing="0.5">${t}</text>`);
-  g+=`<line x1="14" y1="56" x2="986" y2="56" stroke="#243f2e"/>`;
-  rows.forEach((r,i)=>{const y=colY+i*rh+34,v=r.v;
     g+=`<text x="20" y="${y}" font-size="14" font-weight="800" fill="#dcefe2">${v.name}</text>
         <text x="250" y="${y}" font-size="11" fill="#9fc0ac" font-family="var(--mono)">${v.cls} · ${v.dwt}k · ${v.geared?'geared':'gearless'}</text>
-        <text x="430" y="${y}" font-size="11.5" fill="#cfe6d6" font-family="var(--mono)">${v.eta}</text>
-        <text x="590" y="${y}" font-size="11.5" fill="#cfe6d6" font-family="var(--mono)">${v.lc}</text>
+        <text x="430" y="${y}" font-size="11" fill="#cfe6d6" font-family="var(--mono)">${v.eta}</text>
+        <text x="590" y="${y}" font-size="11" fill="#cfe6d6" font-family="var(--mono)">${v.lc}</text>
         <rect x="710" y="${y-13}" width="74" height="19" rx="9" fill="${ST[v.st].c}22" stroke="${ST[v.st].c}55"/><text x="747" y="${y}" text-anchor="middle" font-size="10" font-weight="700" fill="${ST[v.st].c}" font-family="var(--mono)">${ST[v.st].l}</text>
-        <text x="810" y="${y}" font-size="11" fill="#cdbf9a">${grd[v.grade]}</text>
-        <text x="900" y="${y}" font-size="11.5" font-weight="700" font-family="var(--mono)">${r.dem}</text>`;
-    g+=`<rect x="20" y="${y+12}" width="200" height="6" rx="3" fill="#1c3326"/><rect x="20" y="${y+12}" width="${2*v.load}" height="6" rx="3" fill="#34d27f"/>`;
-    g+=`<line x1="14" y1="${colY+(i+1)*rh+2}" x2="986" y2="${colY+(i+1)*rh+2}" stroke="#182c20"/>`;
+        <text x="808" y="${y}" font-size="11" fill="#cdbf9a">${grd[v.grade]||'—'}</text>
+        <text x="898" y="${y}" font-size="11.5" font-weight="700" font-family="var(--mono)">${dem}</text>`;
+    if(v.load>0)g+=`<rect x="20" y="${y+11}" width="200" height="5" rx="3" fill="#1c3326"/><rect x="20" y="${y+11}" width="${2*v.load}" height="5" rx="3" fill="#34d27f"/>`;
+    g+=`<line x1="14" y1="${colY+(i+1)*rh+1}" x2="986" y2="${colY+(i+1)*rh+1}" stroke="#182c20"/>`;
   });
   g+=`</g>`;$('heroSvg').innerHTML=g;
 }
@@ -445,8 +446,8 @@ function shipSnapshot(){
   return {buffer:+b.toFixed(1),currentPolicyBuffer:policy,optimumBuffer:+opt.toFixed(2),
     fcAllocationSaprolitePct:+$('fcAlloc').value, sailingDraftM:+d.draft.toFixed(2), draftValueUSD:Math.round(d.value),
     cost:{atBuffer:Math.round(MODEL.cost(b).total),atOptimum:Math.round(MODEL.cost(opt).total),atPolicy:Math.round(MODEL.cost(policy).total),curve:'total(b)=900000*exp(-0.45*b)+140000*b'},
-    binding:'Floating-crane rate (~94% util)',
-    vessels:MODEL.vessels.map(v=>({name:v.name,cls:v.cls,status:v.st,grade:v.grade,eta:v.eta,laycan:v.lc,demurrageUSD:v.dem}))};
+    binding:'Floating-crane rate (~94% util)', feed:FEED.source==='aisstream'?'live-ais':'demo',
+    vessels:displayVessels().map(v=>({name:v.name,cls:v.cls,status:v.st,grade:v.grade,eta:v.eta,laycan:v.lc,demurrageUSD:v.dem}))};
 }
 function localAI(){
   const cur=+$('buffer').value,opt=MODEL.optimumBuffer(),policy=MODEL.currentPolicyBuffer;
@@ -501,7 +502,7 @@ function paintCopilot(){
   $('cpBtn').onclick=cpAsk;
   $('cpInput').addEventListener('keydown',e=>{if(e.key==='Enter')cpAsk();});
 }
-function cpState(){const opt=MODEL.optimumBuffer();return{binding:'Floating-crane rate (~94% util)',optimumBufferDays:+opt.toFixed(2),currentPolicyBufferDays:MODEL.currentPolicyBuffer,costAtOptimumUSD:Math.round(MODEL.cost(opt).total),atRiskVessel:'MV Cape Kendari',atRiskDemurrageUSD:128000,vessels:MODEL.vessels.map(v=>({name:v.name,status:v.st,grade:v.grade,demurrageUSD:v.dem}))};}
+function cpState(){const opt=MODEL.optimumBuffer();return{binding:'Floating-crane rate (~94% util)',optimumBufferDays:+opt.toFixed(2),currentPolicyBufferDays:MODEL.currentPolicyBuffer,costAtOptimumUSD:Math.round(MODEL.cost(opt).total),feed:FEED.source==='aisstream'?'live-ais':'demo',vessels:displayVessels().map(v=>({name:v.name,status:v.st,grade:v.grade,demurrageUSD:v.dem}))};}
 function cpLocal(q){const opt=MODEL.optimumBuffer();
   if(q.includes('constraint')||q.includes('binding'))return'The binding constraint over the next 30 days is the <b>floating-crane rate</b> at ~94% utilisation. FC-1 and FC-2 combine for 38 kt/day while OGV demand peaks at 40 kt/day on the 27th. Barge cycle is second at 81%.';
   if(q.includes('risk')||q.includes('vessel')||q.includes('late'))return'<b>MV Cape Kendari</b> (Capesize) is the at-risk vessel: forecast late against a 25–27 Jun laycan and driving ~$128k of demurrage. It is gearless, so it needs an FC slot contested by the crane constraint.';
@@ -554,11 +555,33 @@ function currentShips(){
       return {lat:p.lat+0.008*Math.sin(dt/12+i),lon:p.lon+(moving?-dt*0.0009:0.004*Math.cos(dt/15+i)),hd:p.hd,col:ST[v.st].c,label:v.name.replace('MV ','')};});}
   return [...FEED.ships.values()].filter(s=>s.lat!=null).map(s=>({lat:s.lat,lon:s.lon,hd:s.hd||0,col:'#34d27f',label:(s.name||String(s.mmsi)).slice(0,14)}));
 }
+// Demurrage rate by class ($/day, illustrative) + class inference from AIS draught.
+const RATE={Capesize:67000,Panamax:20000,Supramax:13000,Handysize:11000,Tanker:22000,Vessel:15000};
+function classFromAIS(s){const t=aisClass(s.type),d=s.draught||0;
+  if(t==='Bulk/Cargo'||t==='Vessel')return d>=16?'Capesize':d>=13?'Panamax':d>=11?'Supramax':'Handysize';return t;}
+// Live line-up: real AIS ETA + a synthetic rolling berth laycan → predicted demurrage/despatch.
+function liveLineup(){
+  try{
+    const inb=[...FEED.ships.values()].filter(s=>s.dest&&KEN.test(s.dest)&&s.etaRaw&&s.etaRaw.Month);
+    const base=startOfDay(new Date());
+    return inb.sort((a,b)=>etaMs(a.etaRaw)-etaMs(b.etaRaw)).slice(0,6).map((s,i)=>{
+      const eta=new Date(etaMs(s.etaRaw));
+      const lc0=new Date(base.getTime()+(3+i*3)*DAY), lc1=new Date(lc0.getTime()+5*DAY);   // synthetic berth window
+      const cls=classFromAIS(s), rate=RATE[cls]||15000;
+      let dem=0,st='ontime';
+      if(eta>lc1){dem=Math.round((eta-lc1)/DAY*rate);st='late';}
+      else if(eta<lc0){dem=-Math.round((lc0-eta)/DAY*rate*0.5);st='early';}
+      return {name:s.name||('MMSI '+s.mmsi),cls,dwt:Math.round((s.draught||12)*11),geared:cls==='Supramax'||cls==='Handysize',
+        etaDate:eta,eta:fmtEtaShort(eta),lcD:[lc0,lc1],lc:fmtRange(lc0,lc1),st,crane:i%2?'FC-2':'FC-1',
+        grade:i%2?'lim':'sap',load:eta<new Date()?40:0,dem,draught:s.draught};
+    });
+  }catch(e){return [];}
+}
+// Source of truth for every vessel-driven view: live line-up when AIS is feeding, else the demo twin.
+function displayVessels(){ if(FEED.source==='aisstream'){const l=liveLineup();if(l.length)return l;} return MODEL.vessels; }
 function inboundList(){
-  if(FEED.source==='demo')return MODEL.vessels.map(v=>({name:v.name,cls:v.cls,etaTxt:v.eta,draught:'12.4',
-    demTxt:v.dem>0?fmt(v.dem)+' demurrage':v.dem<0?fmt(-v.dem)+' despatch':'on plan',demCol:v.dem>0?'#e0655e':v.dem<0?'#34d27f':'#7fa389'}));
-  return [...FEED.ships.values()].filter(s=>s.dest&&KEN.test(s.dest)).map(s=>({name:s.name||('MMSI '+s.mmsi),cls:aisClass(s.type),
-    etaTxt:fmtEta(s.etaRaw),draught:s.draught!=null?(+s.draught).toFixed(1):'—',demTxt:'— needs charter',demCol:'#7fa389'}));
+  return displayVessels().map(v=>({name:v.name,cls:v.cls,etaTxt:v.eta,draught:v.draught!=null?(+v.draught).toFixed(1):'12.4',
+    demTxt:v.dem>0?fmt(v.dem)+' dem.':v.dem<0?fmt(-v.dem)+' desp.':'on plan',demCol:v.dem>0?'#e0655e':v.dem<0?'#34d27f':'#7fa389'}));
 }
 function heroMap(){
   const W=1000,H=520,mapW=700;let g=`<rect x="0" y="0" width="${mapW}" height="${H}" fill="#0b140e"/>`;
@@ -600,16 +623,17 @@ function connectAIS(key){
     if(m.MessageType==='PositionReport'){const p=m.Message.PositionReport;s.lat=p.Latitude;s.lon=p.Longitude;s.sog=p.Sog;s.hd=(p.TrueHeading!=null&&p.TrueHeading<360)?p.TrueHeading:p.Cog;s.nav=p.NavigationalStatus;}
     else if(m.MessageType==='ShipStaticData'){const d=m.Message.ShipStaticData;if(d.Name)s.name=String(d.Name).trim();s.dest=(d.Destination||'').trim();s.draught=d.MaximumStaticDraught;s.type=d.Type;s.etaRaw=d.Eta;}
     FEED.ships.set(mmsi,s);FEED.status='live';
-    const now=Date.now();if(now-FEED.lastPaint>1500){FEED.lastPaint=now;updateSrc();if(heroView==='map')renderHero();}
+    const now=Date.now();if(now-FEED.lastPaint>1500){FEED.lastPaint=now;updateSrc();renderHero();
+      if(!FEED.solved&&liveLineup().length){FEED.solved=true;solveRec();}}
   };
   ws.onerror=()=>{if(!String(FEED.status).startsWith('error')){FEED.status='error: connection';updateSrc();}};
   ws.onclose=()=>{if(FEED.source==='aisstream'&&!String(FEED.status).startsWith('error')){FEED.status='disconnected';updateSrc();}};
 }
 function setSource(src,key){
-  FEED.source=src;
+  FEED.source=src;FEED.solved=false;
   if(src==='demo'){disconnectAIS();FEED.status='demo';}
   else{ if(!key){FEED.status='error: paste a key';updateSrc();return;} connectAIS(key); }
-  updateSrc();if(heroView==='map')renderHero();
+  updateSrc();renderHero();if(src==='demo')solveRec();
 }
 
 /* ===================== TOGGLES + WIRE-UP ===================== */
@@ -637,6 +661,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('.srcwrap'))$('srcPop
 setInterval(()=>{if(heroView==='map'&&FEED.source==='demo')renderHero();},2000);
 
 fetch('/api/health').then(r=>r.json()).then(({aiMode})=>{const live=aiMode==='live';$('liveTxt').textContent=live?'AI: Live':'AI: Demo';}).catch(()=>{});
+fetch('/api/aisstream-key').then(r=>r.json()).then(({key})=>{if(key){$('aisKey').value=key;$('aisKey').placeholder='key loaded from server';}}).catch(()=>{});
 </script>
 </body>
 </html>

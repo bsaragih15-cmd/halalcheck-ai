@@ -426,6 +426,11 @@ IMPORTANT: Return ONLY valid JSON, no other text.`;
 // ── Endpoints ─────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, aiMode: aiMode() }));
 
+// Serve the AISStream key from an env var so it never lives in the (public) repo.
+// AISStream is a browser-side WebSocket, so the key is necessarily client-visible
+// in use; this only keeps it out of source control. Set AISSTREAM_API_KEY in Vercel.
+app.get('/api/aisstream-key', (req, res) => res.json({ key: process.env.AISSTREAM_API_KEY || '' }));
+
 app.post('/api/maintenance/analyze', async (req, res) => {
   const { assetId, assetMeta, telemetrySummary } = req.body || {};
   const result = await askClaude({
