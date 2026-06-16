@@ -1,13 +1,17 @@
 // Hauling Optimisation — stockpile→jetty haul-circuit dispatch console.
-// Light-theme console: a deterministic circuit simulation drives the live route
-// map (always runs), while the AI dispatch rationale comes from /api/haul/*
-// with an unbreakable deterministic fallback baked in below.
+// A deterministic circuit simulation drives the live route map AND the KPIs:
+// every tick the live state (active trucks, loaders up, payload, hopper level)
+// is fed through the shared haul model, so delivered t/h, match factor, the
+// constraint bars and the Monte-Carlo starve risk all emerge from the running
+// twin rather than from canned numbers. The dispatch optimiser + narrative come
+// from /api/haul/* with the model's own output as an unbreakable fallback.
 import { postJSON, esc } from './shared.js';
 import { witaTime } from './sim.js';
-import { buildMetrics, fmt, usd } from './haul-scenarios.js';
+import { PARAMS, nominalState, computeMetrics, optimise, forecastStarve, fmt, usd } from './haul-scenarios.js';
 
 const el = (id) => document.getElementById(id);
 const NS = 'http://www.w3.org/2000/svg';
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 const STATE_COLOR = { loading: '#15803d', hauling: '#0e7490', queuing: '#b45309', dumping: '#0f766e', returning: '#64748b', down: '#b91c1c' };
 const LEGEND = [
@@ -40,15 +44,16 @@ function viewModel(m, chosen) {
   });
   const starveColor = m.starvePct >= 30 ? '#c0392b' : (m.starvePct >= 10 ? '#b45309' : '#16915a');
   const mfBal = (m.mf >= 0.95 && m.mf <= 1.05);
-  const mfChip = 'MF ' + m.mf.toFixed(2) + ' · ' + (mfBal ? 'balanced' : (m.mf < 0.95 ? 'under-trucked' : 'over-trucked')) + ' — ' + (m.loaderDown ? 'hold 3' : (m.down && m.down.length ? 're-balance' : 'hold 9'));
+  const mfChip = 'MF ' + m.mf.toFixed(2) + ' · ' + (mfBal ? 'balanced' : (m.mf < 0.95 ? 'under-trucked' : 'over-trucked')) + ' — ' + (m.loaderDown ? 'hold spares' : (m.down && m.down.length ? 're-balance' : 'hold 9'));
+  const starveChip = 'Hopper-starve 4h: ' + m.starvePct + '%' + (m.minToStarve != null && m.starvePct >= 10 ? ' · ~' + m.minToStarve + ' min' : '');
   const chosenStrat = m.strategies[chosen] || m.strategies['protect-demand'];
   return {
     kpis, bars, legend: LEGEND,
     constraint: { color: cColor, label: cLabel, note: m.cnote, shiftTxt: m.shiftFrom ? ('⟳ ' + m.shiftFrom.toUpperCase() + '→' + m.binding.toUpperCase()) : '' },
     strategies, chosenStrat,
-    starveChip: 'Hopper-starve 4h: ' + m.starvePct + '%', starveColor, mfChip, mfChipColor: mfBal ? '#16915a' : '#b45309',
+    starveChip, starveColor, mfChip, mfChipColor: mfBal ? '#16915a' : '#b45309',
     ai: { headline: m.headline, current: fmt(m.current), optimised: fmt(chosenStrat.optimised), value: chosenStrat.value },
-    fleetActions: m.fa, recs: m.recs, narrative: m.narrative,
+    actions: m.actions, narrative: m.narrative,
   };
 }
 
@@ -61,10 +66,42 @@ const GEO = {
 };
 const LOADER_POS = { 'LD-1': [116, 130], 'LD-2': [116, 320] };
 const T = { load: 2.4, haul: 7.0, dump: 1.8, ret: 6.0 };
-let trucks = [], loaders, hopper, speedMult = 1, tnodes = [], hopDisp = 68, last = 0;
-let m = buildMetrics('optimise');
+// Hopper control loop: net (delivered−demand) disturbs the level; a restoring
+// term models the barge-loadout controller holding the bin toward its setpoint.
+const HOP = { TIME_SCALE: 120, DIST_K: 1, RESTORE_K: 1.1 };
+
+let trucks = [], loaders, hopper, speedMult = 1, tnodes = [], last = 0;
+let cstate = nominalState('optimise');   // live circuit state
+let plan = null;                         // optimiser output (per scenario)
+let m = null;                            // merged metrics for rendering
+let liveDelivered = 1980;
 let chosen = 'protect-demand';
 let currentScenarioKey = 'optimise';
+
+// A rigid mining haul-truck glyph (chunky dump tray with an ore load, front
+// rock-guard canopy + cab window, big mining tyres). Body stays haul-truck
+// yellow; a status pip shows state. The body group flips + scales (~1.4×) and
+// faces the direction of travel.
+function truckNode(num) {
+  const g = document.createElementNS(NS, 'g');
+  const inner = document.createElementNS(NS, 'g'); inner.setAttribute('class', 'tbodyG');
+  const body = document.createElementNS(NS, 'path');
+  body.setAttribute('class', 'tbody');
+  body.setAttribute('d', 'M-12 -1 L-12 -8 L-9 -9 L4 -9 L12 -8 L12 -4 L7 -4 L7 -1 Z');
+  body.setAttribute('fill', '#f5b81c'); body.setAttribute('stroke', '#20200f'); body.setAttribute('stroke-width', '0.9'); body.setAttribute('stroke-linejoin', 'round');
+  const ore = document.createElementNS(NS, 'path');
+  ore.setAttribute('d', 'M-11 -8.4 Q-7 -11.4 -3 -9.4 Q1 -11.4 5 -9.4 Q8 -10.2 10.5 -8.4 Z');
+  ore.setAttribute('fill', '#8a7651'); ore.setAttribute('stroke', '#20200f'); ore.setAttribute('stroke-width', '0.4');
+  const win = document.createElementNS(NS, 'path');
+  win.setAttribute('d', 'M8 -3.7 L10.6 -3.7 L10.6 -1.8 L8 -1.8 Z'); win.setAttribute('fill', '#0d1a22');
+  const mk = (cx, r) => { const c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', cx); c.setAttribute('cy', '1.8'); c.setAttribute('r', r); c.setAttribute('fill', '#14130b'); return c; };
+  const hub = (cx, r) => { const c = document.createElementNS(NS, 'circle'); c.setAttribute('cx', cx); c.setAttribute('cy', '1.8'); c.setAttribute('r', r); c.setAttribute('fill', '#c9a227'); return c; };
+  inner.append(body, ore, win, mk(-6.5, 3.2), mk(7, 2.9), hub(-6.5, 1.1), hub(7, 1));
+  const pip = document.createElementNS(NS, 'circle'); pip.setAttribute('class', 'tpip'); pip.setAttribute('cx', '13'); pip.setAttribute('cy', '-11'); pip.setAttribute('r', '2.4'); pip.setAttribute('fill', '#cdd6c6'); pip.setAttribute('stroke', '#0e140d'); pip.setAttribute('stroke-width', '0.8');
+  const tx = document.createElementNS(NS, 'text'); tx.setAttribute('text-anchor', 'middle'); tx.setAttribute('y', '-15'); tx.setAttribute('font-family', "'JetBrains Mono',monospace"); tx.setAttribute('font-size', '8'); tx.setAttribute('font-weight', '700'); tx.setAttribute('fill', '#aeb6a5'); tx.textContent = num;
+  g.append(inner, pip, tx);
+  return g;
+}
 
 function initSim() {
   loaders = { 'LD-1': { busy: false, down: false }, 'LD-2': { busy: false, down: false } };
@@ -78,12 +115,7 @@ function initSim() {
     return t;
   });
   const layer = el('truckLayer'); layer.innerHTML = '';
-  tnodes = trucks.map((t) => {
-    const g = document.createElementNS(NS, 'g');
-    const c = document.createElementNS(NS, 'circle'); c.setAttribute('r', '7.5'); c.setAttribute('stroke', 'rgba(255,255,255,0.4)'); c.setAttribute('stroke-width', '1.5'); c.setAttribute('fill', '#64748b');
-    const tx = document.createElementNS(NS, 'text'); tx.setAttribute('text-anchor', 'middle'); tx.setAttribute('y', '-11'); tx.setAttribute('font-family', "'JetBrains Mono',monospace"); tx.setAttribute('font-size', '8'); tx.setAttribute('font-weight', '700'); tx.setAttribute('fill', '#aeb6a5'); tx.textContent = t.num;
-    g.appendChild(c); g.appendChild(tx); layer.appendChild(g); return g;
-  });
+  tnodes = trucks.map((t) => { const g = truckNode(t.num); layer.appendChild(g); return g; });
 }
 
 function lerp(pts, f) {
@@ -122,22 +154,56 @@ function step(ts) {
     const st = (t.state === 'qloader' || t.state === 'qhopper') ? 'queuing' : t.state;
     const node = tnodes[i];
     node.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
-    const c = node.querySelector('circle');
-    c.setAttribute('fill', t.state === 'down' ? '#0e140d' : (STATE_COLOR[st] || '#64748b'));
-    c.setAttribute('stroke', t.state === 'down' ? '#c0392b' : 'rgba(255,255,255,0.4)');
-    c.setAttribute('stroke-width', t.state === 'down' ? '2.5' : '1.5');
+    // Face the direction of travel (nose left when returning/at the jetty), ~1.4× size.
+    const faceLeft = (t.state === 'returning' || t.state === 'qhopper' || t.state === 'dumping');
+    node.querySelector('.tbodyG').setAttribute('transform', faceLeft ? 'scale(-1.4,1.4)' : 'scale(1.4,1.4)');
+    const down = t.state === 'down';
+    const body = node.querySelector('.tbody');
+    body.setAttribute('fill', down ? '#3a3a28' : '#f5b81c');           // yellow body; muted when parked
+    body.setAttribute('stroke', down ? '#c0392b' : '#20200f');
+    body.setAttribute('stroke-width', down ? '1.5' : '0.9');
+    node.querySelector('.tpip').setAttribute('fill', STATE_COLOR[st] || '#64748b'); // state via status pip
   });
   setBadge('q1Badge', 'q1Text', qlc['LD-1']); setBadge('q2Badge', 'q2Text', qlc['LD-2']); setBadge('qhBadge', 'qhText', qhc);
-  hopDisp += (m.hopPct - hopDisp) * Math.min(1, dt * 2);
-  const h0 = 100, y0 = 152, h = Math.max(2, hopDisp / 100 * h0);
+
+  // Emergent hopper level: integrate delivered−demand with a controller pulling
+  // toward the setpoint (the barge loadout throttles to protect the bin).
+  const capT = PARAMS.HOP_CAP_MIN / 60 * cstate.demand;
+  const disturb = (liveDelivered - cstate.demand) / capT * 100;          // %/mine-hr
+  const restore = (PARAMS.HOP_SETPOINT - cstate.hopLevel) * HOP.RESTORE_K;
+  const dLevelPerHr = disturb * HOP.DIST_K + restore;
+  cstate.hopLevel = clamp(cstate.hopLevel + dLevelPerHr * (dt * HOP.TIME_SCALE / 3600), 0, 100);
+
+  const h0 = 100, y0 = 152, h = Math.max(2, cstate.hopLevel / 100 * h0);
+  const hopMinLive = cstate.hopLevel / 100 * PARAMS.HOP_CAP_MIN;
   const hf = el('hopFill'); hf.setAttribute('height', h.toFixed(1)); hf.setAttribute('y', (y0 + h0 - h).toFixed(1));
-  hf.setAttribute('fill', m.hopMin < 6 ? '#c0392b' : (m.hopMin < 10 ? '#b45309' : '#15803d'));
-  el('hopPct').textContent = Math.round(hopDisp) + '%';
+  hf.setAttribute('fill', hopMinLive < 6 ? '#c0392b' : (hopMinLive < 10 ? '#b45309' : '#15803d'));
+  el('hopPct').textContent = Math.round(cstate.hopLevel) + '%';
 }
 function frame(ts) { step(ts); requestAnimationFrame(frame); }
 
-function tick() {
-  step(performance.now());
+// ── Live model: recompute emergent KPIs from the running sim ───────────────────
+function readObservables() {
+  const up = trucks.filter((t) => t.state !== 'down');
+  cstate.active = up.length;
+  cstate.loadersUp = (loaders['LD-1'].down ? 0 : 1) + (loaders['LD-2'].down ? 0 : 1);
+  cstate.payload = up.length ? up.reduce((a, t) => a + t.payload, 0) / up.length : PARAMS.PAYLOAD;
+  cstate.wet = speedMult > 1;
+  cstate.ct = PARAMS.CT_NOM * (cstate.wet ? PARAMS.WET_CT : 1) * (cstate.cadence || 1);
+}
+let mcAccum = 0;
+function refreshLive(dtMs = 550) {
+  readObservables();
+  const live = computeMetrics(cstate);
+  liveDelivered = live.delivered;
+  // Re-run the Monte-Carlo every ~2s (it's the only non-trivial cost).
+  mcAccum += dtMs;
+  let starve = m ? { starvePct: m.starvePct, minToStarve: m.minToStarve } : { starvePct: 0, minToStarve: null };
+  if (mcAccum >= 2000 || !m) { mcAccum = 0; starve = forecastStarve(cstate, live, plan ? plan.optimised : live.delivered, 300); }
+  m = { ...live, ...plan, starvePct: starve.starvePct, minToStarve: starve.minToStarve,
+    wet: cstate.wet, down: cstate.downIds, loaderDown: cstate.loaderDown, shiftFrom: m ? m.shiftFrom : null };
+  const vm = viewModel(m, chosen);
+  renderKPIs(vm); renderConstraint(vm); renderChips(vm); drawGauges();
   el('hopMin').textContent = m.hopMin + ' min';
   el('hopDemand').textContent = 'DEMAND ' + fmt(m.demand) + ' t/h';
 }
@@ -153,14 +219,14 @@ function drawGauges() {
   el('bufVal').innerHTML = m.hopMin + '<span style="font-size:12px;font-weight:600;color:#9aa091;"> min</span>';
 }
 
-function applySimFlags(metrics, initial) {
-  trucks.forEach((t, i) => { if (t.state === 'down') { t.state = 'returning'; t.prog = 0.5; } t.loader = t.origLoader; const c = tnodes[i].querySelector('circle'); if (c) c.style.animation = ''; });
+function applySimFlags(snap, initial) {
+  trucks.forEach((t) => { if (t.state === 'down') { t.state = 'returning'; t.prog = 0.5; } t.loader = t.origLoader; const b = tnodes[trucks.indexOf(t)].querySelector('.tbody'); if (b) b.style.animation = ''; });
   loaders['LD-1'].down = false; loaders['LD-2'].down = false;
-  speedMult = metrics.wet ? 1.45 : 1;
-  (metrics.down || []).forEach((id) => { const t = trucks.find((x) => x.id === id); if (t) t.state = 'down'; });
-  if (metrics.loaderDown) { loaders[metrics.loaderDown].down = true; const other = metrics.loaderDown === 'LD-2' ? 'LD-1' : 'LD-2'; trucks.forEach((t) => { if (t.origLoader === metrics.loaderDown && t.state !== 'down') t.loader = other; }); }
-  if (!initial) { const mv = new Set(metrics.moved || []); trucks.forEach((t, i) => { if (mv.has(t.id)) { const c = tnodes[i].querySelector('circle'); if (c) { c.style.transformBox = 'fill-box'; c.style.transformOrigin = 'center'; c.style.animation = 'osPulse 0.9s ease 3'; setTimeout(() => { if (c) c.style.animation = ''; }, 2800); } } }); }
-  el('ld2Down').setAttribute('opacity', metrics.loaderDown === 'LD-2' ? '0.28' : '0');
+  speedMult = snap.wet ? 1.45 : 1;
+  (snap.down || []).forEach((id) => { const t = trucks.find((x) => x.id === id); if (t) t.state = 'down'; });
+  if (snap.loaderDown) { loaders[snap.loaderDown].down = true; const other = snap.loaderDown === 'LD-2' ? 'LD-1' : 'LD-2'; trucks.forEach((t) => { if (t.origLoader === snap.loaderDown && t.state !== 'down') t.loader = other; }); }
+  if (!initial) { const mv = new Set(snap.moved || []); trucks.forEach((t, i) => { if (mv.has(t.id)) { const b = tnodes[i].querySelector('.tbody'); if (b) { b.style.transformBox = 'fill-box'; b.style.transformOrigin = 'center'; b.style.animation = 'osPulse 0.9s ease 3'; setTimeout(() => { if (b) b.style.animation = ''; }, 2800); } } }); }
+  el('ld2Down').setAttribute('opacity', snap.loaderDown === 'LD-2' ? '0.28' : '0');
 }
 
 // ── Panel rendering ───────────────────────────────────────────────────────────
@@ -203,25 +269,26 @@ function renderChips(vm) {
   el('mfChip').textContent = vm.mfChip;
 }
 
+// Merged "Recommended actions": unit-tagged dispatch moves with impact + horizon.
+function actionCard(a) {
+  const unit = a.unit ? `<span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#161b13;">${esc(a.unit)}</span>` : '';
+  const tag = a.action ? `<span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;color:#fff;background:${a.tagColor || '#6b7264'};padding:3px 7px;border-radius:5px;">${esc(a.action)}</span>` : '';
+  const delta = a.delta ? `<span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${a.deltaColor || '#16915a'};">${esc(a.delta)}</span>` : '';
+  const tf = a.timeframe ? `<span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#0e7490;"> · ${esc(a.timeframe)}</span>` : '';
+  return `
+    <div style="background:#faf9f3;border:1px solid #eeece1;border-radius:10px;padding:10px 12px;">
+      <div style="display:flex;align-items:center;gap:8px;">${unit}${tag}${delta}</div>
+      <div style="font-size:13px;color:#6b7264;margin-top:5px;line-height:1.4;">${esc(a.detail)}${tf}</div>
+    </div>`;
+}
+function renderActions(actions) { el('aiActions').innerHTML = actions.map(actionCard).join(''); }
+
 function renderAIPanel(vm) {
   el('aiHeadline').textContent = vm.ai.headline;
   el('aiCurrent').textContent = vm.ai.current;
   el('aiOptimised').textContent = vm.ai.optimised;
   el('aiValue').textContent = vm.ai.value;
-  el('aiActions').innerHTML = vm.fleetActions.map((f) => `
-    <div style="background:#faf9f3;border:1px solid #eeece1;border-radius:10px;padding:10px 12px;">
-      <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#161b13;">${f.unit}</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.04em;text-transform:uppercase;font-weight:700;color:#fff;background:${f.tagColor};padding:3px 7px;border-radius:5px;">${f.action}</span>
-        <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${f.deltaColor};">${f.delta}</span>
-      </div>
-      <div style="font-size:13px;color:#6b7264;margin-top:5px;line-height:1.4;">${esc(f.detail)}</div>
-    </div>`).join('');
-  el('aiRecs').innerHTML = vm.recs.map((rc) => `
-    <div style="display:flex;gap:9px;align-items:flex-start;">
-      <span style="width:6px;height:6px;border-radius:50%;background:#15803d;margin-top:7px;flex-shrink:0;"></span>
-      <div style="font-size:13px;line-height:1.45;"><span style="color:#2a3024;font-weight:600;">${esc(rc.action)}</span><span style="color:#8b9182;"> — ${esc(rc.impact)}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#0e7490;"> · ${esc(rc.timeframe)}</span></div>
-    </div>`).join('');
+  renderActions(vm.actions);
   el('aiNarrative').textContent = vm.narrative;
 }
 
@@ -246,10 +313,10 @@ function renderStrategies(vm) {
   }));
 }
 
-function renderAll() {
+// Render the AI plan (optimiser output) — only on scenario change, not each tick.
+function renderPlan() {
   const vm = viewModel(m, chosen);
-  renderKPIs(vm); renderConstraint(vm); renderChips(vm); renderAIPanel(vm); renderStrategies(vm);
-  drawGauges();
+  renderAIPanel(vm); renderStrategies(vm);
 }
 
 // ── Map view toggle (schematic ↔ satellite terrain) ───────────────────────────
@@ -268,38 +335,43 @@ el('haulLegend').innerHTML = LEGEND.map((lg) => `
 
 // ── Scenario application + live AI ─────────────────────────────────────────────
 function planState() {
-  return { binding: m.binding, deliveredTph: m.delivered, demandTph: m.demand, matchFactor: +m.mf.toFixed(2), fleetUtilPct: m.util, hopperBufferMin: m.hopMin, hopperPct: m.hopPct, downTrucks: m.down || [], wet: !!m.wet, activeStrategy: chosen };
+  return { binding: m.binding, deliveredTph: m.delivered, demandTph: m.demand, matchFactor: +m.mf.toFixed(2), fleetUtilPct: m.util, hopperBufferMin: m.hopMin, hopperPct: m.hopPct, starveRiskPct: m.starvePct, downTrucks: m.down || [], wet: !!m.wet, activeStrategy: chosen };
 }
 
 async function applyScenario(key) {
-  const prev = m.binding;
-  m = buildMetrics(key);
-  m.shiftFrom = (prev !== m.binding && key !== 'optimise') ? prev : null;
+  const prev = m ? m.binding : null;
+  // Apply the perturbation to the sim, then re-derive state + plan from it.
+  const snap = nominalState(key);
+  applySimFlags(snap, false);
+  cstate = snap;
+  readObservables();
+  const live = computeMetrics(cstate);
+  plan = optimise(cstate, live);
+  const forecast = forecastStarve(cstate, live, plan.optimised);
   chosen = 'protect-demand';
   currentScenarioKey = key;
-  applySimFlags(m, false);
+  m = { ...live, ...plan, starvePct: forecast.starvePct, minToStarve: forecast.minToStarve,
+    wet: cstate.wet, down: cstate.downIds, loaderDown: cstate.loaderDown,
+    shiftFrom: (prev && prev !== live.binding && key !== 'optimise') ? prev : null };
   syncToggles();
-  renderAll();
-  el('haulParsed').textContent = m.parsed || '';
+  renderPlan();
+  refreshLive();
+  el('haulParsed').textContent = '';
   // solving flash
   const solve = el('haulSolve'); solve.style.opacity = '1'; setTimeout(() => { solve.style.opacity = '0'; }, 1400);
-  // live AI rationale (falls back to the deterministic copy when offline)
+  // live AI rationale (falls back to the model's own copy when offline)
   try {
-    const r = await postJSON('/api/haul/analyze', { scenario: { disruptionId: key, description: m.headline, demandTph: m.demand, deliveredTph: m.delivered, matchFactor: m.mf, hopperBufferMin: m.hopMin } });
+    const r = await postJSON('/api/haul/analyze', { scenario: { disruptionId: key, description: m.headline, demandTph: m.demand, deliveredTph: m.delivered, matchFactor: m.mf, hopperBufferMin: m.hopMin, starveRiskPct: m.starvePct } });
     if (r && r.source === 'live') {
       if (r.headline) el('aiHeadline').textContent = r.headline;
       if (r.narrative) el('aiNarrative').textContent = r.narrative;
       if (r.valueImpactUSD) el('aiValue').textContent = usd(r.valueImpactUSD);
       if (typeof r.optimisedRateTph === 'number') el('aiOptimised').textContent = fmt(r.optimisedRateTph);
       if (Array.isArray(r.recommendations) && r.recommendations.length) {
-        el('aiRecs').innerHTML = r.recommendations.map((rc) => `
-          <div style="display:flex;gap:9px;align-items:flex-start;">
-            <span style="width:6px;height:6px;border-radius:50%;background:#15803d;margin-top:7px;flex-shrink:0;"></span>
-            <div style="font-size:13px;line-height:1.45;"><span style="color:#2a3024;font-weight:600;">${esc(rc.action)}</span><span style="color:#8b9182;"> — ${esc(rc.impact)}</span><span style="font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#0e7490;"> · ${esc(rc.timeframe)}</span></div>
-          </div>`).join('');
+        renderActions(r.recommendations.map((rc) => ({ detail: rc.action, delta: rc.impact, timeframe: rc.timeframe })));
       }
     }
-  } catch { /* deterministic copy already shown */ }
+  } catch { /* model copy already shown */ }
 }
 
 function parseFreeLocal(text) {
@@ -347,7 +419,7 @@ function copilotLocal(q) {
   const tt = (q || '').toLowerCase();
   const tm = tt.match(/(\d[\d,\.]{2,})\s*t\/?h?|\bto\s+(\d[\d,\.]{2,})/);
   if (/binding|constraint/.test(tt)) return 'Binding constraint is ' + m.binding.toUpperCase() + ': ' + m.cnote + ' Delivered ' + fmt(m.delivered) + ' t/h vs ' + fmt(m.demand) + ' demand.';
-  if (/starv|hopper|buffer|min/.test(tt)) return 'Hopper buffer is ' + m.hopMin + ' min at ' + fmt(m.delivered) + ' t/h delivered vs ' + fmt(m.demand) + ' demand (' + m.hopPct + '% level). 4h starve risk ' + m.starvePct + '%.';
+  if (/starv|hopper|buffer|min/.test(tt)) return 'Hopper buffer is ' + m.hopMin + ' min at ' + fmt(m.delivered) + ' t/h delivered vs ' + fmt(m.demand) + ' demand (' + m.hopPct + '% level). 4h starve risk ' + m.starvePct + '%' + (m.minToStarve != null ? ' (~' + m.minToStarve + ' min if unmanaged)' : '') + '.';
   if ((/over|under|truck|match|mf/.test(tt)) && !tm) return 'Match factor ' + m.mf.toFixed(2) + ' — ' + (m.mf < 0.95 ? 'under-trucked, loaders waiting' : (m.mf > 1.05 ? 'over-trucked, trucks queuing' : 'balanced')) + '. Fleet utilisation ' + m.util + '%.';
   if (tm) {
     const tgt = parseInt((tm[1] || tm[2]).replace(/[,\.]/g, ''), 10);
@@ -368,13 +440,21 @@ async function askCopilot(q) {
 
 // ── Boot ──────────────────────────────────────────────────────────────────────
 initSim();
-applySimFlags(m, true);
-hopDisp = m.hopPct;
+cstate = nominalState('optimise');
+applySimFlags(cstate, true);
+readObservables();
+{
+  const live = computeMetrics(cstate);
+  plan = optimise(cstate, live);
+  const forecast = forecastStarve(cstate, live, plan.optimised);
+  m = { ...live, ...plan, starvePct: forecast.starvePct, minToStarve: forecast.minToStarve, wet: cstate.wet, down: cstate.downIds, loaderDown: cstate.loaderDown, shiftFrom: null };
+}
 syncToggles();
 applyView('schematic');
-renderAll();
+renderPlan();
+refreshLive();
 last = performance.now();
 requestAnimationFrame(frame);
-setInterval(tick, 550);
+setInterval(() => refreshLive(550), 550);
 setInterval(() => { el('witaClock').textContent = witaTime(); }, 1000);
 el('witaClock').textContent = witaTime();

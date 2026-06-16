@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OreSight AI — Marketing Optimisation</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/marketing.css" />
+</head>
+<body class="lay-a">
+<div class="wrap">
+
+  <!-- HEADER -->
+  <div class="topbar">
+    <div class="brand">
+      <a class="logo" href="/index.html#matrix" title="Back to use-case matrix">OS</a>
+      <div>
+        <h1>Marketing Optimisation <span class="sub">OreSight AI</span></h1>
+        <div class="ctx">Morowali · 2 stockpiles · saprolite + limonite · mine → blend → product → cargo</div>
+      </div>
+    </div>
+    <div class="topright">
+      <div class="toggle"><button class="on">▦ Desk view</button><button>◷ Mine plan</button></div>
+      <div class="clock"><div class="t" id="clock">--:--:--</div><div class="z">WITA · Cargo window 14</div></div>
+      <div class="live"><span class="dot"></span>Live</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT -->
+    <div class="leftcol">
+
+      <!-- METRICS -->
+      <div class="metrics">
+        <div class="metric"><div class="head"><span class="label">Realised value</span><span class="tag pos">+4.1</span></div><div class="val">78.4<span class="u">$/wmt</span></div><div class="bar"><i style="width:82%"></i></div><div class="foot">HPM floor 70.83 · 1.6% sap</div></div>
+        <div class="metric"><div class="head"><span class="label">Payable capture</span><span class="tag good">balanced</span></div><div class="val">0.92<span class="u">ratio</span></div><div class="bar"><i style="width:74%"></i></div><div class="foot">target 0.88–0.94</div></div>
+        <div class="metric"><div class="head"><span class="label">Spec compliance</span><span class="tag pos">+2</span></div><div class="val">98<span class="u">%</span></div><div class="bar"><i style="width:98%"></i></div><div class="foot">cargoes in-window</div></div>
+        <div class="metric"><div class="head"><span class="label">Offtake fill</span><span class="tag good">safe</span></div><div class="val">91<span class="u">%</span></div><div class="bar"><i style="width:91%"></i></div><div class="foot">9% to spot · committed vs avail</div></div>
+      </div>
+
+      <!-- SCHEMATIC -->
+      <div class="vizcard">
+        <div class="schematic">
+          <div class="sch-cap">Blend &amp; allocation flow — live</div>
+          <svg class="links" viewBox="0 0 1000 520" preserveAspectRatio="none">
+            <defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="rgba(34,197,94,.06)"/><stop offset="1" stop-color="rgba(34,197,94,.32)"/></linearGradient></defs>
+            <path d="M150,150 C260,150 300,210 380,235" stroke="url(#g1)" stroke-width="16" fill="none"/>
+            <path d="M150,380 C260,380 300,300 380,265" stroke="rgba(127,178,230,.24)" stroke-width="16" fill="none"/>
+            <path d="M500,235 C560,210 600,180 660,175" stroke="url(#g1)" stroke-width="14" fill="none"/>
+            <path d="M500,265 C560,300 600,330 660,345" stroke="rgba(127,178,230,.22)" stroke-width="14" fill="none"/>
+            <path d="M780,175 C820,175 830,210 845,235" stroke="url(#g1)" stroke-width="12" fill="none"/>
+            <path d="M780,345 C810,345 820,320 838,300" stroke="rgba(127,178,230,.2)" stroke-width="10" fill="none"/>
+          </svg>
+          <div class="node" style="left:34px;top:128px"><div class="n-top"><span class="pill">SAP-1</span><span class="nm">1.82% Ni</span></div><div class="meta">saprolite · Fe/Ni 4.1 · 240 kt</div></div>
+          <div class="node" style="left:34px;top:358px"><div class="n-top"><span class="pill lim">LIM-1</span><span class="nm">1.12% Ni</span></div><div class="meta">limonite · Co 0.12% · 180 kt</div></div>
+          <div class="node blend" style="left:380px;top:212px;min-width:128px"><div class="n-top"><span class="pill">BLEND PAD</span></div><div class="nm" style="margin-top:4px">Ni 1.65% · MgO 1.9</div><div class="meta">target spec · SiO₂/MgO 2.0 · S 0.4%</div></div>
+          <div class="node" style="left:660px;top:152px"><div class="n-top"><span class="pill">RKEF → NPI</span></div><div class="nm" style="margin-top:4px">NPI 12% Ni</div><div class="meta">stainless feed · line A</div></div>
+          <div class="node" style="left:660px;top:322px"><div class="n-top"><span class="pill lim">HPAL → MHP</span></div><div class="nm" style="margin-top:4px">MHP 38% Ni</div><div class="meta">battery feed · acid-limited</div></div>
+          <div class="node" style="left:838px;top:60px;min-width:104px"><div class="n-top"><span class="pill cust">CUST</span><span class="nm">Tsingshan</span></div><div class="meta">304/316L · QP M+1</div></div>
+          <div class="parcel" id="p1" style="left:200px;top:152px">82</div>
+          <div class="parcel" id="p2" style="left:300px;top:200px">14</div>
+          <div class="parcel lim" id="p3" style="left:230px;top:362px">L1</div>
+          <div class="parcel" id="p4" style="left:560px;top:178px">A</div>
+          <div class="cargo"><div class="fill" id="cargoFill" style="height:74%"></div><div class="ftxt"><div class="pct" id="cargoPct">74%</div><div class="lab" id="cargoLab">C-14 · laycan 2d</div></div></div>
+          <div style="position:absolute;right:30px;top:372px;font-size:10px;color:#5a6356;width:128px;text-align:center;font-family:'JetBrains Mono',monospace">CARGO LOADOUT — 55 kt Panamax</div>
+          <div class="legend"><span><i style="background:#22c55e"></i>saprolite</span><span><i style="background:#7fb2e6"></i>limonite</span><span><i style="background:#d9a441"></i>blended product</span></div>
+          <div class="sch-foot">Live · Morowali jetty · IMIP</div>
+        </div>
+      </div>
+
+      <!-- DOCK -->
+      <div class="trio">
+        <div class="card constraint">
+          <div class="ctitle">Binding constraint</div>
+          <div class="binding" id="bindName">Saprolite supply</div>
+          <div class="crow bind"><span class="cl">SAP SUPPLY</span><span class="cb"><i style="width:90%"></i></span><span class="cv">90%</span></div>
+          <div class="crow"><span class="cl">BLEND CAP</span><span class="cb"><i style="width:71%"></i></span><span class="cv">71%</span></div>
+          <div class="crow"><span class="cl">SMELT OFFTAKE</span><span class="cb"><i style="width:64%"></i></span><span class="cv">64%</span></div>
+          <div class="crow"><span class="cl">HPAL ACID</span><span class="cb"><i style="width:41%"></i></span><span class="cv">41%</span></div>
+          <div class="crow"><span class="cl">LAYCAN</span><span class="cb"><i style="width:56%"></i></span><span class="cv">56%</span></div>
+        </div>
+        <div class="card">
+          <div class="ctitle">Spec match · inventory</div>
+          <div class="gauges">
+            <div class="gauge"><div class="glab">Blend ratio</div><div class="arc"><svg width="104" height="60" viewBox="0 0 104 60"><path d="M8,56 A44,44 0 0 1 96,56" fill="none" stroke="#eeece1" stroke-width="8" stroke-linecap="round"/><path d="M8,56 A44,44 0 0 1 96,56" fill="none" stroke="#15803d" stroke-width="8" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="69"/></svg></div><div class="gnum">1.00</div><div class="gunit">balanced</div></div>
+            <div class="gauge"><div class="glab">Stockpile</div><div class="arc"><svg width="104" height="60" viewBox="0 0 104 60"><path d="M8,56 A44,44 0 0 1 96,56" fill="none" stroke="#eeece1" stroke-width="8" stroke-linecap="round"/><path d="M8,56 A44,44 0 0 1 96,56" fill="none" stroke="#2f8a52" stroke-width="8" stroke-linecap="round" stroke-dasharray="138" stroke-dashoffset="48"/></svg></div><div class="gnum">11<span class="su"> d</span></div><div class="gunit">cover</div></div>
+          </div>
+          <div class="notes"><div>• Spec-reject 30d: <b>0.4%</b></div><div>• Blend 1.00 · Ni 1.65% — on target</div></div>
+        </div>
+        <div class="card">
+          <div class="ctitle">Disruption · re-allocate</div>
+          <div class="chips">
+            <div class="chip c-blue" data-d="lme"><i></i>LME −5%</div>
+            <div class="chip c-red" data-d="reject"><i></i>Cargo rejected</div>
+            <div class="chip c-rust" data-d="laycan"><i></i>Laycan slip</div>
+            <div class="chip c-green" data-d="acid"><i></i>Acid shortage</div>
+          </div>
+          <div class="disrow"><input id="disInput" placeholder="or type a disruption…" /><button id="disGo">→</button><button class="reset" id="disReset" title="reset">↺</button></div>
+        </div>
+      </div>
+
+      <!-- CONTRACTING -->
+      <div class="contracting">
+        <div class="dialwrap">
+          <div class="ctitle">Spot / contract mix</div>
+          <div class="mixbar"><div class="mc" id="mixC" style="width:72%">CONTRACT 72%</div><div class="ms" id="mixS">SPOT 28%</div></div>
+          <div class="p90"><div class="tick" id="p90tick" style="left:82%"></div></div>
+          <input type="range" min="40" max="95" value="72" class="slider" id="mixSlider" />
+          <div class="mixrow"><span>more spot · premium</span><span>more contract · floor</span></div>
+          <div class="mixstats"><div class="mixstat"><div class="k">Realised prem</div><div class="v" id="premV">$1,950<span style="font-size:10px;color:#9aa091">/wmt</span></div></div><div class="mixstat"><div class="k">Floor cover</div><div class="v" id="coverV">84%</div></div></div>
+          <div class="safetag ok" id="safeTag">✓ Within P90 supply cover — no over-contract risk</div>
+        </div>
+        <div>
+          <div class="ctitle">Contract book — 50 kt cargo window</div>
+          <table class="book">
+            <thead><tr><th>Counterparty</th><th>Product</th><th>kt</th><th>Pricing basis</th><th>QP</th><th>Spec</th><th>ToP</th></tr></thead>
+            <tbody>
+              <tr><td><span class="bp">CONTRACT</span> <span class="cu">Tsingshan</span></td><td>NPI 12% Ni</td><td>22</td><td>LME ×12% payable +$1,800</td><td>M+1</td><td>Ni ≥1.6</td><td>90%</td></tr>
+              <tr><td><span class="bp">CONTRACT</span> <span class="cu">QMB battery</span></td><td>MHP 38% Ni</td><td>10</td><td>LME ×0.80 + Co credit</td><td>M</td><td>Co ≥0.10</td><td>80%</td></tr>
+              <tr><td><span class="bp">CONTRACT</span> <span class="cu">GEM matte</span></td><td>Ni matte 75%</td><td>4</td><td>LME ×0.78 +$2,400</td><td>M+1</td><td>loose</td><td>70%</td></tr>
+              <tr class="spot"><td><span class="bp spot">SPOT</span> <span class="cu">Open pool</span></td><td>NPI / sap ore</td><td>14</td><td>negotiated prompt</td><td>prompt</td><td>flex</td><td>—</td></tr>
+            </tbody>
+          </table>
+          <div class="booknote">Take-or-pay (ToP) on the buyer; supply-or-pay on the seller. Contracting above P90 reliable supply exposes the book to cover-buying if the mine plan slips.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT — AI rail -->
+    <aside class="airail">
+      <div class="ai">
+        <div class="ai-head"><div class="ai-badge">AI</div><div class="ttl">OreSight marketing optimiser</div></div>
+        <div class="ai-lead" id="aiLead">Realised <em>78.4 $/wmt</em> vs 70.83 HPM floor — capturing premium with spec headroom — optimiser lifts to <em>81.2 $/wmt</em>.</div>
+        <div class="cmp">
+          <div class="box"><div class="k">Current</div><div class="v" id="curVal">78.4<span class="u">$/wmt</span></div></div>
+          <div class="arrow">→</div>
+          <div class="box opt"><div class="k">Optimised</div><div class="v" id="optVal">81.2<span class="u">$/wmt</span></div></div>
+          <div class="box"><div class="k">Value / yr</div><div class="v" id="valYr">$4.2M</div></div>
+        </div>
+        <div class="sec-cap">Optimise for <span class="hint">· objective function</span></div>
+        <div class="objsel" id="objSel">
+          <button data-o="netback" class="on">Netback<span class="ob-sub">$/wmt margin</span></button>
+          <button data-o="revenue">Revenue<span class="ob-sub">top line</span></button>
+          <button data-o="constraint">Margin / <span id="denomLab">t sap</span><span class="ob-sub">per constraint</span></button>
+          <button data-o="riskadj">Risk-adj<span class="ob-sub">floor-secured</span></button>
+        </div>
+        <div class="obj-note" id="objNote"><b>Netback to mine gate</b> — revenue less freight, TC/RC, royalty &amp; penalties. The marketing-native objective; balances price capture against cost-to-serve.</div>
+        <div class="sec-cap">Contracting strategy <span class="hint">· sets the spot/contract mix</span></div>
+        <div id="stratWrap">
+          <div class="strat on" data-s="balanced"><div class="s-top"><span class="s-name">Balanced hedge</span><span class="s-flag">✓ Recommended</span></div><div class="s-desc">Contract to ~P90 reliable supply, spot the swing. Captures premium without over-committing scarce grade.</div><div class="s-stats"><span><span class="lab">mix</span><b>72/28</b></span><span><span class="lab">opt</span><b>81.2</b></span><span><span class="lab">value</span><b>$4.2M</b></span></div></div>
+          <div class="strat" data-s="lock"><div class="s-top"><span class="s-name">Lock the book</span><span class="s-flag opt">Option</span></div><div class="s-desc">Maximise contracted tonnes to secure the revenue floor. Gives up spot upside; risks over-contracting vs supply.</div><div class="s-stats"><span><span class="lab">mix</span><b>88/12</b></span><span><span class="lab">opt</span><b>79.8</b></span><span><span class="lab">value</span><b>$3.6M</b></span></div></div>
+          <div class="strat" data-s="spot"><div class="s-top"><span class="s-name">Ride spot</span><span class="s-flag opt">Option</span></div><div class="s-desc">Minimise commitment, chase premium. Higher expected realisation, higher variance — HPM floor caps the downside.</div><div class="s-stats"><span><span class="lab">mix</span><b>52/48</b></span><span><span class="lab">opt</span><b>83.2</b></span><span><span class="lab">value</span><b>$4.7M</b></span></div></div>
+        </div>
+        <div class="actions">
+          <div class="sec-cap">Recommended actions <span class="hint" id="actCap">· netback-ranked</span></div>
+          <div id="actWrap"></div>
+        </div>
+        <div class="narr" id="narr"></div>
+        <div class="copilot">
+          <div class="ttl">Copilot · ask the desk</div>
+          <div class="q-chips"><div class="qc">What if LME drops to $17k?</div><div class="qc">Cheapest path to spec on C-14?</div><div class="qc">Cobalt value at risk?</div></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="footnote">
+    <b>Prototype · illustrative.</b> Concept demo for a mining commodity-marketing AI use case (nickel sales &amp; blend allocation), themed to match the OreSight hauling console. Domain figures grounded in 2026 market context: HPM benchmark reform effective 15 Apr 2026 (cobalt/iron/chromium added, CF 17%→30%, WMT basis); saprolite 1.5–2.0% Ni → RKEF/NPI for stainless, limonite 0.8–1.2% Ni → HPAL/MHP for battery; LME nickel ≈ $18.4k/t, saprolite ≈ $69–80/wmt, HPAL acid tight on sulphur. Numbers are synthetic for demonstration, not investment advice.
+  </div>
+</div>
+<script src="/js/marketing.js"></script>
+</body>
+</html>

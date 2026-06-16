@@ -193,7 +193,7 @@ export const USE_CASES = {
   'blast': {
     title: 'Blast Optimisation',
     decisions: 'drill spacing & powder factor',
-    stage: 'Drill & Blast', horizon: '4w', drivers: ['throughput'],
+    stage: 'Drill & Blast', horizon: '4w', drivers: ['throughput'], href: '/blast.html',
     pitch: 'AI links drill-and-blast design to downstream crusher performance: fragmentation predicted per blast, powder factor tuned per domain, and redrill rates driven down.',
     site: 'Pit 2 saprolite & waste domains — Morowali Nickel Operations',
     kpis: [
@@ -235,6 +235,7 @@ export const USE_CASES = {
   'payload': {
     title: 'Payload Optimisation',
     decisions: 'under/over loading feedback',
+    href: '/payload.html',
     stage: 'Excavate', horizon: '4w', drivers: ['throughput'],
     pitch: 'Per-pass payload analytics close the loop between shovel operators and truck payload meters — killing both underloading (lost tonnes) and overloading (frame damage, tyre life).',
     site: 'EX-201/EX-202 backhoes loading HD785-7 fleet — Pit 2',
@@ -446,7 +447,7 @@ export const USE_CASES = {
   'shipping': {
     title: 'Shipping Optimisation',
     decisions: 'ship line-up / contracting',
-    stage: 'Shipping', horizon: '4w', drivers: ['margin', 'cost'],
+    stage: 'Shipping', horizon: '4w', drivers: ['margin', 'cost'], href: '/shipping.html',
     pitch: 'AI lines up vessels, stockpiles and laycans so ore never waits for ships and ships never wait for ore — demurrage down, despatch up.',
     site: 'Morowali jetty + Kendari anchorage — barge & OGV program',
     kpis: [
@@ -488,7 +489,7 @@ export const USE_CASES = {
   'marketing': {
     title: 'Marketing Optimisation',
     decisions: 'spot volume / contracts',
-    stage: 'Marketing', horizon: '4w', drivers: ['margin'],
+    stage: 'Marketing', horizon: '4w', drivers: ['margin'], href: '/marketing.html',
     pitch: 'AI balances the contract book against the spot market — placing each parcel where realised price, counterparty risk and logistics cost net out best.',
     site: 'FeNi & ore sales book — Singapore trading desk',
     kpis: [
