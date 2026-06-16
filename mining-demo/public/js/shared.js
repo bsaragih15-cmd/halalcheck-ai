@@ -41,7 +41,7 @@ export function renderNav(active = '') {
         <a href="/haul.html" ${active === 'haul' ? 'class="active"' : ''}>Hauling</a>
         <a href="/control-tower.html" ${active === 'control-tower' ? 'class="active"' : ''}>Control Tower</a>
         <a href="/maintenance.html" ${active === 'maintenance' ? 'class="active"' : ''}>Maintenance</a>
-        <a href="/production.html" ${active === 'production' ? 'class="active"' : ''}>Blending</a>
+        <a href="/blending.html" ${active === 'blending' ? 'class="active"' : ''}>Blending</a>
         <a href="/safety.html" ${active === 'safety' ? 'class="active"' : ''}>Safety</a>
         <span class="ai-badge" id="aiBadge"><span class="dot"></span><span id="aiBadgeText">AI: …</span></span>
         <button class="btn-cta" onclick="document.getElementById('pilot')?.scrollIntoView({behavior:'smooth'}) || (location.href='/index.html#pilot')">Book a pilot</button>

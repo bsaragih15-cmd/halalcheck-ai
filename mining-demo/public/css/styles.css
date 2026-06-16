@@ -70,53 +70,68 @@ button { font-family: inherit; }
 /* ── Matrix ──────────────────────────────────────────────────────── */
 .matrix-wrap { overflow-x: auto; padding-bottom: 10px; }
 .matrix-flex { display: flex; gap: 12px; min-width: 1280px; }
-.matrix-axis { writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; padding-top: 60px; }
+.matrix-axis { writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; color: var(--muted); font-family: var(--font-mono); font-size: 15px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; padding-top: 60px; }
 .matrix-axis::after { content: ' →'; }
 .matrix { flex: 1; display: grid; grid-template-columns: 52px repeat(10, 1fr); gap: 9px; align-items: stretch; }
 
 /* ── Landing: value-chain matrix as full-screen hero ─────────────── */
-.landing { display: flex; flex-direction: column; min-height: 100vh; }
-.hero-matrix { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 22px 0; }
-.hm-inner { width: 100%; max-width: 1560px; margin: 0 auto; padding: 0 28px; }
-.hm-inner .section-tag { margin-bottom: 14px; }
-.hm-inner .matrix-wrap { padding-bottom: 6px; }
-.hm-inner .matrix-legend { margin-top: 16px; }
-/* Grow rows so the grid fills a tall viewport without losing density. */
-.landing .chevron { min-height: clamp(48px, 6vh, 72px); }
-.landing .matrix-cell { min-height: clamp(92px, 13vh, 138px); }
-.landing .matrix-cell.row-cell { min-height: clamp(58px, 8vh, 90px); }
+.landing { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+.hero-matrix { flex: 1; display: flex; flex-direction: column; padding: 16px 0; min-height: 0; }
+.hm-inner { width: 100%; max-width: 1560px; margin: 0 auto; padding: 0 28px; flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.hm-inner .section-tag { margin-bottom: 14px; font-size: 16px; flex: 0 0 auto; }
+.hm-inner .matrix-wrap { padding-bottom: 0; flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; overflow-x: hidden; }
+.hm-inner .matrix-flex { flex: 1 1 auto; min-height: 0; min-width: 0; gap: 8px; }
+.hm-inner .matrix-legend { margin-top: 14px; flex: 0 0 auto; }
+/* Stretch the grid to fill the viewport: chevron header auto-sized, the data
+   rows split the remaining height equally so there is no leftover whitespace.
+   Columns shrink to fit the width (minmax 0) so there is never a sideways scroll. */
+.hm-inner .matrix { height: 100%; width: 100%; grid-template-columns: 40px repeat(10, minmax(0, 1fr)); grid-template-rows: auto; grid-auto-rows: minmax(0, 1fr); gap: 7px; }
+.hm-inner .matrix-cell { overflow: hidden; }
+/* The single-column 4w cells are narrow — size their type down so titles wrap
+   cleanly at word breaks and the badges don't clip. Full-width band rows keep
+   their larger type (handled by .row-cell rules below). */
+.hm-inner .matrix-cell:not(.row-cell) { padding: 14px 13px; gap: 4px; }
+.hm-inner .matrix-cell:not(.row-cell) .t { font-size: 13.5px; line-height: 1.25; }
+.hm-inner .matrix-cell:not(.row-cell) .d { font-size: 12px; line-height: 1.3; }
+.hm-inner .matrix-cell:not(.row-cell) .vdg { font-size: 13px; }
+.hm-inner .matrix-cell:not(.row-cell) .vdg.vd-npv { font-size: 11px; }
+.hm-inner .matrix-cell:not(.row-cell) .badge-live,
+.hm-inner .matrix-cell:not(.row-cell) .badge-indev { font-size: 10px; padding: 3px 9px; letter-spacing: 0.04em; }
+.landing .chevron { min-height: 50px; }
+.landing .matrix-cell { min-height: 0; height: 100%; }
+.landing .matrix-cell.row-cell { min-height: 0; }
 
-.chevron { background: var(--accent-soft); color: var(--accent); font-family: var(--font-mono); font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; text-align: center; padding: 12px 14px 12px 18px; clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 50%, calc(100% - 11px) 100%, 0 100%, 11px 50%); line-height: 1.3; display: grid; place-items: center; min-height: 48px; }
+.chevron { background: var(--accent-soft); color: var(--accent); font-family: var(--font-mono); font-size: 15px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; text-align: center; padding: 16px 18px 16px 24px; clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 50%, calc(100% - 11px) 100%, 0 100%, 11px 50%); line-height: 1.3; display: grid; place-items: center; min-height: 48px; }
 .chevron.first { clip-path: polygon(0 0, calc(100% - 11px) 0, 100% 50%, calc(100% - 11px) 100%, 0 100%); border-radius: 6px 0 0 6px; }
 
-.horizon-label { display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--text); }
+.horizon-label { display: flex; align-items: center; justify-content: flex-end; padding-right: 10px; font-family: var(--font-mono); font-size: 18px; font-weight: 700; color: var(--text); }
 
-.matrix-cell { position: relative; display: flex; flex-direction: column; gap: 5px; flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 13px 14px; min-height: 92px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
+.matrix-cell { position: relative; display: flex; flex-direction: column; gap: 7px; flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 19px 20px; min-height: 92px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
 .matrix-cell:hover { border-color: var(--accent); box-shadow: 0 4px 16px rgba(21, 128, 61, 0.12); transform: translateY(-1px); }
-.matrix-cell .t { font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.3; }
-.matrix-cell .d { font-size: 11.5px; color: var(--muted); line-height: 1.35; }
+.matrix-cell .t { font-size: 18px; font-weight: 700; color: var(--text); line-height: 1.3; }
+.matrix-cell .d { font-size: 16px; color: var(--muted); line-height: 1.35; }
 .matrix-cell.live { border: 1.5px solid var(--accent); background: #efeee4; }
 .matrix-cell.live .t { color: var(--accent); }
 
 .cell-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
 .cell-badge { margin-top: auto; padding-top: 4px; }
 
-.matrix-cell.row-cell { flex-direction: row; align-items: center; justify-content: center; min-height: 58px; padding: 10px 18px; }
-.rc-main { display: flex; align-items: center; gap: 14px; }
+.matrix-cell.row-cell { flex-direction: row; align-items: center; justify-content: center; min-height: 58px; padding: 14px 24px; }
+.rc-main { display: flex; align-items: center; gap: 18px; }
 .rc-text { text-align: center; }
-.rc-text .t { display: block; font-size: 14px; }
+.rc-text .t { display: block; font-size: 20px; }
 .rc-text .d { display: block; }
 .rc-right { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); }
 
-.badge-live { display: inline-block; font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; background: var(--accent); color: #fff; border-radius: 999px; padding: 3px 11px; white-space: nowrap; }
-.badge-indev { display: inline-block; font-family: var(--font-mono); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; background: transparent; color: var(--muted); border: 1px solid var(--border-hi); border-radius: 999px; padding: 3px 11px; white-space: nowrap; }
+.badge-live { display: inline-block; font-family: var(--font-mono); font-size: 14px; font-weight: 700; letter-spacing: 0.08em; background: var(--accent); color: #fff; border-radius: 999px; padding: 5px 15px; white-space: nowrap; }
+.badge-indev { display: inline-block; font-family: var(--font-mono); font-size: 14px; font-weight: 700; letter-spacing: 0.08em; background: transparent; color: var(--muted); border: 1px solid var(--border-hi); border-radius: 999px; padding: 5px 15px; white-space: nowrap; }
 
-.vd-icons { display: inline-flex; gap: 7px; flex-shrink: 0; }
-.vdg { font-family: var(--font-mono); font-size: 12px; font-weight: 800; color: var(--text); }
-.vdg.vd-npv { color: var(--accent); font-size: 11px; }
+.vd-icons { display: inline-flex; gap: 9px; flex-shrink: 0; }
+.vdg { font-family: var(--font-mono); font-size: 17px; font-weight: 800; color: var(--text); }
+.vdg.vd-npv { color: var(--accent); font-size: 15px; }
 .vdg.vd-margin { color: var(--text); }
 
-.matrix-legend { display: flex; gap: 26px; align-items: center; margin-top: 22px; color: var(--text); font-size: 13px; flex-wrap: wrap; }
+.matrix-legend { display: flex; gap: 26px; align-items: center; margin-top: 22px; color: var(--text); font-size: 17px; flex-wrap: wrap; }
 .matrix-legend .item { display: flex; align-items: center; gap: 8px; font-weight: 600; }
 .leg-dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--border-hi); background: transparent; }
 .leg-dot.live { background: var(--accent); border-color: var(--accent); }
