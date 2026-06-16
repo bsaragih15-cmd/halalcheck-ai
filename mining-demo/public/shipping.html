@@ -196,6 +196,9 @@
   <span class="tag horizon">Horizon 4w</span>
   <span class="tag dev">IN DEV</span>
   <span class="sub">Morowali jetty + Kendari anchorage · barge &amp; OGV program</span>
+  <span class="nav-sp"></span>
+  <span class="wx" id="tideChip" title="Live tide / DUKC">Tide · model</span>
+  <span class="wx" id="pxChip" title="Live nickel &amp; bunker price">Ni · model</span>
 </div>
 
 <div class="alertrail" id="alertRail"></div>
@@ -440,7 +443,7 @@ function generateAI(){
   const actions=[
     `Set laycan buffer to <b>${opt.buffer.toFixed(1)} days</b> (from ${MODEL.base.buffer.toFixed(1)} d practice) to balance demurrage against carrying cost under ${MODEL.wxName[wx].toLowerCase()} weather.`,
     `Run <b>${opt.cranes} floating crane${opt.cranes>1?'s':''}</b> (${MODEL.loadingRate(opt.cranes)} kt/d): ${opt.cranes>p.cranes?'add capacity to clear the OGV queue faster':opt.cranes<p.cranes?'stand down a crane, charter cost outweighs the demurrage saved':'this matches the binding-constraint sweet spot'}.`,
-    `Load to <b>${opt.draft.toFixed(1)} m sailing draft</b> on the spring-tide window, worth ~${fmtK(360000)} /yr in freight efficiency; hold off when the DUKC overlay shows a neap.`,
+    `Load to <b>${opt.draft.toFixed(1)} m sailing draft</b> on the spring-tide window, worth ~${fmtK(Math.round(360000*((LIVE_PX&&LIVE_PX.nickelUSD?LIVE_PX.nickelUSD:16500)/16500)))} /yr in freight efficiency at ${LIVE_PX&&LIVE_PX.source==='live'?'live':'ref'} Ni $${(LIVE_PX&&LIVE_PX.nickelUSD?LIVE_PX.nickelUSD:16500).toLocaleString()}/t; hold off when the DUKC overlay shows a neap.`,
     `Hold <b>MV Cape Kendari</b> 8 h, the only late vessel, then pull its FC-2 slot forward once saprolite cover clears 4.0 d.`,
   ];
   document.getElementById('aiBody').innerHTML=`
@@ -673,10 +676,48 @@ function showMap(on){
   if(on){ initMap(); setTimeout(()=>{ if(MAP) MAP.invalidateSize(); },60); }
 }
 
+/* ---------- live external data: weather (Open-Meteo, free), tide & price (proxied) ---------- */
+let LIVE_PX={nickelUSD:16500,bunkerVLSFO:600,source:'model'}, WX_AUTO=true;
+async function loadWeather(){
+  try{
+    const [mar,wea]=await Promise.all([
+      fetch('https://marine-api.open-meteo.com/v1/marine?latitude=-3.95&longitude=122.72&current=wave_height,wave_period').then(r=>r.json()),
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=-3.95&longitude=122.72&current=wind_speed_10m,wind_direction_10m,precipitation,visibility').then(r=>r.json())
+    ]);
+    const swell=(mar&&mar.current)?mar.current.wave_height:null, c=(wea&&wea.current)||{};
+    const windKt=c.wind_speed_10m!=null? c.wind_speed_10m/1.852 : null;
+    const dir=c.wind_direction_10m!=null? ['N','NE','E','SE','S','SW','W','NW'][Math.round(c.wind_direction_10m/45)%8] : '';
+    const vis=c.visibility!=null? (c.visibility>=10000?'good':c.visibility>=4000?'mod':'poor') : 'good';
+    let chip=`Swell ${swell!=null?swell.toFixed(1):'—'} m · Wind ${windKt!=null?windKt.toFixed(0):'—'} kt ${dir} · Vis ${vis}`;
+    if(c.precipitation>0.4) chip+=' · rain: TML watch';
+    chip+=' · live';
+    const el=document.getElementById('wxChip'); if(el){ el.textContent=chip; el.style.color='var(--green-d)'; el.style.borderColor='#bcd6c5'; }
+    if(WX_AUTO && swell!=null && windKt!=null){
+      const cond=(swell>=2.5||windKt>=25)?'rough':(swell<=1.0&&windKt<=12)?'calm':'mod';
+      const btn=document.querySelector(`#wxSeg button[data-w="${cond}"]`);
+      if(btn){ document.querySelectorAll('#wxSeg button').forEach(x=>x.classList.remove('on')); btn.classList.add('on'); renderScenario(); }
+    }
+  }catch(e){}
+}
+async function loadTide(){
+  try{ const d=await (await fetch('/api/tide')).json(); const ex=(d.extremes||[])[0];
+    let t=`Tide ${d.current!=null?(+d.current).toFixed(1)+' m':'—'}`; if(ex) t+=` · next ${ex.type} ${ex.dt}`;
+    t+= d.source==='live'?' · live':' · model';
+    const el=document.getElementById('tideChip'); if(el){ el.textContent=t; if(d.source==='live'){el.style.color='var(--green-d)';el.style.borderColor='#bcd6c5';} }
+  }catch(e){}
+}
+async function loadMarket(){
+  try{ const d=await (await fetch('/api/market')).json(); LIVE_PX=d;
+    const el=document.getElementById('pxChip'); if(el){ el.textContent=`Ni $${(d.nickelUSD||16500).toLocaleString()}/t · VLSFO $${d.bunkerVLSFO||600}${d.source==='live'?' · live':' · model'}`; if(d.source==='live'){el.style.color='var(--green-d)';el.style.borderColor='#bcd6c5';} }
+  }catch(e){}
+}
+
 /* ---------- wire up ---------- */
 renderKpis();renderVchain();renderDem();renderGantt();renderScenario();renderAlerts();
+loadWeather();loadTide();loadMarket();
+setInterval(loadWeather,600000);setInterval(loadTide,600000);setInterval(loadMarket,1800000);
 ['buffer','cranes','draft'].forEach(id=>document.getElementById(id).addEventListener('input',renderScenario));
-document.querySelectorAll('#wxSeg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#wxSeg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderScenario();});
+document.querySelectorAll('#wxSeg button').forEach(b=>b.onclick=()=>{WX_AUTO=false;document.querySelectorAll('#wxSeg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderScenario();});
 document.getElementById('genBtn').onclick=generateAI;
 document.querySelectorAll('.tab[data-v]').forEach(t=>t.onclick=()=>showMap(t.dataset.v==='map'));
 document.getElementById('tideToggle').onclick=function(){ SHOW_TIDE=!SHOW_TIDE; this.classList.toggle('on',SHOW_TIDE); renderGantt(); };
