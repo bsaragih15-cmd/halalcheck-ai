@@ -1002,5 +1002,7 @@ document.getElementById('cpInput').addEventListener('keydown',e=>{if(e.key==='En
 document.getElementById('mBlend').onclick=()=>setMode('blend');
 document.getElementById('mCost').onclick=()=>setMode('cost');
 </script>
+<script src="/js/tour.js"></script>
+<script>OreTour.init({"label":"Guided tour","steps":[{"sel":"#kpis","title":"Live KPIs","text":"Blend Ni grade, slag ratio, feed rate, cash cost and surge buffer."},{"sel":"#cstName","title":"Binding cost driver","text":"The single driver pushing cash cost over budget right now (e.g. coal consumption)."},{"sel":"#costStack","title":"Weekly cash cost","text":"The cost stack and driver variance vs budget, with the binding driver called out."},{"sel":"#aiHeadline","title":"AI cost optimiser","text":"Blend / cost levers with current → optimised cash cost and value per year."},{"sel":"#disFree","title":"Disruption & copilot","text":"Inject a disruption (FC down, rain on barges…) or ask the copilot — the plan re-solves."}]});</script>
 </body>
 </html>
