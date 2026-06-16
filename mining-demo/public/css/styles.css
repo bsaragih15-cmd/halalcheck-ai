@@ -79,12 +79,15 @@ button { font-family: inherit; }
 .hero-matrix { flex: 1; display: flex; flex-direction: column; padding: 16px 0; min-height: 0; }
 .hm-inner { width: 100%; max-width: 1560px; margin: 0 auto; padding: 0 28px; flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .hm-inner .section-tag { margin-bottom: 14px; font-size: 16px; flex: 0 0 auto; }
-.hm-inner .matrix-wrap { padding-bottom: 0; flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; }
-.hm-inner .matrix-flex { flex: 1 1 auto; min-height: 0; }
+.hm-inner .matrix-wrap { padding-bottom: 0; flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; overflow-x: hidden; }
+.hm-inner .matrix-flex { flex: 1 1 auto; min-height: 0; min-width: 0; gap: 8px; }
 .hm-inner .matrix-legend { margin-top: 14px; flex: 0 0 auto; }
 /* Stretch the grid to fill the viewport: chevron header auto-sized, the data
-   rows split the remaining height equally so there is no leftover whitespace. */
-.hm-inner .matrix { height: 100%; grid-template-rows: auto; grid-auto-rows: minmax(0, 1fr); }
+   rows split the remaining height equally so there is no leftover whitespace.
+   Columns shrink to fit the width (minmax 0) so there is never a sideways scroll. */
+.hm-inner .matrix { height: 100%; width: 100%; grid-template-columns: 40px repeat(10, minmax(0, 1fr)); grid-template-rows: auto; grid-auto-rows: minmax(0, 1fr); gap: 7px; }
+.hm-inner .matrix-cell { overflow: hidden; }
+.hm-inner .matrix-cell .t, .hm-inner .matrix-cell .d { overflow-wrap: anywhere; }
 .landing .chevron { min-height: 50px; }
 .landing .matrix-cell { min-height: 0; height: 100%; }
 .landing .matrix-cell.row-cell { min-height: 0; }
