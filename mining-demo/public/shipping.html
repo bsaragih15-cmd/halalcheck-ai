@@ -140,6 +140,21 @@
   .parsed{margin-top:8px;font-size:10.5px;color:var(--mut);line-height:1.5;min-height:0}
   .parsed b{color:var(--red-d)}
 
+  /* ===== SOURCE SWITCHER ===== */
+  .srcwrap{position:relative}
+  .srcchip{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;font-weight:700;border:1px solid var(--line2);background:var(--panel);border-radius:20px;padding:6px 11px;color:var(--ink)}
+  .srcchip .dot{width:7px;height:7px;border-radius:50%;background:#b0b8a8;display:inline-block}
+  .srcpop{position:absolute;right:0;top:38px;width:292px;background:#fff;border:1px solid var(--line2);border-radius:12px;box-shadow:0 14px 34px rgba(0,0,0,.15);padding:13px;z-index:30;display:none}
+  .srcpop.open{display:block}
+  .srcpop .sprow{font-size:12px;font-weight:700;margin-bottom:9px}
+  .sopt{display:flex;align-items:center;gap:7px;font-size:12px;margin-bottom:6px;cursor:pointer}
+  .skey{width:100%;border:1px solid var(--line2);border-radius:8px;padding:8px 10px;font-size:11px;font-family:var(--mono);margin:4px 0 8px}
+  .skey:focus{outline:none;border-color:#bcd6c5}
+  .srow2{display:flex;align-items:center;gap:9px}
+  .srow2 button{background:var(--green);color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:11.5px;font-weight:600}
+  .sstat{font-family:var(--mono);font-size:10px;color:var(--mut2)}
+  .snote{font-size:10px;color:var(--mut2);line-height:1.45;margin-top:9px;padding-top:9px;border-top:1px dashed var(--line2)}
+
   @media(max-width:1180px){ body{overflow:auto} .app{height:auto} .kpis{grid-template-columns:repeat(2,1fr)} .body{grid-template-columns:1fr} .hero{height:360px} }
 </style>
 </head>
@@ -158,6 +173,18 @@
       <button data-v="timeline" class="on">Timeline</button>
       <button data-v="schematic">Schematic</button>
       <button data-v="table">Table</button>
+      <button data-v="map">Map</button>
+    </div>
+    <div class="srcwrap">
+      <button class="srcchip" id="srcChip"><span class="dot" id="srcDot"></span><span id="srcLbl">AIS: Demo</span> ▾</button>
+      <div class="srcpop" id="srcPop">
+        <div class="sprow"><b>Vessel feed source</b></div>
+        <label class="sopt"><input type="radio" name="src" value="demo" checked> Demo · synthetic line-up</label>
+        <label class="sopt"><input type="radio" name="src" value="aisstream"> Live AIS · AISStream (free)</label>
+        <input class="skey" id="aisKey" placeholder="paste free AISStream API key" />
+        <div class="srow2"><button id="srcConnect">Connect</button><span class="sstat" id="srcStat">demo mode</span></div>
+        <div class="snote">Live AIS gives real positions, ETA &amp; draught for ships in the Morowali–Kendari box. Laycan &amp; charter terms aren't broadcast over AIS, so demurrage stays on demo terms.</div>
+      </div>
     </div>
     <div class="clock"><b id="clk">--:--:--</b><br>WITA · Shift A</div>
     <span class="live"><b></b><span id="liveTxt">AI: Demo</span></span>
@@ -274,11 +301,10 @@ function renderKpis(){
 /* ===================== HERO ===================== */
 let heroView='timeline';
 function renderHero(){
-  $('heroTitle').textContent = heroView==='timeline'?'Vessel line-up × stockpile cover'
-    : heroView==='schematic'?'Transshipment chain · stockpile → barge → FC → OGV' : 'Vessel line-up — predicted ETA, laycan & demurrage';
-  if(heroView==='timeline') heroTimeline();
-  else if(heroView==='schematic') heroSchematic();
-  else heroTable();
+  const titles={timeline:'Vessel line-up × stockpile cover',schematic:'Transshipment chain · stockpile → barge → FC → OGV',
+    table:'Vessel line-up — predicted ETA, laycan & demurrage',map:'Live anchorage · Morowali jetty ↔ Kendari anchorage'};
+  $('heroTitle').textContent=titles[heroView]||'';
+  ({timeline:heroTimeline,schematic:heroSchematic,table:heroTable,map:heroMap}[heroView]||heroTimeline)();
 }
 function heroTimeline(){
   const W=1000,H=520,padL=158,padR=74,padT=24,laneH=58,covH=120;
@@ -510,6 +536,82 @@ async function runDisruption({text='',scenarioKey=''}){
   catch{el.innerHTML=localDisruption({text,scenarioKey});}
 }
 
+/* ===================== VESSEL FEED · Demo + Live AIS (AISStream) ===================== */
+// Vendor-neutral connector: the view reads one normalised schema; Demo is the
+// always-on fallback, AISStream is a browser WebSocket adapter (free key).
+const BBOX={latMin:-4.25,latMax:-2.25,lonMin:121.55,lonMax:123.05};
+const PLACES=[{n:'Morowali jetty',lat:-2.55,lon:121.95},{n:'Kendari anchorage',lat:-3.97,lon:122.57}];
+const DEMOPOS=[{lat:-3.95,lon:122.60,hd:200},{lat:-3.99,lon:122.55,hd:340},{lat:-3.66,lon:122.95,hd:250},{lat:-3.28,lon:123.02,hd:235}];
+const KEN=/KENDARI|MOROWALI|POMALAA|BUNGKU|SULAWESI|IDKDI|IDPOM|IDMRW/i;
+const FEED={source:'demo',status:'demo',ws:null,ships:new Map(),lastPaint:0,t0:Date.now()};
+const geoXY=(lat,lon,W,H)=>({x:(lon-BBOX.lonMin)/(BBOX.lonMax-BBOX.lonMin)*W,y:(BBOX.latMax-lat)/(BBOX.latMax-BBOX.latMin)*H});
+const aisClass=t=>t==null?'Vessel':(t>=80&&t<=89)?'Tanker':(t>=70&&t<=79)?'Bulk/Cargo':(t>=60&&t<=69)?'Passenger':'Vessel';
+const MMM=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const fmtEta=e=>(!e||e.Month==null||e.Month===0)?'—':`${e.Day||'?'} ${MMM[e.Month]||''} ${String(e.Hour??0).padStart(2,'0')}:${String(e.Minute??0).padStart(2,'0')}`;
+function currentShips(){
+  if(FEED.source==='demo'){const dt=(Date.now()-FEED.t0)/1000;
+    return MODEL.vessels.map((v,i)=>{const p=DEMOPOS[i],moving=v.st!=='ontime';
+      return {lat:p.lat+0.008*Math.sin(dt/12+i),lon:p.lon+(moving?-dt*0.0009:0.004*Math.cos(dt/15+i)),hd:p.hd,col:ST[v.st].c,label:v.name.replace('MV ','')};});}
+  return [...FEED.ships.values()].filter(s=>s.lat!=null).map(s=>({lat:s.lat,lon:s.lon,hd:s.hd||0,col:'#34d27f',label:(s.name||String(s.mmsi)).slice(0,14)}));
+}
+function inboundList(){
+  if(FEED.source==='demo')return MODEL.vessels.map(v=>({name:v.name,cls:v.cls,etaTxt:v.eta,draught:'12.4',
+    demTxt:v.dem>0?fmt(v.dem)+' demurrage':v.dem<0?fmt(-v.dem)+' despatch':'on plan',demCol:v.dem>0?'#e0655e':v.dem<0?'#34d27f':'#7fa389'}));
+  return [...FEED.ships.values()].filter(s=>s.dest&&KEN.test(s.dest)).map(s=>({name:s.name||('MMSI '+s.mmsi),cls:aisClass(s.type),
+    etaTxt:fmtEta(s.etaRaw),draught:s.draught!=null?(+s.draught).toFixed(1):'—',demTxt:'— needs charter',demCol:'#7fa389'}));
+}
+function heroMap(){
+  const W=1000,H=520,mapW=700;let g=`<rect x="0" y="0" width="${mapW}" height="${H}" fill="#0b140e"/>`;
+  for(let i=1;i<6;i++)g+=`<line x1="${mapW*i/6}" y1="0" x2="${mapW*i/6}" y2="${H}" stroke="#142016"/>`;
+  for(let i=1;i<5;i++)g+=`<line x1="0" y1="${H*i/5}" x2="${mapW}" y2="${H*i/5}" stroke="#142016"/>`;
+  PLACES.forEach(p=>{const {x,y}=geoXY(p.lat,p.lon,mapW,H);g+=`<circle cx="${x}" cy="${y}" r="6" fill="none" stroke="#cdbf9a" stroke-width="1.4"/><circle cx="${x}" cy="${y}" r="2" fill="#cdbf9a"/><text x="${x+10}" y="${y+4}" font-size="10.5" fill="#cdbf9a" font-family="var(--mono)">${p.n}</text>`;});
+  currentShips().forEach(s=>{const {x,y}=geoXY(s.lat,s.lon,mapW,H);if(x<-20||x>mapW+20||y<-20||y>H+20)return;
+    g+=`<g transform="translate(${x},${y}) rotate(${s.hd||0})"><path d="M0,-7 L4.5,6 L0,3 L-4.5,6 Z" fill="${s.col}"/></g>`;
+    if(s.label)g+=`<text x="${x+8}" y="${y+3}" font-size="9" fill="#bcd9c6" font-family="var(--mono)">${s.label}</text>`;});
+  g+=`<text x="14" y="${H-14}" font-size="9.5" fill="#5f7d68" font-family="var(--mono)">${FEED.source==='demo'?'demo positions · synthetic':'live AIS · '+FEED.ships.size+' ships in box'}</text>`;
+  // inbound panel
+  g+=`<rect x="${mapW}" y="0" width="${W-mapW}" height="${H}" fill="#0e1a12"/><line x1="${mapW}" y1="0" x2="${mapW}" y2="${H}" stroke="#20382a"/>
+      <text x="${mapW+16}" y="30" font-size="11" font-weight="800" fill="#dcefe2" font-family="var(--mono)">INBOUND → KENDARI</text>`;
+  const inb=inboundList();
+  if(!inb.length)g+=`<text x="${mapW+16}" y="56" font-size="9.5" fill="#7fa389" font-family="var(--mono)">no inbound vessels in feed yet</text>`;
+  inb.slice(0,6).forEach((s,i)=>{const y=62+i*74;
+    g+=`<text x="${mapW+16}" y="${y}" font-size="11.5" font-weight="700" fill="#dcefe2">${s.name}</text>
+        <text x="${mapW+16}" y="${y+15}" font-size="9" fill="#7fa389" font-family="var(--mono)">${s.cls} · ETA ${s.etaTxt}</text>
+        <text x="${mapW+16}" y="${y+29}" font-size="9" fill="#7fa389" font-family="var(--mono)">draught ${s.draught} m</text>
+        <text x="${mapW+16}" y="${y+45}" font-size="10.5" font-weight="700" fill="${s.demCol}" font-family="var(--mono)">${s.demTxt}</text>`;});
+  $('heroSvg').innerHTML=`<g font-family="var(--sans)">${g}</g>`;
+}
+function updateSrc(){
+  const live=FEED.source==='aisstream'&&FEED.status==='live';
+  $('srcLbl').textContent=FEED.source==='demo'?'AIS: Demo':live?`AIS: Live · ${FEED.ships.size}`:'AIS: '+FEED.status;
+  $('srcDot').style.background=FEED.source==='demo'?'#b0b8a8':live?'#34d27f':String(FEED.status).startsWith('error')?'#e0655e':'#e0a23c';
+  const st=$('srcStat');if(st)st.textContent=FEED.source==='demo'?'demo mode — synthetic line-up':live?`live · ${FEED.ships.size} in box · ${inboundList().length} inbound`:FEED.status;
+}
+function disconnectAIS(){if(FEED.ws){try{FEED.ws.onclose=null;FEED.ws.close();}catch(e){}FEED.ws=null;}}
+function connectAIS(key){
+  disconnectAIS();FEED.ships.clear();FEED.status='connecting';updateSrc();
+  let ws;try{ws=new WebSocket('wss://stream.aisstream.io/v0/stream');}catch(e){FEED.status='error: '+e.message;updateSrc();return;}
+  FEED.ws=ws;
+  ws.onopen=()=>ws.send(JSON.stringify({APIKey:key,BoundingBoxes:[[[BBOX.latMin,BBOX.lonMin],[BBOX.latMax,BBOX.lonMax]]],FilterMessageTypes:['PositionReport','ShipStaticData']}));
+  ws.onmessage=ev=>{let m;try{m=JSON.parse(ev.data);}catch(e){return;}
+    if(m.error||m.Error){FEED.status='error: '+(m.error||m.Error);updateSrc();disconnectAIS();return;}
+    const meta=m.MetaData||{},mmsi=meta.MMSI||meta.UserID;if(!mmsi)return;
+    const s=FEED.ships.get(mmsi)||{mmsi};s.t=Date.now();if(meta.ShipName)s.name=String(meta.ShipName).trim();
+    if(m.MessageType==='PositionReport'){const p=m.Message.PositionReport;s.lat=p.Latitude;s.lon=p.Longitude;s.sog=p.Sog;s.hd=(p.TrueHeading!=null&&p.TrueHeading<360)?p.TrueHeading:p.Cog;s.nav=p.NavigationalStatus;}
+    else if(m.MessageType==='ShipStaticData'){const d=m.Message.ShipStaticData;if(d.Name)s.name=String(d.Name).trim();s.dest=(d.Destination||'').trim();s.draught=d.MaximumStaticDraught;s.type=d.Type;s.etaRaw=d.Eta;}
+    FEED.ships.set(mmsi,s);FEED.status='live';
+    const now=Date.now();if(now-FEED.lastPaint>1500){FEED.lastPaint=now;updateSrc();if(heroView==='map')renderHero();}
+  };
+  ws.onerror=()=>{if(!String(FEED.status).startsWith('error')){FEED.status='error: connection';updateSrc();}};
+  ws.onclose=()=>{if(FEED.source==='aisstream'&&!String(FEED.status).startsWith('error')){FEED.status='disconnected';updateSrc();}};
+}
+function setSource(src,key){
+  FEED.source=src;
+  if(src==='demo'){disconnectAIS();FEED.status='demo';}
+  else{ if(!key){FEED.status='error: paste a key';updateSrc();return;} connectAIS(key); }
+  updateSrc();if(heroView==='map')renderHero();
+}
+
 /* ===================== TOGGLES + WIRE-UP ===================== */
 function setRail(v){railView=v;document.querySelectorAll('#railSeg button').forEach(b=>b.classList.toggle('on',b.dataset.r===v));
   if(v==='rec'){ if(lastRec)paintRec(lastRec.d,lastRec.live); else solveRec(); } else paintCopilot();}
@@ -526,6 +628,13 @@ document.querySelectorAll('#railSeg button').forEach(b=>b.onclick=()=>setRail(b.
 ['buffer','fcAlloc','draft'].forEach(id=>$(id).addEventListener('change',solveRec));
 $('disBtn').onclick=()=>runDisruption({text:$('disFree').value});
 $('disFree').addEventListener('keydown',e=>{if(e.key==='Enter')runDisruption({text:$('disFree').value});});
+
+// vessel-feed source switcher
+updateSrc();
+$('srcChip').onclick=e=>{e.stopPropagation();$('srcPop').classList.toggle('open');};
+$('srcConnect').onclick=()=>{const v=document.querySelector('input[name=src]:checked').value;setSource(v,$('aisKey').value.trim());if(v==='demo'||FEED.status==='live')$('srcPop').classList.remove('open');};
+document.addEventListener('click',e=>{if(!e.target.closest('.srcwrap'))$('srcPop').classList.remove('open');});
+setInterval(()=>{if(heroView==='map'&&FEED.source==='demo')renderHero();},2000);
 
 fetch('/api/health').then(r=>r.json()).then(({aiMode})=>{const live=aiMode==='live';$('liveTxt').textContent=live?'AI: Live':'AI: Demo';}).catch(()=>{});
 </script>
