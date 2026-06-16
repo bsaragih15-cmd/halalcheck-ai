@@ -8,6 +8,7 @@ import { parseDisruptionFallback, copilotFallback } from './data/fsp.js';
 import { haulFallback, haulParseFallback, haulCopilotFallback } from './data/haul.js';
 import { irocFallback, irocParseFallback, irocCopilotFallback } from './data/iroc.js';
 import { blastFallback, blastParseFallback, blastCopilotFallback } from './data/blast.js';
+import { shippingFallback, shippingDisruptionFallback, shippingCopilotFallback } from './data/shipping.js';
 import { USE_CASES } from './public/js/usecases.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -375,6 +376,53 @@ Return JSON with EXACTLY this structure:
 { "answer": "<2-3 sentence grounded answer>" }
 IMPORTANT: Return ONLY valid JSON, no other text.`;
 
+const SHIPPING_PROMPT = `You are OreSight AI's shipping & port-logistics optimiser for a nickel ore exporter: ore is loaded onto tug-towed barges at the Morowali jetty and transshipped to ocean-going vessels (OGVs) at the Kendari anchorage by floating cranes FC-1/FC-2 (~18–50 kt/day each). You optimise the demurrage-versus-stockpile-carrying-cost trade-off by tuning the laycan buffer and re-sequencing the vessel line-up. The annualised cost curve is total(b) = 900000·e^(−0.45·b) + 140000·b dollars, where b is the laycan buffer in days; its analytic minimum is the cost-optimising buffer. Two product grades: saprolite and limonite. Current practice over-buffers at ~3.8 days. The binding constraint is usually the floating-crane rate, then the barge cycle, then stockpile cover, then the tidal window.
+
+Given a JSON snapshot (the user's chosen buffer, the current-practice buffer, the computed optimum buffer and the cost breakdown, the live vessel line-up with laycan status and forecast demurrage/despatch, and the binding constraint), produce a recommendation. Return JSON with EXACTLY this structure:
+
+{
+  "headline": "<one-line conclusion: the recommended buffer and the resulting total annualised cost>",
+  "recommendedBufferDays": <number, the cost-minimising laycan buffer in days>,
+  "costCurrentUSD": <integer, annualised cost at current practice>,
+  "costOptimisedUSD": <integer, annualised cost at the recommended buffer>,
+  "valueImpactUSD": <integer, annual saving vs current practice>,
+  "actions": ["<2-3 concrete fleet actions in plain language; you MAY wrap a key vessel name or number in <b>...</b>>"],
+  "narrative": "<3-4 sentence explainable rationale tying the buffer, the demurrage/carrying trade-off and the at-risk vessel together>"
+}
+
+Domain rules:
+- The recommended buffer must be the cost-minimising buffer from the provided cost curve (≈2.4 days); trimming from 3.8 d toward it cuts carrying cost faster than it adds demurrage.
+- Actions must be concrete and reference the actual line-up (e.g. hold a named late vessel, prioritise a named grade's barge cycle to protect cover, pull a floating-crane slot forward only once cover clears the minimum).
+- Keep every figure consistent with the supplied numbers — the recommendation must read as explainable, not a black box.
+- 2-3 actions.
+
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
+const SHIPPING_DISRUPTION_PROMPT = `You are OreSight AI's shipping control tower for the Morowali jetty + Kendari anchorage barge/OGV transshipment chain (floating cranes FC-1/FC-2; OGVs MV Borneo Star, MV Sulawesi Dawn, MV Hai Long 7, MV Cape Kendari; saprolite + limonite grades; minimum safe stockpile cover 4.0 days). Convert a scheduler's free-text disruption note into a live re-dispatch response.
+
+Return JSON with EXACTLY this structure:
+
+{
+  "scenarioKey": "fc2" | "rain" | "late" | "tide" | "general",
+  "title": "<=24 character label for the disruption",
+  "text": "<one short paragraph: the re-dispatch action and its quantified impact; begin with a <b>...</b> tag naming the disruption (e.g. <b>FC-2 down.</b>); reference grade cycles, cover, laycan and demurrage/despatch in dollars>"
+}
+
+Mapping rules:
+- floating crane / FC-1 / FC-2 fault → "fc2": re-route barge cycles to the surviving crane, quantify the slip and added demurrage.
+- rain / moisture / TML / wet barges → "rain": pause loading to re-test, protect cover, load tested grade first.
+- vessel arriving early / capesize early → "late": no FC slot, convert demurrage into despatch by accelerating barge cycles.
+- neap tide / draft / swell → "tide": deep-draft window shrinks, cap the capesize load, top off on the next spring tide.
+- anything else → "general": re-solve holding the floating-crane constraint and protecting minimum cover.
+
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
+const SHIPPING_COPILOT_PROMPT = `You are the OreSight Shipping Optimisation copilot for the Morowali jetty + Kendari anchorage barge/OGV program (floating cranes FC-1/FC-2; cost curve total(b)=900000·e^(−0.45·b)+140000·b; cost-optimising laycan buffer ≈2.4 d; current practice 3.8 d; binding constraint the floating-crane rate at ~94% utilisation; at-risk vessel MV Cape Kendari driving ~$128k demurrage). Answer the scheduler's question in 2-3 sentences, grounded ONLY in the provided live-state JSON. Be concrete and quantified. If the question sets a demurrage/cost target, reason about whether it is achievable against the cost floor at the optimal buffer. You MAY wrap a key figure or vessel name in <b>...</b>.
+
+Return JSON with EXACTLY this structure:
+{ "answer": "<2-3 sentence grounded answer, may contain <b> tags>" }
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
 // ── Endpoints ─────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, aiMode: aiMode() }));
 
@@ -576,6 +624,44 @@ app.post('/api/fsp/copilot', async (req, res) => {
     systemPrompt: FSP_COPILOT_PROMPT,
     userMessage: `Plan state:\n${JSON.stringify(state || {}, null, 2)}\n\nPlanner question: ${question.trim().slice(0, 400)}\n\nReturn only valid JSON.`,
     fallback: copilotFallback({ question, state }),
+  });
+  res.json(result);
+});
+
+// Shipping: laycan-buffer + line-up recommendation for the chosen scenario.
+app.post('/api/shipping/analyze', async (req, res) => {
+  const { scenario } = req.body || {};
+  const result = await askClaude({
+    label: `shipping:buffer:${scenario?.buffer ?? '?'}`,
+    systemPrompt: SHIPPING_PROMPT,
+    userMessage: `Optimise this shipping scenario:\n${JSON.stringify(scenario ?? {}, null, 2)}\n\nReturn only valid JSON.`,
+    fallback: shippingFallback(scenario || {}),
+  });
+  res.json(result);
+});
+
+// Shipping: free-text (or preset) disruption → live re-dispatch response.
+app.post('/api/shipping/disruption', async (req, res) => {
+  const { text, scenarioKey } = req.body || {};
+  if ((!text || !text.trim()) && !scenarioKey) return res.status(400).json({ error: 'A disruption description or preset is required' });
+  const result = await askClaude({
+    label: `shipping:disruption:${scenarioKey || 'free'}`,
+    systemPrompt: SHIPPING_DISRUPTION_PROMPT,
+    userMessage: `Scheduler note:\n"""${(text || scenarioKey || '').toString().trim().slice(0, 500)}"""\n\nReturn only valid JSON.`,
+    fallback: shippingDisruptionFallback({ text, scenarioKey }),
+  });
+  res.json(result);
+});
+
+// Shipping: line-up copilot Q&A grounded in the live state.
+app.post('/api/shipping/copilot', async (req, res) => {
+  const { question, state } = req.body || {};
+  if (!question || !question.trim()) return res.status(400).json({ error: 'A question is required' });
+  const result = await askClaude({
+    label: 'shipping:copilot',
+    systemPrompt: SHIPPING_COPILOT_PROMPT,
+    userMessage: `Live state:\n${JSON.stringify(state || {}, null, 2)}\n\nScheduler question: ${question.trim().slice(0, 400)}\n\nReturn only valid JSON.`,
+    fallback: shippingCopilotFallback({ question, state }),
   });
   res.json(result);
 });

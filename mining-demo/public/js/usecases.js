@@ -457,7 +457,7 @@ export const USE_CASES = {
   'shipping': {
     title: 'Shipping Optimisation',
     decisions: 'ship line-up / contracting',
-    stage: 'Shipping', horizon: '4w', drivers: ['margin', 'cost'],
+    stage: 'Shipping', horizon: '4w', drivers: ['margin', 'cost'], href: '/shipping.html',
     pitch: 'AI lines up vessels, stockpiles and laycans so ore never waits for ships and ships never wait for ore — demurrage down, despatch up.',
     site: 'Morowali jetty + Kendari anchorage — barge & OGV program',
     kpis: [
