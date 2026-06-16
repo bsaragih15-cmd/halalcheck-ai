@@ -140,9 +140,9 @@ export const USE_CASES = {
 
   'blending': {
     title: 'Blending Optimisation',
-    decisions: 'haul / rail to pile allocation',
-    stage: 'Port', horizon: '4w', drivers: ['margin'],
-    flagship: true, href: '/production.html',
+    decisions: 'smelter-feed blend recipe & flux',
+    stage: 'Processing', horizon: '4w', drivers: ['margin', 'cost'],
+    flagship: true, href: '/blending.html',
   },
 
   // ── Templated demos (demo.html?case=<id>) ─────────────────────────────────
