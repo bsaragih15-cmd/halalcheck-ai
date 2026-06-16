@@ -31,5 +31,15 @@
     renderMatrix(document.getElementById('matrixGrid'));
     renderLegend(document.getElementById('matrixLegend'));
   </script>
+  <script src="/js/tour.js"></script>
+  <script>
+    OreTour.init({ label: 'Guided tour', steps: [
+      { sel: '.section-tag', title: 'The OreSight value chain', text: 'Every AI use-case across the mining operation, on one grid. Pick any cell to open a live module.' },
+      { sel: '.chevron', title: 'Columns = value-chain stages', text: 'Left to right: exploration → drill &amp; blast → load &amp; haul → processing → hauling → port → shipping → marketing.' },
+      { sel: '.matrix-axis', title: 'Rows = decision horizon', text: 'Top to bottom: from real-time (0h control tower) down to life-of-mine (+10y) planning.' },
+      { sel: '.matrix-cell.live', title: 'Live demos', text: 'Green ▶ LIVE DEMO cells are fully interactive — click one (Hauling, Blast, Blending, Shipping…) to open the module. Each has its own guided tour inside.' },
+      { sel: '#matrixLegend', title: 'Legend', text: 'Shows each cell’s primary value driver (throughput, cost, margin, NPV) and whether it’s a live demo or in development.' },
+    ]});
+  </script>
 </body>
 </html>
