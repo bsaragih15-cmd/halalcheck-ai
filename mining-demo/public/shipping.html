@@ -195,6 +195,18 @@
   .help-body .step .n{flex:none;width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;font-size:.64rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;font-family:var(--mono)}
   .help-tag{display:inline-block;font-family:var(--mono);font-size:.62rem;font-weight:700;padding:1px 6px;border-radius:4px;background:#e3f1e8;color:var(--green-d);margin-right:5px}
   .help-kbd{font-family:var(--mono);font-size:.7rem;background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:0 5px}
+
+  /* GUIDED TOUR spotlight */
+  .tour-hl{position:fixed;z-index:2500;border:2px solid #5dd08a;border-radius:10px;box-shadow:0 0 0 9999px rgba(13,22,16,.55);pointer-events:none;transition:top .25s,left .25s,width .25s,height .25s}
+  .tour-pop{position:fixed;z-index:2501;width:300px;max-width:92vw;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 14px 36px rgba(0,0,0,.24);padding:13px 15px}
+  .tour-pop .tt{font-weight:800;font-size:.92rem;margin-bottom:5px;color:var(--green-d)}
+  .tour-pop .tx{font-size:.82rem;color:var(--mut);line-height:1.45}
+  .tour-pop .tr{display:flex;align-items:center;gap:8px;margin-top:12px}
+  .tour-pop .tstep{font-family:var(--mono);font-size:.7rem;color:var(--mut2)}
+  .tour-pop .tsp{flex:1}
+  .tour-pop button{font-size:.78rem;font-weight:600;border-radius:6px;padding:.32rem .7rem;cursor:pointer;border:1px solid var(--line2);background:var(--panel2);color:var(--ink)}
+  .tour-pop button.prim{background:var(--green);border-color:var(--green);color:#fff}
+  .tour-pop .tskip{border:none;background:none;color:var(--mut2);font-weight:500;padding:.32rem .2rem}
 </style>
 </head>
 <body>
@@ -206,6 +218,7 @@
     <a href="/haul.html">Hauling</a><a href="/control-tower.html">Control Tower</a><a href="/production.html">Blending</a><a href="/safety.html">Safety</a>
   </nav>
   <span class="nav-sp"></span>
+  <button class="btn-help" id="tourBtn" title="Guided walkthrough">&#9654; Tour</button>
   <button class="btn-help" id="helpBtn" title="How to read this screen">&#9432; How to read</button>
   <span class="src" id="srcPill"><b></b><span id="srcLabel">AIS: Demo feed</span></span>
   <button class="btn-pilot" onclick="location.href='/index.html#pilot'">Book a pilot</button>
@@ -215,6 +228,7 @@
 <aside class="help-drawer" id="helpDrawer" aria-hidden="true">
   <div class="help-hd"><span class="ht">How to read this screen</span><button class="hx" id="helpClose" title="Close">&#10005;</button></div>
   <div class="help-body">
+    <button id="tourStart" style="width:100%;background:var(--green);color:#fff;border:none;border-radius:7px;padding:.55rem;font-weight:600;font-size:.86rem;cursor:pointer;margin-bottom:14px">&#9654; Start guided tour</button>
     <h3>What this is</h3>
     <p>A control tower for getting ore onto ships. It watches the whole chain — stockpile → jetty → barge → floating crane → ocean vessel — and finds the cheapest way to run it, trading <b>demurrage</b> (ships waiting) against <b>stockpile carrying cost</b>. The goal: <b>ore never waits for ships, ships never wait for ore.</b></p>
 
@@ -266,7 +280,7 @@
       <div class="chead"><h2>Demurrage cost by month</h2><span class="hint">2026 YTD · k$ · red = demurrage paid</span></div>
       <svg id="demChart" viewBox="0 0 560 150" preserveAspectRatio="xMidYMid meet"></svg>
     </div>
-    <div class="card grow" style="flex:1.7">
+    <div class="card grow" id="heroCard" style="flex:1.7">
       <div class="chead">
         <h2 id="heroTitle">Berth &amp; anchorage schedule</h2>
         <span class="hint" id="heroHint">FC-1 / FC-2 · 15–29 Jun</span>
@@ -292,7 +306,7 @@
 
   <!-- RHS -->
   <section class="col">
-    <div class="card">
+    <div class="card" id="scenCard">
       <div class="scen-head"><div class="t">&#9881; Scenario</div><div class="h">drag — the model reacts instantly</div></div>
 
       <div class="lever">
@@ -329,7 +343,7 @@
       <button class="btn-gen" id="genBtn">&#10022; Generate AI Recommendation</button>
     </div>
 
-    <div class="card ai">
+    <div class="card ai" id="aiCard">
       <div class="ai-head"><span class="ai-badge">AI</span><span class="ai-title">OreSight AI Recommendation</span><span class="ai-solve" id="aiSolve"></span></div>
       <div class="ai-caps">
         <span class="ai-cap">Real-time visibility</span><span class="ai-cap">ETA · AIS-ML</span>
@@ -807,7 +821,51 @@ function helpToggle(open){ document.getElementById('helpDrawer').classList.toggl
 document.getElementById('helpBtn').onclick=()=>helpToggle(true);
 document.getElementById('helpClose').onclick=()=>helpToggle(false);
 document.getElementById('helpScrim').onclick=()=>helpToggle(false);
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') helpToggle(false); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ helpToggle(false); endTour(); } });
+
+/* ---------- guided tour: spotlight each panel in sequence ---------- */
+const TOUR=[
+  {sel:'#alertRail',title:'1 · Alert rail',text:'Leads with your single highest-demurrage-risk vessel — name, reason, dollar exposure and the fix. Your ranked, money-first to-do list.'},
+  {sel:'#kpis',title:'2 · KPI strip',text:'The five numbers a manager checks first: demurrage YTD, vessel queue, loading rate vs contract, laycan compliance, stockpile cover.'},
+  {sel:'#vchain',title:'3 · Value-chain ribbon',text:'Stockpile → Jetty → Barge → Anchorage → OGV load → Sail, each with a health dot. The red “OGV load · binding” node is today’s bottleneck.'},
+  {sel:'#heroCard',title:'4 · Berth & anchorage schedule',text:'One lane per vessel: laycan window, confirmed loading (green), AIS forecast (hatched), demurrage overrun (red), the TODAY line. Toggle Tide for the DUKC low-water windows.',before:()=>showMap(false)},
+  {sel:'#heroCard',title:'5 · Live vessel map',text:'Real AIS positions — OGVs by status, amber tugs/barges near port, ETA cones and live congestion. Crossing the geofence auto-confirms a slot in the schedule.',before:()=>showMap(true)},
+  {sel:'#scenCard',title:'6 · Scenario — four levers',text:'Drag laycan buffer, floating cranes, tide-gated sailing draft, and weather. The stacked cost bar reacts instantly: demurrage / buffer carry / crane charter / tide-freight.',before:()=>showMap(false)},
+  {sel:'#aiCard',title:'7 · AI recommendation',text:'Generate sweeps the options (a Berth-Allocation solve) and returns current → optimised → value per year, plus concrete actions — explainable, not a black box.',before:()=>{ try{generateAI();}catch(e){} }},
+];
+let tourI=-1;
+function ensureTourEls(){
+  if(!document.getElementById('tourHl')){ const h=document.createElement('div'); h.id='tourHl'; h.className='tour-hl'; h.style.display='none'; document.body.appendChild(h);
+    const p=document.createElement('div'); p.id='tourPop'; p.className='tour-pop'; p.style.display='none'; document.body.appendChild(p); }
+}
+function positionTour(){
+  if(tourI<0) return; const el=document.querySelector(TOUR[tourI].sel); const hl=document.getElementById('tourHl'), pop=document.getElementById('tourPop'); if(!el||!hl||!pop) return;
+  const r=el.getBoundingClientRect(), pad=6;
+  hl.style.display='block'; hl.style.top=(r.top-pad)+'px'; hl.style.left=(r.left-pad)+'px'; hl.style.width=(r.width+2*pad)+'px'; hl.style.height=(r.height+2*pad)+'px';
+  pop.style.display='block';
+  const pw=pop.offsetWidth||300, ph=pop.offsetHeight||150, vw=innerWidth, vh=innerHeight;
+  let top=r.bottom+12; if(top+ph>vh-10) top=Math.max(10, r.top-ph-12);
+  let left=Math.min(Math.max(10, r.left+r.width/2-pw/2), vw-pw-10);
+  pop.style.top=top+'px'; pop.style.left=left+'px';
+}
+function renderTour(){
+  const s=TOUR[tourI], pop=document.getElementById('tourPop');
+  pop.innerHTML=`<div class="tt">${s.title}</div><div class="tx">${s.text}</div>
+    <div class="tr"><span class="tstep">${tourI+1} / ${TOUR.length}</span><span class="tsp"></span>
+    <button class="tskip" id="tourSkip">Skip</button>
+    ${tourI>0?'<button id="tourPrev">Back</button>':''}
+    <button class="prim" id="tourNext">${tourI===TOUR.length-1?'Done':'Next →'}</button></div>`;
+  document.getElementById('tourNext').onclick=()=> tourI===TOUR.length-1? endTour() : gotoStep(tourI+1);
+  document.getElementById('tourSkip').onclick=endTour;
+  const pv=document.getElementById('tourPrev'); if(pv) pv.onclick=()=>gotoStep(tourI-1);
+  positionTour(); setTimeout(positionTour,260);
+}
+function gotoStep(i){ tourI=i; const s=TOUR[i]; if(s.before){ try{s.before();}catch(e){} } setTimeout(renderTour, s.before?200:0); }
+function startTour(){ ensureTourEls(); helpToggle(false); tourI=-1; gotoStep(0); window.addEventListener('resize',positionTour); }
+function endTour(){ tourI=-1; const hl=document.getElementById('tourHl'), pop=document.getElementById('tourPop'); if(hl)hl.style.display='none'; if(pop)pop.style.display='none'; window.removeEventListener('resize',positionTour); }
+document.getElementById('tourBtn').onclick=startTour;
+document.getElementById('tourStart').onclick=startTour;
+
 simTimer=setInterval(stepSim,1500); stepSim();
 </script>
 </body>
