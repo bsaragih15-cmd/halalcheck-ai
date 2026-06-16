@@ -455,17 +455,34 @@ app.get('/api/tide', async (req, res) => {
   } catch (e) { res.json({ ...fallback, error: String(e.message || e) }); }
 });
 
-// Market proxy (nickel via Metals-API; VLSFO bunker synthetic). Best-effort, synthetic fallback.
+// Market proxy. Provider chain: metals.dev (free tier, LME base metals) →
+// metals-api (paid, optional) → a reference price you can set via env
+// (NICKEL_REF_USD, e.g. this month's Indonesia HMA or World Bank nickel).
 app.get('/api/market', async (req, res) => {
-  const key = process.env.METALS_API_KEY;
-  const fallback = { source: 'model', nickelUSD: 16500, bunkerVLSFO: 600 };
-  if (!key) return res.json(fallback);
-  try {
-    const d = await fetchJSON(`https://metals-api.com/api/latest?access_key=${key}&base=USD&symbols=NI`);
-    const r = d && d.rates ? (d.rates.NI ?? d.rates.XNI) : null;
-    const ni = r ? (r > 100 ? r : 1 / r) : null;           // metals-api may quote inverse
-    res.json({ source: ni ? 'live' : 'model', nickelUSD: ni ? Math.round(ni) : 16500, bunkerVLSFO: 600 });
-  } catch (e) { res.json({ ...fallback, error: String(e.message || e) }); }
+  const ref = Number(process.env.NICKEL_REF_USD) || 16500;
+  const bunker = Number(process.env.BUNKER_VLSFO_USD) || 600;
+  const fallback = { source: 'model', provider: 'reference', nickelUSD: ref, bunkerVLSFO: bunker };
+
+  // 1) metals.dev — free tier, returns base metals in USD/metric-tonne
+  const md = process.env.METALS_DEV_API_KEY;
+  if (md) {
+    try {
+      const d = await fetchJSON(`https://api.metals.dev/v1/latest?api_key=${md}&currency=USD&unit=mt`);
+      const ni = d && d.metals ? (d.metals.nickel ?? d.metals.lme_nickel) : null;
+      if (ni) return res.json({ source: 'live', provider: 'metals.dev', nickelUSD: Math.round(ni), bunkerVLSFO: bunker });
+    } catch (e) { /* fall through */ }
+  }
+  // 2) metals-api — paid for nickel, kept for compatibility if a key exists
+  const ma = process.env.METALS_API_KEY;
+  if (ma) {
+    try {
+      const d = await fetchJSON(`https://metals-api.com/api/latest?access_key=${ma}&base=USD&symbols=NI`);
+      const r = d && d.rates ? (d.rates.NI ?? d.rates.XNI) : null;
+      const ni = r ? (r > 100 ? r : 1 / r) : null;
+      if (ni) return res.json({ source: 'live', provider: 'metals-api', nickelUSD: Math.round(ni), bunkerVLSFO: bunker });
+    } catch (e) { /* fall through */ }
+  }
+  res.json(fallback);
 });
 
 app.post('/api/maintenance/analyze', async (req, res) => {
