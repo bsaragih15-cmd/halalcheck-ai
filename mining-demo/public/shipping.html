@@ -569,31 +569,73 @@ function stepSim(){
     if(b.lat> -2.95) b.dir=-1; if(b.lat< -3.90) b.dir=1;
     if(mapInited && bargeMarks[b.id]) bargeMarks[b.id].setLatLng([b.lat,b.lon]);
   });
-  const t=new Date().toLocaleTimeString('en-GB');
-  document.getElementById('mapnote').innerHTML = (LIVE?'● LIVE AIS':'● Demo AIS feed')+` · last update ${t} · ${FLEET.length} OGVs, ${BARGES.length} barges`;
+  if(typeof updateMapNote==='function') updateMapNote();
 }
 
-/* Live AIS positions overlay the tracked line-up as faint dots. */
-let liveMarks={};
-function onVesselPosition(v){
-  if(!mapInited || typeof L==='undefined' || v.lat==null) return;
-  try{
-    if(liveMarks[v.mmsi]) liveMarks[v.mmsi].setLatLng([v.lat,v.lon]);
-    else if(Object.keys(liveMarks).length<200)
-      liveMarks[v.mmsi]=L.circleMarker([v.lat,v.lon],{radius:2.6,color:'#0e7490',weight:0.8,fillColor:'#0e7490',fillOpacity:0.7}).addTo(MAP).bindTooltip('AIS '+v.mmsi,{permanent:false});
-  }catch(e){}
+/* =========================================================================
+   LIVE AIS overlay — classify vessels by type and surface tugs/barges by port
+   ========================================================================= */
+let liveShips=new Map(), liveLayer=null, livePaintAt=0, liveCounts={barge:0,bargeNear:0,ogv:0,total:0};
+const PORTS_NEAR=[GEO.jetty,GEO.anchorage,GEO.port];
+function kmTo(lat,lon,p){ const dy=(lat-p.lat)*111, dx=(lon-p.lon)*111*Math.cos(lat*Math.PI/180); return Math.hypot(dx,dy); }
+function nearestPortKm(lat,lon){ let m=1e9; for(const p of PORTS_NEAR){ const d=kmTo(lat,lon,p); if(d<m)m=d; } return m; }
+// AIS ship-type → category. Tug/towing (21,22,31,32,52) move the tug-and-barge feeders.
+function shipCat(t){ if(t==null)return 'other'; if([21,22,31,32,52].includes(t))return 'tug';
+  if(t>=70&&t<=79)return 'cargo'; if(t>=80&&t<=89)return 'tanker'; return 'other'; }
+function updateMapNote(){
+  const el=document.getElementById('mapnote'); if(!el)return;
+  const t=new Date().toLocaleTimeString('en-GB');
+  if(LIVE){
+    el.innerHTML = liveShips.size
+      ? `● LIVE AIS · ${t} · <b style="color:#b8860b">${liveCounts.barge} tugs/barges</b> (${liveCounts.bargeNear} ≤50 km) · ${liveCounts.ogv} cargo · ${liveShips.size} total`
+      : `● LIVE AIS · ${t} · waiting for vessels in the Morowali–Kendari box…`;
+  } else {
+    el.innerHTML = `● Demo AIS feed · last update ${t} · ${FLEET.length} OGVs, ${BARGES.length} barges`;
+  }
 }
-/* Connector hook — AISStream WebSocket over the Morowali–Kendari corridor. */
+function renderLiveAIS(){
+  if(!mapInited || typeof L==='undefined') return;
+  if(!liveLayer) liveLayer=L.layerGroup().addTo(MAP);
+  liveLayer.clearLayers();
+  let barge=0,bargeNear=0,ogv=0;
+  liveShips.forEach((s,mmsi)=>{
+    if(s.lat==null) return;
+    const cat=shipCat(s.type), near=nearestPortKm(s.lat,s.lon);
+    if(cat==='tug'){
+      barge++; if(near<=50) bargeNear++;
+      L.circleMarker([s.lat,s.lon],{radius:near<=50?5:3.5,color:'#7a5a1a',weight:1.2,fillColor:'#d39a2e',fillOpacity:0.95}).addTo(liveLayer)
+        .bindTooltip(`🛟 ${s.name||'Tug/Barge'} · ${mmsi}${near<80?` · ${near.toFixed(0)} km from port`:''}`,{permanent:false});
+    } else if(cat==='cargo'||cat==='tanker'){
+      ogv++;
+      L.circleMarker([s.lat,s.lon],{radius:3.5,color:'#1b3a57',weight:0.8,fillColor:'#2a5f8f',fillOpacity:0.85}).addTo(liveLayer)
+        .bindTooltip(`${s.name||(cat==='tanker'?'Tanker':'Cargo')} · ${mmsi}`,{permanent:false});
+    } else {
+      L.circleMarker([s.lat,s.lon],{radius:2,color:'#0e7490',weight:0.5,fillColor:'#0e7490',fillOpacity:0.45}).addTo(liveLayer);
+    }
+  });
+  liveCounts={barge,bargeNear,ogv,total:liveShips.size};
+  updateMapNote();
+}
+function upsertLive(mmsi,patch){
+  if(!mmsi) return;
+  const s=liveShips.get(mmsi)||{mmsi}; Object.assign(s,patch,{t:Date.now()}); liveShips.set(mmsi,s);
+  const now=Date.now(); if(now-livePaintAt>1500){ livePaintAt=now; renderLiveAIS(); }
+}
+/* Connector — AISStream WebSocket over the Morowali–Kendari corridor.
+   Subscribes to position + static data so tugs/barges can be told from OGVs. */
 function connectLiveAIS(apiKey){
   if(!apiKey) return false;
   try{ liveWS=new WebSocket('wss://stream.aisstream.io/v0/stream'); }catch(e){ return false; }
   liveWS.onopen=()=>{ LIVE=true;
     document.getElementById('srcPill').classList.add('live'); document.getElementById('srcLabel').textContent='AIS: Live';
-    liveWS.send(JSON.stringify({APIKey:apiKey, BoundingBoxes:[[[-4.95,121.6],[-2.6,123.9]]], FilterMessageTypes:['PositionReport']})); };
+    liveWS.send(JSON.stringify({APIKey:apiKey, BoundingBoxes:[[[-4.95,121.6],[-2.6,123.9]]], FilterMessageTypes:['PositionReport','ShipStaticData']})); };
   liveWS.onmessage=(ev)=>{ let m; try{ m=JSON.parse(ev.data); }catch(e){ return; }
     if(m.error||m.Error){ document.getElementById('mapnote').innerHTML='● LIVE AIS error: '+(m.error||m.Error)+' — running demo feed.'; try{liveWS.close();}catch(e){} LIVE=false; return; }
-    if(m.MessageType==='PositionReport'){ const p=m.Message.PositionReport, meta=m.MetaData||{};
-      onVesselPosition({mmsi:meta.MMSI||p.UserID, lat:p.Latitude, lon:p.Longitude, sog:p.Sog, cog:p.Cog}); } };
+    const meta=m.MetaData||{}; let mmsi=meta.MMSI;
+    if(m.MessageType==='PositionReport'){ const p=m.Message.PositionReport; mmsi=mmsi||p.UserID;
+      upsertLive(mmsi,{lat:p.Latitude,lon:p.Longitude,sog:p.Sog,cog:p.Cog,name:(meta.ShipName||'').trim()||undefined}); }
+    else if(m.MessageType==='ShipStaticData'){ const d=m.Message.ShipStaticData; mmsi=mmsi||d.UserID;
+      upsertLive(mmsi,{type:d.Type,name:((meta.ShipName||d.Name||'').trim())||undefined}); } };
   liveWS.onerror=()=>{ document.getElementById('mapnote').innerHTML='● LIVE AIS connection failed — running demo feed.'; LIVE=false; };
   liveWS.onclose=()=>{ if(LIVE){ LIVE=false; const pill=document.getElementById('srcPill'); pill&&pill.classList.remove('live'); } };
   return true;
@@ -606,7 +648,7 @@ async function toggleSource(){
     showMap(true); label.textContent='AIS: connecting…';
     let key=''; try{ key=(await (await fetch('/api/aisstream-key')).json()).key||''; }catch(e){}
     if(key && connectLiveAIS(key)){
-      document.getElementById('mapnote').innerHTML='● LIVE AIS connecting — real positions overlay the tracked line-up as they arrive.';
+      document.getElementById('mapnote').innerHTML='● LIVE AIS connecting — tugs/barges (amber) and OGVs (blue) in the Morowali–Kendari box appear as they report.';
     } else {
       LIVE=true; pill.classList.add('live'); label.textContent='AIS: Live (needs key)';
       document.getElementById('mapnote').innerHTML='● LIVE AIS requested — set AISSTREAM_API_KEY in the deploy env to stream real positions. Running demo feed meanwhile.';
@@ -614,7 +656,8 @@ async function toggleSource(){
   } else {
     LIVE=false; pill.classList.remove('live'); label.textContent='AIS: Demo feed';
     try{ liveWS && liveWS.close(); }catch(e){}
-    for(const k in liveMarks){ try{ MAP && MAP.removeLayer(liveMarks[k]); }catch(e){} } liveMarks={};
+    if(liveLayer){ try{ MAP.removeLayer(liveLayer); }catch(e){} liveLayer=null; } liveShips.clear();
+    updateMapNote();
   }
 }
 
