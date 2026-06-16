@@ -87,7 +87,16 @@ button { font-family: inherit; }
    Columns shrink to fit the width (minmax 0) so there is never a sideways scroll. */
 .hm-inner .matrix { height: 100%; width: 100%; grid-template-columns: 40px repeat(10, minmax(0, 1fr)); grid-template-rows: auto; grid-auto-rows: minmax(0, 1fr); gap: 7px; }
 .hm-inner .matrix-cell { overflow: hidden; }
-.hm-inner .matrix-cell .t, .hm-inner .matrix-cell .d { overflow-wrap: anywhere; }
+/* The single-column 4w cells are narrow — size their type down so titles wrap
+   cleanly at word breaks and the badges don't clip. Full-width band rows keep
+   their larger type (handled by .row-cell rules below). */
+.hm-inner .matrix-cell:not(.row-cell) { padding: 14px 13px; gap: 4px; }
+.hm-inner .matrix-cell:not(.row-cell) .t { font-size: 13.5px; line-height: 1.25; }
+.hm-inner .matrix-cell:not(.row-cell) .d { font-size: 12px; line-height: 1.3; }
+.hm-inner .matrix-cell:not(.row-cell) .vdg { font-size: 13px; }
+.hm-inner .matrix-cell:not(.row-cell) .vdg.vd-npv { font-size: 11px; }
+.hm-inner .matrix-cell:not(.row-cell) .badge-live,
+.hm-inner .matrix-cell:not(.row-cell) .badge-indev { font-size: 10px; padding: 3px 9px; letter-spacing: 0.04em; }
 .landing .chevron { min-height: 50px; }
 .landing .matrix-cell { min-height: 0; height: 100%; }
 .landing .matrix-cell.row-cell { min-height: 0; }
