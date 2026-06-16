@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OreSight AI — Shipping Optimisation</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f4f2ec; --panel:#fbfaf6; --panel2:#f0eee6; --ink:#1b231a; --mut:#6b7464; --mut2:#8a9282;
+    --line:#e2dfd4; --line2:#d8d4c7; --green:#15803d; --green-d:#0f5c2c; --green-l:#e7f1ea;
+    --red:#cf5b54; --red-d:#b91c1c; --orange:#c8741c; --cyan:#0e7490; --amber:#b45309;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+  .mono{font-family:var(--mono)}
+
+  /* ===== NAV ===== */
+  .nav{display:flex;align-items:center;gap:22px;background:#13301d;color:#dfe7da;padding:0 22px;height:52px;font-size:13px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:15px;color:#fff;text-decoration:none}
+  .brand em{color:#5dd08a;font-style:normal}
+  .logo{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;background:var(--green);border-radius:6px;font-family:var(--mono);font-weight:800;font-size:12px;color:#fff}
+  .nav-links{display:flex;gap:16px;flex-wrap:wrap;color:#aebaa6;font-weight:500}
+  .nav-links a{color:#aebaa6;text-decoration:none;white-space:nowrap}
+  .nav-links a.active{color:#fff}
+  .nav-links a:hover{color:#fff}
+  .nav-sp{flex:1}
+  .pill-demo{font-family:var(--mono);font-size:10.5px;letter-spacing:.5px;border:1px solid #6b7d5f;border-radius:20px;padding:4px 10px;color:#cdd8c4;display:flex;align-items:center;gap:6px}
+  .pill-demo b{width:6px;height:6px;border-radius:50%;background:#f0c14b;display:inline-block}
+  .btn-pilot{background:var(--green);color:#fff;border:none;border-radius:7px;padding:8px 14px;font-weight:600;font-size:13px;cursor:pointer}
+  .btn-pilot:hover{background:#1a9648}
+
+  /* ===== LAYOUT ===== */
+  .wrap{max-width:1500px;margin:0 auto;padding:22px 34px 60px}
+  .crumb{font-size:12.5px;color:var(--mut2);margin-bottom:14px}
+  .crumb b{color:var(--ink);font-weight:600}
+  .titlerow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  h1{font-size:30px;font-weight:800;margin:0;letter-spacing:-.5px}
+  .tag{font-family:var(--mono);font-size:11px;font-weight:700;padding:4px 9px;border-radius:6px;letter-spacing:.5px}
+  .tag.horizon{background:#e6eef6;color:#2a5f8f}
+  .tag.dev{background:#efece2;color:#8a7a4a;border:1px solid #ded7c2}
+  .tag.dollar{color:var(--green);font-size:18px;font-weight:800}
+  .sub{font-family:var(--mono);font-size:13px;color:var(--mut);margin:10px 0 4px}
+  .desc{color:var(--mut);max-width:760px;margin:0 0 22px}
+
+  /* ===== CARDS GRID ===== */
+  .grid{display:grid;gap:16px}
+  .kpis{grid-template-columns:repeat(5,1fr);margin-bottom:18px}
+  @media(max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+  .kpi .lab{font-size:12px;color:var(--mut);margin-bottom:8px}
+  .kpi .val{font-family:var(--mono);font-size:30px;font-weight:800;letter-spacing:-1px;line-height:1}
+  .kpi .val span{font-size:13px;font-weight:600;color:var(--mut2);margin-left:3px}
+  .kpi .foot{font-size:11.5px;color:var(--mut2);margin-top:9px}
+  .kpi .foot.good{color:var(--green)}
+  .kpi .foot.warn{color:var(--amber)}
+
+  .twocol{grid-template-columns:1fr 1fr;margin-bottom:18px}
+  @media(max-width:1100px){.twocol{grid-template-columns:1fr}}
+  .ch-cap{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:6px}
+  .ch-sub{font-size:11.5px;color:var(--mut2);margin-bottom:10px}
+  .legend{display:flex;gap:16px;font-size:11px;color:var(--mut);margin-bottom:6px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+
+  /* ===== VESSEL LINE-UP ===== */
+  .sechead{display:flex;align-items:center;gap:10px;margin:6px 0 12px}
+  .sechead h2{font-size:16px;font-weight:700;margin:0}
+  .sechead .hint{font-size:11.5px;color:var(--mut2);font-family:var(--mono)}
+  table.vl{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.vl th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.5px;color:var(--mut2);text-transform:uppercase;font-weight:700;padding:6px 10px;border-bottom:1px solid var(--line2)}
+  table.vl td{padding:9px 10px;border-bottom:1px solid var(--line)}
+  table.vl tr:last-child td{border-bottom:none}
+  table.vl tr:hover td{background:#f6f4ee}
+  .vname{font-weight:700}
+  .vclass{font-family:var(--mono);font-size:10.5px;color:var(--mut2)}
+  .chip{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.3px}
+  .chip.ontime{background:#e3f1e8;color:var(--green-d)}
+  .chip.early{background:#e6eef6;color:#2a5f8f}
+  .chip.late{background:#fbe6e4;color:var(--red-d)}
+  .chip.grade-sap{background:#efe7d8;color:#8a6a2a}
+  .chip.grade-lim{background:#e2ece6;color:#3a6b54}
+  .money{font-family:var(--mono);font-weight:700}
+  .money.cost{color:var(--red-d)}
+  .money.save{color:var(--green-d)}
+  .prog{height:7px;background:#e7e4da;border-radius:4px;overflow:hidden;min-width:70px}
+  .prog i{display:block;height:100%;background:var(--green)}
+  .swap{font-family:var(--mono);font-size:10.5px;color:var(--green-d);border:1px solid #bcd6c5;background:#eef5f0;border-radius:6px;padding:3px 8px;cursor:pointer}
+  .swap:hover{background:#e0eee6}
+
+  /* ===== CONSTRAINT + TIDE ===== */
+  .twocol2{grid-template-columns:1.1fr 1fr;margin:18px 0}
+  @media(max-width:1100px){.twocol2{grid-template-columns:1fr}}
+  .cst-name{display:flex;align-items:center;gap:9px;font-size:18px;font-weight:800;margin:4px 0 14px}
+  .cst-sq{width:13px;height:13px;border-radius:3px;background:var(--red)}
+  .cst-bar{margin-bottom:11px}
+  .cst-bar .row{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px}
+  .cst-bar .row b{font-family:var(--mono)}
+  .track{height:8px;background:#e7e4da;border-radius:4px;overflow:hidden}
+  .track i{display:block;height:100%;border-radius:4px}
+  .cst-note{font-size:11.5px;color:var(--mut);margin-top:10px;padding-top:10px;border-top:1px dashed var(--line2)}
+
+  .tide-row{display:flex;gap:18px;align-items:flex-end;margin:6px 0 14px}
+  .tide-big{font-family:var(--mono);font-size:30px;font-weight:800;line-height:1}
+  .tide-big span{font-size:13px;color:var(--mut2);font-weight:600}
+  .tide-mini{font-size:11.5px;color:var(--mut)}
+  .draftctl{margin-top:8px}
+  .draftctl input[type=range]{width:100%}
+  .tide-out{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:12px;text-align:center}
+  .tide-out .b{background:var(--panel2);border-radius:8px;padding:10px 6px}
+  .tide-out .b .l{font-size:10.5px;color:var(--mut2)}
+  .tide-out .b .v{font-family:var(--mono);font-weight:800;font-size:17px;margin-top:3px}
+
+  /* ===== SCENARIO + AI ===== */
+  .scenwrap{grid-template-columns:1fr 1fr;margin:18px 0}
+  @media(max-width:1100px){.scenwrap{grid-template-columns:1fr}}
+  .scen-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .scen-head .t{font-weight:700}
+  .scen-head .t b{margin-right:6px}
+  .scen-head .h{font-size:11.5px;color:var(--mut2);font-style:italic}
+  .lever{margin-bottom:8px}
+  .lever .ll{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+  .lever .lname{font-size:13px;font-weight:600}
+  .lever .lval{font-family:var(--mono);font-size:20px;font-weight:800;color:var(--green-d)}
+  .lever .lval span{font-size:12px;color:var(--mut)}
+  input[type=range]{-webkit-appearance:none;appearance:none;height:6px;background:#dcd8cc;border-radius:4px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--green);cursor:pointer;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--green);cursor:pointer;border:3px solid #fff}
+  .ticks{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--mut2);margin-top:5px}
+  .costbox{background:var(--panel2);border-radius:10px;padding:14px 16px;margin-top:16px}
+  .costbox .cl{font-size:12px;color:var(--mut)}
+  .costbox .cv{font-family:var(--mono);font-size:26px;font-weight:800;margin:4px 0}
+  .costbar{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:10px 0 6px}
+  .costbar i{display:block;height:100%}
+  .costbar .dem{background:var(--red)}
+  .costbar .car{background:var(--orange)}
+  .costlegend{display:flex;justify-content:space-between;font-size:11px;color:var(--mut)}
+  .costnote{font-size:11.5px;color:var(--mut2);margin-top:8px}
+  .btn-gen{margin-top:14px;width:100%;background:var(--green);color:#fff;border:none;border-radius:8px;padding:11px;font-weight:600;font-size:13.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn-gen:hover{background:#1a9648}
+
+  /* AI panel */
+  .ai{border-left:3px solid var(--green);background:linear-gradient(180deg,#f0f6f2,#fbfaf6)}
+  .ai-head{display:flex;align-items:center;gap:9px;margin-bottom:4px}
+  .ai-badge{font-family:var(--mono);font-size:10px;font-weight:800;background:var(--green);color:#fff;padding:2px 7px;border-radius:5px}
+  .ai-title{font-weight:700}
+  .ai-solve{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--green-d)}
+  .ai-empty{color:var(--mut);font-size:13px;padding:18px 0}
+  .ai-headline{font-size:15px;font-weight:700;margin:10px 0 14px;line-height:1.4}
+  .ai-delta{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  .dcard{background:var(--panel2);border-radius:9px;padding:10px 12px;flex:1;text-align:center}
+  .dcard.opt{background:#e3f1e8}
+  .dcard .l{font-size:10.5px;color:var(--mut2)}
+  .dcard .v{font-family:var(--mono);font-size:19px;font-weight:800;margin-top:3px}
+  .dcard.opt .v{color:var(--green-d)}
+  .ai-arrow{color:var(--mut2);font-size:18px}
+  .ai-sec{font-family:var(--mono);font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--mut2);font-weight:700;margin:14px 0 8px}
+  .ai-act{display:flex;gap:9px;align-items:flex-start;font-size:12.5px;margin-bottom:8px}
+  .ai-act .n{flex:none;width:18px;height:18px;border-radius:50%;background:var(--green);color:#fff;font-family:var(--mono);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .ai-narr{font-size:12.5px;color:var(--mut);background:var(--panel2);border-radius:9px;padding:12px 14px;margin-top:12px;line-height:1.5}
+
+  /* ===== DISRUPTION + COPILOT ===== */
+  .twocol3{grid-template-columns:1fr 1fr;margin-top:18px}
+  @media(max-width:1100px){.twocol3{grid-template-columns:1fr}}
+  .dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .dh .c{font-family:var(--mono);font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--mut);font-weight:700}
+  .reset{font-family:var(--mono);font-size:11px;color:var(--mut);border:1px solid var(--line2);background:none;border-radius:6px;padding:4px 9px;cursor:pointer}
+  .presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .preset{font-size:11.5px;border:1px solid var(--line2);background:var(--panel2);border-radius:20px;padding:6px 12px;cursor:pointer}
+  .preset:hover{background:#eae7dd;border-color:#c7c2b2}
+  .preset.on{background:var(--red);color:#fff;border-color:var(--red)}
+  .freerow{display:flex;gap:8px}
+  .freerow input{flex:1;border:1px solid var(--line2);border-radius:8px;padding:9px 11px;font-size:12.5px;font-family:var(--sans);background:#fff}
+  .freerow button{background:var(--ink);color:#fff;border:none;border-radius:8px;padding:0 14px;font-size:12.5px;font-weight:600;cursor:pointer}
+  .parsed{margin-top:12px;font-size:12px;color:var(--mut);min-height:18px}
+  .parsed b{color:var(--red-d)}
+  .cp-qs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .cp-q{font-size:11.5px;border:1px solid #bcd6c5;background:#eef5f0;color:var(--green-d);border-radius:20px;padding:6px 12px;cursor:pointer}
+  .cp-q:hover{background:#e0eee6}
+  .cp-ans{font-size:12.5px;color:var(--ink);background:var(--panel2);border-radius:9px;padding:12px 14px;line-height:1.55;min-height:40px}
+  .cp-ans b{color:var(--green-d)}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="/index.html"><span class="logo">OS</span><span>Ore<em>Sight</em>&nbsp;AI</span></a>
+  <nav class="nav-links">
+    <a href="/index.html#matrix">Value Chain</a><a href="/fsp.html">Scheduler (FSP)</a><a href="/payload.html">Payload</a>
+    <a href="/blast.html">Blast</a><a href="/haul.html">Hauling</a><a href="/control-tower.html">Control Tower</a>
+    <a href="/maintenance.html">Maintenance</a><a href="/production.html">Blending</a><a href="/safety.html">Safety</a>
+  </nav>
+  <span class="nav-sp"></span>
+  <span class="pill-demo"><b></b>AI: Demo Mode</span>
+  <button class="btn-pilot" onclick="location.href='/index.html#pilot'">Book a pilot</button>
+</header>
+
+<div class="wrap">
+  <div class="crumb">Value Chain&nbsp; / &nbsp;Shipping&nbsp; / &nbsp;<b>Shipping Optimisation</b></div>
+
+  <div class="titlerow">
+    <h1>Shipping Optimisation</h1>
+    <span class="tag dollar">$</span>
+    <span class="tag horizon">Horizon: 4w</span>
+    <span class="tag dev">IN DEV</span>
+  </div>
+  <div class="sub">Morowali jetty + Kendari anchorage · barge &amp; OGV program</div>
+  <p class="desc">AI lines up vessels, stockpiles and laycans so ore never waits for ships and ships never wait for ore. Demurrage down, despatch up, and the demurrage-versus-stockpile-carrying-cost trade-off made explicit and tunable.</p>
+
+  <!-- KPIs -->
+  <div class="grid kpis" id="kpis"></div>
+
+  <!-- CHARTS -->
+  <div class="grid twocol">
+    <div class="card">
+      <div class="ch-cap">Demurrage cost by month (k$)</div>
+      <div class="ch-sub">2026 YTD · red = demurrage paid</div>
+      <svg id="demChart" viewBox="0 0 560 260" style="width:100%;height:auto"></svg>
+    </div>
+    <div class="card">
+      <div class="ch-cap">Port stockpile cover vs vessel line-up (days, 30 d)</div>
+      <div class="legend"><span><i style="background:var(--orange)"></i>Stock cover</span><span><i style="background:var(--red-d)"></i>Min safe cover</span><span><i style="background:var(--green)"></i>Vessel arrival</span></div>
+      <svg id="coverChart" viewBox="0 0 560 260" style="width:100%;height:auto"></svg>
+    </div>
+  </div>
+
+  <!-- VESSEL LINE-UP -->
+  <div class="card">
+    <div class="sechead"><h2>Vessel line-up</h2><span class="hint">Kendari anchorage · OGV queue + feeding barge cycles · predicted by AIS-ML</span></div>
+    <div style="overflow-x:auto">
+      <table class="vl" id="vlTable">
+        <thead><tr>
+          <th>Vessel</th><th>Class</th><th>ETA (AIS-ML)</th><th>Laycan</th><th>Status</th>
+          <th>Crane</th><th>Grade</th><th>Load</th><th>Demurrage / despatch</th><th></th>
+        </tr></thead>
+        <tbody id="vlBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CONSTRAINT + TIDE -->
+  <div class="grid twocol2">
+    <div class="card">
+      <div class="sechead"><h2>Binding constraint</h2><span class="hint" id="cstShift"></span></div>
+      <div class="cst-name"><span class="cst-sq" id="cstSq"></span><span id="cstName">Floating-crane rate</span></div>
+      <div id="cstBars"></div>
+      <div class="cst-note" id="cstNote"></div>
+    </div>
+    <div class="card">
+      <div class="sechead"><h2>Tide &amp; draft</h2><span class="hint">DUKC · Kendari anchorage</span></div>
+      <div class="tide-row">
+        <div><div class="tide-big" id="tideH">2.4<span> m tide</span></div><div class="tide-mini">rising · next high 14:40 WITA</div></div>
+      </div>
+      <div class="draftctl">
+        <div class="lever"><div class="ll"><span class="lname">Sailing draft</span><span class="lval" id="draftVal">12.8<span> m</span></span></div></div>
+        <input type="range" id="draft" min="11.5" max="14.0" step="0.05" value="12.8" />
+        <div class="ticks"><span>11.5 (static UKC)</span><span>14.0 (DUKC max)</span></div>
+      </div>
+      <div class="tide-out">
+        <div class="b"><div class="l">Extra draft vs static</div><div class="v" id="dDraft">+1.30 m</div></div>
+        <div class="b"><div class="l">Extra cargo</div><div class="v" id="dTonnes">+19.5 kt</div></div>
+        <div class="b"><div class="l">Value / sailing</div><div class="v" id="dValue" style="color:var(--green-d)">+$2.0M</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENARIO + AI -->
+  <div class="grid scenwrap">
+    <div class="card">
+      <div class="scen-head"><div class="t"><b>&#9881; Scenario</b></div><div class="h">drag the control — the model reacts instantly</div></div>
+      <div class="lever">
+        <div class="ll"><span class="lname">Laycan buffer</span><span class="lval" id="bufVal">2.0<span> days</span></span></div>
+      </div>
+      <input type="range" id="buffer" min="0.5" max="6" step="0.1" value="2.0" />
+      <div class="ticks"><span>0.5 d (lean)</span><span>6 d (safe)</span></div>
+
+      <div class="costbox">
+        <div class="cl">Annualised demurrage + inventory cost</div>
+        <div class="cv" id="costVal">$646,000</div>
+        <div class="costbar"><i class="dem" id="barDem" style="width:57%"></i><i class="car" id="barCar" style="width:43%"></i></div>
+        <div class="costlegend"><span style="color:var(--red-d)">Demurrage <b id="legDem" class="mono">$366k</b></span><span style="color:var(--orange)">Carrying <b id="legCar" class="mono">$280k</b></span></div>
+        <div class="costnote" id="costNote">demurrage risk falls, stockpile carrying cost rises as buffer grows</div>
+      </div>
+      <button class="btn-gen" id="genBtn">&#10022; Generate AI Recommendation</button>
+    </div>
+
+    <div class="card ai">
+      <div class="ai-head"><span class="ai-badge">AI</span><span class="ai-title">OreSight AI Recommendation</span><span class="ai-solve" id="aiSolve"></span></div>
+      <div id="aiBody"><div class="ai-empty">Set your scenario on the left, then generate a recommendation. The AI reacts to the value you choose and finds the cost-minimising laycan buffer.</div></div>
+    </div>
+  </div>
+
+  <!-- DISRUPTION + COPILOT -->
+  <div class="grid twocol3">
+    <div class="card">
+      <div class="dh"><span class="c">Disruption · live re-dispatch</span><button class="reset" id="disReset">&#8635; Reset</button></div>
+      <div class="presets" id="presets"></div>
+      <div class="freerow">
+        <input id="disFree" placeholder='Describe a disruption — e.g. "rain on uncovered barges, FC-2 slow"' />
+        <button id="disBtn">Re-dispatch &rarr;</button>
+      </div>
+      <div class="parsed" id="disParsed"></div>
+    </div>
+
+    <div class="card">
+      <div class="dh"><span class="c">Copilot · ask the line-up</span></div>
+      <div class="cp-qs" id="cpQs"></div>
+      <div class="freerow" style="margin-bottom:12px">
+        <input id="cpInput" placeholder='Ask, or set a target — e.g. "get demurrage under 500k"' />
+        <button id="cpBtn">Ask</button>
+      </div>
+      <div class="cp-ans" id="cpAns">Ask about the binding constraint, the laycan buffer, the tide window, or which vessel is at risk. Answers come from the live line-up.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   OreSight AI — Shipping Optimisation (prototype)
+   Synthetic but internally consistent. All panels read the same MODEL.
+   ========================================================================= */
+const fmt = n => '$' + Math.round(n).toLocaleString();
+const fmtK = n => '$' + Math.round(n/1000) + 'k';
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+const MODEL = {
+  contractRate: 12,            // kt/day contract loading rate
+  currentRate: 14.2,           // kt/day achieved
+  currentPolicyBuffer: 3.8,    // days — over-buffered "current practice"
+  stockpiles: {
+    saprolite: {tonnes: 142000, cover: 5.1},
+    limonite:  {tonnes: 88000,  cover: 4.6}
+  },
+  // cost model: total(b) = D0*exp(-k*b) + c*b   (annualised, $)
+  cost(b){
+    const dem = 900000*Math.exp(-0.45*b);
+    const car = 140000*b;
+    return {dem, car, total: dem+car};
+  },
+  optimumBuffer(){
+    // analytic minimum of D0*exp(-k b)+c b : b* = (1/k) ln(D0 k / c)
+    const D0=900000,k=0.45,c=140000;
+    return clamp((1/k)*Math.log(D0*k/c), 0.5, 6);
+  },
+  vessels: [
+    {name:'MV Borneo Star', cls:'Supramax', dwt:58, geared:true,  eta:'18 Jun 06:20', lc:'15–20 Jun', st:'ontime', crane:'FC-1', grade:'sap', load:62, dem:0},
+    {name:'MV Sulawesi Dawn',cls:'Supramax', dwt:61, geared:true,  eta:'19 Jun 22:10', lc:'17–22 Jun', st:'ontime', crane:'FC-2', grade:'lim', load:18, dem:0},
+    {name:'MV Hai Long 7',   cls:'Panamax',  dwt:82, geared:false, eta:'21 Jun 11:00', lc:'24–28 Jun', st:'early',  crane:'FC-1', grade:'sap', load:0,  dem:-46000},
+    {name:'MV Cape Kendari', cls:'Capesize', dwt:181,geared:false, eta:'27 Jun 03:30', lc:'25–27 Jun', st:'late',   crane:'FC-2', grade:'sap', load:0,  dem:128000},
+  ],
+  state: {disruption:null}
+};
+
+/* ---------- KPIs ---------- */
+function renderKpis(){
+  const cards = [
+    {lab:'Demurrage YTD', val:'1.84', unit:'M$', foot:'−38% vs LY', cls:'good'},
+    {lab:'Vessel queue',  val:'2',    unit:'OGVs', foot:'avg wait 1.8 days', cls:''},
+    {lab:'Loading rate',  val:MODEL.currentRate.toFixed(1), unit:'kt/day', foot:'contract '+MODEL.contractRate+' kt/day', cls:'good'},
+    {lab:'Laycan compliance', val:'91', unit:'%', foot:'+9 pts with AI line-up', cls:'good'},
+    {lab:'Stockpile cover', val:'4.9', unit:'days', foot:'min safe 4.0 days', cls:'warn'},
+  ];
+  document.getElementById('kpis').innerHTML = cards.map(c=>`
+    <div class="card kpi"><div class="lab">${c.lab}</div>
+      <div class="val">${c.val}<span>${c.unit}</span></div>
+      <div class="foot ${c.cls}">${c.foot}</div></div>`).join('');
+}
+
+/* ---------- Demurrage bar chart ---------- */
+function renderDem(){
+  const data=[{m:'Jan',v:410},{m:'Feb',v:375},{m:'Mar',v:288},{m:'Apr',v:305},{m:'May',v:236},{m:'Jun',v:210}];
+  const W=560,H=260,pl=40,pb=30,pt=14,pr=12;
+  const max=450, n=data.length, bw=(W-pl-pr)/n*0.55;
+  const x=i=>pl+(W-pl-pr)/n*(i+0.5);
+  const y=v=>pt+(H-pt-pb)*(1-v/max);
+  let g='';
+  for(let t=0;t<=450;t+=150){g+=`<line x1="${pl}" y1="${y(t)}" x2="${W-pr}" y2="${y(t)}" stroke="#e6e3d8"/><text x="${pl-6}" y="${y(t)+3}" text-anchor="end" font-size="9" fill="#9a9484" font-family="var(--mono)">${t}</text>`;}
+  data.forEach((d,i)=>{const h=(H-pt-pb)*(d.v/max);g+=`<rect x="${x(i)-bw/2}" y="${y(d.v)}" width="${bw}" height="${h}" rx="3" fill="#cf5b54"/><text x="${x(i)}" y="${H-pb+16}" text-anchor="middle" font-size="10" fill="#7a7464">${d.m}</text>`;});
+  document.getElementById('demChart').innerHTML=g;
+}
+
+/* ---------- Stockpile cover line chart ---------- */
+function renderCover(){
+  const W=560,H=260,pl=34,pb=26,pt=14,pr=12, days=30, minSafe=4.0;
+  const x=i=>pl+(W-pl-pr)*(i/(days-1));
+  const y=v=>pt+(H-pt-pb)*(1-(v-2)/(8-2));
+  const cover=[];let c=6.5;
+  for(let i=0;i<days;i++){c+=Math.sin(i/2.4)*0.55+(Math.random()-0.5)*0.18; c=clamp(c,3.9,8.0); cover.push(c);}
+  let g='';
+  for(let t=2;t<=8;t+=2){g+=`<line x1="${pl}" y1="${y(t)}" x2="${W-pr}" y2="${y(t)}" stroke="#e6e3d8"/><text x="${pl-5}" y="${y(t)+3}" text-anchor="end" font-size="9" fill="#9a9484" font-family="var(--mono)">${t}</text>`;}
+  g+=`<line x1="${pl}" y1="${y(minSafe)}" x2="${W-pr}" y2="${y(minSafe)}" stroke="#b91c1c" stroke-width="1.5" stroke-dasharray="6 5"/>`;
+  let path=cover.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+  g+=`<path d="${path}" fill="none" stroke="#c8741c" stroke-width="2.2"/>`;
+  [3,12,21,27].forEach(d=>{g+=`<line x1="${x(d)}" y1="${pt}" x2="${x(d)}" y2="${H-pb}" stroke="#15803d" stroke-width="1" stroke-dasharray="3 4" opacity="0.7"/><circle cx="${x(d)}" cy="${pt+4}" r="3.2" fill="#15803d"/>`;});
+  for(let d=0;d<days;d+=6){g+=`<text x="${x(d)}" y="${H-pb+15}" text-anchor="middle" font-size="9" fill="#9a9484">${d+1}</text>`;}
+  document.getElementById('coverChart').innerHTML=g;
+}
+
+/* ---------- Vessel line-up ---------- */
+function renderVessels(){
+  const gradeLabel={sap:'Saprolite',lim:'Limonite'};
+  const stLabel={ontime:'On time',early:'Early',late:'Late'};
+  document.getElementById('vlBody').innerHTML = MODEL.vessels.map((v,i)=>{
+    const demCell = v.dem>0 ? `<span class="money cost">${fmt(v.dem)} demurrage</span>`
+                  : v.dem<0 ? `<span class="money save">${fmt(-v.dem)} despatch</span>`
+                  : `<span class="money" style="color:var(--mut2)">on plan</span>`;
+    return `<tr>
+      <td><div class="vname">${v.name}</div></td>
+      <td><span class="vclass">${v.cls} · ${v.dwt}k DWT · ${v.geared?'geared':'gearless'}</span></td>
+      <td class="mono" style="font-size:11.5px">${v.eta}</td>
+      <td class="mono" style="font-size:11.5px">${v.lc}</td>
+      <td><span class="chip ${v.st}">${stLabel[v.st]}</span></td>
+      <td class="mono">${v.crane}</td>
+      <td><span class="chip grade-${v.grade}">${gradeLabel[v.grade]}</span></td>
+      <td><div class="prog"><i style="width:${v.load}%"></i></div></td>
+      <td>${demCell}</td>
+      <td><button class="swap" data-i="${i}">swap</button></td>
+    </tr>`;
+  }).join('');
+  document.querySelectorAll('.swap').forEach(b=>b.onclick=()=>{
+    const i=+b.dataset.i; if(i<MODEL.vessels.length-1){const t=MODEL.vessels[i];MODEL.vessels[i]=MODEL.vessels[i+1];MODEL.vessels[i+1]=t;renderVessels();flashSolve();}
+  });
+}
+
+/* ---------- Binding constraint ---------- */
+function renderConstraint(){
+  // utilisation of each candidate constraint (0-1). highest = binding.
+  const items=[
+    {n:'Floating-crane rate', u:0.94, note:'FC-1 + FC-2 at 38 kt/day combined; OGV demand peaks at 40 kt/day on the 27th'},
+    {n:'Barge cycle', u:0.81, note:'6 barges, 11 h round trip Morowali↔Kendari'},
+    {n:'Stockpile cover', u:0.72, note:'saprolite cover dips to 3.9 d around the 12th'},
+    {n:'Tidal window', u:0.58, note:'two deep-draft windows/day at Kendari'},
+  ].sort((a,b)=>b.u-a.u);
+  const bind=items[0];
+  document.getElementById('cstName').textContent=bind.n;
+  document.getElementById('cstShift').textContent='next 30 days';
+  document.getElementById('cstBars').innerHTML=items.map((it,idx)=>{
+    const col= idx===0?'var(--red)': it.u>0.75?'var(--orange)':'#9bb38f';
+    return `<div class="cst-bar"><div class="row"><span>${it.n}</span><b>${Math.round(it.u*100)}%</b></div><div class="track"><i style="width:${it.u*100}%;background:${col}"></i></div></div>`;
+  }).join('');
+  document.getElementById('cstNote').textContent='Binding: '+bind.n+'. '+bind.note+'.';
+}
+
+/* ---------- Tide & draft (DUKC) ---------- */
+function renderTide(){
+  const draft=+document.getElementById('draft').value;
+  const staticUKC=11.5;
+  const extraM=draft-staticUKC;
+  const tPerCm=0.15; // kt per cm  (≈150 t/cm)
+  const extraKt=extraM*100*tPerCm;          // kt
+  const orePrice=105;                         // $/t (nickel ore, illustrative)
+  const value=extraKt*1000*orePrice;
+  document.getElementById('draftVal').innerHTML=draft.toFixed(2)+'<span> m</span>';
+  document.getElementById('dDraft').textContent='+'+extraM.toFixed(2)+' m';
+  document.getElementById('dTonnes').textContent='+'+extraKt.toFixed(1)+' kt';
+  document.getElementById('dValue').textContent='+'+ (value>=1e6 ? '$'+(value/1e6).toFixed(1)+'M' : fmtK(value));
+}
+
+/* ---------- Scenario cost (live) ---------- */
+function renderScenario(){
+  const b=+document.getElementById('buffer').value;
+  const {dem,car,total}=MODEL.cost(b);
+  document.getElementById('bufVal').innerHTML=b.toFixed(1)+'<span> days</span>';
+  document.getElementById('costVal').textContent=fmt(total);
+  const pct=dem/total*100;
+  document.getElementById('barDem').style.width=pct+'%';
+  document.getElementById('barCar').style.width=(100-pct)+'%';
+  document.getElementById('legDem').textContent=fmtK(dem);
+  document.getElementById('legCar').textContent=fmtK(car);
+  const opt=MODEL.optimumBuffer();
+  document.getElementById('costNote').textContent =
+    b < opt-0.15 ? 'Lean: demurrage risk dominates. Nudging the buffer up lowers total cost.'
+  : b > opt+0.15 ? 'Over-buffered: carrying cost dominates. Trimming the buffer lowers total cost.'
+  : 'Near optimal: demurrage and carrying cost are balanced.';
+}
+
+/* ---------- AI recommendation ---------- */
+function generateAI(){
+  const cur=+document.getElementById('buffer').value;
+  const opt=MODEL.optimumBuffer();
+  const policy=MODEL.currentPolicyBuffer;
+  const costNow=MODEL.cost(cur).total;
+  const costOpt=MODEL.cost(opt).total;
+  const costPolicy=MODEL.cost(policy).total;
+  const saveVsPolicy=costPolicy-costOpt;
+  const solve=document.getElementById('aiSolve');
+  solve.textContent='● re-solving…';
+  setTimeout(()=>{solve.textContent='● solved';},650);
+
+  const actions=[
+    `Set laycan buffer to <b>${opt.toFixed(1)} days</b> (from current practice of ${policy.toFixed(1)} d) to balance demurrage against carrying cost.`,
+    `Hold <b>MV Cape Kendari</b> at anchorage drift 8 h: it is the only late vessel and is driving ${fmt(128000)} of forecast demurrage; pull its FC-2 slot forward only once saprolite cover clears 4.0 d.`,
+    `Prioritise a <b>limonite barge cycle</b> for MV Sulawesi Dawn before the 12th to protect the cover dip, then rebalance FC-2 to saprolite.`,
+  ];
+  document.getElementById('aiBody').innerHTML=`
+    <div class="ai-headline">Move the laycan buffer to ${opt.toFixed(1)} days and re-sequence the line-up. Total annualised cost falls to ${fmt(costOpt)}.</div>
+    <div class="ai-delta">
+      <div class="dcard"><div class="l">Current practice</div><div class="v">${fmtK(costPolicy)}</div></div>
+      <div class="ai-arrow">&rarr;</div>
+      <div class="dcard opt"><div class="l">Optimised</div><div class="v">${fmtK(costOpt)}</div></div>
+      <div class="dcard"><div class="l">Value / yr</div><div class="v" style="color:var(--green-d)">${fmtK(saveVsPolicy)}</div></div>
+    </div>
+    <div class="ai-sec">Fleet actions</div>
+    ${actions.map((a,i)=>`<div class="ai-act"><span class="n">${i+1}</span><span>${a}</span></div>`).join('')}
+    <div class="ai-narr">At your selected buffer of ${cur.toFixed(1)} d the total is ${fmt(costNow)}. The cost-minimising buffer is ${opt.toFixed(1)} d, where a marginal day of buffer saves as much demurrage as it adds in carrying cost. The recommendation is explainable: every figure traces to the live line-up, the tide window, and the cost curve, not a black box.</div>`;
+}
+function flashSolve(){const s=document.getElementById('aiSolve');s.textContent='● re-solving…';setTimeout(()=>{if(document.querySelector('#aiBody .ai-headline'))s.textContent='● solved';else s.textContent='';},650);}
+
+/* ---------- Disruption ---------- */
+const PRESETS=[
+  {k:'fc2', t:'FC-2 floating crane down', txt:'<b>FC-2 down.</b> Re-routed all limonite barge cycles to FC-1; MV Sulawesi Dawn slips 14 h, forecast demurrage +$58k. AI recommends declaring weather hold and pulling MV Hai Long 7 laycan back 1 day.'},
+  {k:'rain', t:'Rain on uncovered barges', txt:'<b>TML risk.</b> 3 barges over moisture limit; loading paused 6 h to re-test. Saprolite cover holds at 4.1 d. AI re-sequences to load tested saprolite first, defers limonite cycle.'},
+  {k:'late', t:'Capesize arrives early', txt:'<b>MV Cape Kendari early by 2 days.</b> No FC slot until the 25th; despatch opportunity if cover allows. AI recommends accelerating saprolite barge cycles to convert $128k demurrage into ~$40k despatch.'},
+  {k:'tide', t:'Neap tide cuts draft', txt:'<b>Neap tide.</b> Deep-draft window shrinks 1.1 m; Capesize load capped −16 kt. AI recommends topping off at Kendari outer anchorage on the next spring tide.'},
+];
+function renderPresets(){
+  document.getElementById('presets').innerHTML=PRESETS.map(p=>`<button class="preset" data-k="${p.k}">${p.t}</button>`).join('');
+  document.querySelectorAll('.preset').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.preset').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    const p=PRESETS.find(x=>x.k===b.dataset.k);
+    document.getElementById('disParsed').innerHTML=p.txt; flashSolve();
+  });
+}
+function disFree(){
+  const q=document.getElementById('disFree').value.toLowerCase();
+  let hit=PRESETS.find(p=> q.includes('fc')||q.includes('crane')?p.k==='fc2': q.includes('rain')||q.includes('moist')||q.includes('wet')?p.k==='rain': q.includes('early')||q.includes('cape')?p.k==='late': q.includes('tide')||q.includes('draft')?p.k==='tide':false);
+  document.getElementById('disParsed').innerHTML = hit? hit.txt : '<b>Parsed.</b> Re-solving the line-up against your disruption. AI holds the binding constraint (floating-crane rate) and protects minimum stockpile cover; check the updated vessel line-up above.';
+  flashSolve();
+}
+
+/* ---------- Copilot ---------- */
+const CPQS=['What is the binding constraint?','Which vessel is at risk?','What is the optimal buffer?','How much is the tide worth?'];
+function renderCp(){
+  document.getElementById('cpQs').innerHTML=CPQS.map(q=>`<button class="cp-q">${q}</button>`).join('');
+  document.querySelectorAll('.cp-q').forEach(b=>b.onclick=()=>{document.getElementById('cpInput').value=b.textContent;cpAsk();});
+}
+function cpAsk(){
+  const q=document.getElementById('cpInput').value.toLowerCase();
+  const opt=MODEL.optimumBuffer();
+  let a;
+  if(q.includes('constraint')||q.includes('binding')) a='The binding constraint over the next 30 days is the <b>floating-crane rate</b> at ~94% utilisation. FC-1 and FC-2 combine for 38 kt/day while OGV demand peaks at 40 kt/day on the 27th. Barge cycle is second at 81%.';
+  else if(q.includes('risk')||q.includes('vessel')||q.includes('late')) a='<b>MV Cape Kendari</b> (Capesize) is the at-risk vessel: it is forecast late against a 25–27 Jun laycan and is driving ~$128k of demurrage. It is gearless, so it needs an FC slot that is contested by the crane constraint.';
+  else if(q.includes('buffer')||q.includes('optimal')) a=`The cost-minimising laycan buffer is <b>${opt.toFixed(1)} days</b>. Below that, demurrage risk dominates; above it, carrying cost dominates. Current practice runs ${MODEL.currentPolicyBuffer.toFixed(1)} d, so trimming the buffer saves ${fmtK(MODEL.cost(MODEL.currentPolicyBuffer).total-MODEL.cost(opt).total)}/yr.`;
+  else if(q.includes('tide')||q.includes('draft')) a='Each extra centimetre of sailing draft is worth ~150 t of ore. At the current DUKC setting that is roughly the value shown in the tide widget; on a Capesize a full +1 m of draft is worth well over $1M of extra cargo per sailing.';
+  else if(q.match(/\d/)&&(q.includes('demurrage')||q.includes('under')||q.includes('target')||q.includes('get'))){
+    const m=q.match(/(\d[\d,\.]*)\s*(k|m)?/); let tgt=m?parseFloat(m[1].replace(/,/g,'')):500; if(m&&m[2]==='m')tgt*=1e6; else if((m&&m[2]==='k')||tgt<10000)tgt*=1000;
+    a=`To target a total annualised cost of <b>${fmt(tgt)}</b>: the floor at the optimal ${opt.toFixed(1)}-day buffer is ${fmt(MODEL.cost(opt).total)}. ${tgt<MODEL.cost(opt).total? 'That is below the achievable floor with the current fleet; you would need an extra floating crane or a tighter barge cycle to go lower.':'Achievable — set the buffer to ~'+opt.toFixed(1)+' d and re-sequence MV Cape Kendari as recommended.'}`;
+  }
+  else a='I read the live line-up, the binding constraint, the tide window and the cost curve. Try asking about the binding constraint, the at-risk vessel, the optimal buffer, or set a demurrage target.';
+  document.getElementById('cpAns').innerHTML=a;
+}
+
+/* ---------- wire up ---------- */
+renderKpis();renderDem();renderCover();renderVessels();renderConstraint();renderTide();renderScenario();renderPresets();renderCp();
+document.getElementById('buffer').addEventListener('input',renderScenario);
+document.getElementById('draft').addEventListener('input',renderTide);
+document.getElementById('genBtn').onclick=generateAI;
+document.getElementById('disBtn').onclick=disFree;
+document.getElementById('disFree').addEventListener('keydown',e=>{if(e.key==='Enter')disFree();});
+document.getElementById('disReset').onclick=()=>{document.querySelectorAll('.preset').forEach(x=>x.classList.remove('on'));document.getElementById('disParsed').innerHTML='';document.getElementById('disFree').value='';};
+document.getElementById('cpBtn').onclick=cpAsk;
+document.getElementById('cpInput').addEventListener('keydown',e=>{if(e.key==='Enter')cpAsk();});
+</script>
+</body>
+</html>
