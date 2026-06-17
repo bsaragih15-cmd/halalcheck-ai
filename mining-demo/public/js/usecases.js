@@ -278,7 +278,7 @@ export const USE_CASES = {
   'dispatch': {
     title: 'Dispatch Optimisation',
     decisions: 'truck movements',
-    stage: 'Load & Haul', horizon: '4w', drivers: ['throughput'],
+    stage: 'Load & Haul', horizon: '4w', drivers: ['throughput'], href: '/dispatch.html',
     pitch: 'AI dispatch re-assigns trucks dynamically as cycle conditions change — cutting shovel hang and truck queue time that fixed allocations leave on the table.',
     site: 'Pit 2 → ROM pad circuit, 6 × HD785-7 — Morowali',
     kpis: [
