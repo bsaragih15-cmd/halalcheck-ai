@@ -426,6 +426,65 @@ IMPORTANT: Return ONLY valid JSON, no other text.`;
 // ── Endpoints ─────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, aiMode: aiMode() }));
 
+// Serve the AISStream key from an env var so it never lives in the (public) repo.
+// AISStream is a browser-side WebSocket, so the key is necessarily client-visible
+// in use; this only keeps it out of source control. Set AISSTREAM_API_KEY in Vercel.
+app.get('/api/aisstream-key', (req, res) => res.json({ key: process.env.AISSTREAM_API_KEY || '' }));
+
+// Small fetch-with-timeout for the external data proxies below.
+async function fetchJSON(url, ms = 6000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try { const r = await fetch(url, { signal: ctrl.signal }); return await r.json(); }
+  finally { clearTimeout(t); }
+}
+const witaHM = (unixSec) => new Date((unixSec + 8 * 3600) * 1000).toISOString().slice(11, 16);
+
+// Tide proxy (WorldTides). Key in env; falls back to a synthetic spring-neap reading.
+app.get('/api/tide', async (req, res) => {
+  const key = process.env.WORLDTIDES_API_KEY;
+  const fallback = { source: 'model', current: 1.4, springNeap: 'neap',
+    extremes: [{ type: 'High', height: 2.1, dt: '14:40' }, { type: 'Low', height: 0.6, dt: '21:10' }] };
+  if (!key) return res.json(fallback);
+  try {
+    const lat = -3.95, lon = 122.72;
+    const d = await fetchJSON(`https://www.worldtides.info/api/v3?heights&extremes&lat=${lat}&lon=${lon}&key=${key}`);
+    const extremes = (d.extremes || []).slice(0, 4).map((e) => ({ type: e.type, height: +(+e.height).toFixed(2), dt: witaHM(e.dt) }));
+    const current = (d.heights && d.heights[0]) ? +(+d.heights[0].height).toFixed(2) : fallback.current;
+    res.json({ source: extremes.length ? 'live' : 'model', current, extremes: extremes.length ? extremes : fallback.extremes });
+  } catch (e) { res.json({ ...fallback, error: String(e.message || e) }); }
+});
+
+// Market proxy. Provider chain: metals.dev (free tier, LME base metals) →
+// metals-api (paid, optional) → a reference price you can set via env
+// (NICKEL_REF_USD, e.g. this month's Indonesia HMA or World Bank nickel).
+app.get('/api/market', async (req, res) => {
+  const ref = Number(process.env.NICKEL_REF_USD) || 16500;
+  const bunker = Number(process.env.BUNKER_VLSFO_USD) || 600;
+  const fallback = { source: 'ref', provider: 'Indonesia HMA', nickelUSD: ref, bunkerVLSFO: bunker };
+
+  // 1) metals.dev — free tier, returns base metals in USD/metric-tonne
+  const md = process.env.METALS_DEV_API_KEY;
+  if (md) {
+    try {
+      const d = await fetchJSON(`https://api.metals.dev/v1/latest?api_key=${md}&currency=USD&unit=mt`);
+      const ni = d && d.metals ? (d.metals.nickel ?? d.metals.lme_nickel) : null;
+      if (ni) return res.json({ source: 'live', provider: 'metals.dev', nickelUSD: Math.round(ni), bunkerVLSFO: bunker });
+    } catch (e) { /* fall through */ }
+  }
+  // 2) metals-api — paid for nickel, kept for compatibility if a key exists
+  const ma = process.env.METALS_API_KEY;
+  if (ma) {
+    try {
+      const d = await fetchJSON(`https://metals-api.com/api/latest?access_key=${ma}&base=USD&symbols=NI`);
+      const r = d && d.rates ? (d.rates.NI ?? d.rates.XNI) : null;
+      const ni = r ? (r > 100 ? r : 1 / r) : null;
+      if (ni) return res.json({ source: 'live', provider: 'metals-api', nickelUSD: Math.round(ni), bunkerVLSFO: bunker });
+    } catch (e) { /* fall through */ }
+  }
+  res.json(fallback);
+});
+
 app.post('/api/maintenance/analyze', async (req, res) => {
   const { assetId, assetMeta, telemetrySummary } = req.body || {};
   const result = await askClaude({

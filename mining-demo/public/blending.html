@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OreSight AI — Blending Optimisation</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f4f2ec; --panel:#fbfaf6; --panel2:#f0eee6; --ink:#1b231a; --mut:#6b7464; --mut2:#8a9282;
+    --line:#e2dfd4; --line2:#d8d4c7; --green:#15803d; --green-d:#0f5c2c; --green-l:#e7f1ea;
+    --red:#cf5b54; --red-d:#b91c1c; --orange:#c8741c; --cyan:#0e7490; --amber:#b45309; --blue:#2a5f8f;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    /* map palette */
+    --m-bg:#0d150f; --m-bg2:#101c13; --m-line:#1d3322; --m-grid:#16271a;
+    --reclaim:#3aa55f; --convey:#e0b341; --blend:#e08a2c; --feed:#2bb8c4; --flux:#7c8aa0; --down:#cf4b44;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:14px;line-height:1.45}
+  .mono{font-family:var(--mono)}
+
+  /* ===== TOP BAR ===== */
+  .topbar{display:flex;align-items:center;gap:16px;padding:14px 22px 0}
+  .tb-id{display:flex;align-items:center;gap:12px}
+  .logo{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;background:var(--green);border-radius:9px;font-family:var(--mono);font-weight:800;font-size:15px;color:#fff}
+  .tb-tt h1{font-size:22px;font-weight:800;margin:0;letter-spacing:-.4px;display:flex;align-items:center;gap:10px}
+  .tb-tt h1 em{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:1px;color:var(--mut2);font-style:normal;background:var(--panel2);border:1px solid var(--line2);padding:3px 7px;border-radius:5px}
+  .tb-tt .s{font-family:var(--mono);font-size:12px;color:var(--mut);margin-top:3px}
+  .tb-sp{flex:1}
+  .seg{display:inline-flex;background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:3px;gap:2px}
+  .seg button{font-family:var(--sans);font-size:12.5px;font-weight:600;border:none;background:none;color:var(--mut);padding:6px 13px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .seg button.on{background:var(--green);color:#fff}
+  .clock{font-family:var(--mono);font-size:21px;font-weight:800;letter-spacing:.5px}
+  .clock span{font-size:10.5px;color:var(--mut2);font-weight:700;display:block;text-align:right;letter-spacing:1px}
+  .live{display:flex;align-items:center;gap:7px;border:1px solid var(--line2);border-radius:20px;padding:6px 13px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:1px;color:var(--green-d)}
+  .live b{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  .wrap{padding:16px 22px 50px}
+
+  /* ===== KPI STRIP ===== */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:16px}
+  @media(max-width:1100px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi .tag.bad{background:#f6dedd;color:var(--red-d)}
+  .kpi .bar i.over{background:var(--red)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+  .kpi .top{display:flex;justify-content:space-between;align-items:baseline}
+  .kpi .lab{font-family:var(--mono);font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--mut2);font-weight:700}
+  .kpi .tag{font-family:var(--mono);font-size:10.5px;font-weight:700;padding:2px 7px;border-radius:5px}
+  .kpi .tag.good{background:#e3f1e8;color:var(--green-d)}
+  .kpi .tag.warn{background:#f7eccf;color:var(--amber)}
+  .kpi .tag.up{color:var(--green-d)}
+  .kpi .val{font-family:var(--mono);font-size:30px;font-weight:800;letter-spacing:-1px;line-height:1;margin:8px 0 0}
+  .kpi .val span{font-size:13px;font-weight:600;color:var(--mut2);margin-left:3px}
+  .kpi .bar{height:6px;background:#e7e4da;border-radius:4px;overflow:hidden;margin:10px 0 6px}
+  .kpi .bar i{display:block;height:100%;background:var(--green)}
+  .kpi .foot{font-size:11px;color:var(--mut2)}
+
+  /* ===== MAIN GRID ===== */
+  .main{display:flex;gap:16px;align-items:stretch}
+  .leftcol{flex:1.42;display:flex;flex-direction:column;gap:16px;min-width:0}
+  .card.ai{flex:1;min-width:0}
+  @media(max-width:1200px){.main{flex-direction:column}}
+
+  /* ===== SCHEMATIC MAP ===== */
+  .stage{position:relative;background:radial-gradient(120% 90% at 78% 50%,#13251a 0%,var(--m-bg) 60%);border:1px solid var(--line);border-radius:12px;overflow:hidden;flex:1;min-height:560px}
+  .stage .grid-bg{position:absolute;inset:0;background-image:linear-gradient(var(--m-grid) 1px,transparent 1px),linear-gradient(90deg,var(--m-grid) 1px,transparent 1px);background-size:38px 38px;opacity:.55}
+  .stage svg.links{position:absolute;inset:0;width:100%;height:100%}
+  .node{position:absolute;transform:translate(-50%,-50%);text-align:center;z-index:3}
+  .pile{width:74px;height:50px;background:linear-gradient(180deg,#1a2c1d,#13211633);border:1.5px solid #2b4630;border-radius:8px 8px 10px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#cfe6d4;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+  .pile .pn{font-family:var(--mono);font-weight:800;font-size:12px;color:#eaf5ec}
+  .pile .pg{font-family:var(--mono);font-size:9px;color:#86b394;margin-top:1px}
+  .lbl{font-family:var(--mono);font-size:9px;letter-spacing:.5px;color:#6f8f78;margin-top:5px;text-transform:uppercase}
+  .silo{width:48px;height:54px;background:linear-gradient(180deg,#26303c,#1a222c);border:1.5px solid #3a4a5c;border-radius:8px 8px 4px 4px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#c4d2e2}
+  .silo .pn{font-family:var(--mono);font-weight:800;font-size:11px}
+  /* blend bed */
+  .bed{width:128px;height:54px;border:1.5px solid #5a4a22;border-radius:9px;background:linear-gradient(180deg,#2a2415,#1a1710);position:relative;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+  .bed .bt{font-family:var(--mono);font-size:10px;color:#d9b86a;font-weight:800;letter-spacing:.5px}
+  .bed .stk{position:absolute;left:8px;right:8px;bottom:7px;height:9px;border-radius:3px;background:repeating-linear-gradient(90deg,#caa24f 0 9px,#a07d2f 9px 18px);opacity:.85}
+  .stkarm{position:absolute;width:2px;height:26px;background:#d9b86a;left:50%;top:-22px;transform-origin:bottom center;animation:sweep 4s ease-in-out infinite}
+  @keyframes sweep{0%,100%{transform:rotate(-26deg)}50%{transform:rotate(26deg)}}
+  /* surge bin */
+  .surge{width:88px;height:96px;position:relative}
+  .surge .bin{position:absolute;inset:0;border:1.5px solid #2f6b46;border-radius:9px 9px 4px 4px;overflow:hidden;background:#0f1f15}
+  .surge .fill{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(180deg,#1f9d57,#157a40);transition:height .6s ease}
+  .surge .txt{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2;color:#fff}
+  .surge .txt .p{font-family:var(--mono);font-weight:800;font-size:21px;line-height:1}
+  .surge .txt .m{font-family:var(--mono);font-size:9px;color:#d6f0df;margin-top:3px}
+  .surge .funnel{position:absolute;left:50%;bottom:-13px;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:14px solid #2f6b46}
+  /* furnace */
+  .furnace{width:96px;height:120px;border:1.5px solid #6a3328;border-radius:10px;background:linear-gradient(180deg,#2a1612,#160c0a);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:9px;position:relative;overflow:hidden;box-shadow:0 0 30px rgba(207,116,60,.18)}
+  .furnace .glow{position:absolute;left:0;right:0;bottom:0;height:46%;background:radial-gradient(80% 100% at 50% 100%,#ff8a3c 0%,#c8741c55 50%,transparent 75%);animation:flicker 2.4s ease-in-out infinite}
+  @keyframes flicker{0%,100%{opacity:.85}50%{opacity:1}}
+  .furnace .el{position:absolute;top:8px;width:5px;height:34px;background:linear-gradient(180deg,#555,#222);border-radius:2px}
+  .furnace .el.a{left:24px}.furnace .el.b{left:50%;transform:translateX(-50%)}.furnace .el.c{right:24px}
+  .furnace .fl{font-family:var(--mono);font-size:9px;color:#f0c08a;font-weight:800;letter-spacing:.5px;z-index:2}
+  .furnace .fd{font-family:var(--mono);font-size:13px;color:#fff;font-weight:800;z-index:2}
+  .badge{position:absolute;font-family:var(--mono);font-size:8.5px;font-weight:700;letter-spacing:.4px;padding:2px 6px;border-radius:5px;z-index:4;white-space:nowrap}
+  .badge.spec{background:#16351f;color:#7fe0a3;border:1px solid #2f6b46;top:-13px;left:50%;transform:translateX(-50%)}
+  .reclaimer{font-family:var(--mono);font-size:8px;color:#86b394;letter-spacing:.4px}
+  .rc-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:3px;vertical-align:0}
+  /* moving parcels */
+  .parcel{position:absolute;width:9px;height:9px;border-radius:2px;offset-rotate:0deg;z-index:2;box-shadow:0 0 6px rgba(0,0,0,.4)}
+  .stage .leg{position:absolute;left:14px;bottom:12px;display:flex;gap:15px;flex-wrap:wrap;font-family:var(--mono);font-size:9.5px;color:#9db8a4;z-index:5}
+  .stage .leg i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px;vertical-align:0}
+  .stage .src{position:absolute;right:14px;bottom:12px;font-family:var(--mono);font-size:9.5px;color:#5f7d68;z-index:5}
+  .stage .flowlbl{position:absolute;font-family:var(--mono);font-size:8.5px;color:#5f7d68;z-index:2;letter-spacing:.4px}
+
+  /* ===== AI RAIL ===== */
+  .ai{border-left:3px solid var(--green);background:linear-gradient(180deg,#f0f6f2,#fbfaf6);padding:18px 20px}
+  .ai-head{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+  .ai-badge{font-family:var(--mono);font-size:10px;font-weight:800;background:var(--green);color:#fff;padding:3px 7px;border-radius:5px}
+  .ai-title{font-family:var(--mono);font-size:11px;letter-spacing:.6px;text-transform:uppercase;color:var(--mut);font-weight:700}
+  .ai-solve{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--green-d)}
+  .ai-headline{font-size:17px;font-weight:700;line-height:1.4;margin:2px 0 16px}
+  .ai-headline b{color:var(--green-d)}
+  .delta{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:center;margin-bottom:18px}
+  .dcard{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:11px 12px;text-align:left}
+  .dcard.opt{background:#e3f1e8;border-color:#bcd6c5}
+  .dcard.val{background:#eef3ee}
+  .dcard .l{font-family:var(--mono);font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--mut2);font-weight:700}
+  .dcard .v{font-family:var(--mono);font-size:21px;font-weight:800;margin-top:5px;line-height:1}
+  .dcard .v span{font-size:11px;color:var(--mut2);font-weight:600}
+  .dcard.opt .v{color:var(--green-d)}
+  .dcard.val .v{color:var(--green-d)}
+  .arrow{color:var(--mut2);font-size:18px;text-align:center}
+  .sec{font-family:var(--mono);font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--mut2);font-weight:700;margin:16px 0 9px;display:flex;justify-content:space-between}
+  .sec span{color:var(--mut2);font-weight:600;text-transform:none;letter-spacing:0;font-style:italic}
+  /* strategy cards */
+  .strat{border:1.5px solid var(--line2);border-radius:10px;padding:12px 14px;margin-bottom:9px;cursor:pointer;background:var(--panel);transition:.15s}
+  .strat:hover{border-color:#bcd6c5;background:#f7faf7}
+  .strat.on{border-color:var(--green);background:#eef6f0;box-shadow:0 0 0 1px var(--green) inset}
+  .strat .sh{display:flex;justify-content:space-between;align-items:center}
+  .strat .sn{font-weight:700;font-size:13.5px}
+  .strat .rec{font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.5px;color:var(--green-d);background:#d8edde;padding:2px 7px;border-radius:5px}
+  .strat .opt-t{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.5px;color:var(--mut2)}
+  .strat .sd{font-size:12px;color:var(--mut);margin:4px 0 9px}
+  .strat .sm{display:flex;gap:16px;font-family:var(--mono);font-size:11px}
+  .strat .sm b{color:var(--ink);font-weight:800}
+  .strat .sm .k{color:var(--mut2);font-weight:600}
+  /* actions */
+  .act{display:flex;align-items:flex-start;gap:11px;border:1px solid var(--line);border-radius:9px;padding:11px 13px;margin-bottom:8px;background:var(--panel)}
+  .act .tag{font-family:var(--mono);font-size:9px;font-weight:800;letter-spacing:.4px;padding:3px 7px;border-radius:5px;flex:none;margin-top:1px}
+  .act .tag.reclaim{background:#e2f0e7;color:var(--green-d)}
+  .act .tag.flux{background:#e8ecf2;color:var(--blue)}
+  .act .tag.bed{background:#f6ecd6;color:var(--amber)}
+  .act .tag.feed{background:#d8eef1;color:var(--cyan)}
+  .act .id{font-family:var(--mono);font-weight:800;font-size:12px}
+  .act .tx{font-size:12px;color:var(--mut);margin-top:2px}
+  .act .tx b{color:var(--ink)}
+  .act .d{margin-left:auto;font-family:var(--mono);font-size:11px;font-weight:800;color:var(--green-d);flex:none;white-space:nowrap}
+  .ai-narr{font-size:12.5px;color:var(--mut);background:var(--panel2);border-radius:9px;padding:13px 15px;margin-top:14px;line-height:1.55}
+
+  /* ===== LOWER ROW ===== */
+  .lower{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+  @media(max-width:1200px){.lower{grid-template-columns:1fr}}
+  .ch{font-family:var(--mono);font-size:10.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--mut);font-weight:700;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+  .ch .r{color:var(--mut2);font-weight:600;letter-spacing:0;text-transform:none;font-style:italic}
+  /* binding constraint */
+  .cst-name{display:flex;align-items:center;gap:9px;font-size:17px;font-weight:800;margin:2px 0 14px}
+  .cst-sq{width:13px;height:13px;border-radius:3px;background:var(--red)}
+  .cst-bar{margin-bottom:11px}
+  .cst-bar .row{display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:4px}
+  .cst-bar .row b{font-family:var(--mono)}
+  .track{height:8px;background:#e7e4da;border-radius:4px;overflow:hidden}
+  .track i{display:block;height:100%;border-radius:4px}
+  /* gauges */
+  .gaugewrap{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .gauge{text-align:center}
+  .gauge .gl{font-family:var(--mono);font-size:10px;letter-spacing:.5px;color:var(--mut2);text-transform:uppercase;font-weight:700}
+  .gauge svg{width:100%;height:auto;max-width:150px}
+  .gauge .gv{font-family:var(--mono);font-size:22px;font-weight:800}
+  .gauge .gs{font-family:var(--mono);font-size:10px;color:var(--mut2);margin-top:1px}
+  .speclist{margin-top:6px;font-size:11px;color:var(--mut)}
+  .speclist .sr{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px dashed var(--line)}
+  .speclist .sr:last-child{border-bottom:none}
+  .speclist .sr b{font-family:var(--mono)}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:1px}
+  .dot.ok{background:var(--green)}.dot.warn{background:var(--amber)}.dot.bad{background:var(--red)}
+  /* disruption */
+  .presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .preset{font-size:11.5px;border:1px solid var(--line2);background:var(--panel2);border-radius:20px;padding:6px 12px;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .preset:hover{background:#eae7dd;border-color:#c7c2b2}
+  .preset b{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .preset.on{background:var(--red);color:#fff;border-color:var(--red)}
+  .preset.on b{background:#fff}
+  .freerow{display:flex;gap:8px}
+  .freerow input{flex:1;border:1px solid var(--line2);border-radius:8px;padding:9px 11px;font-size:12.5px;font-family:var(--sans);background:#fff}
+  .freerow button{background:var(--green);color:#fff;border:none;border-radius:8px;padding:0 14px;font-size:15px;font-weight:600;cursor:pointer}
+  .freerow .reset{background:var(--panel2);color:var(--mut);border:1px solid var(--line2);font-size:13px}
+  .parsed{margin-top:12px;font-size:12px;color:var(--mut);line-height:1.5;min-height:18px}
+  .parsed b{color:var(--red-d)}
+  /* copilot */
+  .copilot{margin-top:16px}
+  .cp-qs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+  .cp-q{font-size:11.5px;border:1px solid #bcd6c5;background:#eef5f0;color:var(--green-d);border-radius:20px;padding:6px 12px;cursor:pointer}
+  .cp-q:hover{background:#e0eee6}
+  .cp-ans{font-size:12.5px;color:var(--ink);background:var(--panel2);border-radius:9px;padding:13px 15px;line-height:1.55;min-height:40px}
+  .cp-ans b{color:var(--green-d)}
+
+  /* ===== COST MODE ===== */
+  .modeseg{display:inline-flex;background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:2px;gap:2px;margin-left:auto}
+  .modeseg button{font-family:var(--mono);font-size:10.5px;font-weight:700;border:none;background:none;color:var(--mut);padding:5px 12px;border-radius:6px;cursor:pointer}
+  .modeseg button.on{background:var(--green);color:#fff}
+  .hide{display:none!important}
+  /* driver colours */
+  .d-mfo{background:#2a5f8f}.d-coal{background:#e0b341}.d-proc{background:#b08a2c}.d-emp{background:#6f6b3a}
+  .d-diesel{background:#9aa0a8}.d-maint{background:#7d8590}.d-bulk{background:#cdd2d6}.d-support{background:#27c0bd}
+  .d-spare{background:#1f8f8c}.d-svc{background:#0e4f4d}
+  /* weekly stack */
+  .stackwrap{display:flex;align-items:flex-end;gap:9px;height:188px;padding:6px 2px 0}
+  .wkcol{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}
+  .wkbar{width:100%;max-width:46px;display:flex;flex-direction:column;border-radius:4px 4px 0 0;overflow:hidden;box-shadow:0 2px 5px rgba(0,0,0,.07)}
+  .wkbar.budget{background:var(--panel2);outline:1.5px dashed var(--line2)}
+  .wkseg{width:100%}
+  .wktot{font-family:var(--mono);font-size:11px;font-weight:800;margin-bottom:5px}
+  .wkcol.cur .wktot{color:var(--green-d)}
+  .wklab{font-family:var(--mono);font-size:9px;color:var(--mut2);margin-top:6px;text-align:center;font-weight:600}
+  .wklab b{display:block;color:var(--ink);font-weight:800;font-size:9.5px}
+  /* driver variance list */
+  .dvrow{display:flex;align-items:center;gap:8px;font-size:11.5px;padding:4px 0;border-bottom:1px solid var(--line)}
+  .dvrow .sw{width:10px;height:10px;border-radius:2px;flex:none}
+  .dvrow .nm{flex:1;color:var(--mut)}
+  .dvrow .pc{font-family:var(--mono);font-weight:800;font-size:11px}
+  .dvrow .pc.up{color:var(--red-d)} .dvrow .pc.dn{color:var(--green-d)}
+  .dvrow .pill{font-family:var(--mono);font-size:8px;font-weight:800;padding:1px 5px;border-radius:4px}
+  .pill.ctrl{background:#e3f1e8;color:var(--green-d)} .pill.mkt{background:#eceaf2;color:var(--blue)}
+  /* cost tweak action reuse .act; cost delta cards reuse .dcard */
+  .ai-narr.cost b{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="tb-id">
+    <span class="logo">OS</span>
+    <div class="tb-tt">
+      <h1>Blending Optimisation <em>ORESIGHT AI</em></h1>
+      <div class="s">Morowali RKEF · 2× line · stockpiles &rarr; blend bed &rarr; furnace feed</div>
+    </div>
+  </div>
+  <span class="tb-sp"></span>
+  <div class="seg">
+    <button class="on" id="segSchem">&#9783; Schematic</button>
+    <button id="segSat">&#9788; Process</button>
+  </div>
+  <div class="clock"><span>WITA · SHIFT A</span><span id="clock" style="text-align:right">11:49:14</span></div>
+  <div class="live"><b></b>LIVE</div>
+</header>
+
+<div class="wrap">
+
+  <!-- KPI STRIP -->
+  <div class="kpis" id="kpis"></div>
+
+  <!-- MAIN -->
+  <div class="main">
+   <div class="leftcol">
+    <!-- SCHEMATIC -->
+    <div class="stage" id="stage">
+      <div class="grid-bg"></div>
+      <svg class="links" viewBox="0 0 1000 625" preserveAspectRatio="none" id="links"></svg>
+
+      <!-- stockpiles (left) -->
+      <div class="node" style="left:9%;top:20%">
+        <div class="pile"><span class="pn">SP-1</span><span class="pg" id="g_sp1">2.05% Ni</span></div>
+        <div class="lbl">Saprolite HG</div>
+        <div class="reclaimer"><span class="rc-dot" style="background:var(--reclaim)"></span>RC-1</div>
+      </div>
+      <div class="node" style="left:9%;top:43%">
+        <div class="pile"><span class="pn">SP-2</span><span class="pg" id="g_sp2">1.72% Ni</span></div>
+        <div class="lbl">Saprolite MG</div>
+        <div class="reclaimer"><span class="rc-dot" style="background:var(--reclaim)"></span>RC-1</div>
+      </div>
+      <div class="node" style="left:9%;top:66%">
+        <div class="pile"><span class="pn">SP-3</span><span class="pg" id="g_sp3">1.45% Ni</span></div>
+        <div class="lbl">Saprolite LG</div>
+        <div class="reclaimer"><span class="rc-dot" style="background:var(--reclaim)"></span>RC-2</div>
+      </div>
+      <div class="node" style="left:9%;top:88%">
+        <div class="pile"><span class="pn">LIM</span><span class="pg" id="g_lim">1.12% Ni</span></div>
+        <div class="lbl">Limonite (Fe)</div>
+        <div class="reclaimer"><span class="rc-dot" style="background:var(--reclaim)"></span>RC-2</div>
+      </div>
+      <div class="node" style="left:30%;top:90%">
+        <div class="silo"><span class="pn">LIME</span></div>
+        <div class="lbl">Flux silo</div>
+      </div>
+
+      <!-- blend bed -->
+      <div class="node" style="left:48%;top:45%">
+        <div class="bed">
+          <div class="stkarm"></div>
+          <span class="bt">BLEND BED</span>
+          <div class="stk"></div>
+        </div>
+        <div class="lbl">Stacker-reclaimer · recipe</div>
+      </div>
+
+      <!-- surge bin -->
+      <div class="node" style="left:70%;top:42%">
+        <div class="surge">
+          <span class="badge spec" id="surgeBadge">IN SPEC</span>
+          <div class="bin"><div class="fill" id="surgeFill" style="height:74%"></div></div>
+          <div class="txt"><div class="p" id="surgePct">74%</div><div class="m" id="surgeMin">24 min</div></div>
+          <div class="funnel"></div>
+        </div>
+        <div class="lbl">Surge bin · feed buffer</div>
+      </div>
+
+      <!-- furnace -->
+      <div class="node" style="left:90%;top:43%">
+        <div class="furnace">
+          <div class="el a"></div><div class="el b"></div><div class="el c"></div>
+          <div class="glow"></div>
+          <div class="fl">RKEF · EF</div>
+          <div class="fd" id="furnaceFeed">300 t/h</div>
+        </div>
+        <div class="lbl">Electric furnace</div>
+      </div>
+
+      <div class="flowlbl" style="left:33%;top:33%">RECIPE BLEND</div>
+      <div class="flowlbl" style="left:80%;top:35%">DRY FEED</div>
+
+      <!-- legend -->
+      <div class="leg">
+        <span><i style="background:var(--reclaim)"></i>RECLAIMING</span>
+        <span><i style="background:var(--convey)"></i>CONVEYING</span>
+        <span><i style="background:var(--blend)"></i>BLENDING</span>
+        <span><i style="background:var(--flux)"></i>FLUX</span>
+        <span><i style="background:var(--feed)"></i>FEEDING</span>
+        <span><i style="background:var(--down)"></i>OFF / IDLE</span>
+      </div>
+      <div class="src">Live · Morowali RKEF</div>
+    </div>
+
+    <!-- LOWER ROW · BLEND -->
+    <div class="lower" id="lowerBlend">
+      <!-- binding constraint -->
+      <div class="card">
+        <div class="ch">Binding constraint <span class="r" id="cstShift">this shift</span></div>
+        <div class="cst-name"><span class="cst-sq" id="cstSq"></span><span id="cstName"></span></div>
+        <div id="cstBars"></div>
+      </div>
+
+      <!-- spec gauges -->
+      <div class="card">
+        <div class="ch">Spec compliance <span class="r">live recipe vs furnace window</span></div>
+        <div class="gaugewrap">
+          <div class="gauge"><div class="gl">Blend Ni</div><svg id="gNi" viewBox="0 0 150 92"></svg><div class="gv" id="gNiV"></div><div class="gs" id="gNiS"></div></div>
+          <div class="gauge"><div class="gl">Slag S/M</div><svg id="gSM" viewBox="0 0 150 92"></svg><div class="gv" id="gSMV"></div><div class="gs" id="gSMS"></div></div>
+        </div>
+        <div class="speclist" id="specList"></div>
+      </div>
+
+      <!-- disruption -->
+      <div class="card">
+        <div class="ch">Disruption · re-blend <button class="reset" id="disReset" style="font-family:var(--mono);font-size:11px;color:var(--mut);border:1px solid var(--line2);background:none;border-radius:6px;padding:3px 9px;cursor:pointer">&#8635; Reset</button></div>
+        <div class="presets" id="presets"></div>
+        <div class="freerow">
+          <input id="disFree" placeholder='Describe a disruption — e.g. "SP-1 depleted, wet ore on RC-2"' />
+          <button id="disBtn">&rarr;</button>
+        </div>
+        <div class="parsed" id="disParsed"></div>
+      </div>
+    </div>
+    <!-- /lower blend -->
+
+    <!-- LOWER ROW · COST -->
+    <div class="lower hide" id="lowerCost">
+      <!-- weekly cash-cost stack -->
+      <div class="card" style="grid-column:span 2">
+        <div class="ch">Weekly C1 cash cost <span class="r">K/t Ni · last 6 weeks vs budget</span></div>
+        <div class="stackwrap" id="costStack"></div>
+        <div class="dlegend" id="costLegend" style="display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:10px;font-size:10.5px;color:var(--mut)"></div>
+      </div>
+      <!-- binding cost driver -->
+      <div class="card">
+        <div class="ch">Binding cost driver <span class="r" id="costBindName">this week</span></div>
+        <div id="costDrivers"></div>
+        <div class="note" style="font-size:11px;color:var(--mut);margin-top:10px;padding-top:10px;border-top:1px dashed var(--line2)">Blue is <b>market price</b> (alert only). Green/red is <b>consumption</b> — the levers in the rail reach it.</div>
+      </div>
+    </div>
+    <!-- /lower cost -->
+   </div><!-- /leftcol -->
+
+    <!-- AI RAIL -->
+    <div class="card ai">
+      <div class="ai-head"><span class="ai-badge">AI</span><span class="ai-title" id="aiTitle">OreSight Blend Optimiser</span><span class="ai-solve" id="aiSolve">&#9679; solved</span>
+        <div class="modeseg"><button class="on" id="mBlend">Blend</button><button id="mCost">Cost</button></div>
+      </div>
+      <div class="ai-headline" id="aiHeadline"></div>
+
+      <div class="delta">
+        <div class="dcard"><div class="l" id="lCur">Current margin</div><div class="v" id="dCur"></div></div>
+        <div class="arrow">&rarr;</div>
+        <div class="dcard opt"><div class="l" id="lOpt">Optimised</div><div class="v" id="dOpt"></div></div>
+        <div class="arrow"></div>
+        <div class="dcard val"><div class="l">Value / yr</div><div class="v" id="dVal"></div></div>
+      </div>
+
+      <!-- BLEND MODE -->
+      <div id="railBlend">
+        <div class="sec">Strategy <span>pick the trade-off</span></div>
+        <div id="strats"></div>
+
+        <div class="sec">Recommended actions</div>
+        <div id="actions"></div>
+
+        <div class="ai-narr" id="aiNarr"></div>
+
+        <!-- COPILOT -->
+        <div class="copilot">
+          <div class="sec">Copilot · ask the blend</div>
+          <div class="cp-qs" id="cpQs"></div>
+          <div class="freerow" style="margin-bottom:12px">
+            <input id="cpInput" placeholder='Ask, or set a target — e.g. "get S/M under 2.0"' />
+            <button id="cpBtn" style="font-size:13px;padding:0 14px">Ask</button>
+          </div>
+          <div class="cp-ans" id="cpAns">Ask about the binding constraint, the slag chemistry window, which pile to pull, or set a target — answers read the live recipe, assays and cost curve.</div>
+        </div>
+      </div>
+
+      <!-- COST MODE -->
+      <div id="railCost" class="hide">
+        <div class="sec">Lever &rarr; driver <span>which lever reaches which cost</span></div>
+        <div id="costTweaks"></div>
+        <div class="ai-narr cost" id="costNarr"></div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /wrap -->
+
+<script>
+/* =========================================================================
+   OreSight AI — Blending Optimisation (prototype)
+   Nickel-laterite RKEF smelter-feed blend. Synthetic but internally
+   consistent: every panel reads the same MODEL + blend() function.
+   Grounding: MgO/SiO2 0.50–0.65 (S/M ~1.5–2.0), slag quaternary basicity
+   (CaO+MgO)/(SiO2+Al2O3) ~0.58–0.61, slag FeO >10%, ~400 kWh/t dry ore.
+   ========================================================================= */
+const fmtM = n => '$' + (n/1e6).toFixed(1) + 'M';
+const fmt  = n => '$' + Math.round(n).toLocaleString();
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ---- ore sources (dry-basis assays) ---- */
+const SRC = {
+  sp1:{name:'SP-1 Saprolite HG', Ni:2.05, Fe:12, SiO2:42, MgO:22, Al2O3:2.5, moist:32, cost:82, tonnes:180},
+  sp2:{name:'SP-2 Saprolite MG', Ni:1.72, Fe:15, SiO2:44, MgO:20, Al2O3:3.0, moist:30, cost:71, tonnes:240},
+  sp3:{name:'SP-3 Saprolite LG', Ni:1.45, Fe:22, SiO2:40, MgO:17, Al2O3:3.4, moist:28, cost:58, tonnes:160},
+  lim:{name:'LIM Limonite',      Ni:1.12, Fe:38, SiO2:30, MgO:8,  Al2O3:5.0, moist:35, cost:44, tonnes:120},
+};
+const KEYS=['sp1','sp2','sp3','lim'];
+const norm=r=>{const s=KEYS.reduce((a,k)=>a+r[k],0)||1;const o={};KEYS.forEach(k=>o[k]=r[k]/s);return o;};
+
+const TARGET = {
+  Ni:1.80, NiMin:1.72, NiMax:1.90,
+  SM:2.00, SMmin:1.90, SMmax:2.15,         // SiO2/MgO window (MgO/SiO2 0.47–0.53)
+  basMin:0.56, basMax:0.62,                 // (CaO+MgO)/(SiO2+Al2O3)
+  feedTph:300,                              // dry feed t/h to furnace
+  limeCost:95,                              // $/t flux
+  niPrice:18400,                            // $/t LME nickel
+  payable:0.90,
+};
+
+const MODEL = {
+  // "current practice" recipe — over-pulls high-grade SP-1, over-fluxes,
+  // sits off the slag-chemistry window so recovery + energy leak value.
+  current:{sp1:0.40, sp2:0.40, sp3:0.13, lim:0.07, lime:0.050},
+  sp1Cap:0.40,            // SP-1 reclaim is the binding supply constraint
+  strategy:'spec',
+  disruption:null,
+  hoursYr:7800,
+};
+
+/* ---- core blend chemistry ---- */
+function blend(r, lime){
+  // r = shares over ore piles (need not sum to 1, we normalise); lime = flux fraction of total
+  let s=KEYS.reduce((a,k)=>a+r[k],0)||1;
+  const w={}; KEYS.forEach(k=>w[k]=r[k]/s);
+  const wt=p=>KEYS.reduce((a,k)=>a+w[k]*SRC[k][p],0);
+  const oreFrac=1-lime;
+  const Ni=wt('Ni'), Fe=wt('Fe'), SiO2=wt('SiO2'), MgO=wt('MgO'), Al2O3=wt('Al2O3'), moist=wt('moist');
+  // lime adds CaO (≈95% CaO), dilutes ore oxides by oreFrac
+  const CaO = lime*95;
+  const SiO2e=SiO2*oreFrac, MgOe=MgO*oreFrac, Al2O3e=Al2O3*oreFrac;
+  const SM = SiO2e/Math.max(MgOe,1e-6);
+  const bas = (CaO+MgOe)/Math.max(SiO2e+Al2O3e,1e-6);
+  const oreCost=KEYS.reduce((a,k)=>a+w[k]*SRC[k].cost,0); // $/wmt blended ore
+  const costPerT = oreCost*oreFrac + TARGET.limeCost*lime; // $/t feed
+  // recovery proxy: best near basicity window + S/M window; penalised outside
+  const basPen=Math.max(0,Math.abs(bas-0.59)-0.02)*0.9;
+  const smPen =Math.max(0,Math.abs(SM-TARGET.SM)-0.10)*0.12;
+  const recovery=clamp(0.94 - basPen - smPen, 0.80, 0.95);
+  // specific energy kWh/t dry ore: baseline 400, +moisture drying, +off-basicity
+  const energy=400 + (moist-30)*3.4 + basPen*180 + smPen*120;
+  return {Ni,Fe,SiO2:SiO2e,MgO:MgOe,CaO,Al2O3:Al2O3e,moist,SM,bas,recovery,costPerT,energy,oreCost};
+}
+
+// contribution margin PER TONNE of dry feed ($/t):
+//   payable Ni value recovered − ore/flux cost − energy cost
+function margin(b){
+  // contained Ni is supply-bound, so revenue is capped at the target feed grade:
+  // the optimiser earns value from recovery + flux + energy, not from over-grading.
+  const eff=Math.min(b.Ni,TARGET.Ni);
+  const niRev=(eff/100)*b.recovery*TARGET.niPrice*TARGET.payable;    // $/t feed
+  const energyCost=b.energy/1000*95;                                // 95 $/MWh
+  return niRev - b.costPerT - energyCost;
+}
+const feedYr = ()=>TARGET.feedTph*MODEL.hoursYr;   // t/yr dry feed
+const valueYr = (curMt,optMt)=>(optMt-curMt)*feedYr();
+
+/* =========================================================================
+   COST LAYER (Option B) — weekly C1 cash cost per t Ni, derived from the
+   SAME live blend state. The analytical move: split every driver into
+   PRICE variance (market, alert-only) and CONSUMPTION variance (the
+   controllable lever the blend recipe / dryer / flux / throughput reach).
+   Modelled on the Vale PTVI C1 stack: MFO+Coal ≈ 64–68% of processing cost,
+   coal consumption up while coal price fell. All numbers synthetic.
+   ========================================================================= */
+const COSTCFG = {
+  priceMWh:      132,    // blended energy price $/MWh (calibration knob)
+  fixedPerFeed:  22.5,   // $/t feed fixed cost (emp/maint/svc/spare/support/bulk)
+  suppliesBase:  2.6,    // $/t feed processing supplies at budget flux (0.045)
+  budgetK:       4.60,   // plan baseline, K/t Ni
+  niProdKtYr:    145,    // kt Ni / yr (for $/yr value translation)
+  // energy cost split across fuels (fractions of energy cost)
+  eSplit: {mfo:0.55, coal:0.37, diesel:0.08},
+  // fixed cost split across drivers (fractions of fixed cost)
+  fSplit: {emp:0.34, maint:0.20, svc:0.13, spare:0.13, support:0.11, bulk:0.09},
+  // MARKET price variance vs budget, K/t Ni — ALERT ONLY (not controllable).
+  // Coal price is favourable (down ~45% since 2022) — so the coal miss is
+  // pure CONSUMPTION once the market signal is stripped out.
+  priceVar:{mfo:+0.03, coal:-0.12, diesel:+0.02, proc:0, emp:+0.01, maint:0, svc:0, spare:+0.01, support:0, bulk:+0.02},
+  hist:[4.55,4.61,4.66,4.72,4.78],   // W-5..W-1 historical totals K/t Ni
+};
+const DMETA={
+  mfo:    {n:'MFO (fuel oil)', cls:'d-mfo',     grp:'energy', kind:'ctrl', lever:'blend + dryer'},
+  coal:   {n:'Coal',           cls:'d-coal',    grp:'energy', kind:'ctrl', lever:'blend + dryer'},
+  proc:   {n:'Process supplies',cls:'d-proc',   grp:'supply', kind:'ctrl', lever:'flux rate'},
+  diesel: {n:'Diesel',         cls:'d-diesel',  grp:'energy', kind:'mkt'},
+  emp:    {n:'Employment',     cls:'d-emp',     grp:'fixed',  kind:'ctrl', lever:'throughput'},
+  maint:  {n:'Maintenance',    cls:'d-maint',   grp:'fixed',  kind:'mkt'},
+  bulk:   {n:'Bulk materials', cls:'d-bulk',    grp:'fixed',  kind:'mkt'},
+  support:{n:'Support',        cls:'d-support', grp:'fixed',  kind:'mkt'},
+  spare:  {n:'Spares',         cls:'d-spare',   grp:'fixed',  kind:'mkt'},
+  svc:    {n:'Services',       cls:'d-svc',     grp:'fixed',  kind:'mkt'},
+};
+// stack order, bottom → top (fixed at base, energy on top to show its weight)
+const DORDER=['svc','spare','support','bulk','maint','emp','proc','diesel','coal','mfo'];
+
+// derive the full C1 stack from a live blend + flux fraction.
+// Returns per-driver CURRENT $/tNi; variance is computed in renderCost
+// against a fixed in-window plan so it isolates behaviour, not structure.
+function costModel(bl, lime){
+  const niPerFeed=(bl.Ni/100)*bl.recovery;                  // t Ni per t feed
+  const energyFeed=bl.energy/1000*COSTCFG.priceMWh;         // $/t feed (energy)
+  const suppliesFeed=COSTCFG.suppliesBase*(1+((lime||0.05)-0.045)*4); // flux-linked
+  const fixedFeed=COSTCFG.fixedPerFeed;                     // $/t feed (fixed)
+  const procFeed=energyFeed+suppliesFeed+fixedFeed;
+  const totalK=procFeed/niPerFeed/1000;                     // K/t Ni
+  const curK={};
+  for(const k in COSTCFG.eSplit) curK[k]=energyFeed*COSTCFG.eSplit[k]/niPerFeed/1000;
+  curK.proc=suppliesFeed/niPerFeed/1000;
+  for(const k in COSTCFG.fSplit) curK[k]=fixedFeed*COSTCFG.fSplit[k]/niPerFeed/1000;
+  return {niPerFeed, totalK, curK};
+}
+const costValYr=(curK,optK)=>(curK-optK)*COSTCFG.niProdKtYr*1e3*1e3; // $/yr
+
+/* ---- optimiser: coordinate search over shares + lime, per strategy ---- */
+function optimise(strategy){
+  let best=null, bestScore=-1e18, fallback=null, fbScore=-1e18;
+  const grid=[0,0.06,0.12,0.2,0.28,0.36];
+  const limes=[0.02,0.035,0.05,0.06,0.07,0.08];
+  for(const a of grid)for(const b2 of grid)for(const c of grid)for(const d of grid){
+    const s=a+b2+c+d; if(s<0.5) continue;
+    // SP-1 reclaim is supply-capped — can't brute-force grade with high-grade ore
+    if(a/s > MODEL.sp1Cap+1e-6) continue;
+    for(const lm of limes){
+      const r={sp1:a,sp2:b2,sp3:c,lim:d};
+      const bl=blend(r,lm);
+      const m=margin(bl);
+      // soft fallback: best margin ignoring slag windows (used only if nothing feasible)
+      if(m>fbScore){fbScore=m;fallback={r,lime:lm,bl,m};}
+      // HARD spec feasibility for every strategy
+      const inNi = bl.Ni>=TARGET.NiMin && bl.Ni<=TARGET.NiMax;
+      const inSM = bl.SM>=TARGET.SMmin && bl.SM<=TARGET.SMmax;
+      const inBas= bl.bas>=TARGET.basMin && bl.bas<=TARGET.basMax;
+      if(!(inNi&&inSM&&inBas)) continue;
+      let score;
+      if(strategy==='spec')      score=m;                          // max margin, in spec
+      else if(strategy==='ni')   score=bl.Ni*1e4 + bl.recovery*1e3; // push grade, in spec
+      else                       score=-bl.costPerT*1e4;            // cheapest, in spec
+      if(score>bestScore){bestScore=score;best={r,lime:lm,bl,m};}
+    }
+  }
+  return best||fallback;
+}
+
+/* ---- strategy definitions ---- */
+const STRATS={
+  spec:{name:'Protect spec', rec:true, desc:'Hold the recipe inside the Ni and slag-chemistry windows; accept a touch more flux.'},
+  ni:  {name:'Max Ni recovery', rec:false, desc:'Pull richer saprolite to lift metal Ni; risk slag freeze and energy.'},
+  cost:{name:'Min cost / tonne', rec:false, desc:'Ease toward the cheapest pile mix and least flux; lowest $/t feed.'},
+};
+
+/* ====================== RENDER ====================== */
+let CUR, OPT;            // current + optimised blend states
+function recompute(){
+  CUR = {r:{sp1:MODEL.current.sp1,sp2:MODEL.current.sp2,sp3:MODEL.current.sp3,lim:MODEL.current.lim}, lime:MODEL.current.lime};
+  CUR.bl=blend(CUR.r,CUR.lime); CUR.m=margin(CUR.bl);
+  OPT=optimise(MODEL.strategy);
+  // cost layer derives from the same blend state
+  CUR.cost=costModel(CUR.bl,CUR.lime);
+  OPT.cost=costModel(OPT.bl,OPT.lime);
+}
+
+function renderKpis(){
+  const b=CUR.bl;
+  const niTag = b.Ni>=TARGET.NiMin&&b.Ni<=TARGET.NiMax?'good':'warn';
+  const smTag = b.SM>=TARGET.SMmin&&b.SM<=TARGET.SMmax?'good':'warn';
+  const cards=[
+    {lab:'Blend Ni grade', val:b.Ni.toFixed(2), unit:'% Ni', tag:(niTag==='good'?'in spec':'off spec'), tagc:niTag, bar:clamp((b.Ni-1.5)/(2.0-1.5),0,1), foot:'target '+TARGET.Ni.toFixed(2)+'% ('+TARGET.NiMin+'–'+TARGET.NiMax+')'},
+    {lab:'Slag S/M ratio', val:b.SM.toFixed(2), unit:'SiO₂/MgO', tag:(smTag==='good'?'window':'off window'), tagc:smTag, bar:clamp((b.SM-1.6)/(2.4-1.6),0,1), foot:'window '+TARGET.SMmin+'–'+TARGET.SMmax+' · basicity '+b.bas.toFixed(2)},
+    {lab:'Feed rate', val:TARGET.feedTph, unit:'t/h dry', tag:'+4', tagc:'up', bar:0.88, foot:'2 RKEF lines · '+b.energy.toFixed(0)+' kWh/t'},
+    {lab:'Surge buffer', val:'24', unit:'min', tag:'safe', tagc:'good', bar:0.74, foot:'74% full · 38 min to starve'},
+  ];
+  // 5th card — weekly C1 cash cost (links the cost layer into the always-on strip)
+  const ck=CUR.cost.totalK, over=ck>COSTCFG.budgetK;
+  const pct=((ck-COSTCFG.budgetK)/COSTCFG.budgetK*100);
+  cards.push({lab:'Cash cost / t Ni', val:ck.toFixed(2), unit:'K', tag:(over?'+'+pct.toFixed(1)+'% plan':'on plan'), tagc:(over?'bad':'good'), bar:clamp(ck/(COSTCFG.budgetK*1.15),0,1), over:over, foot:'budget '+COSTCFG.budgetK.toFixed(2)});
+  document.getElementById('kpis').innerHTML=cards.map(c=>`
+    <div class="card kpi">
+      <div class="top"><span class="lab">${c.lab}</span><span class="tag ${c.tagc}">${c.tag}</span></div>
+      <div class="val">${c.val}<span>${c.unit}</span></div>
+      <div class="bar"><i class="${c.over?'over':''}" style="width:${(c.bar*100).toFixed(0)}%;background:${c.over?'var(--red)':(c.tagc==='warn'?'var(--amber)':'var(--green)')}"></i></div>
+      <div class="foot">${c.foot}</div>
+    </div>`).join('');
+}
+
+/* ---- schematic links + parcels ---- */
+function renderLinks(){
+  // node anchor points in the 1000x625 svg space (match % positions)
+  const P={
+    sp1:[90,125],sp2:[90,269],sp3:[90,412],lim:[90,550],lime:[300,562],
+    bed:[480,281],surge:[700,262],furn:[900,269]
+  };
+  const path=(a,b,c)=>`M${a[0]} ${a[1]} ${c?`Q${c[0]} ${c[1]} `:''}${b[0]} ${b[1]}`;
+  const lines=[
+    {d:path(P.sp1,P.bed,[300,150]),col:'var(--reclaim)',w:2.4},
+    {d:path(P.sp2,P.bed,[300,275]),col:'var(--reclaim)',w:3.0},
+    {d:path(P.sp3,P.bed,[300,400]),col:'var(--reclaim)',w:2.0},
+    {d:path(P.lim,P.bed,[300,520]),col:'var(--reclaim)',w:1.4},
+    {d:path(P.lime,P.bed,[400,470]),col:'var(--flux)',w:1.6,dash:'5 5'},
+    {d:path(P.bed,P.surge),col:'var(--blend)',w:4},
+    {d:path(P.surge,P.furn),col:'var(--feed)',w:4.2},
+  ];
+  let g='';
+  lines.forEach((l,i)=>{g+=`<path id="ln${i}" d="${l.d}" fill="none" stroke="${l.col}" stroke-width="${l.w}" opacity="0.5" ${l.dash?`stroke-dasharray="${l.dash}"`:''}/>`;});
+  document.getElementById('links').innerHTML=g;
+
+  // moving parcels along each conveyor
+  const stage=document.getElementById('stage');
+  stage.querySelectorAll('.parcel').forEach(p=>p.remove());
+  const cfg=[
+    {sel:'#ln0',col:'var(--reclaim)',n:2,dur:7},{sel:'#ln1',col:'var(--reclaim)',n:3,dur:6},
+    {sel:'#ln2',col:'var(--reclaim)',n:2,dur:8},{sel:'#ln3',col:'var(--reclaim)',n:1,dur:9},
+    {sel:'#ln4',col:'var(--flux)',n:1,dur:8},
+    {sel:'#ln5',col:'var(--blend)',n:3,dur:4.5},{sel:'#ln6',col:'var(--feed)',n:4,dur:4},
+  ];
+  cfg.forEach((c,ci)=>{
+    const p=document.querySelector(c.sel); const len=p.getTotalLength();
+    for(let k=0;k<c.n;k++){
+      const dot=document.createElement('div'); dot.className='parcel'; dot.style.background=c.col;
+      stage.appendChild(dot);
+      animateParcel(dot,p,len,c.dur,(k/c.n)*c.dur);
+    }
+  });
+}
+function animateParcel(dot,path,len,dur,delay){
+  const svg=document.getElementById('links');
+  function frame(t){
+    const tt=((t/1000+delay)%dur)/dur;
+    const pt=path.getPointAtLength(tt*len);
+    // map svg coords (1000x625) to stage px
+    const rect=svg.getBoundingClientRect();
+    const x=pt.x/1000*rect.width, y=pt.y/625*rect.height;
+    dot.style.left=(x-4.5)+'px'; dot.style.top=(y-4.5)+'px';
+    dot.style.opacity = tt<0.04||tt>0.96 ? 0 : 0.95;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---- surge + furnace + spec badge ---- */
+function renderStage(){
+  const b=CUR.bl;
+  const inSpec=b.Ni>=TARGET.NiMin&&b.Ni<=TARGET.NiMax&&b.SM>=TARGET.SMmin&&b.SM<=TARGET.SMmax;
+  const bdg=document.getElementById('surgeBadge');
+  bdg.textContent=inSpec?'IN SPEC':'OFF SPEC';
+  bdg.style.background=inSpec?'#16351f':'#3a1d18'; bdg.style.color=inSpec?'#7fe0a3':'#f0a59c'; bdg.style.borderColor=inSpec?'#2f6b46':'#6a3328';
+  document.getElementById('furnaceFeed').textContent=TARGET.feedTph+' t/h';
+  // pile grade tags
+  document.getElementById('g_sp1').textContent=SRC.sp1.Ni.toFixed(2)+'% Ni';
+  document.getElementById('g_sp2').textContent=SRC.sp2.Ni.toFixed(2)+'% Ni';
+  document.getElementById('g_sp3').textContent=SRC.sp3.Ni.toFixed(2)+'% Ni';
+  document.getElementById('g_lim').textContent=SRC.lim.Ni.toFixed(2)+'% Ni';
+}
+
+/* ---- AI rail ---- */
+function renderAI(){
+  const cur=CUR.m, opt=OPT.m, val=valueYr(cur,opt);
+  const inSpec=CUR.bl.SM>=TARGET.SMmin&&CUR.bl.SM<=TARGET.SMmax&&CUR.bl.bas>=TARGET.basMin&&CUR.bl.bas<=TARGET.basMax;
+  document.getElementById('aiHeadline').innerHTML=
+    `Blend at <b>${CUR.bl.Ni.toFixed(2)}% Ni</b>, slag S/M ${CUR.bl.SM.toFixed(2)} — ${inSpec?'on grade but':'<b style="color:var(--red-d)">off the slag window</b> —'} recovery leaking. Optimiser re-cuts the recipe for <b>${fmtM(val)}/yr</b>.`;
+  document.getElementById('dCur').innerHTML='$'+cur.toFixed(0)+'<span>/t feed</span>';
+  document.getElementById('dOpt').innerHTML='$'+opt.toFixed(0)+'<span>/t feed</span>';
+  document.getElementById('dVal').innerHTML=fmtM(val)+'<span>/yr</span>';
+
+  // strategy cards (recompute each strategy's optimum for the metric line)
+  document.getElementById('strats').innerHTML=Object.keys(STRATS).map(k=>{
+    const s=STRATS[k]; const o=optimise(k); const bl=o.bl;
+    const on=k===MODEL.strategy;
+    return `<div class="strat ${on?'on':''}" data-k="${k}">
+      <div class="sh"><span class="sn">${s.name}</span>${s.rec?'<span class="rec">✓ RECOMMENDED</span>':'<span class="opt-t">OPTION</span>'}</div>
+      <div class="sd">${s.desc}</div>
+      <div class="sm"><span><span class="k">Ni</span> <b>${bl.Ni.toFixed(2)}%</b></span><span><span class="k">S/M</span> <b>${bl.SM.toFixed(2)}</b></span><span><span class="k">$/t feed</span> <b>$${o.m.toFixed(0)}</b></span><span><span class="k">value</span> <b>${fmtM(valueYr(CUR.m,o.m))}</b></span></div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('.strat').forEach(el=>el.onclick=()=>{MODEL.strategy=el.dataset.k;flashSolve();renderAI();});
+
+  // recommended actions = deltas from current recipe to optimised (shares as % of bed)
+  const CW=norm(CUR.r), OW=norm(OPT.r);
+  const d=k=>(OW[k]-CW[k]);
+  const acts=[];
+  const dLime=OPT.lime-CUR.lime;
+  // biggest reclaim move
+  const moves=KEYS.map(k=>({k,dv:d(k)})).sort((a,b)=>Math.abs(b.dv)-Math.abs(a.dv));
+  const top=moves[0];
+  const niMetalGain=(OPT.bl.Ni*OPT.bl.recovery-CUR.bl.Ni*CUR.bl.recovery)/100*TARGET.feedTph; // t Ni/h
+  acts.push({tag:'reclaim',cls:'reclaim',id:'RC-'+(top.k==='sp1'||top.k==='sp2'?'1':'2'),
+    tx:`${top.dv>0?'Lift':'Trim'} <b>${SRC[top.k].name.split(' ')[0]}</b> share to <b>${(OW[top.k]*100).toFixed(0)}%</b> of the bed (from ${(CW[top.k]*100).toFixed(0)}%).`,
+    d:(niMetalGain>=0?'+':'')+niMetalGain.toFixed(2)+' t Ni/h'});
+  acts.push({tag:dLime<0?'FLUX −':'FLUX +',cls:'flux',id:'LIME',
+    tx:`${dLime<0?'Cut':'Raise'} lime addition to <b>${(OPT.lime*100).toFixed(1)}%</b> — moves quaternary basicity to <b>${OPT.bl.bas.toFixed(2)}</b>, into the ${TARGET.basMin}–${TARGET.basMax} window for the low-melting diopside–olivine slag.`,
+    d:'basicity '+(dLime<0?'↓':'↑')+' '+OPT.bl.bas.toFixed(2)});
+  acts.push({tag:'BED',cls:'bed',id:'BED',
+    tx:`Re-cut the stacker recipe now; surge bin holds <b>24 min</b> so the furnace never sees the step change.`,
+    d:'energy −'+(CUR.bl.energy-OPT.bl.energy>0?(CUR.bl.energy-OPT.bl.energy).toFixed(0):'0')+' kWh/t'});
+  document.getElementById('actions').innerHTML=acts.map(a=>`
+    <div class="act"><span class="tag ${a.cls}">${a.tag.toUpperCase()}</span>
+      <div><span class="id">${a.id}</span><div class="tx">${a.tx}</div></div>
+      <span class="d">${a.d}</span></div>`).join('');
+
+  document.getElementById('aiNarr').innerHTML=
+    `The bed is running at S/M ${CUR.bl.SM.toFixed(2)} and basicity ${CUR.bl.bas.toFixed(2)} — off the ${TARGET.basMin}–${TARGET.basMax} window — so the slag runs hot and recovery sits at ${(CUR.bl.recovery*100).toFixed(1)}% while Ni under-shoots target at ${CUR.bl.Ni.toFixed(2)}%. Under <b>${STRATS[MODEL.strategy].name}</b> the optimiser re-cuts the recipe to ${OPT.bl.Ni.toFixed(2)}% Ni inside the ${TARGET.SMmin}–${TARGET.SMmax} slag window at $${OPT.bl.costPerT.toFixed(1)}/t feed, lifting recovery to ${(OPT.bl.recovery*100).toFixed(1)}%. The value is recovery, flux and energy — contained Ni is supply-bound, so the optimiser hits target grade rather than over-grading. Every figure traces to the live assays, the basicity model and the cost curve.`;
+}
+function flashSolve(){const s=document.getElementById('aiSolve');s.textContent='● re-solving…';recompute();setTimeout(()=>{s.textContent='● solved';renderKpis();renderStage();renderGauges();renderConstraint();if(COSTMODE)renderCost();},600);}
+
+/* ---- binding constraint ---- */
+function renderConstraint(){
+  const items=[
+    {n:'Saprolite HG supply', u:0.93, note:'SP-1 reclaim limited; 22 days cover at current pull'},
+    {n:'RC-2 reclaim rate', u:0.84, note:'shared across SP-3 + limonite'},
+    {n:'Lime / flux budget', u:0.71, note:'basicity tuning vs slag volume'},
+    {n:'Surge bin cover', u:0.62, note:'24 min buffer ahead of furnace'},
+  ].sort((a,b)=>b.u-a.u);
+  const bind=items[0];
+  document.getElementById('cstName').textContent=bind.n;
+  document.getElementById('cstBars').innerHTML=items.map((it,i)=>{
+    const col=i===0?'var(--red)':it.u>0.75?'var(--orange)':'#9bb38f';
+    return `<div class="cst-bar"><div class="row"><span>${it.n}</span><b>${Math.round(it.u*100)}%</b></div><div class="track"><i style="width:${it.u*100}%;background:${col}"></i></div></div>`;
+  }).join('')+`<div style="font-size:11.5px;color:var(--mut);margin-top:10px;padding-top:10px;border-top:1px dashed var(--line2)">Binding: <b>${bind.n}</b>. ${bind.note}. The optimiser will not exceed SP-1 reclaim even when richer ore would lift Ni.</div>`;
+}
+
+/* ---- gauges ---- */
+function gaugeArc(svgId,frac,col){
+  const cx=75,cy=80,r=58, a0=Math.PI, a1=0;
+  const ang=a0+(a1-a0)*clamp(frac,0,1);
+  const x=cx+r*Math.cos(ang), y=cy+r*Math.sin(ang)*-1; // svg y down → invert
+  const yy=cy - r*Math.sin(ang);
+  const large=0;
+  const bg=`<path d="M${cx-r} ${cy} A${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="#e7e4da" stroke-width="11" stroke-linecap="round"/>`;
+  const xEnd=cx+r*Math.cos(ang), yEnd=cy - r*Math.sin(Math.PI - (Math.PI*(1-clamp(frac,0,1))));
+  // simpler: sweep proportional
+  const end=a0+(0-a0)*clamp(frac,0,1);
+  const ex=cx+r*Math.cos(end), ey=cy+r*Math.sin(end);
+  const fg=`<path d="M${cx-r} ${cy} A${r} ${r} 0 0 1 ${ex.toFixed(1)} ${ey.toFixed(1)}" fill="none" stroke="${col}" stroke-width="11" stroke-linecap="round"/>`;
+  document.getElementById(svgId).innerHTML=bg+fg;
+}
+function renderGauges(){
+  const b=CUR.bl;
+  const niFrac=(b.Ni-1.5)/(2.0-1.5);
+  const niOk=b.Ni>=TARGET.NiMin&&b.Ni<=TARGET.NiMax;
+  gaugeArc('gNi',niFrac, niOk?'var(--green)':'var(--amber)');
+  document.getElementById('gNiV').textContent=b.Ni.toFixed(2)+'%';
+  document.getElementById('gNiS').textContent=niOk?'within '+TARGET.NiMin+'–'+TARGET.NiMax:'outside window';
+  const smFrac=(b.SM-1.6)/(2.4-1.6);
+  const smOk=b.SM>=TARGET.SMmin&&b.SM<=TARGET.SMmax;
+  gaugeArc('gSM',smFrac, smOk?'var(--green)':'var(--amber)');
+  document.getElementById('gSMV').textContent=b.SM.toFixed(2);
+  document.getElementById('gSMS').textContent=smOk?'slag window OK':'flux to correct';
+
+  const rows=[
+    {l:'Quaternary basicity (CaO+MgO)/(SiO₂+Al₂O₃)', v:b.bas.toFixed(2), ok:b.bas>=TARGET.basMin&&b.bas<=TARGET.basMax, t:TARGET.basMin+'–'+TARGET.basMax},
+    {l:'Slag FeO proxy (Fe in feed)', v:b.Fe.toFixed(1)+'%', ok:b.Fe>=12&&b.Fe<=20, t:'12–20%'},
+    {l:'Feed moisture (pre-dryer)', v:b.moist.toFixed(1)+'%', ok:b.moist<=32, t:'TML &lt;33%'},
+    {l:'Cost / tonne feed', v:'$'+b.costPerT.toFixed(1), ok:true, t:'lower better'},
+  ];
+  document.getElementById('specList').innerHTML=rows.map(r=>`
+    <div class="sr"><span><span class="dot ${r.ok?'ok':'warn'}"></span>${r.l}</span><b>${r.v}</b></div>`).join('');
+}
+
+/* ---- disruption ---- */
+const PRESETS=[
+  {k:'depl',c:'var(--red)',t:'SP-1 high-grade depleted',txt:'<b>SP-1 reclaim halted.</b> High-grade saprolite cover hits the 4-day floor. AI shifts the bed to SP-2-heavy, lifts SP-3 to hold tonnage and adds <b>+0.8% lime</b> to keep basicity in window — Ni slips to ~1.74%, still in spec.'},
+  {k:'wet',c:'var(--blue)',t:'Wet ore on RC-2 (TML)',txt:'<b>TML risk.</b> SP-3 + limonite over moisture limit after rain; drying energy +18 kWh/t. AI defers the limonite cycle, leans on drier SP-1/SP-2 and warns the dryer line — surge bin absorbs the 11-min dip.'},
+  {k:'trip',c:'var(--orange)',t:'EF electrode trip',txt:'<b>Furnace feed paused 25 min.</b> Surge bin drains to 41%. AI throttles reclaim to match restart ramp and holds the recipe so the re-feed lands exactly on the S/M window — no slag freeze on restart.'},
+  {k:'surge',c:'var(--green)',t:'Demand surge (3rd line)',txt:'<b>Feed demand +90 t/h.</b> Third RKEF line called early. AI raises RC-1 + RC-2 to 96%, flags Saprolite-HG supply as the new binding constraint and recommends pulling forward the next SP-1 barge.'},
+];
+function renderPresets(){
+  document.getElementById('presets').innerHTML=PRESETS.map(p=>`<button class="preset" data-k="${p.k}"><b style="background:${p.c}"></b>${p.t}</button>`).join('');
+  document.querySelectorAll('.preset').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.preset').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    document.getElementById('disParsed').innerHTML=PRESETS.find(x=>x.k===b.dataset.k).txt;flashSolve();
+  });
+}
+function disFree(){
+  const q=document.getElementById('disFree').value.toLowerCase();
+  let hit=PRESETS.find(p=>
+    (q.includes('sp-1')||q.includes('deplet')||q.includes('high grade')||q.includes('high-grade'))?p.k==='depl':
+    (q.includes('wet')||q.includes('rain')||q.includes('moist')||q.includes('tml'))?p.k==='wet':
+    (q.includes('trip')||q.includes('furnace')||q.includes('electrode')||q.includes('down'))?p.k==='trip':
+    (q.includes('surge')||q.includes('demand')||q.includes('line'))?p.k==='surge':false);
+  document.getElementById('disParsed').innerHTML=hit?hit.txt:'<b>Parsed.</b> Re-solving the blend against your disruption. AI holds the binding constraint (Saprolite-HG supply), keeps the recipe inside the Ni and S/M windows, and uses the surge bin to ride the transient. Check the updated recipe and gauges.';
+  flashSolve();
+}
+
+/* ---- copilot ---- */
+const CPQS=['What is the binding constraint?','Why is the blend off-spec?','How much is the flux trim worth?','Which pile should I pull?'];
+function renderCp(){
+  document.getElementById('cpQs').innerHTML=CPQS.map(q=>`<button class="cp-q">${q}</button>`).join('');
+  document.querySelectorAll('.cp-q').forEach(b=>b.onclick=()=>{document.getElementById('cpInput').value=b.textContent;cpAsk();});
+}
+function cpAsk(){
+  const q=document.getElementById('cpInput').value.toLowerCase();
+  const b=CUR.bl,o=OPT;
+  let a;
+  if(q.includes('constraint')||q.includes('binding'))
+    a='The binding constraint this shift is <b>Saprolite-HG (SP-1) supply</b> at ~93% utilisation — only 22 days of cover at the current pull. RC-2 reclaim rate is second at 84%. The optimiser will not exceed SP-1 reclaim even when richer ore would lift Ni, so it buys grade with flux and SP-2 instead.';
+  else if(q.includes('off-spec')||q.includes('off spec')||q.includes('why')||q.includes('spec'))
+    a=`Current practice runs the bed at S/M <b>${b.SM.toFixed(2)}</b> and basicity ${b.bas.toFixed(2)} while leaning on cheaper low-grade SP-3, so blend Ni sits at <b>${b.Ni.toFixed(2)}%</b>${b.Ni<TARGET.NiMin?' — below the '+TARGET.NiMin+'% floor':''}. Re-cutting to the optimised recipe lands Ni at ${o.bl.Ni.toFixed(2)}% inside the ${TARGET.SMmin}–${TARGET.SMmax} window.`;
+  else if(q.includes('flux')||q.includes('lime')||q.includes('basicity')){
+    const dLime=o.lime-CUR.lime;
+    a=`Moving lime from ${(CUR.lime*100).toFixed(1)}% to <b>${(o.lime*100).toFixed(1)}%</b> drives quaternary basicity to ${o.bl.bas.toFixed(2)} (target ${TARGET.basMin}–${TARGET.basMax}). That ${dLime<0?'saves':'costs'} ~$${Math.abs(dLime*TARGET.limeCost*TARGET.feedTph*MODEL.hoursYr/1e6).toFixed(2)}M/yr in flux and ${dLime<0?'cuts':'shifts'} smelting energy by re-balancing the slag toward the low-melting diopside–olivine eutectic.`;
+  }
+  else if(q.includes('pull')||q.includes('pile')||q.includes('which')){
+    const CW=norm(CUR.r), OW=norm(o.r);
+    const moves=KEYS.map(k=>({k,dv:OW[k]-CW[k]})).sort((a,b)=>Math.abs(b.dv)-Math.abs(a.dv));
+    const t=moves[0];
+    a=`Under <b>${STRATS[MODEL.strategy].name}</b>, ${t.dv>0?'pull more':'pull less'} <b>${SRC[t.k].name}</b>: take its bed share to ${(OW[t.k]*100).toFixed(0)}% (from ${(CW[t.k]*100).toFixed(0)}%). It is the highest-leverage move on Ni-per-dollar given the SP-1 supply cap.`;
+  }
+  else if(q.match(/\d/)&&(q.includes('s/m')||q.includes('sm')||q.includes('ni')||q.includes('under')||q.includes('target'))){
+    a=`The optimiser already targets S/M ${TARGET.SMmin}–${TARGET.SMmax} and Ni ${TARGET.NiMin}–${TARGET.NiMax}%. The achievable optimum under the live supply cap is Ni <b>${o.bl.Ni.toFixed(2)}%</b> at S/M ${o.bl.SM.toFixed(2)}, basicity ${o.bl.bas.toFixed(2)}, $${o.bl.costPerT.toFixed(1)}/t. To go beyond that you would need more SP-1 reclaim capacity or a richer incoming parcel.`;
+  }
+  else a='I read the live recipe, the four stockpile assays, the slag-chemistry model (S/M + quaternary basicity) and the cost curve. Try asking about the binding constraint, why the blend is off-spec, the flux trim value, or which pile to pull.';
+  document.getElementById('cpAns').innerHTML=a;
+}
+
+/* ====================== COST MODE RENDER ====================== */
+let COSTMODE=false;
+function renderCost(){
+  const cc=CUR.cost, oc=OPT.cost;
+  const curK=cc.totalK, optK=Math.min(oc.totalK,curK);
+  const over=curK-COSTCFG.budgetK;
+  const val=costValYr(curK, optK);
+
+  // variance vs a FIXED in-window plan: scale the optimised split to the
+  // budget total, so net is behavioural (consumption / recovery), not structural.
+  const scale=COSTCFG.budgetK/oc.totalK;
+  const drivers=DORDER.map(k=>{
+    const cur=cc.curK[k], budget=oc.curK[k]*scale;
+    const net=cur-budget;
+    const price=COSTCFG.priceVar[k]||0;     // market, alert-only
+    const cons=net-price;                   // controllable, lever-reachable
+    return {k, ...DMETA[k], cur, budget, net, price, cons};
+  });
+  const ctrlCons=drivers.filter(d=>d.kind==='ctrl').reduce((a,d)=>a+d.cons,0);
+  const mktNet=drivers.filter(d=>d.kind==='mkt').reduce((a,d)=>a+d.net,0);
+  // the binding controllable cost driver = largest consumption variance
+  const bind=drivers.filter(d=>d.kind==='ctrl').sort((a,b)=>b.cons-a.cons)[0];
+
+  // headline + delta cards (shared elements)
+  document.getElementById('aiHeadline').innerHTML=
+    `Cash cost <b>${curK.toFixed(2)}K/t Ni</b>, <b style="color:${over>0?'var(--red-d)':'var(--green-d)'}">${over>0?'+':''}${over.toFixed(2)}K vs budget</b> — the controllable share is <b>${bind.n.toLowerCase()} consumption</b>. Worth <b>${fmtM(val)}/yr</b>.`;
+  document.getElementById('lCur').textContent='This week';
+  document.getElementById('lOpt').textContent='Achievable';
+  document.getElementById('dCur').innerHTML=curK.toFixed(2)+'<span> K/t Ni</span>';
+  document.getElementById('dOpt').innerHTML=optK.toFixed(2)+'<span> K/t Ni</span>';
+  document.getElementById('dVal').innerHTML=fmtM(val)+'<span>/yr</span>';
+
+  // ---- weekly stack (5 historical + this week live + budget marker) ----
+  const segs=DORDER; // bottom→top
+  const propOf=k=>cc.curK[k]/curK; // live proportion
+  const weeks=COSTCFG.hist.map((t,i)=>({lab:'W-'+(5-i), tot:t, cur:false}))
+    .concat([{lab:'W0', tot:curK, cur:true}]);
+  const maxT=Math.max(curK, ...COSTCFG.hist, COSTCFG.budgetK)*1.04;
+  let html=weeks.map(w=>{
+    const segHtml=segs.map(k=>{
+      const h=(w.tot*propOf(k))/maxT*100;
+      return `<div class="wkseg ${DMETA[k].cls}" style="height:${h}%"></div>`;
+    }).join('');
+    return `<div class="wkcol ${w.cur?'cur':''}">
+      <div class="wktot">${w.tot.toFixed(2)}</div>
+      <div class="wkbar" style="height:${w.tot/maxT*100}%">${segHtml}</div>
+      <div class="wklab">${w.lab}${w.cur?'<b>this wk</b>':''}</div></div>`;
+  }).join('');
+  // budget reference column
+  html+=`<div class="wkcol"><div class="wktot" style="color:var(--mut2)">${COSTCFG.budgetK.toFixed(2)}</div>
+    <div class="wkbar budget" style="height:${COSTCFG.budgetK/maxT*100}%"></div>
+    <div class="wklab">BUDGET<b>plan</b></div></div>`;
+  document.getElementById('costStack').innerHTML=html;
+  // legend
+  document.getElementById('costLegend').innerHTML=segs.slice().reverse().map(k=>
+    `<span style="display:flex;align-items:center;gap:5px"><i class="${DMETA[k].cls}" style="width:9px;height:9px;border-radius:2px;display:inline-block"></i>${DMETA[k].n}</span>`).join('');
+
+  // ---- binding cost driver list ----
+  // controllable rows show CONSUMPTION variance (the lever-reachable miss);
+  // market rows show PRICE variance (alert only). Sorted by absolute impact.
+  const rows=drivers.map(d=>({...d, show:(d.kind==='ctrl'?d.cons:d.price)}))
+    .sort((a,b)=>Math.abs(b.show)-Math.abs(a.show)).slice(0,7);
+  document.getElementById('costBindName').textContent=bind.n+' · '+(bind.cons>0?'+':'')+bind.cons.toFixed(2)+'K cons';
+  document.getElementById('costDrivers').innerHTML=rows.map(d=>{
+    const isCtrl=d.kind==='ctrl';
+    return `<div class="dvrow">
+      <span class="sw ${d.cls}"></span>
+      <span class="nm">${d.n}</span>
+      <span class="pill ${isCtrl?'ctrl':'mkt'}">${isCtrl?'CONS':'PRICE'}</span>
+      <span class="pc ${d.show>0?'up':'dn'}">${d.show>0?'+':''}${d.show.toFixed(2)}</span></div>`;
+  }).join('');
+
+  // ---- rail: lever → driver tweaks (controllable only) ----
+  const coalGain=cc.curK.coal-oc.curK.coal;
+  const dEnergy=CUR.bl.energy-OPT.bl.energy;
+  const dLime=OPT.lime-CUR.lime;
+  const tweaks=[
+    {tag:'BLEND',cls:'reclaim',id:'COAL',
+     tx:`Re-cut the bed into the slag window so the dryer burns less coal — energy ${dEnergy>=0?'−':'+'}<b>${Math.abs(dEnergy).toFixed(0)} kWh/t</b>.`,
+     d:(coalGain>=0?'−':'+')+Math.abs(coalGain).toFixed(2)+'K coal'},
+    {tag:'DRYER',cls:'bed',id:'COAL',
+     tx:`Trim drying-kiln setpoint as feed moisture falls; coal is reached by both <b>blend</b> and <b>dryer</b>.`,
+     d:'recovery '+(OPT.bl.recovery*100).toFixed(1)+'%'},
+    {tag:dLime<0?'FLUX −':'FLUX +',cls:'flux',id:'PROC',
+     tx:`${dLime<0?'Cut':'Raise'} lime to <b>${(OPT.lime*100).toFixed(1)}%</b> — basicity to ${OPT.bl.bas.toFixed(2)}, trims process supplies.`,
+     d:'basicity '+(dLime<0?'↓':'↑')+' '+OPT.bl.bas.toFixed(2)},
+  ];
+  document.getElementById('costTweaks').innerHTML=tweaks.map(a=>`
+    <div class="act"><span class="tag ${a.cls}">${a.tag}</span>
+      <div><span class="id">${a.id}</span><div class="tx">${a.tx}</div></div>
+      <span class="d">${a.d}</span></div>`).join('');
+
+  document.getElementById('costNarr').innerHTML=
+    `Coal <b>price</b> is favourable, down ~45% since 2022 — that is an alert, not an action. The miss is pure <b>consumption</b>: the off-window blend runs the drying kiln hot at ${CUR.bl.energy.toFixed(0)} kWh/t. The optimiser reaches coal through the <b>blend recipe</b> and the <b>dryer</b>, pulling the in-window recipe to ${OPT.bl.energy.toFixed(0)} kWh/t and ${oc.totalK.toFixed(2)}K/t Ni. The seven market lines stay untouched.`;
+}
+
+function setMode(m){
+  COSTMODE = m==='cost';
+  const t=(id,h)=>document.getElementById(id).classList.toggle('hide',h);
+  t('railBlend',COSTMODE); t('railCost',!COSTMODE);
+  t('lowerBlend',COSTMODE); t('lowerCost',!COSTMODE);
+  document.getElementById('mBlend').classList.toggle('on',!COSTMODE);
+  document.getElementById('mCost').classList.toggle('on',COSTMODE);
+  document.getElementById('aiTitle').textContent=COSTMODE?'OreSight Cost Optimiser':'OreSight Blend Optimiser';
+  if(COSTMODE){renderCost();} else {document.getElementById('lCur').textContent='Current margin';document.getElementById('lOpt').textContent='Optimised';renderAI();}
+}
+
+/* ---- clock ---- */
+function tick(){
+  const d=new Date();
+  document.getElementById('clock').textContent=d.toTimeString().slice(0,8);
+}
+
+/* ---- view toggle ---- */
+document.getElementById('segSchem').onclick=function(){this.classList.add('on');document.getElementById('segSat').classList.remove('on');};
+document.getElementById('segSat').onclick=function(){this.classList.add('on');document.getElementById('segSchem').classList.remove('on');document.getElementById('segSchem').classList.remove('on');};
+
+/* ====================== INIT ====================== */
+recompute();
+renderKpis();renderStage();renderAI();renderConstraint();renderGauges();renderPresets();renderCp();
+renderLinks();
+window.addEventListener('resize',()=>{clearTimeout(window._rz);window._rz=setTimeout(renderLinks,200);});
+setInterval(tick,1000);tick();
+document.getElementById('disBtn').onclick=disFree;
+document.getElementById('disFree').addEventListener('keydown',e=>{if(e.key==='Enter')disFree();});
+document.getElementById('disReset').onclick=()=>{document.querySelectorAll('.preset').forEach(x=>x.classList.remove('on'));document.getElementById('disParsed').innerHTML='';document.getElementById('disFree').value='';MODEL.strategy='spec';flashSolve();renderAI();};
+document.getElementById('cpBtn').onclick=cpAsk;
+document.getElementById('cpInput').addEventListener('keydown',e=>{if(e.key==='Enter')cpAsk();});
+document.getElementById('mBlend').onclick=()=>setMode('blend');
+document.getElementById('mCost').onclick=()=>setMode('cost');
+</script>
+<script src="/js/tour.js"></script>
+<script>OreTour.init({"label":"Guided tour","steps":[{"sel":"#kpis","title":"Live KPIs","text":"Blend Ni grade, slag ratio, feed rate, cash cost and surge buffer."},{"sel":"#cstName","title":"Binding cost driver","text":"The single driver pushing cash cost over budget right now (e.g. coal consumption)."},{"sel":"#costStack","title":"Weekly cash cost","text":"The cost stack and driver variance vs budget, with the binding driver called out."},{"sel":"#aiHeadline","title":"AI cost optimiser","text":"Blend / cost levers with current → optimised cash cost and value per year."},{"sel":"#disFree","title":"Disruption & copilot","text":"Inject a disruption (FC down, rain on barges…) or ask the copilot — the plan re-solves."}]});</script>
+</body>
+</html>
