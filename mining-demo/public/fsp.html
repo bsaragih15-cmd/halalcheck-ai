@@ -7,46 +7,263 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/console.css" />
   <script src="/vendor/chart.umd.min.js"></script>
+  <style>
+    /* renderNav()/renderFooter() from shared.js still inject the legacy global
+       nav + footer; this page is a self-contained console, so hide them. */
+    .nav, .footer { display: none !important; }
+
+    /* ── Tabs (UC switcher) ─────────────────────────────────────────── */
+    .fsp-tabs { display: flex; gap: 4px; background: #fff; border: 1px solid var(--os-line); border-radius: 10px; padding: 4px; }
+    .fsp-tab { border: none; font-family: var(--os-mono); font-size: 11.5px; letter-spacing: .03em; font-weight: 600; padding: 7px 12px; border-radius: 7px; background: transparent; color: var(--os-mut2); transition: all .18s; white-space: nowrap; }
+    .fsp-tab.active { background: var(--os-green); color: #fff; }
+    .fsp-status { font-family: var(--os-mono); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--os-green); font-weight: 600; transition: color .2s; }
+    .fsp-status.replanning { color: var(--os-amber); animation: osPulse 1s infinite; }
+
+    /* ── Panes fill the big visual card ─────────────────────────────── */
+    .fsp-pane { display: flex; flex-direction: column; min-height: 0; flex: 1; gap: 10px; }
+    .fsp-toolbar { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; flex-shrink: 0; }
+    .mono-label { font-family: var(--os-mono); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--os-mut2); font-weight: 600; }
+    .disrupt-btn { border: 1px solid var(--os-line); background: var(--os-card2); color: var(--os-body); font-family: var(--os-mono); font-size: 11px; letter-spacing: .01em; font-weight: 600; padding: 7px 10px; border-radius: 9px; transition: all .18s; }
+    .disrupt-btn:hover { border-color: #cdd3bf; background: #f3f1e6; }
+    .disrupt-btn.active { border-color: var(--os-green); background: var(--os-green-soft); color: var(--os-green); }
+    .disrupt-btn.reset { color: var(--os-mut2); }
+    .disrupt-btn:disabled { opacity: .5; cursor: default; }
+    .freeform-row { display: flex; gap: 7px; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
+    .freeform-row input { flex: 1; min-width: 200px; background: var(--os-card2); border: 1px solid var(--os-line); color: var(--os-ink2); font-family: var(--os-font); font-size: 12.5px; padding: 8px 12px; border-radius: 10px; }
+    .ff-btn { border: none; background: var(--os-green); color: #fff; font-size: 12.5px; font-weight: 700; padding: 8px 14px; border-radius: 10px; white-space: nowrap; }
+    .ff-btn:disabled { opacity: .5; cursor: default; }
+    .ff-hint { font-family: var(--os-mono); font-size: 9.5px; letter-spacing: .02em; color: var(--os-mut3); flex-basis: 100%; }
+
+    /* ── Gantt ──────────────────────────────────────────────────────── */
+    .gantt { flex: 1; min-height: 0; overflow: auto; display: grid; grid-template-columns: 92px 1fr; align-content: start; background: #0e140d; border-radius: 12px; padding: 6px 10px 10px; position: relative; }
+    .gantt-axis { position: relative; height: 18px; }
+    .gantt-axis .tick { position: absolute; top: 2px; transform: translateX(-50%); font-family: var(--os-mono); font-size: 8.5px; letter-spacing: .04em; color: #5a6753; white-space: nowrap; }
+    .gantt-row-label { display: flex; align-items: center; font-family: var(--os-mono); font-size: 9.5px; font-weight: 700; letter-spacing: .03em; color: #8fa18f; height: 24px; padding-right: 6px; }
+    .gantt-track { position: relative; height: 24px; border-top: 1px solid #1a241733; }
+    .gantt-track .grid-line { position: absolute; top: 0; bottom: 0; width: 1px; background: #ffffff08; }
+    .gantt-block { position: absolute; top: 3px; height: 18px; border-radius: 4px; font-family: var(--os-mono); font-size: 8.5px; font-weight: 700; letter-spacing: .02em; color: #eafff0; display: flex; align-items: center; padding: 0 5px; overflow: hidden; white-space: nowrap; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: left .7s cubic-bezier(.4,0,.2,1), width .7s cubic-bezier(.4,0,.2,1); }
+    .gantt-block.load { background: #2f8a52; }
+    .gantt-block.transit { background: #355c3c; color: #bfe0c8; }
+    .gantt-block.tranship { background: #0e7490; }
+    .gantt-block.ogv { background: #b45309; }
+    .gantt-block.laycan { background: #2b3a28; color: #8fa18f; border: 1px dashed #4a6043; }
+    .gantt-block.maint { background: #b91c1c; }
+    .gantt-block.moved { outline: 1.5px solid #e8c46a; outline-offset: -1.5px; }
+    .gantt-now { width: 2px; background: #e8c46a; box-shadow: 0 0 6px #e8c46a99; z-index: 5; }
+    .tide-band { background: repeating-linear-gradient(45deg, #3a2a1433, #3a2a1433 6px, transparent 6px, transparent 12px); z-index: 1; }
+    .tide-band .lbl { position: absolute; top: 1px; left: 3px; font-family: var(--os-mono); font-size: 7.5px; color: #7a5a2a; white-space: nowrap; }
+    .gantt-legend { display: flex; gap: 6px 14px; flex-wrap: wrap; flex-shrink: 0; font-family: var(--os-mono); font-size: 9.5px; color: var(--os-mut2); }
+    .gantt-legend span { display: inline-flex; align-items: center; gap: 5px; }
+    .gantt-legend .gl { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
+    .gantt-legend .gl.load { background: #2f8a52; }
+    .gantt-legend .gl.transit { background: #355c3c; }
+    .gantt-legend .gl.tranship { background: #0e7490; }
+    .gantt-legend .gl.ogv { background: #b45309; }
+    .gantt-legend .gl.maint { background: #b91c1c; }
+    .gantt-legend .gl.laycan { background: #2b3a28; border: 1px dashed #4a6043; }
+    .gantt-legend .gl.tide { background: repeating-linear-gradient(45deg, #b08648, #b08648 3px, transparent 3px, transparent 6px); }
+
+    /* ── Bottleneck strip ───────────────────────────────────────────── */
+    .bottleneck-strip { display: flex; align-items: center; gap: 10px 16px; flex-wrap: wrap; flex-shrink: 0; font-family: var(--os-mono); font-size: 11px; color: var(--os-body); }
+    .bottleneck-strip .bn-title { color: var(--os-mut2); letter-spacing: .05em; text-transform: uppercase; font-size: 10px; }
+    .bottleneck-strip .bn-drum { font-weight: 800; color: var(--os-green); font-size: 12.5px; letter-spacing: .02em; }
+    .bottleneck-strip .bn-bars { display: flex; gap: 12px; flex-wrap: wrap; }
+    .bottleneck-strip .bn-bar { display: inline-flex; align-items: center; gap: 5px; color: var(--os-mut); font-size: 10px; }
+    .bottleneck-strip .bn-bar.drum { color: var(--os-green); font-weight: 700; }
+    .bottleneck-strip .bn-bar .track { width: 46px; height: 6px; border-radius: 3px; background: var(--os-line2); overflow: hidden; }
+    .bottleneck-strip .bn-bar .fill { display: block; height: 100%; background: var(--os-green); }
+    .bottleneck-strip .bn-shift { color: var(--os-amber); font-size: 10px; }
+    .bottleneck-strip .bn-conf { margin-left: auto; padding: 4px 10px; border-radius: 999px; font-size: 10px; letter-spacing: .02em; }
+    .bottleneck-strip .bn-conf.lo { background: var(--os-green-soft); color: var(--os-green); border: 1px solid var(--os-green-line); }
+    .bottleneck-strip .bn-conf.med { background: #fdf3e6; color: var(--os-amber); border: 1px solid #f0d9b8; }
+    .bottleneck-strip .bn-conf.hi { background: #fbeaea; color: var(--os-red); border: 1px solid #efc9c9; }
+
+    /* ── Inload network / table ─────────────────────────────────────── */
+    #netmap { width: 100%; flex: 1; min-height: 0; background: #0d120c; border-radius: 12px; border: 1px solid #1a2417; }
+    .fsp-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+    .fsp-table th { text-align: left; font-family: var(--os-mono); font-size: 9.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--os-mut2); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--os-line); }
+    .fsp-table td { padding: 7px 8px; border-bottom: 1px solid var(--os-line2); color: var(--os-body); }
+    .fsp-table td.mono { font-family: var(--os-mono); font-size: 11px; }
+    .fsp-table .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; }
+    .fsp-table .status-dot.ok { background: var(--os-green); }
+    .fsp-table .status-dot.warn { background: var(--os-amber); }
+    .inload-grid, .exec-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; flex: 1; min-height: 0; }
+    .inload-grid > div, .exec-grid > div { display: flex; flex-direction: column; min-height: 0; }
+    .exec-prob { flex-shrink: 0; }
+    .fsp-log { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+    .fsp-log .li { display: flex; gap: 9px; font-size: 11.5px; color: var(--os-body); line-height: 1.4; }
+    .fsp-log .li .ts { font-family: var(--os-mono); font-size: 10px; color: var(--os-mut3); flex-shrink: 0; }
+
+    /* ── Option cards (re-plan strategies, in the AI rail) ──────────── */
+    .option-cards { display: flex; flex-direction: column; gap: 9px; }
+    .option-card { display: flex; flex-direction: column; gap: 6px; text-align: left; border: 1.5px solid var(--os-line); background: #fff; border-radius: 12px; padding: 11px 14px; cursor: pointer; transition: all .18s; }
+    .option-card:hover { border-color: #cdd3bf; }
+    .option-card.chosen { border-color: var(--os-green); background: var(--os-green-soft); }
+    .option-card.recommended { border-color: var(--os-green); }
+    .option-card .oc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .option-card .oc-name { font-size: 14px; font-weight: 700; color: var(--os-ink); }
+    .option-card .oc-tag { font-family: var(--os-mono); font-size: 9.5px; letter-spacing: .03em; text-transform: uppercase; color: var(--os-green); font-weight: 600; }
+    .option-card .oc-desc { font-size: 11.5px; line-height: 1.4; color: var(--os-mut); }
+    .option-card .oc-kpis { display: flex; gap: 10px; flex-wrap: wrap; font-family: var(--os-mono); font-size: 10.5px; color: var(--os-mut2); }
+    .option-card .oc-kpis b { color: var(--os-ink); font-weight: 700; }
+    .option-card .oc-kpis b.pos { color: var(--os-green); }
+    .option-card .oc-kpis b.neg { color: var(--os-amber); }
+
+    /* ── AI rationale panel (renderAIResult target) ─────────────────── */
+    .ai-panel-head { display: flex; align-items: center; gap: 9px; margin-bottom: 12px; }
+    .ai-panel-head .spark { color: var(--os-green); font-size: 14px; }
+    .ai-panel-head .t { font-family: var(--os-mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--os-mut2); font-weight: 600; }
+    .ai-panel-head .src { margin-left: auto; font-family: var(--os-mono); font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--os-green); }
+    .ai-headline { font-size: 16px; font-weight: 700; line-height: 1.45; letter-spacing: -0.01em; color: var(--os-ink); margin-bottom: 14px; }
+    .ai-rec { display: flex; gap: 11px; margin-bottom: 11px; }
+    .ai-rec .n { font-family: var(--os-mono); font-size: 11px; font-weight: 700; color: var(--os-green); flex-shrink: 0; padding-top: 1px; }
+    .ai-rec .a { font-size: 13px; font-weight: 600; color: var(--os-body); line-height: 1.4; }
+    .ai-rec .meta { font-family: var(--os-mono); font-size: 10.5px; color: var(--os-mut); margin-top: 2px; }
+    .ai-value { display: flex; align-items: baseline; gap: 9px; background: var(--os-green-soft); border: 1px solid var(--os-green-line); border-radius: 11px; padding: 11px 14px; margin: 12px 0; }
+    .ai-value .v { font-size: 21px; font-weight: 800; color: var(--os-green); }
+    .ai-value .l { font-family: var(--os-mono); font-size: 10px; letter-spacing: .03em; text-transform: uppercase; color: var(--os-mut2); }
+    .ai-narrative { font-size: 13px; line-height: 1.55; color: var(--os-mut); border-top: 1px solid var(--os-line2); padding-top: 12px; }
+    .loading-shimmer { animation: osPulse 1.2s infinite; }
+
+    /* ── Risk radar / copilot / objectives panels ───────────────────── */
+    .panel h3 { font-size: 13.5px; font-weight: 700; color: var(--os-ink); margin: 0 0 11px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .panel h3 .hint { font-family: var(--os-mono); font-size: 9.5px; font-weight: 400; letter-spacing: .02em; text-transform: none; color: var(--os-mut3); }
+    .risk-item { display: flex; gap: 11px; padding: 9px 0; border-top: 1px solid var(--os-line2); }
+    .risk-item:first-of-type { border-top: none; }
+    .rk-prob { font-family: var(--os-mono); font-size: 12px; font-weight: 800; flex-shrink: 0; padding: 4px 7px; border-radius: 7px; height: fit-content; }
+    .rk-prob.lo { background: var(--os-green-soft); color: var(--os-green); }
+    .rk-prob.med { background: #fdf3e6; color: var(--os-amber); }
+    .rk-prob.hi { background: #fbeaea; color: var(--os-red); }
+    .rk-body .t { font-size: 12.5px; font-weight: 600; color: var(--os-body); line-height: 1.35; }
+    .rk-body .s { font-size: 11.5px; color: var(--os-mut); line-height: 1.4; margin: 3px 0 6px; }
+    .rk-act { border: 1px solid var(--os-green-line); background: var(--os-green-soft); color: var(--os-green); font-family: var(--os-mono); font-size: 10.5px; font-weight: 600; padding: 5px 10px; border-radius: 8px; }
+    .rk-act:hover { background: #e2efe4; }
+    .copilot-log { display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; margin-bottom: 10px; }
+    .cp-msg { font-size: 12.5px; line-height: 1.5; padding: 8px 11px; border-radius: 10px; }
+    .cp-msg.a { background: var(--os-card2); border: 1px solid var(--os-line2); color: var(--os-body); }
+    .cp-msg.q { background: var(--os-green-soft); border: 1px solid var(--os-green-line); color: var(--os-green-d); align-self: flex-end; max-width: 85%; }
+    .cp-chip { border: 1px solid var(--os-line); background: var(--os-card2); color: var(--os-body); font-size: 11.5px; padding: 6px 10px; border-radius: 9px; cursor: pointer; transition: all .18s; }
+    .cp-chip:hover { border-color: #cdd3bf; background: #f3f1e6; }
+    .copilot-row { display: flex; gap: 8px; align-items: center; }
+    .copilot-row input { flex: 1; min-width: 0; background: var(--os-card2); border: 1px solid var(--os-line); color: var(--os-ink2); font-family: var(--os-font); font-size: 13px; padding: 9px 12px; border-radius: 10px; }
+    .copilot-row button { border: none; background: var(--os-green); color: #fff; font-size: 13px; font-weight: 700; padding: 9px 15px; border-radius: 10px; }
+    .list-block { display: flex; flex-direction: column; gap: 7px; }
+    .list-block .li { font-size: 12.5px; line-height: 1.4; color: var(--os-body); padding-left: 16px; position: relative; }
+    .list-block .li::before { content: '▸'; position: absolute; left: 0; color: var(--os-green); }
+    .derived { display: flex; flex-direction: column; gap: 3px; border-top: 1px solid var(--os-line2); padding-top: 12px; }
+    .derived .l { font-family: var(--os-mono); font-size: 10px; letter-spacing: .04em; text-transform: uppercase; color: var(--os-mut2); }
+    .derived .v { font-size: 22px; font-weight: 800; }
+    .derived .note { font-family: var(--os-mono); font-size: 10px; color: var(--os-mut3); }
+    .precedent { font-size: 11.5px; line-height: 1.45; color: var(--os-mut); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--os-line2); }
+    .spinner { display: inline-block; width: 11px; height: 11px; border: 2px solid #ffffff66; border-top-color: #fff; border-radius: 50%; animation: spin .7s linear infinite; margin-right: 6px; vertical-align: -1px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
+<div class="os-app">
 
-  <div class="container">
-    <div class="breadcrumb"><a href="/index.html#matrix">Value Chain</a><span class="sep">/</span><span>Scheduling horizon</span><span class="sep">/</span><span class="cur">Future Scheduling Platform</span></div>
-    <div class="demo-head">
-      <h1>Future Scheduling Platform <span class="badge-live">▶ LIVE DEMO</span></h1>
-      <div class="site mono">Morowali nickel logistics — pit → stockyard → jetty → barge → transshipment → vessel · <span id="witaClock">--:--:--</span> WITA</div>
-      <p class="pitch">One scheduling brain for the whole logistics chain. The platform publishes a 48-hour plan for every convoy, berth, barge and vessel — and when a disruption hits, it re-solves the schedule in minutes, not meetings.</p>
-    </div>
-
-    <div class="kpi-row">
-      <div class="kpi-card"><div class="l">Schedule adherence (7 d)</div><div class="v" id="kAdh">94.2<small>%</small></div><div class="d up">+11 pts vs legacy HOS</div></div>
-      <div class="kpi-card"><div class="l">Chain throughput</div><div class="v">41.2<small>kt/d</small></div><div class="d up">+6% with FSP sequencing</div></div>
-      <div class="kpi-card"><div class="l">Demurrage avoided YTD</div><div class="v">$1.1<small>M</small></div><div class="d up">laycan-priority re-planning</div></div>
-      <div class="kpi-card"><div class="l">Re-plan time</div><div class="v">4<small>min</small></div><div class="d">was ~6 h of phone calls</div></div>
-    </div>
-
-    <!-- FSP workspace: dark "control room" screen -->
-    <div class="fsp-screen">
-      <div class="fsp-bar">
-        <div class="fsp-tabs">
-          <button class="fsp-tab active" data-tab="outload">UC2 · Outload schedule</button>
-          <button class="fsp-tab" data-tab="inload">UC1 · Inload logistics</button>
-          <button class="fsp-tab" data-tab="execution">UC3 · Execution</button>
+  <!-- header -->
+  <div class="os-top">
+    <div class="os-top-l">
+      <a class="os-logo" href="/index.html#matrix" title="Back to use-case matrix">OS</a>
+      <div style="white-space:nowrap;">
+        <div style="display:flex;align-items:baseline;gap:10px;">
+          <span class="os-ttl">Future Scheduling Platform</span>
+          <span class="os-kicker">OreSight AI</span>
         </div>
-        <div class="fsp-status mono" id="fspStatus">PLAN v12 · PUBLISHED</div>
+        <div class="os-sub">Pit → stockyard → jetty → barge → transshipment → vessel · 48-h re-solving plan</div>
+      </div>
+    </div>
+    <div class="os-top-r">
+      <div class="fsp-tabs">
+        <button class="fsp-tab active" data-tab="outload">UC2 · Outload</button>
+        <button class="fsp-tab" data-tab="inload">UC1 · Inload</button>
+        <button class="fsp-tab" data-tab="execution">UC3 · Execution</button>
+      </div>
+      <div style="text-align:right;">
+        <div id="witaClock" class="os-clock">--:--:--</div>
+        <div class="os-clock-l">WITA · Shift A</div>
+      </div>
+      <span class="os-live"><span class="os-live-dot"></span><span class="os-live-t">Live</span></span>
+    </div>
+  </div>
+
+  <!-- body: [KPIs + schedule + dock] | [AI rail] -->
+  <div class="os-body">
+
+    <!-- LEFT console -->
+    <div class="os-left">
+
+      <!-- KPI strip -->
+      <div class="os-kpis">
+        <div class="os-kpi"><div class="l">Schedule adherence (7 d)</div><div class="v"><span id="kAdh">94.2</span><span class="u"> %</span></div><div class="d">+11 pts vs legacy HOS</div></div>
+        <div class="os-kpi"><div class="l">Chain throughput</div><div class="v">41.2<span class="u"> kt/d</span></div><div class="d">+6% with FSP sequencing</div></div>
+        <div class="os-kpi"><div class="l">Demurrage avoided YTD</div><div class="v">$1.1<span class="u"> M</span></div><div class="d">laycan-priority re-planning</div></div>
+        <div class="os-kpi"><div class="l">Re-plan time</div><div class="v">4<span class="u"> min</span></div><div class="d">was ~6 h of phone calls</div></div>
       </div>
 
-      <!-- Live constraint / bottleneck strip (Theory-of-Constraints drum + buffer) -->
-      <div class="bottleneck-strip" id="bottleneckStrip"></div>
+      <!-- big visual card: schedule / network / execution -->
+      <div class="os-card os-grow" style="padding:13px 15px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;">
+          <span class="os-label">48-hour published plan</span>
+          <span class="fsp-status" id="fspStatus">PLAN v12 · PUBLISHED</span>
+        </div>
 
-      <!-- UC2: Outload Gantt -->
-      <section class="fsp-pane" id="pane-outload">
+        <!-- Live constraint / bottleneck strip (TOC drum + buffer) -->
+        <div class="bottleneck-strip" id="bottleneckStrip"></div>
+
+        <!-- UC2: Outload Gantt -->
+        <section class="fsp-pane" id="pane-outload">
+          <div class="gantt" id="gantt"></div>
+          <div class="gantt-legend">
+            <span><i class="gl load"></i>Load at jetty</span>
+            <span><i class="gl transit"></i>Transit</span>
+            <span><i class="gl tranship"></i>Transship</span>
+            <span><i class="gl ogv"></i>OGV loading</span>
+            <span><i class="gl maint"></i>Outage / repair</span>
+            <span><i class="gl laycan"></i>Laycan window</span>
+            <span><i class="gl tide"></i>Tidal draft gate</span>
+          </div>
+        </section>
+
+        <!-- UC1: Inload network -->
+        <section class="fsp-pane" id="pane-inload" style="display:none;">
+          <div class="inload-grid">
+            <div>
+              <div class="mono-label" style="margin-bottom:8px;">Pit → stockyard network · live convoy positions</div>
+              <svg id="netmap" viewBox="0 0 640 300" preserveAspectRatio="xMidYMid meet"></svg>
+            </div>
+            <div>
+              <div class="mono-label" style="margin-bottom:8px;">Convoy allocation — next 4 hours</div>
+              <div style="overflow:auto;min-height:0;flex:1;"><table class="fsp-table" id="allocTable"></table></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- UC3: Execution -->
+        <section class="fsp-pane" id="pane-execution" style="display:none;">
+          <div class="exec-prob mono-label" id="execProb"></div>
+          <div class="exec-grid">
+            <div>
+              <div class="mono-label" style="margin-bottom:8px;">Variance to plan — by resource (h, last 24 h)</div>
+              <div style="flex:1;min-height:0;position:relative;"><canvas id="varChart"></canvas></div>
+            </div>
+            <div>
+              <div class="mono-label" style="margin-bottom:8px;">Re-plan log</div>
+              <div class="fsp-log" id="replanLog"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- dock: inject disruption controls -->
+      <div class="os-card sm" style="flex-shrink:0;display:flex;flex-direction:column;gap:9px;">
         <div class="fsp-toolbar">
-          <span class="mono-label" style="color:#8fa18f;">Inject disruption</span>
+          <span class="mono-label">Inject disruption</span>
           <button class="disrupt-btn" data-d="jetty2-down">⚙ Berth 2 loader down — 4 h</button>
-          <button class="disrupt-btn" data-d="swell">🌊 Heavy swell at anchorage — 8 h</button>
+          <button class="disrupt-btn" data-d="swell">🌊 Heavy swell — 8 h</button>
           <button class="disrupt-btn" data-d="barge-engine">🛠 BG-3103 engine fault</button>
           <button class="disrupt-btn reset" data-d="reset">↺ Restore base plan</button>
         </div>
@@ -55,58 +272,38 @@
           <button class="ff-btn" id="ffBtn">Re-solve →</button>
           <span class="ff-hint">✦ Natural-language disruptions are parsed by AI into a schedule constraint, then re-solved by the engine.</span>
         </div>
-        <div class="gantt" id="gantt"></div>
-        <div class="gantt-legend">
-          <span><i class="gl load"></i>Load at jetty</span>
-          <span><i class="gl transit"></i>Transit</span>
-          <span><i class="gl tranship"></i>Transship</span>
-          <span><i class="gl ogv"></i>OGV loading</span>
-          <span><i class="gl maint"></i>Outage / repair</span>
-          <span><i class="gl laycan"></i>Laycan window</span>
-          <span><i class="gl tide"></i>Tidal draft gate</span>
-        </div>
-        <div class="option-cards" id="optionCards" style="display:none;"></div>
-      </section>
-
-      <!-- UC1: Inload network -->
-      <section class="fsp-pane" id="pane-inload" style="display:none;">
-        <div class="grid-2" style="gap: 14px; align-items: stretch;">
-          <div>
-            <div class="mono-label" style="color:#8fa18f; margin-bottom: 10px;">Pit → stockyard network · live convoy positions</div>
-            <svg id="netmap" viewBox="0 0 640 300" style="width:100%; background:#0d120c; border-radius:10px; border:1px solid #283226;"></svg>
-          </div>
-          <div>
-            <div class="mono-label" style="color:#8fa18f; margin-bottom: 10px;">Convoy allocation — next 4 hours</div>
-            <table class="fsp-table" id="allocTable"></table>
-          </div>
-        </div>
-      </section>
-
-      <!-- UC3: Execution -->
-      <section class="fsp-pane" id="pane-execution" style="display:none;">
-        <div class="exec-prob mono-label" id="execProb" style="color:#8fa18f; margin-bottom:12px;"></div>
-        <div class="grid-2" style="gap: 14px; align-items: start;">
-          <div>
-            <div class="mono-label" style="color:#8fa18f; margin-bottom: 10px;">Variance to plan — by resource (h, last 24 h)</div>
-            <canvas id="varChart" style="max-height: 220px;"></canvas>
-          </div>
-          <div>
-            <div class="mono-label" style="color:#8fa18f; margin-bottom: 10px;">Re-plan log</div>
-            <div class="fsp-log" id="replanLog"></div>
-          </div>
-        </div>
-      </section>
+      </div>
     </div>
 
-    <div class="ai-panel" id="aiPanel" style="margin-top: 18px;">
-      <div class="ai-panel-head"><span class="spark">✦</span><span class="t">OreSight AI — Re-plan rationale</span></div>
-      <div style="color: var(--muted); font-size: 13.5px;">Inject a disruption — pick a preset, type one in plain language, or pre-position against a forecast risk. The platform re-solves the 48-hour schedule, offers the trade-off options, and explains every move it makes — what shifts, what holds, and what it's worth.</div>
-    </div>
+    <!-- RIGHT — AI rail -->
+    <aside class="os-rail">
 
-    <div class="fsp-grid3">
-      <div class="panel" id="riskRadar"></div>
-      <div class="panel" id="copilotPanel"></div>
-      <div class="panel">
+      <!-- AI re-plan rationale + strategy options -->
+      <div class="os-card">
+        <div class="ai-panel-head" style="margin-bottom:14px;">
+          <span class="os-ai-badge">AI</span>
+          <span class="os-label">OreSight scheduling optimiser</span>
+        </div>
+
+        <!-- strategy trade-off cards (renderOptions target) -->
+        <div class="os-label" style="margin-bottom:9px;">Strategy <span style="color:#b3b7a6;font-weight:400;text-transform:none;letter-spacing:0;">· pick the trade-off</span></div>
+        <div class="option-cards" id="optionCards" style="display:none;margin-bottom:16px;"></div>
+
+        <!-- re-plan rationale (renderAIResult target) -->
+        <div class="ai-panel" id="aiPanel">
+          <div class="ai-panel-head"><span class="spark">✦</span><span class="t">Re-plan rationale</span></div>
+          <div style="color:var(--os-mut);font-size:13px;line-height:1.55;">Inject a disruption — pick a preset, type one in plain language, or pre-position against a forecast risk. The platform re-solves the 48-hour schedule, offers the trade-off options, and explains every move it makes — what shifts, what holds, and what it's worth.</div>
+        </div>
+      </div>
+
+      <!-- Risk radar -->
+      <div class="os-card panel" id="riskRadar"></div>
+
+      <!-- Scheduling copilot -->
+      <div class="os-card panel" id="copilotPanel"></div>
+
+      <!-- Platform objectives + value protected + learning loop -->
+      <div class="os-card panel">
         <h3>Platform objectives <span class="hint">why operations teams adopt it</span></h3>
         <div class="list-block">
           <div class="li">Replace legacy spreadsheet/HOS scheduling with one optimised, published plan</div>
@@ -114,14 +311,15 @@
           <div class="li">Build internal digital capability to support and extend the platform</div>
           <div class="li">Deliver value from increased throughput &amp; margin — measured per re-plan, not per slide</div>
         </div>
-        <div class="derived" style="margin-top: 16px;"><span class="l">Value protected this week</span><span class="v" style="color: var(--green);" id="kProtected">$621,000</span><span class="note">demurrage + throughput recovered by re-plans</span></div>
+        <div class="derived" style="margin-top:14px;"><span class="l">Value protected this week</span><span class="v" style="color:var(--os-green);" id="kProtected">$621,000</span><span class="note">demurrage + throughput recovered by re-plans</span></div>
         <div class="precedent" id="precedent">↳ <b>Learning loop:</b> 2 prior disruptions on file — re-plans referenced against precedent.</div>
       </div>
-    </div>
+    </aside>
   </div>
+</div>
 
   <script type="module" src="/js/fsp.js"></script>
 <script src="/js/tour.js"></script>
-<script>OreTour.init({"label":"Guided tour","steps":[{"sel":"#bottleneckStrip","title":"Bottleneck","text":"The binding constraint across the 48-hour barge-to-vessel schedule."},{"sel":"#netmap","title":"Network map","text":"Jetty → barges → floating crane → ocean vessels, live."},{"sel":"#gantt","title":"Schedule (Gantt)","text":"The published 48-hour plan; it re-solves visibly when a disruption hits."},{"sel":"#optionCards","title":"AI re-plan options","text":"Ranked re-plan choices with tonnes protected and demurrage avoided."},{"sel":"#copilotPanel","title":"Copilot","text":"Ask the scheduling copilot or inject a free-text disruption."}]});</script>
+<script>OreTour.init({"label":"Guided tour","steps":[{"sel":"#bottleneckStrip","title":"Bottleneck","text":"The binding constraint across the 48-hour barge-to-vessel schedule."},{"sel":"#gantt","title":"Schedule (Gantt)","text":"The published 48-hour plan; it re-solves visibly when a disruption hits."},{"sel":"#optionCards","title":"AI re-plan options","text":"Ranked re-plan choices with tonnes protected and demurrage avoided."},{"sel":"#riskRadar","title":"Risk radar","text":"Forecast disruptions — pre-position before the hit."},{"sel":"#copilotPanel","title":"Copilot","text":"Ask the scheduling copilot or inject a free-text disruption."}]});</script>
 </body>
 </html>
