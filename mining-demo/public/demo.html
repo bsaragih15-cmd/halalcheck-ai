@@ -40,5 +40,16 @@
   </div>
 
   <script type="module" src="/js/demo.js"></script>
+  <script src="/js/tour.js"></script>
+  <script>
+    OreTour.init({ label: 'Guided tour', steps: [
+      { sel: '.demo-head', title: 'The use-case', text: 'What this module decides, where it runs, and the value driver it targets.' },
+      { sel: '#kpis', title: 'Live KPIs', text: 'The headline metrics for this use-case, each with a delta against plan or baseline.' },
+      { sel: '#charts', title: 'Trends & breakdown', text: 'How the key signal is moving and where the loss or opportunity sits.' },
+      { sel: '#scenario', title: 'Scenario control', text: 'Drag the control — the deterministic model re-solves instantly so you can see the trade-off.' },
+      { sel: '#aiBtn', title: 'AI recommendation', text: 'Generate a grounded recommendation that reacts to the scenario you set.' },
+      { sel: '#aiPanel', title: 'The recommendation', text: 'A ranked, quantified action plan with its value impact appears here.' },
+    ]});
+  </script>
 </body>
 </html>
