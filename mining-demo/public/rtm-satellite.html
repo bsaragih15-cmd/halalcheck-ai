@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>OreSight AI — RTM over Satellite (Bingham Canyon)</title>
+<title>OreSight AI — RTM over Satellite (Batu Hijau)</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -16,18 +16,16 @@
   .leaflet-container{background:#0c1116}
   .card{position:absolute;z-index:1000;background:rgba(18,26,34,.95);border:1px solid var(--line);
     border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.45)}
-  .titlecard{top:12px;left:12px;padding:12px 14px;max-width:330px}
+  .titlecard{top:12px;left:12px;padding:12px 14px;max-width:320px}
   .titlecard h1{font-size:15px;margin:0 0 2px;font-weight:800}
   .titlecard .sub{font-size:11.5px;color:var(--mut);line-height:1.45}
-  .titlecard .brand{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--green);
+  .brand{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--green);
     font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
-  .titlecard .brand i{width:9px;height:9px;background:var(--green);border-radius:2px;display:inline-block}
-  .nav{margin-top:9px;border-top:1px solid var(--line);padding-top:8px;display:flex;gap:7px;flex-wrap:wrap}
-  .nav a{font-size:10.5px;color:#9ec5ff;text-decoration:none;border:1px solid var(--line);
-    border-radius:6px;padding:3px 8px}
+  .brand i{width:9px;height:9px;background:var(--green);border-radius:2px;display:inline-block}
+  .nav{margin-top:9px;display:flex;gap:7px;flex-wrap:wrap}
+  .nav a{font-size:10.5px;color:#9ec5ff;text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:3px 8px}
   .nav a.on{background:#1c2a36;color:#fff;border-color:#2f4a5e}
-  .note{margin-top:8px;font-size:10.3px;color:#d6a85a;line-height:1.4}
-  .legend{bottom:18px;right:12px;padding:11px 13px;font-size:11px;min-width:178px}
+  .legend{bottom:18px;right:12px;padding:11px 13px;font-size:11px;min-width:172px}
   .legend h4{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut)}
   .ramp{display:flex;height:13px;border-radius:3px;overflow:hidden;margin-bottom:4px}
   .ramp span{flex:1}
@@ -42,6 +40,14 @@
   .leaflet-bar a{background:#121a22!important;color:var(--ink)!important;border-color:var(--line)!important}
   .pit-lab{font-size:11px;font-weight:700;color:#eaf6ff;text-shadow:0 1px 4px #000;white-space:nowrap}
   .inc-pop{font-size:11.5px;line-height:1.5}.inc-pop b{color:#0c1116}
+  /* calibration panel */
+  .calib{bottom:18px;left:12px;padding:10px 12px;max-width:280px;font-size:11px}
+  .calib h4{margin:0 0 5px;font-size:11px;text-transform:uppercase;letter-spacing:.6px;color:#9ec5ff}
+  .calib p{margin:0 0 7px;color:var(--mut);line-height:1.4}
+  .calib pre{background:#0b0f14;border:1px solid var(--line);border-radius:6px;padding:7px 8px;
+    margin:0;font-family:JetBrains Mono,monospace;font-size:10.5px;color:#cde;max-height:96px;overflow:auto;white-space:pre-wrap}
+  .calib button{margin-top:6px;font-size:10.5px;background:#1c2a36;color:#fff;border:1px solid #2f4a5e;
+    border-radius:6px;padding:3px 9px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -49,14 +55,13 @@
 
 <div class="card titlecard">
   <div class="brand"><i></i> OreSight AI · Safety</div>
-  <h1>RTM over Satellite — Bingham Canyon</h1>
-  <div class="sub">Risk surface aligned to a <b>real open pit</b>. The crest and spiral haul ramp are traced to the pit's true centre &amp; radius (its real form is concentric benches), so the RTM factors sit on the actual workings.</div>
+  <h1>RTM over Satellite — Batu Hijau</h1>
+  <div class="sub">Risk surface on the real copper-gold pit (Sumbawa). Crest &amp; haul ramp traced to the pit; risk concentrates at ramp switchbacks, crest edge and floor.</div>
   <div class="nav">
     <a href="rtm.html">Schematic</a>
     <a class="on">Satellite trace</a>
     <a href="rtm-section.html">Cross-section</a>
   </div>
-  <div class="note">⚠ Crest/ramp are a parametric trace of the pit geometry, not a pixel survey. Surface facilities (crusher, dumps) are omitted here since they can't be verified without the still image.</div>
 </div>
 
 <div class="card legend">
@@ -70,49 +75,62 @@
   <div class="lg"><span class="cr"></span> Pit crest (traced)</div>
 </div>
 
+<div class="card calib">
+  <h4>Calibrate the trace</h4>
+  <p>Click these on the satellite, in order: <b>1) pit centre · 2) crest edge · 3) ramp top · 4) floor</b>, then send me the lines below — I'll lock the trace onto the real pit.</p>
+  <pre id="clicklog">(click the map…)</pre>
+  <button onclick="document.getElementById('clicklog').textContent='(click the map…)';clicks.length=0;">Clear</button>
+</div>
+
 <script>
-/* ───────── Geo (real metric anchor on Bingham Canyon) ───────── */
-const C={lat:40.5230,lng:-112.1510};
+/* ════════ CONFIG — adjust after calibration ════════ */
+const CFG = {
+  center:[-8.9667, 116.8667],   // pit centre (lat,lng)
+  pitA:1050, pitB:980,          // crest semi-axes (m): E-W, N-S
+  rotDeg:0,                     // rotate whole trace (deg)
+  rampTurns:1.8,                // ramp winds this many turns to floor
+};
+/* ═══════════════════════════════════════════════════ */
+
+const C={lat:CFG.center[0], lng:CFG.center[1]};
 const M_LAT=111320, M_LNG=111320*Math.cos(C.lat*Math.PI/180);
-const off=(dx,dy)=>[C.lat+dy/M_LAT, C.lng+dx/M_LNG];
+const rot=CFG.rotDeg*Math.PI/180, cosR=Math.cos(rot), sinR=Math.sin(rot);
+function off(dx,dy){ const x=dx*cosR-dy*sinR, y=dx*sinR+dy*cosR;
+  return [C.lat+y/M_LAT, C.lng+x/M_LNG]; }
 const dist=(ax,ay,bx,by)=>Math.hypot(ax-bx,ay-by);
 
-const map=L.map('map',{preferCanvas:true,zoomControl:false}).setView([C.lat,C.lng],14);
-L.control.zoom({position:'bottomleft'}).addTo(map);
+const map=L.map('map',{preferCanvas:true,zoomControl:false}).setView([C.lat,C.lng],15);
+L.control.zoom({position:'topleft'}).addTo(map);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
   {maxZoom:19,attribution:'Imagery © Esri, Maxar, Earthstar Geographics'}).addTo(map);
 
-/* ───────── Traced pit geometry (aligned to true centre/radius) ───────── */
-const PIT={a:1980,b:1760};                       // crest semi-axes (m)
+/* ───────── Traced geometry ───────── */
+const PIT={a:CFG.pitA,b:CFG.pitB};
 const crestM=[]; for(let d=0;d<360;d+=4){const th=d*Math.PI/180;
   crestM.push({x:PIT.a*Math.cos(th),y:PIT.b*Math.sin(th)});}
-// descending spiral haul ramp (Bingham's real form: concentric switchbacks)
-const rampM=[]; { const TURNS=2.6,N=420,rOa=1850,rOb=1640,rI=240;
-  for(let i=0;i<=N;i++){const t=i/N, ea=rI+(rOa-rI)*(1-t), eb=rI+(rOb-rI)*(1-t),
-    ang=t*TURNS*2*Math.PI;
+const N=320, rampM=[]; { const rOa=PIT.a*0.93,rOb=PIT.b*0.93,rI=130;
+  for(let i=0;i<=N;i++){const t=i/N, ea=rI+(rOa-rI)*(1-t), eb=rI+(rOb-rI)*(1-t), ang=t*CFG.rampTurns*2*Math.PI;
     rampM.push({x:ea*Math.cos(ang),y:eb*Math.sin(ang)});}}
 const FLOOR={x:0,y:0};
-const BLAST={x:650,y:-780,rad:330};
 const conflictM=[
-  {...rampM[Math.round(N0(0.12))],t:'Switchback'},{...rampM[Math.round(N0(0.30))],t:'Switchback'},
-  {...rampM[Math.round(N0(0.50))],t:'Switchback'},{...rampM[Math.round(N0(0.72))],t:'Switchback'},
-  {x:1480,y:980,t:'Primary haul exit (approx)'},{x:FLOOR.x,y:FLOOR.y,t:'Floor loading bay'},
+  {...rampM[Math.round(N*0.22)],t:'Ramp switchback'},
+  {...rampM[Math.round(N*0.58)],t:'Ramp switchback'},
+  {...rampM[0], t:'Haul exit (ramp top)'},
+  {x:FLOOR.x,y:FLOOR.y,t:'Pit floor — loading'},
 ];
-function N0(f){return f*420;}
 const roadSamp=rampM.filter((_,i)=>i%3===0);
 
 /* ───────── RTM engine ───────── */
-const GRID=42, EXT=2350, CELL=2*EXT/GRID;
-const WT={conflict:1.0,road:0.55,crest:0.6,blast:0.75,floor:0.42};
+const GRID=34, EXT=Math.max(PIT.a,PIT.b)*1.35, CELL=2*EXT/GRID;
+const WT={conflict:1.0,road:0.55,crest:0.6,floor:0.44};
 function factorRisk(x,y){
   let dr=1e9; for(const p of roadSamp){const d=dist(x,y,p.x,p.y);if(d<dr)dr=d;}
-  const road=Math.exp(-dr/150);
-  let conf=0; for(const p of conflictM){conf=Math.max(conf,Math.exp(-dist(x,y,p.x,p.y)/230));}
+  const road=Math.exp(-dr/95);
+  let conf=0; for(const p of conflictM){conf=Math.max(conf,Math.exp(-dist(x,y,p.x,p.y)/150));}
   let dc=1e9; for(const p of crestM){const d=dist(x,y,p.x,p.y);if(d<dc)dc=d;}
-  const crest=Math.exp(-dc/140);
-  const db=dist(x,y,BLAST.x,BLAST.y); const blast=db<BLAST.rad?1:Math.exp(-(db-BLAST.rad)/300);
-  const floor=Math.exp(-dist(x,y,FLOOR.x,FLOOR.y)/520);
-  return WT.road*road+WT.conflict*conf+WT.crest*crest+WT.blast*blast+WT.floor*floor;
+  const crest=Math.exp(-dc/90);
+  const floor=Math.exp(-dist(x,y,FLOOR.x,FLOOR.y)/300);
+  return WT.road*road+WT.conflict*conf+WT.crest*crest+WT.floor*floor;
 }
 const cells=[]; let maxR=0;
 for(let i=0;i<GRID;i++)for(let j=0;j<GRID;j++){const cx=-EXT+(i+.5)*CELL, cy=-EXT+(j+.5)*CELL;
@@ -125,15 +143,16 @@ const cls=n=>n<TH[0]?0:n<TH[1]?1:n<TH[2]?2:n<TH[3]?3:4;
 const rtmLayer=L.layerGroup();
 cells.forEach(c=>{const k=cls(c.n);
   L.rectangle([off(c.cx-CELL/2,c.cy-CELL/2),off(c.cx+CELL/2,c.cy+CELL/2)],
-    {stroke:false,fillColor:RAMP[k],fillOpacity:k===0?0.16:0.42}).addTo(rtmLayer);});
+    {stroke:false,fillColor:RAMP[k],fillOpacity:k===0?0.14:0.42}).addTo(rtmLayer);});
 rtmLayer.addTo(map);
 
 const crestLayer=L.layerGroup();
 L.polygon(crestM.map(p=>off(p.x,p.y)),{color:'#7dd3fc',weight:2,dashArray:'6 5',fill:false,opacity:.9}).addTo(crestLayer);
+L.marker(off(0,-PIT.b-120),{icon:L.divIcon({className:'',html:'<div class="pit-lab">BATU HIJAU PIT</div>',iconSize:[0,0]})}).addTo(crestLayer);
 crestLayer.addTo(map);
 
 const roadLayer=L.layerGroup();
-L.polyline(rampM.map(p=>off(p.x,p.y)),{color:'#f4c430',weight:2.4,opacity:.95}).addTo(roadLayer);
+L.polyline(rampM.map(p=>off(p.x,p.y)),{color:'#f4c430',weight:2.6,opacity:.95}).addTo(roadLayer);
 roadLayer.addTo(map);
 
 const cpLayer=L.layerGroup();
@@ -142,27 +161,28 @@ conflictM.forEach(p=>L.circleMarker(off(p.x,p.y),{radius:7,color:'#b8860b',weigh
 cpLayer.addTo(map);
 
 const incLayer=L.layerGroup();
-const N_INC=120, TYPES=['Struck-by (light vehicle)','Fall of ground','Vehicle rollover','Tyre/edge near-miss','Blast exclusion breach','Gas reading exceedance'];
+const N_INC=70, TYPES=['Struck-by (light vehicle)','Fall of ground','Vehicle rollover','Tyre/edge near-miss','Restricted sight-line','Loading-bay incident'];
 const wsum=[]; let acc=0; cells.forEach(c=>{acc+=Math.pow(c.n,2.6);wsum.push(acc);});
 function pick(){const t=Math.random()*acc;let lo=0,hi=wsum.length-1;
   while(lo<hi){const m=(lo+hi)>>1;if(wsum[m]<t)lo=m+1;else hi=m;}return cells[lo];}
 for(let i=0;i<N_INC;i++){const c=pick(),jx=(Math.random()-.5)*CELL,jy=(Math.random()-.5)*CELL;
   const yr=2018+Math.floor(Math.random()*7),ty=TYPES[Math.min(TYPES.length-1,Math.floor(c.n*TYPES.length))];
-  L.circleMarker(off(c.cx+jx,c.cy+jy),{radius:3.4,color:'#fff',weight:.8,fillColor:'#ff3b30',fillOpacity:.9})
+  L.circleMarker(off(c.cx+jx,c.cy+jy),{radius:3.5,color:'#fff',weight:.8,fillColor:'#ff3b30',fillOpacity:.9})
     .bindPopup(`<div class="inc-pop"><b>${ty}</b><br>Year: ${yr}<br>RTM value: ${c.n.toFixed(2)}</div>`).addTo(incLayer);}
 incLayer.addTo(map);
 
-const blastLayer=L.layerGroup();
-L.circle(off(BLAST.x,BLAST.y),{radius:BLAST.rad,color:'#ff9f0a',weight:1.5,dashArray:'8 5',
-  fillColor:'#ff9f0a',fillOpacity:.10}).bindTooltip('Active blast exclusion zone (illustrative)').addTo(blastLayer);
-L.marker(off(0,-PIT.b-150),{icon:L.divIcon({className:'',html:'<div class="pit-lab">BINGHAM CANYON PIT</div>',iconSize:[0,0]})}).addTo(crestLayer);
-
 L.control.layers(null,{
   'RTM risk surface':rtmLayer,'Pit crest (traced)':crestLayer,'Haul ramp (traced)':roadLayer,
-  'Conflict points':cpLayer,'Historical incidents':incLayer,'Blast exclusion zone':blastLayer,
+  'Conflict points':cpLayer,'Historical incidents':incLayer,
 },{collapsed:false,position:'topright'}).addTo(map);
 
-map.fitBounds(L.latLngBounds(off(-EXT,-EXT),off(EXT,EXT)).pad(-0.04));
+/* ───────── click-to-calibrate ───────── */
+const clicks=[]; const LB=['1 centre','2 crest','3 ramp-top','4 floor'];
+map.on('click',e=>{ clicks.push(e.latlng);
+  const txt=clicks.map((p,i)=>`${LB[i]||('+'+i)}: ${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`).join('\n');
+  document.getElementById('clicklog').textContent=txt; });
+
+map.fitBounds(L.latLngBounds(off(-EXT,-EXT),off(EXT,EXT)).pad(-0.02));
 </script>
 </body>
 </html>
