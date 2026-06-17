@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OreSight AI — Dispatch Optimisation</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f4f2ec; --panel:#fbfaf6; --panel2:#f0eee6; --ink:#1b231a; --mut:#6b7464; --mut2:#8a9282;
+    --line:#e2dfd4; --line2:#d8d4c7; --green:#15803d; --green-d:#0f5c2c; --green-l:#e7f1ea;
+    --red:#cf5b54; --red-d:#b91c1c; --orange:#c8741c; --cyan:#0e7490; --amber:#b45309; --blue:#2a5f8f;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+    --sans:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  }
+  html{font-size:clamp(13px, 0.42vw + 9.2px, 16px); height:100%; overflow:hidden}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);font-size:.92rem;line-height:1.4;height:100%;overflow:hidden;display:flex;flex-direction:column}
+  .mono{font-family:var(--mono)}
+
+  /* NAV */
+  .nav{display:flex;align-items:center;gap:1.3rem;background:#13301d;color:#dfe7da;padding:0 18px;height:2.9rem;font-size:.86rem;flex:none}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:1rem;color:#fff;text-decoration:none}
+  .brand em{color:#5dd08a;font-style:normal}
+  .logo{display:inline-flex;align-items:center;justify-content:center;width:1.6rem;height:1.6rem;background:var(--green);border-radius:5px;font-family:var(--mono);font-weight:800;font-size:.78rem;color:#fff}
+  .nav-links{display:flex;gap:.95rem;color:#aebaa6;font-weight:500}
+  .nav-links a{color:#aebaa6;text-decoration:none;white-space:nowrap}
+  .nav-links a.active,.nav-links a:hover{color:#fff}
+  .nav-sp{flex:1}
+  .src{font-family:var(--mono);font-size:.72rem;letter-spacing:.4px;border:1px solid #6b7d5f;border-radius:20px;padding:.25rem .7rem;color:#cdd8c4;display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+  .src b{width:7px;height:7px;border-radius:50%;background:#f0c14b;display:inline-block}
+  .src.live{border-color:#5dd08a;color:#dff3e6} .src.live b{background:#5dd08a;animation:pulse 1.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .btn-pilot{background:var(--green);color:#fff;border:none;border-radius:6px;padding:.45rem .8rem;font-weight:600;font-size:.84rem;cursor:pointer}
+
+  /* TITLE STRIP */
+  .tstrip{display:flex;align-items:center;gap:12px;padding:.4rem 18px;flex:none;border-bottom:1px solid var(--line)}
+  .tstrip h1{font-size:1.18rem;font-weight:800;margin:0;letter-spacing:-.3px}
+  .tstrip .crumb{font-size:.78rem;color:var(--mut2)}
+  .tstrip .sub{font-family:var(--mono);font-size:.78rem;color:var(--mut)}
+  .tag{font-family:var(--mono);font-size:.72rem;font-weight:700;padding:2px 7px;border-radius:5px;letter-spacing:.4px}
+  .tag.horizon{background:#e6eef6;color:#2a5f8f}
+  .tag.dev{background:#efece2;color:#8a7a4a;border:1px solid #ded7c2}
+  .tag.dollar{color:var(--green);font-size:1.05rem;font-weight:800}
+
+  /* MAIN GRID */
+  main{flex:1;display:grid;grid-template-columns:1.58fr 1fr;gap:12px;padding:12px 18px;min-height:0}
+  .col{display:flex;flex-direction:column;gap:10px;min-height:0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:.7rem .85rem;min-height:0}
+  .chead{display:flex;align-items:center;gap:8px;margin-bottom:.5rem}
+  .chead h2{font-size:.92rem;font-weight:700;margin:0;white-space:nowrap}
+  .chead .hint{font-size:.74rem;color:var(--mut2);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .herohint{display:none}
+  @media(min-width:1200px){.herohint{display:inline}}
+
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;flex:none}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:.55rem .7rem}
+  .kpi .lab{font-size:.74rem;color:var(--mut);margin-bottom:.35rem}
+  .kpi .val{font-family:var(--mono);font-size:1.5rem;font-weight:800;letter-spacing:-.5px;line-height:1}
+  .kpi .val span{font-size:.74rem;font-weight:600;color:var(--mut2);margin-left:2px}
+  .kpi .foot{font-size:.7rem;color:var(--mut2);margin-top:.35rem}
+  .kpi .foot.good{color:var(--green)} .kpi .foot.warn{color:var(--amber)} .kpi .foot.risk{color:var(--red-d)}
+
+  /* VALUE CHAIN */
+  .vchain{display:flex;gap:0;flex:none}
+  .vnode{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:.5rem .6rem;position:relative}
+  .vnode + .vnode{margin-left:16px}
+  .vnode::before{content:'\203A';position:absolute;left:-12px;top:50%;transform:translateY(-50%);color:var(--mut2);font-size:1.1rem;font-weight:700}
+  .vnode:first-child::before{display:none}
+  .vn-top{display:flex;align-items:center;gap:6px;margin-bottom:.35rem}
+  .vn-dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .vn-dot.ok{background:var(--green)} .vn-dot.warn{background:var(--orange)} .vn-dot.risk{background:var(--red)}
+  .vn-stage{font-size:.66rem;font-family:var(--mono);letter-spacing:.2px;color:var(--mut);text-transform:uppercase;font-weight:700}
+  .vn-val{font-family:var(--mono);font-size:1.12rem;font-weight:800;letter-spacing:-.4px;line-height:1}
+  .vn-val span{font-size:.7rem;color:var(--mut2);font-weight:600;margin-left:2px}
+  .vn-sub{font-size:.68rem;color:var(--mut2);margin-top:.3rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* CHART CARDS fill */
+  .grow{flex:1;display:flex;flex-direction:column;min-height:0}
+  .grow > svg{flex:1;width:100%;min-height:0}
+
+  /* HERO (network / cascade tabs) */
+  .tabs{display:flex;gap:4px}
+  .tab{font-family:var(--mono);font-size:.74rem;border:1px solid var(--line2);background:var(--panel2);border-radius:6px;padding:.2rem .65rem;cursor:pointer}
+  .tab.on{background:var(--green);color:#fff;border-color:var(--green)}
+  .tab.alloc{border-color:#bcd6dd}
+  .tab.alloc.on{background:var(--cyan);border-color:var(--cyan);color:#fff}
+  .herobody{flex:1;position:relative;min-height:0}
+  .herobody > svg{position:absolute;inset:0;width:100%;height:100%}
+  .netlegend{display:flex;flex-wrap:wrap;gap:.7rem;font-size:.7rem;color:var(--mut);margin:0 0 .35rem}
+  .netlegend span{display:flex;align-items:center;gap:4px}
+  .nl-sw{width:15px;height:6px;border-radius:3px;display:inline-block}
+  .nl-cut{width:15px;height:6px;border-radius:3px;display:inline-block;background:var(--red-d);box-shadow:0 0 0 2px #f3c9c4}
+
+  /* constraint card overlay */
+  .ccard{position:absolute;left:8px;bottom:8px;z-index:50;background:rgba(251,250,246,.97);border:1px solid var(--line);border-left:3px solid var(--mut2);border-radius:8px;padding:.5rem .65rem;font-size:.74rem;max-width:60%;box-shadow:0 4px 14px rgba(0,0,0,.12);display:none}
+  .ccard.show{display:block}
+  .ccard.fleet{border-left-color:var(--amber)} .ccard.infra{border-left-color:var(--red-d)} .ccard.source{border-left-color:var(--blue)} .ccard.slack{border-left-color:var(--green)}
+  .ccard .cc-h{font-weight:700;font-size:.82rem;margin-bottom:.2rem;display:flex;align-items:center;gap:6px}
+  .cc-own{font-family:var(--mono);font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;padding:1px 5px;border-radius:4px}
+  .cc-own.fleet{background:#f7ead3;color:var(--amber)} .cc-own.infra{background:#fbeae8;color:var(--red-d)} .cc-own.source{background:#e6eef6;color:var(--blue)} .cc-own.slack{background:#e7f1ea;color:var(--green-d)}
+  .ccard .cc-row{color:var(--mut);margin:.12rem 0;font-family:var(--mono);font-size:.7rem}
+  .ccard .cc-row b{color:var(--ink)}
+  .ccard .cc-fix{margin-top:.25rem;font-size:.72rem;color:var(--ink)}
+  .ccard .cc-x{position:absolute;top:5px;right:8px;cursor:pointer;color:var(--mut2);font-weight:700}
+  .cc-hint{font-size:.66rem;color:var(--mut2);font-family:var(--mono);position:absolute;right:8px;bottom:8px;z-index:40}
+
+  /* SCENARIO */
+  .scen-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+  .scen-head .t{font-weight:700;font-size:.92rem}
+  .scen-head .h{font-size:.74rem;color:var(--mut2);font-style:italic}
+  .lever + .lever{margin-top:.5rem}
+  .lever .ll{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.3rem}
+  .lever .lname{font-size:.84rem;font-weight:600}
+  .lever .lname i{font-style:normal;font-family:var(--mono);font-size:.6rem;color:var(--cyan);background:#e9f3f5;border:1px solid #bcd6dd;border-radius:4px;padding:0 4px;margin-left:5px}
+  .lever .lname i.own{color:var(--red-d);background:#fbeae8;border-color:#e9c4c0}
+  .lever .lval{font-family:var(--mono);font-size:1.05rem;font-weight:800;color:var(--green-d)}
+  .lever .lval span{font-size:.7rem;color:var(--mut)}
+  .seg{display:flex;gap:4px;margin-top:.15rem}
+  .seg button{flex:1;font-family:var(--mono);font-size:.7rem;border:1px solid var(--line2);background:var(--panel2);border-radius:6px;padding:.28rem .2rem;cursor:pointer;color:var(--mut)}
+  .seg button.on{background:var(--cyan);border-color:var(--cyan);color:#fff}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;background:#dcd8cc;border-radius:4px;outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:1.2rem;height:1.2rem;border-radius:50%;background:var(--green);cursor:pointer;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+  .ticks{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.66rem;color:var(--mut2);margin-top:.3rem}
+  .costbox{background:var(--panel2);border-radius:8px;padding:.6rem .75rem;margin-top:.6rem}
+  .costbox .cl{font-size:.76rem;color:var(--mut)}
+  .costbox .cv{font-family:var(--mono);font-size:1.55rem;font-weight:800;margin:.15rem 0}
+  .costbar{display:flex;height:10px;border-radius:5px;overflow:hidden;margin:.5rem 0 .35rem}
+  .costbar i{display:block;height:100%}
+  .costbar .lost{background:var(--red)} .costbar .idle{background:var(--cyan)}
+  .costbar .queue{background:var(--orange)} .costbar .fuel{background:var(--amber)}
+  .costlegend{display:flex;flex-wrap:wrap;gap:.25rem .8rem;font-size:.72rem;color:var(--mut)}
+  .costnote{font-size:.72rem;color:var(--mut2);margin-top:.4rem}
+  .btn-gen{margin-top:.6rem;width:100%;background:var(--green);color:#fff;border:none;border-radius:7px;padding:.6rem;font-weight:600;font-size:.92rem;cursor:pointer}
+  .btn-gen:hover{background:#1a9648}
+
+  /* AI */
+  .ai{border-left:3px solid var(--green);background:linear-gradient(180deg,#f0f6f2,#fbfaf6);flex:1;display:flex;flex-direction:column;min-height:0}
+  .ai-head{display:flex;align-items:center;gap:8px;margin-bottom:.25rem}
+  .ai-badge{font-family:var(--mono);font-size:.7rem;font-weight:800;background:var(--green);color:#fff;padding:2px 6px;border-radius:4px}
+  .ai-title{font-weight:700;font-size:.92rem}
+  .ai-solve{margin-left:auto;font-family:var(--mono);font-size:.7rem;color:var(--green-d)}
+  .ai-caps{display:flex;flex-wrap:wrap;gap:5px;margin:.1rem 0 .5rem}
+  .ai-cap{font-family:var(--mono);font-size:.64rem;letter-spacing:.2px;font-weight:700;text-transform:uppercase;background:#e3f1e8;color:var(--green-d);border:1px solid #c4ddcc;border-radius:4px;padding:2px 6px}
+  .ai-body{flex:1;overflow:auto;min-height:0;padding-right:2px}
+  .ai-empty{color:var(--mut);font-size:.84rem;padding:.7rem 0}
+  .ai-headline{font-size:.95rem;font-weight:700;margin:.3rem 0 .65rem;line-height:1.35}
+  .ai-delta{display:flex;align-items:center;gap:7px;margin-bottom:.65rem}
+  .dcard{background:var(--panel2);border-radius:7px;padding:.5rem .55rem;flex:1;text-align:center}
+  .dcard.opt{background:#e3f1e8}
+  .dcard .l{font-size:.62rem;color:var(--mut2)}
+  .dcard .v{font-family:var(--mono);font-size:1.02rem;font-weight:800;margin-top:2px}
+  .dcard.opt .v{color:var(--green-d)}
+  .ai-arrow{color:var(--mut2);font-size:1rem}
+  .ai-sec{font-family:var(--mono);font-size:.66rem;letter-spacing:.5px;text-transform:uppercase;color:var(--mut2);font-weight:700;margin:.65rem 0 .4rem}
+  .ai-act{display:flex;gap:7px;align-items:flex-start;font-size:.82rem;margin-bottom:.4rem;line-height:1.35}
+  .ai-act .n{flex:none;width:1.15rem;height:1.15rem;border-radius:50%;color:#fff;font-family:var(--mono);font-size:.66rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .ai-act .n.contractor{background:var(--amber)} .ai-act .n.owner{background:var(--red-d)}
+  .ai-narr{font-size:.78rem;color:var(--mut);background:var(--panel2);border-radius:7px;padding:.6rem .75rem;margin-top:.55rem;line-height:1.45}
+  b.mono{color:inherit}
+
+  /* ALERT RAIL */
+  .alertrail{display:flex;align-items:center;gap:.6rem;padding:.34rem 18px;flex:none;background:#fbeae8;border-bottom:1px solid #ecc9c4;font-size:.8rem;overflow:hidden;white-space:nowrap}
+  .alertrail.clear{background:#e7f1ea;border-bottom-color:#c4ddcc}
+  .ar-pill{font-family:var(--mono);font-size:.68rem;font-weight:800;letter-spacing:.4px;padding:.2rem .5rem;border-radius:5px;flex:none;color:#fff}
+  .ar-pill.crit{background:var(--red-d)} .ar-pill.warn{background:var(--amber)} .ar-pill.watch{background:var(--cyan)} .ar-pill.ok{background:var(--green)}
+  .ar-lead{overflow:hidden;text-overflow:ellipsis;color:#5a2a26}
+  .alertrail.clear .ar-lead{color:var(--green-d)}
+  .ar-lead i{font-style:normal;font-family:var(--mono);font-size:.7rem;color:var(--mut);background:#fff;border:1px solid var(--line);border-radius:4px;padding:0 4px;margin:0 2px}
+  .ar-lead .exp{color:var(--red-d)}
+  .ar-sp{flex:1}
+  .ar-mini{font-family:var(--mono);font-size:.7rem;font-weight:700;padding:.2rem .5rem;border-radius:5px;flex:none;border:1px solid}
+  .ar-mini.warn{color:var(--amber);border-color:#e6cfa3;background:#fbf3e3}
+  .ar-mini.watch{color:var(--cyan);border-color:#bcd6dd;background:#e9f3f5}
+  .ar-mini.crit{color:var(--red-d);border-color:#e9c4c0;background:#fbeae8}
+
+  .wx{font-family:var(--mono);font-size:.7rem;color:var(--mut);border:1px solid var(--line);background:var(--panel2);border-radius:5px;padding:.15rem .5rem;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <a class="brand" href="/index.html"><span class="logo">OS</span><span>Ore<em>Sight</em>&nbsp;AI</span></a>
+  <nav class="nav-links">
+    <a href="/index.html#matrix">Value Chain</a><a href="/fsp.html">Scheduler</a><a href="/payload.html">Payload</a>
+    <a href="/haul.html" class="active">Hauling</a><a href="/control-tower.html">Control Tower</a><a href="/blending.html">Blending</a><a href="/safety.html">Safety</a>
+  </nav>
+  <span class="nav-sp"></span>
+  <span class="src" id="srcPill" title="Toggle FMS data source"><b></b><span id="srcLabel">FMS: Demo feed</span></span>
+  <button class="btn-pilot" onclick="location.href='/index.html#pilot'">Book a pilot</button>
+</header>
+
+<div class="tstrip">
+  <span class="crumb">Value Chain&nbsp;/&nbsp;Hauling&nbsp;/</span>
+  <h1>Dispatch Optimisation</h1>
+  <span class="tag dollar">$</span>
+  <span class="tag horizon">Owner view</span>
+  <span class="tag dev">IN DEV</span>
+  <span class="sub">Sits above the contractor FMS · pit-to-port flow, bottleneck attribution &amp; capex sequencing</span>
+</div>
+
+<div class="alertrail" id="alertRail"></div>
+
+<main>
+  <!-- LHS -->
+  <section class="col">
+    <div class="kpis" id="kpis"></div>
+    <div class="vchain" id="vchain"></div>
+    <div class="card grow">
+      <div class="chead"><h2>Delivered vs target by month</h2><span class="hint">2026 YTD · kt/d · red = shortfall to plan</span></div>
+      <svg id="tpChart" viewBox="0 0 560 150" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+    <div class="card grow" style="flex:2.1">
+      <div class="chead">
+        <h2 id="heroTitle">Haul network &amp; bottleneck</h2>
+        <span class="hint herohint" id="heroHint">pit-to-port · min-cut solver · click a line</span>
+        <span class="nav-sp"></span>
+        <span class="wx" id="wxChip">Road graded · Dry</span>
+        <span class="tabs" style="margin-right:6px"><button class="tab alloc on" data-a="current">Current</button><button class="tab alloc" data-a="ai">AI-optimal</button></span>
+        <div class="tabs"><button class="tab on" data-v="net">Network</button><button class="tab" data-v="cas">Cascade</button></div>
+      </div>
+      <div class="netlegend" id="netLegend">
+        <span><i class="nl-sw" style="background:var(--green)"></i>Slack</span>
+        <span><i class="nl-sw" style="background:var(--amber)"></i>Fleet-limited (contractor)</span>
+        <span><i class="nl-sw" style="background:var(--red-d)"></i>Infra-limited (owner)</span>
+        <span><i class="nl-sw" style="background:var(--blue)"></i>Source-limited (geology)</span>
+        <span><i class="nl-cut"></i>Binding min-cut</span>
+      </div>
+      <div class="herobody">
+        <svg id="net" viewBox="0 0 860 360" preserveAspectRatio="xMidYMid meet"></svg>
+        <svg id="cas" viewBox="0 0 860 360" preserveAspectRatio="xMidYMid meet" style="display:none"></svg>
+        <div class="ccard" id="ccard"></div>
+        <div class="cc-hint" id="ccHint">click any line for its constraint card</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RHS -->
+  <section class="col">
+    <div class="card">
+      <div class="scen-head"><div class="t">&#9881; Scenario</div><div class="h">drag — the network re-solves instantly</div></div>
+
+      <div class="lever">
+        <div class="ll"><span class="lname">Fleet size <i>contractor</i></span><span class="lval" id="fleetVal">66<span> trucks</span></span></div>
+        <input type="range" id="fleet" min="48" max="104" step="1" value="66" />
+        <div class="ticks"><span>48 lean</span><span>104 max</span></div>
+      </div>
+
+      <div class="lever">
+        <div class="ll"><span class="lname">Crusher / ROM intake <i class="own">owner capex</i></span><span class="lval" id="crVal">312<span> kt/d</span></span></div>
+        <input type="range" id="crusher" min="260" max="380" step="2" value="312" />
+        <div class="ticks"><span>260 single</span><span>380 +2nd tippler</span></div>
+      </div>
+
+      <div class="lever">
+        <div class="ll"><span class="lname">Trunk haul road <i class="own">owner capex</i></span><span class="lval" id="trkVal">290<span> kt/d</span></span></div>
+        <input type="range" id="trunk" min="240" max="380" step="2" value="290" />
+        <div class="ticks"><span>240 single-lane</span><span>380 dual + bays</span></div>
+      </div>
+
+      <div class="lever">
+        <div class="ll"><span class="lname">Haul road condition</span><span class="lval" id="rdVal" style="font-size:.84rem">Graded</span></div>
+        <div class="seg" id="rdSeg"><button data-r="sealed">Sealed</button><button data-r="graded" class="on">Graded</button><button data-r="degraded">Degraded</button></div>
+      </div>
+
+      <div class="lever">
+        <div class="ll"><span class="lname">Weather <i>exogenous</i></span><span class="lval" id="wxVal" style="font-size:.84rem">Dry</span></div>
+        <div class="seg" id="wxSeg"><button data-w="dry" class="on">Dry</button><button data-w="wet">Wet</button><button data-w="monsoon">Monsoon</button></div>
+      </div>
+
+      <div class="costbox">
+        <div class="cl">Annualised value at stake</div>
+        <div class="cv" id="costVal">$0</div>
+        <div class="costbar" id="costBar"></div>
+        <div class="costlegend" id="costLegend"></div>
+        <div class="costnote" id="costNote"></div>
+      </div>
+      <button class="btn-gen" id="genBtn">&#10022; Generate AI Recommendation</button>
+    </div>
+
+    <div class="card ai">
+      <div class="ai-head"><span class="ai-badge">AI</span><span class="ai-title">OreSight AI Recommendation</span><span class="ai-solve" id="aiSolve"></span></div>
+      <div class="ai-caps">
+        <span class="ai-cap">Max-flow / min-cut</span><span class="ai-cap">Bottleneck attribution</span>
+        <span class="ai-cap">Owner vs contractor</span><span class="ai-cap">Capex sequencing</span>
+      </div>
+      <div class="ai-body" id="aiBody"><div class="ai-empty">Set your scenario, then generate. The solver models the pit-to-port haul as a max-flow network, finds the binding min-cut, attributes each bottleneck to the contractor (fleet) or owner (infrastructure), and sequences the cheapest unlocks as a cascade.</div></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const fmt = n => '$' + Math.round(n).toLocaleString();
+const fmtM = n => '$' + (n/1e6).toFixed(1) + 'M';
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ---------------- haul-network model ----------------
+   Routes: 4 pits -> 2 collector junctions -> trunk -> crusher -> port.
+   Each route has a SOURCE cap (dig rate, geology), a FLEET cap (trucks x perTruck),
+   and a SPUR infra cap. Shared infra: ramps, trunk, crusher, stockyard.        */
+const TARGET = 300;                                   // kt/d plan
+const PITS = [
+  {id:'r1', name:'Bahodopi N', grade:'SAP', dig:110, pt:5.0, jct:'J1'},
+  {id:'r2', name:'Bahodopi S', grade:'SAP', dig: 95, pt:5.0, jct:'J1'},
+  {id:'r3', name:'Le Le',      grade:'LIM', dig:120, pt:4.2, jct:'J2'},
+  {id:'r4', name:'Bete-bete',  grade:'LIM', dig: 85, pt:4.6, jct:'J2'},
+];
+const CURRENT_PROP = [30,8,16,12];                    // deliberately mis-allocated baseline
+const PROP_SUM = 66;
+const SPUR=150, RAMP_N=220, RAMP_S=200, STOCKYARD=360;
+const RD_MULT = {sealed:1.0, graded:0.85, degraded:0.65};  // trips/day per truck
+const WX_MULT = {dry:1.0, wet:0.90, monsoon:0.72};         // weather x road on cycle
+const WX_INFRA = {dry:1.0, wet:0.96, monsoon:0.85};        // weather on road throughput
+const RD_NAME = {sealed:'Sealed',graded:'Graded',degraded:'Degraded'};
+const WX_NAME = {dry:'Dry',wet:'Wet',monsoon:'Monsoon'};
+const MARGIN = 6, OPDAYS = 330, DAYRATE = 2800;            // $/wmt, op days, truck $/day
+
+// node indices for the flow graph
+const S=0,P1=1,P2=2,P3=3,P4=4,F1=5,F2=6,F3=7,F4=8,J1=9,J2=10,J3=11,CR=12,PT=13,T=14, NN=15;
+const PIDX=[P1,P2,P3,P4], FIDX=[F1,F2,F3,F4];
+
+/* params from levers */
+function curParams(){
+  return {
+    fleet:+document.getElementById('fleet').value,
+    crusher:+document.getElementById('crusher').value,
+    trunk:+document.getElementById('trunk').value,
+    rd:(document.querySelector('#rdSeg button.on')||{dataset:{r:'graded'}}).dataset.r,
+    wx:(document.querySelector('#wxSeg button.on')||{dataset:{w:'dry'}}).dataset.w,
+    alloc:(document.querySelector('.tab.alloc.on')||{dataset:{a:'current'}}).dataset.a,
+  };
+}
+function trucksFor(p){
+  if(p.alloc==='ai'){ const sd=PITS.reduce((a,b)=>a+b.dig,0); return PITS.map(x=>x.dig/sd*p.fleet); }
+  return CURRENT_PROP.map(x=>x/PROP_SUM*p.fleet);
+}
+/* build directed edge list with capacities for the current params (+ optional overrides) */
+function buildEdges(p, ov={}){
+  const m = RD_MULT[p.rd]*WX_MULT[p.wx], wi = WX_INFRA[p.wx];
+  const trucks = trucksFor(p);
+  const fleetRate = PITS.map((x,i)=>trucks[i]*x.pt*m);
+  const E=[];
+  PITS.forEach((x,i)=>{
+    E.push({id:'s'+(i+1), u:S, v:PIDX[i], type:'source', route:x.id, cap:x.dig});
+    E.push({id:'f'+(i+1), u:PIDX[i], v:FIDX[i], type:'fleet', route:x.id, cap:fleetRate[i]});
+    E.push({id:'sp'+(i+1), u:FIDX[i], v:(x.jct==='J1'?J1:J2), type:'spur', route:x.id, cap:SPUR*wi});
+  });
+  E.push({id:'rampN', u:J1, v:J3, type:'ramp', cap:RAMP_N*wi});
+  E.push({id:'rampS', u:J2, v:J3, type:'ramp', cap:RAMP_S*wi});
+  E.push({id:'trunk', u:J3, v:CR, type:'trunk', cap:p.trunk*wi});
+  E.push({id:'crusher', u:CR, v:PT, type:'crusher', cap:p.crusher});
+  E.push({id:'yard', u:PT, v:T, type:'yard', cap:STOCKYARD});
+  E.forEach(e=>{ if(ov[e.id]!=null) e.cap=ov[e.id]; });
+  return {E, trucks, fleetRate, m, wi};
+}
+/* Edmonds-Karp max-flow; returns flow per edge + min-cut edge ids */
+function maxflow(E){
+  const cap=Array.from({length:NN},()=>new Array(NN).fill(0));
+  const orig=Array.from({length:NN},()=>new Array(NN).fill(0));
+  E.forEach(e=>{ cap[e.u][e.v]+=e.cap; orig[e.u][e.v]+=e.cap; });
+  let flow=0;
+  while(true){
+    const par=new Array(NN).fill(-1); par[S]=S; const q=[S];
+    while(q.length){ const u=q.shift(); for(let v=0;v<NN;v++) if(par[v]<0 && cap[u][v]>1e-9){ par[v]=u; q.push(v);} }
+    if(par[T]<0) break;
+    let f=Infinity; for(let v=T; v!==S; v=par[v]) f=Math.min(f,cap[par[v]][v]);
+    for(let v=T; v!==S; v=par[v]){ cap[par[v]][v]-=f; cap[v][par[v]]+=f; }
+    flow+=f;
+  }
+  // reachable set in residual graph => min cut
+  const reach=new Array(NN).fill(false); reach[S]=true; const q=[S];
+  while(q.length){ const u=q.shift(); for(let v=0;v<NN;v++) if(!reach[v] && cap[u][v]>1e-9){ reach[v]=true; q.push(v);} }
+  const cut=new Set(), eflow={};
+  E.forEach(e=>{ eflow[e.id]=Math.max(0, orig[e.u][e.v]-cap[e.u][e.v]);
+                 if(reach[e.u] && !reach[e.v]) cut.add(e.id); });
+  return {flow, cut, eflow};
+}
+/* solve current scenario: throughput, per-route + per-edge state, derived KPIs */
+function solve(p, ov={}){
+  const b=buildEdges(p,ov), mf=maxflow(b.E);
+  const capOf={}, flowOf={}; b.E.forEach(e=>{ capOf[e.id]=e.cap; flowOf[e.id]=mf.eflow[e.id]; });
+  const tp=Math.min(mf.flow, 9999);
+  const routes=PITS.map((x,i)=>{
+    const dlv=flowOf['f'+(i+1)];                     // delivered on this route
+    const local=[['source',x.dig],['fleet',b.fleetRate[i]],['spur',SPUR*b.wi]].sort((a,c)=>a[1]-c[1])[0];
+    const cause = (dlv < local[1]-0.5) ? 'infra' : local[0];   // throttled downstream => infra(owner)
+    return {...x, idx:i, trucks:b.trucks[i], dlv, fleetRate:b.fleetRate[i],
+            mf:b.fleetRate[i]/x.dig, cause, localCap:local[1]};
+  });
+  const ESTATE = b.E.map(e=>({id:e.id,type:e.type,cap:capOf[e.id],flow:flowOf[e.id],
+                              sat:flowOf[e.id]/Math.max(capOf[e.id],.01), binding:mf.cut.has(e.id)}));
+  return {p, tp, cut:mf.cut, routes, E:ESTATE, edges:b.E, flowOf, capOf,
+          fleetRate:b.fleetRate, trucks:b.trucks};
+}
+
+/* edge -> human label / owner / fix */
+const TYPE_META = {
+  source:{owner:'Mine plan (geology)', cls:'source', fix:'Add shovel hours / lift pit availability'},
+  fleet :{owner:'Contractor (fleet)',  cls:'fleet',  fix:'Reallocate or add trucks to this route'},
+  spur  :{owner:'Owner (capex)',        cls:'infra',  fix:'Widen spur / maintain running surface'},
+  ramp  :{owner:'Owner (capex)',        cls:'infra',  fix:'Widen ramp / ease grade'},
+  trunk :{owner:'Owner (capex)',        cls:'infra',  fix:'Add passing bays / dual the single-lane trunk'},
+  crusher:{owner:'Owner (capex)',       cls:'infra',  fix:'Expand ROM intake / add a tippler'},
+  yard  :{owner:'Owner (capex)',        cls:'infra',  fix:'Expand stockyard / barge berths'},
+};
+const EDGE_NAME = {trunk:'Trunk haul J3→Crusher', crusher:'Crusher / ROM intake',
+  rampN:'North ramp J1→J3', rampS:'South ramp J2→J3', yard:'Stockyard → port'};
+function routeOf(id){ return (PITS.find(x=>x.id===(id.replace(/^(s|f|sp)/,'r')))||{}); }
+
+/* shadow price: extra kt/d unlocked if this edge cap is lifted ~30% */
+function marginal(p, edgeId, baseTp){
+  const cur=solve(p).capOf[edgeId];
+  const r=solve(p, {[edgeId]: cur*1.35});
+  return Math.max(0, r.tp - baseTp);
+}
+/* cost: lost-throughput opportunity dominates; plus idle-shovel, truck-queue, fuel */
+function costOf(s){
+  const lostKtd=Math.max(0, TARGET - s.tp);
+  const lostOpp=lostKtd*1000*OPDAYS*MARGIN;
+  let starvedKtd=0, idleTrucks=0;
+  s.routes.forEach(r=>{
+    if(r.cause==='fleet'||r.cause==='source') starvedKtd += Math.max(0, r.dig - r.dlv);
+    if(r.fleetRate > r.dig) idleTrucks += (r.fleetRate - r.dig)/ (r.pt* (RD_MULT[s.p.rd]*WX_MULT[s.p.wx]));
+  });
+  const idleShovel=starvedKtd*1000*OPDAYS*0.30;
+  const queue=idleTrucks*OPDAYS*DAYRATE;
+  const cond=({sealed:0,graded:0.08,degraded:0.20})[s.p.rd] + ({dry:0,wet:0.03,monsoon:0.10})[s.p.wx];
+  const fuel=26e6*cond;
+  return {lostKtd, lostOpp, idleShovel, queue, fuel, idleTrucks, starvedKtd, total:lostOpp+idleShovel+queue+fuel};
+}
+/* bottleneck cascade: progressively relax the binding cut, capturing each unlock */
+function cascade(p){
+  let ov={}, steps=[], prev=solve(p,ov).tp;
+  steps.push({label:'Today', tp:prev, owner:null, type:null});
+  for(let k=0;k<4;k++){
+    const s=solve(p,ov); if(!s.cut.size) break;
+    // dominant binding type among cut edges
+    const types={}; s.cut.forEach(id=>{ const e=s.E.find(x=>x.id===id); types[e.type]=(types[e.type]||0)+1; });
+    const domType=Object.entries(types).sort((a,b)=>b[1]-a[1])[0][0];
+    const meta=TYPE_META[domType];
+    // relax the binding cut edges
+    s.cut.forEach(id=>{ const e=s.E.find(x=>x.id===id); ov[id]=(ov[id]||e.cap)* (domType==='fleet'?1.5:1.4); });
+    const after=solve(p,ov).tp, gain=after-prev; prev=after;
+    let action = domType==='fleet' ? (s.p.alloc==='current'&&k===0?'Reallocate trucks to starved pits':'Add trucks to the fleet')
+               : domType==='source' ? 'Lift shovel / pit availability'
+               : EDGE_NAME[[...s.cut][0]] ? ('Upgrade '+(EDGE_NAME[[...s.cut][0]]||'infra')) : meta.fix;
+    steps.push({label:action, tp:after, gain, owner:meta.owner, cls:meta.cls,
+                ownerShort: domType==='fleet'?'CONTRACTOR':(domType==='source'?'MINE PLAN':'OWNER')});
+  }
+  return steps;
+}
+
+/* ===================== RENDER ===================== */
+let SEL=null;   // selected edge id for constraint card
+function renderKpis(s){
+  const c=costOf(s), short=TARGET-s.tp;
+  const sysMF=s.fleetRate.reduce((a,b)=>a+b,0)/PITS.reduce((a,b)=>a+b.dig,0);
+  const util=clamp(1 - c.idleTrucks/Math.max(s.p.fleet,1), 0, 1);
+  const queueMin=(6 + c.idleTrucks*1.1).toFixed(1);
+  const cards=[
+    {lab:'Throughput',val:s.tp.toFixed(0),unit:'kt/d',foot:`target ${TARGET} · ${short>0?'−'+short.toFixed(0):'on plan'}`,cls:short>4?'risk':'good'},
+    {lab:'System match factor',val:sysMF.toFixed(2),unit:'',foot:sysMF<0.85?'fleet-short · shovels starved':'balanced',cls:sysMF<0.85?'warn':'good'},
+    {lab:'Truck utilisation',val:(util*100).toFixed(0),unit:'%',foot:c.idleTrucks>0.4?c.idleTrucks.toFixed(1)+' idle in queue':'no queueing',cls:c.idleTrucks>0.4?'warn':'good'},
+    {lab:'Avg queue',val:queueMin,unit:'min',foot:'load + dump',cls:queueMin>9?'warn':''},
+    {lab:'Stockpile cover',val:'4.9',unit:'d',foot:'feeds Shipping',cls:'warn'},
+  ];
+  document.getElementById('kpis').innerHTML=cards.map(c=>`<div class="kpi"><div class="lab">${c.lab}</div><div class="val">${c.val}<span>${c.unit}</span></div><div class="foot ${c.cls}">${c.foot}</div></div>`).join('');
+}
+function renderVchain(s){
+  const trunk=s.E.find(e=>e.id==='trunk'), cr=s.E.find(e=>e.id==='crusher');
+  const sysMF=s.fleetRate.reduce((a,b)=>a+b,0)/PITS.reduce((a,b)=>a+b.dig,0);
+  const nodes=[
+    {stage:'Pits',val:PITS.reduce((a,b)=>a+b.dig,0),unit:'kt/d',sub:'4 active faces',h:'ok'},
+    {stage:'Load',val:sysMF.toFixed(2),unit:'MF',sub:sysMF<0.85?'shovels starved':'balanced',h:sysMF<0.85?'risk':'ok'},
+    {stage:'Haul',val:trunk.flow.toFixed(0),unit:'kt/d',sub:`trunk ${trunk.flow.toFixed(0)}/${trunk.cap.toFixed(0)}`,h:trunk.binding?'risk':'ok'},
+    {stage:'Junction',val:trunk.flow.toFixed(0),unit:'kt/d',sub:'J3 merge',h:'ok'},
+    {stage:'Crusher',val:cr.flow.toFixed(0),unit:'kt/d',sub:`${cr.flow.toFixed(0)}/${cr.cap.toFixed(0)}`,h:cr.binding?'risk':'ok'},
+    {stage:'Port yard',val:'4.9',unit:'d',sub:'→ Shipping',h:'warn'},
+  ];
+  document.getElementById('vchain').innerHTML=nodes.map(n=>`<div class="vnode"><div class="vn-top"><span class="vn-dot ${n.h}"></span><span class="vn-stage">${n.stage}</span></div><div class="vn-val">${n.val}<span>${n.unit}</span></div><div class="vn-sub">${n.sub}</div></div>`).join('');
+}
+function renderTpChart(){
+  const data=[{m:'Jan',v:236},{m:'Feb',v:244},{m:'Mar',v:251},{m:'Apr',v:248},{m:'May',v:258},{m:'Jun',v:262}];
+  const W=560,H=150,pl=34,pb=22,pt=10,pr=10,max=320,n=data.length,bw=(W-pl-pr)/n*0.5;
+  const x=i=>pl+(W-pl-pr)/n*(i+0.5), y=v=>pt+(H-pt-pb)*(1-v/max);
+  let g='';
+  for(let t=0;t<=300;t+=100){g+=`<line x1="${pl}" y1="${y(t)}" x2="${W-pr}" y2="${y(t)}" stroke="#e6e3d8"/><text x="${pl-5}" y="${y(t)+3}" text-anchor="end" font-size="9" fill="#9a9484" font-family="monospace">${t}</text>`;}
+  g+=`<line x1="${pl}" y1="${y(TARGET)}" x2="${W-pr}" y2="${y(TARGET)}" stroke="#0f5c2c" stroke-width="1.2" stroke-dasharray="4 3"/><text x="${W-pr}" y="${y(TARGET)-4}" text-anchor="end" font-size="9" fill="#0f5c2c" font-family="monospace">target ${TARGET}</text>`;
+  data.forEach((d,i)=>{
+    g+=`<rect x="${x(i)-bw/2}" y="${y(d.v)}" width="${bw}" height="${(H-pt-pb)*(d.v/max)}" rx="3" fill="#3f8f5e"/>`;
+    g+=`<rect x="${x(i)-bw/2}" y="${y(TARGET)}" width="${bw}" height="${y(d.v)-y(TARGET)}" rx="3" fill="#cf5b54" opacity="0.85"/>`;
+    g+=`<text x="${x(i)}" y="${H-pb+14}" text-anchor="middle" font-size="10" fill="#7a7464">${d.m}</text>`;
+  });
+  document.getElementById('tpChart').innerHTML=g;
+}
+function renderScenario(s){
+  const p=s.p, c=costOf(s);
+  document.getElementById('fleetVal').innerHTML=p.fleet+'<span> trucks</span>';
+  document.getElementById('crVal').innerHTML=p.crusher+'<span> kt/d</span>';
+  document.getElementById('trkVal').innerHTML=p.trunk+'<span> kt/d</span>';
+  document.getElementById('rdVal').textContent=RD_NAME[p.rd];
+  document.getElementById('wxVal').textContent=WX_NAME[p.wx];
+  document.getElementById('wxChip').textContent='Road '+RD_NAME[p.rd].toLowerCase()+' · '+WX_NAME[p.wx];
+  document.getElementById('costVal').textContent=fmtM(c.total);
+  const segs=[['lost',c.lostOpp,'Lost throughput','var(--red-d)'],['idle',c.idleShovel,'Idle shovel','var(--cyan)'],['queue',c.queue,'Truck queue','var(--orange)'],['fuel',c.fuel,'Fuel penalty','var(--amber)']];
+  document.getElementById('costBar').innerHTML=segs.map(x=>`<i class="${x[0]}" style="width:${(x[1]/c.total*100).toFixed(1)}%"></i>`).join('');
+  document.getElementById('costLegend').innerHTML=segs.map(x=>`<span style="color:${x[3]}">${x[2]} <b class="mono">${fmtM(x[1])}</b></span>`).join('');
+  const cutTypes=new Set([...s.cut].map(id=>s.E.find(e=>e.id===id).type));
+  let note;
+  if(c.lostKtd<2) note='At plan: the network clears '+TARGET+' kt/d under these settings.';
+  else if(cutTypes.has('fleet')&&!cutTypes.has('trunk')&&!cutTypes.has('crusher')) note=`Fleet-limited: ${c.lostKtd.toFixed(0)} kt/d short sits with the contractor — reallocate, then add trucks. Lost-throughput value dwarfs the truck bill.`;
+  else if(cutTypes.has('trunk')||cutTypes.has('crusher')||cutTypes.has('ramp')) note=`Infrastructure-limited: more trucks won't help — the binding cut is owner capex. Adding trucks just lengthens the queue.`;
+  else if(cutTypes.has('source')) note='Source-limited: a pit shovel caps this line. No point hauling faster than it digs.';
+  else note=`${c.lostKtd.toFixed(0)} kt/d short to plan.`;
+  document.getElementById('costNote').textContent=note;
+}
+
+/* ---------- network schematic ---------- */
+const CAUSE_COL={fleet:'#b45309',infra:'#b91c1c',source:'#2a5f8f',slack:'#15803d'};
+const POS={
+  [P1]:[80,55],[P2]:[80,135],[P3]:[80,225],[P4]:[80,305],
+  [J1]:[300,95],[J2]:[300,265],[J3]:[470,180],[CR]:[630,180],[PT]:[785,180]
+};
+function edgeColor(es, route){
+  if(es.binding) return route? CAUSE_COL[route.cause] : CAUSE_COL.infra;
+  if(es.sat>0.97) return route? CAUSE_COL[route.cause] : CAUSE_COL.infra;
+  return CAUSE_COL.slack;
+}
+function line(x1,y1,x2,y2,col,w,binding,id){
+  const dash=binding?` stroke-dasharray="8 5"`:'';
+  const glow=binding?`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#f3c9c4" stroke-width="${w+6}" stroke-linecap="round"/>`:'';
+  return glow+`<line class="seg" data-id="${id}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${col}" stroke-width="${w}" stroke-linecap="round"${dash} style="cursor:pointer"/>`;
+}
+function node(cx,cy,r,fill,stroke){return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`;}
+function txt(x,y,t,sz,col,anc,wt){return `<text x="${x}" y="${y}" font-size="${sz}" fill="${col||'#1b231a'}" font-family="monospace" text-anchor="${anc||'start'}"${wt?` font-weight="${wt}"`:''}>${t}</text>`;}
+function renderNet(s){
+  const maxFlow=Math.max(...s.E.map(e=>e.flow),1);
+  const wOf=f=>2+ (f/maxFlow)*11;
+  let g='';
+  // shared edges
+  const eMap={}; s.E.forEach(e=>eMap[e.id]=e);
+  const drawShared=(id,a,b)=>{ const e=eMap[id]; g+=line(POS[a][0],POS[a][1],POS[b][0],POS[b][1],edgeColor(e),wOf(e.flow),e.binding,id); };
+  // spurs (route-coloured)
+  s.routes.forEach((r,i)=>{
+    const sp=eMap['sp'+(i+1)], j=(r.jct==='J1'?J1:J2);
+    const col=(sp.binding||r.cause!=='slack'&&r.dlv>0&&(r.dlv>=r.localCap-0.5||sp.binding))? CAUSE_COL[r.cause]:CAUSE_COL.slack;
+    const bind=s.cut.has('s'+(i+1))||s.cut.has('f'+(i+1))||s.cut.has('sp'+(i+1));
+    g+=line(POS[PIDX[i]][0],POS[PIDX[i]][1],POS[j][0],POS[j][1], bind?CAUSE_COL[r.cause]:edgeColor(sp,r), wOf(r.dlv), bind, 'r'+(i+1));
+  });
+  drawShared('rampN',J1,J3); drawShared('rampS',J2,J3);
+  drawShared('trunk',J3,CR); drawShared('crusher',CR,PT);
+  // nodes + labels
+  s.routes.forEach((r,i)=>{
+    const [x,y]=POS[PIDX[i]];
+    g+=node(x,y,15,'#fff',CAUSE_COL[r.cause]);
+    g+=txt(x,y+4,r.grade,8,CAUSE_COL[r.cause],'middle',700);
+    g+=txt(x-22,y-18,r.name,10,'#1b231a','start',700);
+    g+=txt(x-22,y+26,`${r.dlv.toFixed(0)}/${r.dig} kt/d · MF ${r.mf.toFixed(2)}`,8.5,'#7a7464','start');
+  });
+  [[J1,'J1'],[J2,'J2'],[J3,'J3']].forEach(([n,lab])=>{ g+=node(POS[n][0],POS[n][1],11,'#13301d','#fff'); g+=txt(POS[n][0],POS[n][1]+3.5,lab,8,'#fff','middle',700); });
+  g+=node(POS[CR][0],POS[CR][1],20,'#fff',eMap.crusher.binding?CAUSE_COL.infra:'#13301d');
+  g+=txt(POS[CR][0],POS[CR][1]+4,'CRU',8,'#13301d','middle',700);
+  g+=txt(POS[CR][0],POS[CR][1]-26,'Crusher / ROM',9.5,'#1b231a','middle',700);
+  g+=txt(POS[CR][0],POS[CR][1]+34,`${eMap.crusher.flow.toFixed(0)}/${eMap.crusher.cap.toFixed(0)}`,8.5,'#7a7464','middle');
+  g+=node(POS[PT][0],POS[PT][1],17,'#15803d','#fff');
+  g+=txt(POS[PT][0],POS[PT][1]+4,'⚓',12,'#fff','middle');
+  g+=txt(POS[PT][0],POS[PT][1]-23,'Port stockyard',9.5,'#1b231a','middle',700);
+  g+=txt(POS[PT][0],POS[PT][1]+30,'→ Shipping',8.5,'#0f5c2c','middle',700);
+  // trunk callout
+  const tr=eMap.trunk; const mx=(POS[J3][0]+POS[CR][0])/2;
+  g+=txt(mx,POS[J3][1]-16,`trunk ${tr.flow.toFixed(0)}/${tr.cap.toFixed(0)}`,8.5,tr.binding?CAUSE_COL.infra:'#7a7464','middle',tr.binding?700:400);
+  document.getElementById('net').innerHTML=g;
+  document.querySelectorAll('#net .seg').forEach(el=>el.onclick=()=>showCard(el.dataset.id,s));
+}
+/* ---------- cascade ladder ---------- */
+function renderCascade(s){
+  const steps=cascade(s.p), W=860,H=360,pl=20,pr=20,pt=30,pb=58;
+  const max=Math.max(TARGET, ...steps.map(x=>x.tp))*1.05;
+  const n=steps.length, bw=(W-pl-pr)/n*0.62, x=i=>pl+(W-pl-pr)/n*(i+0.5), y=v=>pt+(H-pt-pb)*(1-v/max);
+  const colOf={fleet:CAUSE_COL.fleet,infra:CAUSE_COL.infra,source:CAUSE_COL.source};
+  let g=txt(pl, 18, 'Bottleneck cascade — each unlock, who owns it, and where returns flatten', 12,'#1b231a','start',700);
+  g+=`<line x1="${pl}" y1="${y(TARGET)}" x2="${W-pr}" y2="${y(TARGET)}" stroke="#0f5c2c" stroke-dasharray="4 3"/>`+txt(W-pr,y(TARGET)-4,'target '+TARGET,9,'#0f5c2c','end');
+  steps.forEach((st,i)=>{
+    const col=i===0?'#9a9484':(colOf[st.cls]||'#3f8f5e');
+    g+=`<rect x="${x(i)-bw/2}" y="${y(st.tp)}" width="${bw}" height="${(H-pt-pb)*(st.tp/max)}" rx="4" fill="${col}"/>`;
+    g+=txt(x(i),y(st.tp)-6,st.tp.toFixed(0),11,'#1b231a','middle',800);
+    if(st.gain>0.5) g+=txt(x(i),y(st.tp)-19,'+'+st.gain.toFixed(0),9,'#0f5c2c','middle',700);
+    // label (wrap to 2 lines)
+    const words=st.label.split(' '); let l1=words.slice(0,3).join(' '), l2=words.slice(3).join(' ');
+    g+=txt(x(i),H-pb+14,l1,9,'#1b231a','middle',600)+ (l2?txt(x(i),H-pb+25,l2,9,'#1b231a','middle',600):'');
+    if(st.ownerShort) g+=`<text x="${x(i)}" y="${H-pb+38}" font-size="8" font-family="monospace" font-weight="700" text-anchor="middle" fill="${col}">${st.ownerShort}</text>`;
+  });
+  document.getElementById('cas').innerHTML=g;
+}
+/* ---------- constraint card (shadow price) ---------- */
+function showCard(id,s){
+  SEL=id;
+  let edgeId=id, route=null;
+  if(/^r[1-4]$/.test(id)){ const i=+id[1]-1; route=s.routes[i];
+    edgeId=[['s'+(i+1),route.dig],['f'+(i+1),route.fleetRate],['sp'+(i+1),SPUR*WX_INFRA[s.p.wx]]].sort((a,b)=>a[1]-b[1])[0][0]; }
+  const e=s.E.find(x=>x.id===edgeId);
+  const binding=s.cut.has(edgeId)|| (route&&(s.cut.has('s'+(route.idx+1))||s.cut.has('f'+(route.idx+1))||s.cut.has('sp'+(route.idx+1))));
+  const meta=TYPE_META[e.type], cls=binding?meta.cls:'slack';
+  const title=route? `${route.name} spur · ${e.type}-limited` : (EDGE_NAME[edgeId]||edgeId);
+  const mg=binding?marginal(s.p, edgeId, s.tp):0;
+  const card=document.getElementById('ccard');
+  card.className='ccard show '+cls;
+  let next='—';
+  if(binding){ const r2=solve(s.p,{[edgeId]:e.cap*1.35}); const nt=[...r2.cut].map(x=>r2.E.find(y=>y.id===x).type); next= nt.length? (EDGE_NAME[[...r2.cut][0]]||nt[0]+' constraint') : 'demand / plan'; }
+  card.innerHTML=`<span class="cc-x" onclick="document.getElementById('ccard').classList.remove('show')">✕</span>
+    <div class="cc-h">${title} <span class="cc-own ${cls}">${binding?meta.owner:'slack'}</span></div>
+    <div class="cc-row">flow <b>${e.flow.toFixed(0)}</b> / cap <b>${e.cap.toFixed(0)}</b> kt/d · sat <b>${(e.sat*100).toFixed(0)}%</b></div>
+    ${binding?`<div class="cc-row">unlock if relaxed: <b>+${mg.toFixed(0)} kt/d</b> ≈ <b>${fmtM(mg*1000*OPDAYS*MARGIN)}/yr</b></div>
+    <div class="cc-row">binds next: <b>${next}</b></div>
+    <div class="cc-fix">Fix · ${meta.fix}</div>`
+    :`<div class="cc-row" style="color:var(--green-d)">slack — not constraining throughput</div>`}`;
+}
+
+/* ---------- alert rail ---------- */
+function renderAlerts(s){
+  const el=document.getElementById('alertRail');
+  const short=TARGET-s.tp;
+  if(short<3){ el.className='alertrail clear'; el.innerHTML=`<span class="ar-pill ok">&#9679; ALL CLEAR</span><span class="ar-lead">Network clears ${TARGET} kt/d. No binding bottleneck under current settings.</span>`; return; }
+  el.className='alertrail';
+  // rank binding constraints by shadow price
+  const binders=[...new Set([...s.cut].map(id=>{
+    if(/^(s|f|sp)/.test(id)){ const i=+id.replace(/\D/g,'')-1; return 'r'+(i+1); } return id;
+  }))];
+  const ranked=binders.map(id=>{
+    let eid=id, route=null;
+    if(/^r[1-4]$/.test(id)){ const i=+id[1]-1; route=s.routes[i]; eid=[['s'+(i+1),route.dig],['f'+(i+1),route.fleetRate],['sp'+(i+1),SPUR]].sort((a,b)=>a[1]-b[1])[0][0]; }
+    const e=s.E.find(x=>x.id===eid), mg=marginal(s.p,eid,s.tp), meta=TYPE_META[e.type];
+    const name=route? route.name+' '+e.type : (EDGE_NAME[eid]||eid);
+    const sev=meta.cls==='infra'?'crit':(meta.cls==='fleet'?'warn':'watch');
+    return {name, mg, sev, owner:meta.ownerShort||meta.owner, fix:meta.fix, type:e.type, cls:meta.cls};
+  }).sort((a,b)=>b.mg-a.mg);
+  ranked.forEach(r=>r.ownerShort = r.cls==='fleet'?'CONTRACTOR':(r.cls==='source'?'MINE PLAN':'OWNER'));
+  const lead=ranked[0], rest=ranked.slice(1,3);
+  el.innerHTML=`<span class="ar-pill ${lead.sev}">&#9650; BINDING</span>`+
+    `<span class="ar-lead"><b>${lead.name}</b> <i>${lead.ownerShort}</i> caps throughput · <b class="exp">+${lead.mg.toFixed(0)} kt/d ≈ ${fmtM(lead.mg*1000*OPDAYS*MARGIN)}/yr if relaxed</b> · ${lead.fix}</span>`+
+    `<span class="ar-sp"></span>`+
+    rest.map((r,i)=>`<span class="ar-mini ${r.sev}">#${i+2} ${r.name} · +${r.mg.toFixed(0)} kt/d</span>`).join('');
+}
+
+/* ---------- AI recommendation ---------- */
+function generateAI(s){
+  const steps=cascade(s.p);
+  const solve_v=document.getElementById('aiSolve'); solve_v.textContent='● solving max-flow…'; setTimeout(()=>solve_v.textContent='● solved · min-cut',650);
+  // contractor-only ceiling = last step before first OWNER step
+  let contractorTp=s.tp, ownerTp=s.tp, firstOwner=null;
+  for(let i=1;i<steps.length;i++){ const st=steps[i];
+    if(st.ownerShort==='OWNER'){ firstOwner=firstOwner||st; ownerTp=st.tp; }
+    else if(!firstOwner) contractorTp=st.tp;
+    ownerTp=st.tp;
+  }
+  const valContractor=(contractorTp-s.tp)*1000*OPDAYS*MARGIN;
+  const valOwner=(ownerTp-contractorTp)*1000*OPDAYS*MARGIN;
+  const acts=[];
+  if(s.p.alloc==='current') acts.push({o:'contractor',t:`<b>Reallocate the ${s.p.fleet} trucks</b> off over-trucked Bahodopi N (MF ${s.routes[0].mf.toFixed(2)}, trucks queuing) onto the starved limonite pits. Zero capex — recovers idle truck-hours and lifts throughput.`});
+  if(contractorTp>s.tp+1) acts.push({o:'contractor',t:`<b>Lift the fleet toward the road ceiling</b> (~${contractorTp.toFixed(0)} kt/d). Beyond that, extra trucks only lengthen the queue.`});
+  if(firstOwner) acts.push({o:'owner',t:`<b>${firstOwner.label}</b> — the binding cut is now infrastructure. ${firstOwner.owner}. Unlocks the next ${(ownerTp-contractorTp).toFixed(0)} kt/d.`});
+  acts.push({o:'owner',t:`Sequence capex by the cascade, not by the loudest complaint: each fix moves the cut, and returns flatten past the crusher. Stop where marginal kt/d stops paying.`});
+  const lead=document.getElementById('alertRail').textContent;
+  document.getElementById('aiBody').innerHTML=`
+    <div class="ai-headline">${s.p.alloc==='current'?'You are truck-mis-allocated, not just truck-short.':'Fleet is balanced.'} The binding min-cut is <b>${[...s.cut].length?firstOwnerLabel(s):'fleet'}</b>. Contractor moves get you to ${contractorTp.toFixed(0)} kt/d at zero capex; owner capex unlocks the rest.</div>
+    <div class="ai-delta">
+      <div class="dcard"><div class="l">Now</div><div class="v">${s.tp.toFixed(0)}</div></div><div class="ai-arrow">&rarr;</div>
+      <div class="dcard opt"><div class="l">Contractor</div><div class="v">${contractorTp.toFixed(0)}</div></div><div class="ai-arrow">&rarr;</div>
+      <div class="dcard opt"><div class="l">+Owner capex</div><div class="v">${ownerTp.toFixed(0)}</div></div>
+      <div class="dcard"><div class="l">Value/yr</div><div class="v" style="color:var(--green-d)">${fmtM(valContractor+valOwner)}</div></div>
+    </div>
+    <div class="ai-sec">Sequenced unlocks · who owns each</div>
+    ${acts.map(a=>`<div class="ai-act"><span class="n ${a.o}">${a.o==='owner'?'O':'C'}</span><span>${a.t}</span></div>`).join('')}
+    <div class="ai-narr">The solver treats the haul as a max-flow network and reads the <b>min-cut</b> — the true throughput ceiling. <b class="mono" style="color:var(--amber)">Contractor</b> bottlenecks (fleet) are free to fix; <b class="mono" style="color:var(--red-d)">Owner</b> bottlenecks (trunk, crusher, ramps) need capex. Lost-throughput value (${fmtM((TARGET-s.tp)*1000*OPDAYS*MARGIN)}/yr at ${(TARGET-s.tp).toFixed(0)} kt/d short) dwarfs the truck bill — the prize is unlocking flow, not trimming fleet cost.</div>`;
+}
+function firstOwnerLabel(s){
+  const id=[...s.cut][0]; if(!id) return 'fleet';
+  if(/^(s|f|sp)/.test(id)) return s.E.find(e=>e.id===id).type;
+  return EDGE_NAME[id]||id;
+}
+
+/* ---------- tabs / wireup ---------- */
+function showView(v){
+  document.querySelectorAll('.tab[data-v]').forEach(t=>t.classList.toggle('on',t.dataset.v===v));
+  document.getElementById('net').style.display=v==='net'?'block':'none';
+  document.getElementById('cas').style.display=v==='cas'?'block':'none';
+  document.getElementById('netLegend').style.display=v==='net'?'flex':'none';
+  document.getElementById('ccHint').style.display=v==='net'?'block':'none';
+  if(v!=='net') document.getElementById('ccard').classList.remove('show');
+  document.getElementById('heroTitle').textContent=v==='net'?'Haul network & bottleneck':'Bottleneck cascade';
+  document.getElementById('heroHint').textContent=v==='net'?'pit-to-port · min-cut solver · click a line':'sequenced unlocks · contractor → owner';
+}
+let STATE=null;
+function refresh(){
+  const p=curParams(); STATE=solve(p);
+  renderKpis(STATE); renderVchain(STATE); renderScenario(STATE);
+  renderNet(STATE); renderCascade(STATE); renderAlerts(STATE);
+  if(SEL && document.getElementById('ccard').classList.contains('show')) showCard(SEL,STATE);
+}
+renderTpChart();
+['fleet','crusher','trunk'].forEach(id=>document.getElementById(id).addEventListener('input',refresh));
+document.querySelectorAll('#rdSeg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#rdSeg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');refresh();});
+document.querySelectorAll('#wxSeg button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#wxSeg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');refresh();});
+document.querySelectorAll('.tab.alloc').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab.alloc').forEach(x=>x.classList.remove('on'));b.classList.add('on');refresh();});
+document.querySelectorAll('.tab[data-v]').forEach(t=>t.onclick=()=>showView(t.dataset.v));
+document.getElementById('genBtn').onclick=()=>generateAI(STATE);
+
+/* ---------------- FMS connector layer ----------------
+   The screen runs on a synthetic feed by default so it always renders.
+   A production wire-up pushes the contractor FMS telemetry through one
+   normalised schema; the model below consumes that schema unchanged.
+     route:   { id, dig (kt/d availto-dig), trucksAssigned, perTruck (trips/d) }
+     infra:   { spur, rampN, rampS, trunk, crusher, stockyard }  // kt/d caps
+     context: { road: sealed|graded|degraded, weather: dry|wet|monsoon }
+   Vendors: Modular DISPATCH, Cat MineStar, Wenco, Hexagon — each exposes
+   shift telemetry over OPC-UA / REST. An adapter normalises to the schema. */
+function connectLiveFMS(endpoint){
+  // Stub: no live endpoint is shipped. A production deploy points this at the
+  // FMS export (e.g. wss://fms.site.local/dispatch) and maps payloads to the
+  // schema above, then calls refresh() on each shift roll-up.
+  return {connected:false, reason:'No FMS endpoint configured'};
+}
+let LIVE=false;
+document.getElementById('srcPill').onclick=()=>{
+  const pill=document.getElementById('srcPill'), lab=document.getElementById('srcLabel');
+  if(!LIVE){
+    const r=connectLiveFMS(null);
+    if(!r.connected){
+      lab.textContent='FMS: connect Modular DISPATCH export to go live';
+      pill.classList.remove('live');
+      setTimeout(()=>{lab.textContent='FMS: Demo feed';},3200);
+      return;
+    }
+    LIVE=true; pill.classList.add('live'); lab.textContent='FMS: Live';
+  } else {
+    LIVE=false; pill.classList.remove('live'); lab.textContent='FMS: Demo feed';
+  }
+};
+
+refresh();
+</script>
+</body>
+</html>
