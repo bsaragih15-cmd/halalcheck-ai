@@ -8,37 +8,120 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/console.css" />
   <script src="/vendor/chart.umd.min.js"></script>
+  <script>if (window.Chart) Chart.defaults.maintainAspectRatio = false;</script>
+  <style>
+    /* Self-contained console shell — hide the global nav/footer that demo.js
+       injects via shared.js, so the page stays a single no-scroll viewport. */
+    body > header.nav, body > footer.footer { display: none !important; }
+
+    /* JS-rendered KPI cards → console tiles */
+    #kpis.os-kpis { grid-template-columns: repeat(4, 1fr); }
+    #kpis .kpi-card { background: var(--os-card); border: 1px solid var(--os-line); border-radius: 14px; padding: 13px 15px; box-shadow: var(--os-shadow); margin: 0; }
+    #kpis .kpi-card .l { font-family: var(--os-mono); font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--os-mut2); font-weight: 600; }
+    #kpis .kpi-card .v { font-size: 22px; font-weight: 800; color: var(--os-ink); line-height: 1.1; margin-top: 5px; }
+    #kpis .kpi-card .v small { font-size: 12px; font-weight: 600; color: var(--os-mut3); margin-left: 2px; }
+    #kpis .kpi-card .d { font-family: var(--os-mono); font-size: 11px; color: var(--os-mut); margin-top: 4px; }
+
+    /* JS-rendered charts → fill a fixed grid inside the visual card */
+    #charts { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    #charts .chart-box { background: var(--os-card2); border: 1px solid var(--os-line2); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; min-height: 0; margin: 0; }
+    #charts .chart-box .ct { font-family: var(--os-mono); font-size: 10.5px; letter-spacing: .03em; text-transform: uppercase; color: var(--os-mut2); font-weight: 600; margin-bottom: 6px; }
+    #charts .chart-box canvas { flex: 1; min-height: 0; }
+    #charts .chart-box:only-child { grid-column: 1 / -1; }
+
+    /* Scenario + AI panels live in the right rail */
+    #scenario .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    #scenario label { font-size: 13px; font-weight: 600; color: var(--os-body); }
+    #scenario input[type=range] { flex: 1; min-width: 140px; accent-color: var(--os-green); }
+    #scenario .val { font-family: var(--os-mono); font-weight: 700; color: var(--os-green); }
+    #scenario .derived { margin-top: 12px; display: flex; flex-direction: column; gap: 2px; }
+    #scenario .derived .l { font-family: var(--os-mono); font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--os-mut2); }
+    #scenario .derived .v { font-size: 18px; font-weight: 800; color: var(--os-ink); }
+    #scenario .derived .note { font-size: 12px; color: var(--os-mut); }
+    #scenario .derived .note.warn { color: var(--os-amber); }
+    #aiBtn { width: 100%; margin-top: 14px; }
+    #aiPanel { color: var(--os-body); }
+    #demoPitch { font-size: 12.5px; line-height: 1.5; color: var(--os-mut); }
+    #demoPitch a { color: var(--os-green); }
+  </style>
 </head>
 <body>
 
-  <div class="container">
-    <div class="breadcrumb" id="crumb"></div>
-    <div class="demo-head">
-      <h1 id="title"></h1>
-      <div class="site mono" id="site"></div>
-      <p class="pitch" id="pitch"></p>
-    </div>
+  <div class="os-app">
 
-    <div class="kpi-row" id="kpis"></div>
-
-    <div class="grid-2" id="charts" style="margin-bottom: 18px;"></div>
-
-    <div class="grid-2" style="align-items: start;">
-      <div class="panel">
-        <h3>⚙ Scenario <span class="hint">drag the control — the model reacts instantly</span></h3>
-        <div class="scenario" id="scenario"></div>
-        <div style="margin-top: 18px;">
-          <button class="btn-ai" id="aiBtn">✦ Generate AI Recommendation</button>
+    <!-- header -->
+    <header class="os-top">
+      <div class="os-top-l">
+        <a class="os-logo" href="/index.html#matrix" title="Back to use-case matrix">OS</a>
+        <div style="white-space:nowrap;max-width:60vw;overflow:hidden;text-overflow:ellipsis;">
+          <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
+            <span class="os-ttl" id="title"></span>
+            <span class="os-kicker">OreSight AI</span>
+          </div>
+          <div class="os-sub" id="site"></div>
         </div>
       </div>
-      <div class="ai-panel" id="aiPanel">
-        <div class="ai-panel-head"><span class="spark">✦</span><span class="t">OreSight AI Recommendation</span></div>
-        <div style="color: var(--muted); font-size: 13.5px;">Set your scenario on the left, then generate a recommendation. The AI reacts to the value you choose.</div>
+      <div class="os-top-r">
+        <span class="os-live"><span class="os-live-dot"></span><span class="os-live-t">Live</span></span>
       </div>
+    </header>
+
+    <!-- body: [KPIs + charts] | [scenario + AI] -->
+    <div class="os-body">
+
+      <!-- LEFT -->
+      <div class="os-left">
+        <div class="kpi-row os-kpis" id="kpis"></div>
+        <div class="os-card os-grow" style="display:flex;flex-direction:column;gap:10px;min-height:0;overflow:hidden;">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;">
+            <span class="os-label">Trends &amp; breakdown</span>
+            <span id="demoPitch" style="text-align:right;max-width:62%;"></span>
+          </div>
+          <div id="charts"></div>
+        </div>
+        <!-- breadcrumb kept for demo.js but folded into the back-link above -->
+        <div id="crumb" style="display:none;"></div>
+        <div id="pitch" style="display:none;"></div>
+      </div>
+
+      <!-- RIGHT — scenario + AI rail -->
+      <aside class="os-rail">
+        <div class="os-card">
+          <div class="os-label" style="margin-bottom:11px;">⚙ Scenario <span style="color:#b3b7a6;font-weight:400;text-transform:none;letter-spacing:0;">· drag — the model re-solves instantly</span></div>
+          <div class="scenario" id="scenario"></div>
+          <button class="btn-ai os-btn" id="aiBtn">✦ Generate AI Recommendation</button>
+        </div>
+        <div class="ai-panel os-card" id="aiPanel">
+          <div class="ai-panel-head"><span class="spark">✦</span><span class="t">OreSight AI Recommendation</span></div>
+          <div style="color:var(--os-mut);font-size:13.5px;margin-top:8px;">Set your scenario on the left, then generate a recommendation. The AI reacts to the value you choose.</div>
+        </div>
+      </aside>
     </div>
   </div>
 
   <script type="module" src="/js/demo.js"></script>
+  <script>
+    // Copy the pitch text into the visible caption once demo.js has populated it.
+    (function () {
+      function sync() {
+        var p = document.getElementById('pitch'), t = document.getElementById('demoPitch');
+        if (p && t && p.innerHTML) t.innerHTML = p.innerHTML;
+      }
+      var n = 0, iv = setInterval(function () { sync(); if (++n > 20) clearInterval(iv); }, 150);
+    })();
+  </script>
+  <script src="/js/tour.js"></script>
+  <script>
+    OreTour.init({ label: 'Guided tour', steps: [
+      { sel: '.os-top', title: 'The use-case', text: 'What this module decides, where it runs, and the value driver it targets.' },
+      { sel: '#kpis', title: 'Live KPIs', text: 'The headline metrics for this use-case, each with a delta against plan or baseline.' },
+      { sel: '#charts', title: 'Trends & breakdown', text: 'How the key signal is moving and where the loss or opportunity sits.' },
+      { sel: '#scenario', title: 'Scenario control', text: 'Drag the control — the deterministic model re-solves instantly so you can see the trade-off.' },
+      { sel: '#aiBtn', title: 'AI recommendation', text: 'Generate a grounded recommendation that reacts to the scenario you set.' },
+      { sel: '#aiPanel', title: 'The recommendation', text: 'A ranked, quantified action plan with its value impact appears here.' },
+    ]});
+  </script>
 </body>
 </html>

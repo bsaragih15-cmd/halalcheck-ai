@@ -4,7 +4,7 @@
 import { STAGES, VALUE_DRIVERS, MATRIX_ROWS, USE_CASES } from './usecases.js';
 
 // Cells carrying the solid green LIVE DEMO badge (the deep interactive demos).
-const LIVE = new Set(['command-center', 'maintenance', 'blending', 'haul', 'payload', 'blast', 'marketing', 'shipping', 'dispatch']);
+const LIVE = new Set(['blending', 'haul', 'payload', 'blast', 'marketing', 'shipping', 'dispatch']);
 
 function hrefFor(id) {
   const uc = USE_CASES[id];
@@ -23,22 +23,27 @@ function cellHTML(id, fullRow) {
   const uc = USE_CASES[id];
   if (!uc) return '';
   const live = LIVE.has(id);
+  // Only live demos are clickable; in-dev cells render as a plain div so the
+  // whole tile is inert (no navigation, no link cursor).
+  const tag = live ? 'a' : 'div';
+  const attr = live ? ` href="${hrefFor(id)}"` : '';
+  const cls = `matrix-cell${fullRow ? ' row-cell' : ''}${live ? ' live' : ' indev'}`;
   if (fullRow) {
     return `
-      <a class="matrix-cell row-cell ${live ? 'live' : ''}" href="${hrefFor(id)}">
+      <${tag} class="${cls}"${attr}>
         <span class="rc-main">
           <span class="rc-text"><span class="t">${uc.title}</span><span class="d">${uc.decisions}</span></span>
           ${badgeHTML(id)}
         </span>
         <span class="vd-icons rc-right">${driversHTML(uc)}</span>
-      </a>`;
+      </${tag}>`;
   }
   return `
-    <a class="matrix-cell ${live ? 'live' : ''}" href="${hrefFor(id)}">
+    <${tag} class="${cls}"${attr}>
       <span class="cell-top"><span class="t">${uc.title}</span><span class="vd-icons">${driversHTML(uc)}</span></span>
       <span class="d">${uc.decisions}</span>
       <span class="cell-badge">${badgeHTML(id)}</span>
-    </a>`;
+    </${tag}>`;
 }
 
 export function renderMatrix(root) {
