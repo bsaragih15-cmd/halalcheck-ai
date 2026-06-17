@@ -20,18 +20,21 @@
     a{text-decoration:none;color:inherit;}
     .rail::-webkit-scrollbar{width:8px;}
     .rail::-webkit-scrollbar-thumb{background:#dcdac9;border-radius:6px;}
-    .b-tab{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;letter-spacing:.04em;background:transparent;color:#8fa18f;border:1px solid #2c382a;border-radius:8px;padding:6px 13px;transition:all .16s;}
-    .b-tab:hover{color:#dfe5da;border-color:#3c5238;}
+    .b-tab{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;letter-spacing:.04em;background:transparent;color:#8b9182;border:1px solid #e7e4d8;border-radius:8px;padding:6px 13px;transition:all .16s;}
+    .b-tab:hover{color:#3a4133;border-color:#cdd3bf;}
     .b-tab.active{background:#15803d;color:#fff;border-color:#15803d;}
     .b-preset{border:1px solid #e7e4d8;background:#faf9f3;color:#3a4133;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.01em;font-weight:600;padding:8px 11px;border-radius:9px;display:inline-flex;align-items:center;gap:6px;transition:all .16s;}
     .b-preset:hover{border-color:#cdd3bf;background:#f3f1e6;}
     .b-preset.active{border-color:#15803d;background:#eef6ef;color:#15803d;}
     .b-cpq{border:1px solid #e7e4d8;background:#faf9f3;color:#3a4133;font-family:'Inter',sans-serif;font-size:12.5px;padding:7px 11px;border-radius:9px;transition:all .16s;text-align:left;}
     .b-cpq:hover{border-color:#cdd3bf;background:#f3f1e6;}
-    .b-rng{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;background:#2c382a;outline:none;margin:0;}
-    .b-rng::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:15px;height:15px;border-radius:50%;background:#dfe5da;border:2px solid #15803d;cursor:grab;box-shadow:0 1px 3px rgba(0,0,0,.4);}
+    .b-rng{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:3px;background:#e3e0d2;outline:none;margin:0;}
+    .b-rng::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:15px;height:15px;border-radius:50%;background:#fff;border:2px solid #15803d;cursor:grab;box-shadow:0 1px 3px rgba(20,30,15,.18);}
     .b-rng::-webkit-slider-thumb:active{cursor:grabbing;background:#15803d;}
-    .b-rng::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:#dfe5da;border:2px solid #15803d;cursor:grab;}
+    .b-rng::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:#fff;border:2px solid #15803d;cursor:grab;}
+    /* slider value readouts are injected by blast.js with a dark-theme light-grey;
+       force a dark/legible colour now they sit on the light cream controls panel */
+    #sliders [id^="sd-"]{color:#161b13 !important;}
   </style>
 </head>
 <body>
@@ -71,22 +74,22 @@
       <!-- KPI ROW -->
       <div id="kpiRow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;flex-shrink:0;"></div>
 
-      <!-- DARK CONTROL-ROOM SCREEN -->
-      <div style="flex:1;min-height:0;background:#10150f;border:1px solid #283226;border-radius:16px;padding:14px 15px;display:flex;flex-direction:column;gap:11px;box-shadow:0 1px 2px rgba(20,30,15,0.04);">
+      <!-- CONTROL-ROOM SCREEN (white card wrapping a dark viz inset) -->
+      <div style="flex:1;min-height:0;background:#fff;border:1px solid #e7e4d8;border-radius:16px;padding:14px 15px;display:flex;flex-direction:column;gap:11px;box-shadow:0 1px 2px rgba(20,30,15,0.04);">
 
         <!-- tabs + status -->
         <div style="display:flex;align-items:center;gap:9px;flex-shrink:0;">
           <button class="b-tab active" data-tab="frag">◷ Fragmentation</button>
           <button class="b-tab" data-tab="pattern">⬡ Pattern</button>
           <button class="b-tab" data-tab="recon">↺ Reconciliation</button>
-          <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#7fc796;display:inline-flex;align-items:center;gap:7px;"><span id="solveDot" style="width:7px;height:7px;border-radius:50%;background:#7fc796;"></span><span id="solveLabel">optimal</span></span>
+          <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#15803d;display:inline-flex;align-items:center;gap:7px;"><span id="solveDot" style="width:7px;height:7px;border-radius:50%;background:#15803d;"></span><span id="solveLabel">optimal</span></span>
         </div>
 
         <!-- constraint strip -->
-        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#141a12;border:1px solid #283226;border-radius:10px;padding:9px 13px;flex-shrink:0;">
-          <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.08em;color:#8fa18f;text-transform:uppercase;">Binding constraint</span>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:#faf9f3;border:1px solid #e7e4d8;border-radius:10px;padding:9px 13px;flex-shrink:0;">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.08em;color:#8b9182;text-transform:uppercase;">Binding constraint</span>
           <span style="display:inline-flex;align-items:center;gap:7px;"><span id="bindDot" style="width:9px;height:9px;border-radius:2px;background:#15803d;"></span><span id="bindName" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;color:#15803d;text-transform:capitalize;">fragmentation</span></span>
-          <span id="bindNote" style="font-size:11.5px;color:#9fb09c;line-height:1.35;flex:1;min-width:160px;"></span>
+          <span id="bindNote" style="font-size:11.5px;color:#6b7264;line-height:1.35;flex:1;min-width:160px;"></span>
         </div>
 
         <!-- content grid: main area | safety -->
@@ -178,27 +181,27 @@
 
           <!-- SAFETY (always visible) -->
           <div style="min-height:0;display:flex;flex-direction:column;gap:9px;">
-            <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#8fa18f;font-weight:700;flex-shrink:0;">Safety gate · always on</div>
-            <div id="ppvCard" style="background:#0c110b;border:1px solid #283226;border-radius:11px;padding:9px 11px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#8b9182;font-weight:700;flex-shrink:0;">Safety gate · always on</div>
+            <div id="ppvCard" style="background:#fff;border:1px solid #e7e4d8;border-radius:11px;padding:9px 11px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(20,30,15,0.04);">
               <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:#8b9182;align-self:flex-start;">Ground vibration · PPV</div>
               <svg viewBox="0 0 200 116" style="width:100%;max-width:118px;">
-                <path d="M22 108 A78 78 0 0 1 178 108" fill="none" stroke="#222c1f" stroke-width="11" stroke-linecap="round"></path>
-                <path id="ppvLimArc" d="" fill="none" stroke="#5a2a2a" stroke-width="11" stroke-linecap="round"></path>
-                <line id="ppvNeedle" x1="100" y1="108" x2="100" y2="36" stroke="#5fbf86" stroke-width="3" stroke-linecap="round"></line>
-                <circle id="ppvHub" cx="100" cy="108" r="5" fill="#5fbf86"></circle>
+                <path d="M22 108 A78 78 0 0 1 178 108" fill="none" stroke="#eeece1" stroke-width="11" stroke-linecap="round"></path>
+                <path id="ppvLimArc" d="" fill="none" stroke="#eccaca" stroke-width="11" stroke-linecap="round"></path>
+                <line id="ppvNeedle" x1="100" y1="108" x2="100" y2="36" stroke="#15803d" stroke-width="3" stroke-linecap="round"></line>
+                <circle id="ppvHub" cx="100" cy="108" r="5" fill="#15803d"></circle>
               </svg>
-              <div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:800;line-height:1;margin-top:-1px;"><span id="ppvVal" style="color:#5fbf86;">—</span><span style="font-size:10px;color:#7c8a78;font-weight:500;"> mm/s</span></div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:800;line-height:1;margin-top:-1px;"><span id="ppvVal" style="color:#15803d;">—</span><span style="font-size:10px;color:#9aa091;font-weight:500;"> mm/s</span></div>
               <div id="ppvCap" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#8b9182;margin-top:3px;">limit — · —</div>
             </div>
-            <div id="flyCard" style="background:#0c110b;border:1px solid #283226;border-radius:11px;padding:9px 11px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;">
+            <div id="flyCard" style="background:#fff;border:1px solid #e7e4d8;border-radius:11px;padding:9px 11px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 1px 2px rgba(20,30,15,0.04);">
               <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:#8b9182;align-self:flex-start;">Flyrock range</div>
               <svg viewBox="0 0 200 116" style="width:100%;max-width:118px;">
-                <path d="M22 108 A78 78 0 0 1 178 108" fill="none" stroke="#222c1f" stroke-width="11" stroke-linecap="round"></path>
-                <path id="flyLimArc" d="" fill="none" stroke="#5a2a2a" stroke-width="11" stroke-linecap="round"></path>
-                <line id="flyNeedle" x1="100" y1="108" x2="100" y2="36" stroke="#5fbf86" stroke-width="3" stroke-linecap="round"></line>
-                <circle id="flyHub" cx="100" cy="108" r="5" fill="#5fbf86"></circle>
+                <path d="M22 108 A78 78 0 0 1 178 108" fill="none" stroke="#eeece1" stroke-width="11" stroke-linecap="round"></path>
+                <path id="flyLimArc" d="" fill="none" stroke="#eccaca" stroke-width="11" stroke-linecap="round"></path>
+                <line id="flyNeedle" x1="100" y1="108" x2="100" y2="36" stroke="#15803d" stroke-width="3" stroke-linecap="round"></line>
+                <circle id="flyHub" cx="100" cy="108" r="5" fill="#15803d"></circle>
               </svg>
-              <div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:800;line-height:1;margin-top:-1px;"><span id="flyVal" style="color:#5fbf86;">—</span><span style="font-size:10px;color:#7c8a78;font-weight:500;"> m</span></div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:800;line-height:1;margin-top:-1px;"><span id="flyVal" style="color:#15803d;">—</span><span style="font-size:10px;color:#9aa091;font-weight:500;"> m</span></div>
               <div id="flyCap" style="font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#8b9182;margin-top:3px;">exclusion — · —</div>
             </div>
             <div id="rejectBanner" style="display:none;background:#991b1b;border-radius:9px;padding:8px 10px;text-align:center;animation:osFlash 0.9s infinite;flex-shrink:0;">
@@ -209,10 +212,10 @@
         </div>
 
         <!-- DESIGN SLIDERS -->
-        <div style="flex-shrink:0;background:#141a12;border:1px solid #283226;border-radius:11px;padding:10px 13px;">
+        <div style="flex-shrink:0;background:#faf9f3;border:1px solid #e7e4d8;border-radius:11px;padding:10px 13px;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px;">
-            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#8fa18f;font-weight:700;">Design controls</span>
-            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#6f7c68;">drag to redesign — curve &amp; gates react live</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#8b9182;font-weight:700;">Design controls</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#9aa091;">drag to redesign — curve &amp; gates react live</span>
           </div>
           <div id="sliders" style="display:grid;grid-template-columns:repeat(6,1fr);gap:13px;"></div>
         </div>

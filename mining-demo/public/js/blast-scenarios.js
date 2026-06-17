@@ -256,8 +256,8 @@ export function deriveView(d, ctx, opts = {}) {
     plannedPts: pp.join(' '), actualPts: ap.join(' '), actualP80: String(Math.round(aP80)),
     reconErr: (reconDelta >= 0 ? '+' : '') + Math.round(reconDelta) + ' mm', reconColor: Math.abs(reconDelta) <= 30 ? '#5fbf86' : '#e0a23a',
     // safety gauges
-    ppvDisp: m.ppv.toFixed(1), ppvLimitDisp: ctx.ppvLimit + ' mm/s', ppvNeedle: needle(m.ppv / ppvScale), ppvLimArc: limitArc(ctx.ppvLimit / ppvScale), ppvBorder: rejected && ppvStatus === 'BREACH' ? '#991b1b' : '#283226',
-    flyDisp: String(Math.round(m.fly)), exclDisp: ctx.exclusion + ' m', flyNeedle: needle(m.fly / flyScale), flyLimArc: limitArc(ctx.exclusion / flyScale), flyBorder: rejected && flyStatus === 'BREACH' ? '#991b1b' : '#283226',
+    ppvDisp: m.ppv.toFixed(1), ppvLimitDisp: ctx.ppvLimit + ' mm/s', ppvNeedle: needle(m.ppv / ppvScale), ppvLimArc: limitArc(ctx.ppvLimit / ppvScale), ppvBorder: rejected && ppvStatus === 'BREACH' ? '#991b1b' : '#e7e4d8',
+    flyDisp: String(Math.round(m.fly)), exclDisp: ctx.exclusion + ' m', flyNeedle: needle(m.fly / flyScale), flyLimArc: limitArc(ctx.exclusion / flyScale), flyBorder: rejected && flyStatus === 'BREACH' ? '#991b1b' : '#e7e4d8',
     // value / AI numeric boxes
     uplift, upliftDisp: fmt(uplift), value, valueDisp: usd(value), pfDisp: pf.toFixed(2), digDisp: fmt(m.digRate),
     // solve / AI status labels
