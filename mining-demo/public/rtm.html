@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OreSight AI — Risk Terrain Model (Mine Safety)</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{
+    --bg:#0c1116; --panel:#121a22; --line:#23303c; --ink:#e7eef5; --mut:#8aa0b2;
+    --green:#16a34a; --amber:#f59e0b; --red:#ef4444;
+    /* RTM ramp — mirrors the Dallas RTM legend (blue → yellow hot-spot) */
+    --rtm0:#13315c; --rtm1:#3f6fb0; --rtm2:#9aa0a6; --rtm3:#cdb27a; --rtm4:#f4d11a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+    font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif}
+  #map{position:absolute;inset:0;background:#0c1116}
+  .leaflet-container{background:#0c1116}
+
+  /* ── Title card ── */
+  .titlecard{
+    position:absolute;top:12px;left:12px;z-index:1000;background:rgba(18,26,34,.94);
+    border:1px solid var(--line);border-radius:10px;padding:12px 14px;max-width:330px;
+    box-shadow:0 6px 24px rgba(0,0,0,.45)}
+  .titlecard h1{font-size:15px;margin:0 0 2px;font-weight:800;letter-spacing:.2px}
+  .titlecard .sub{font-size:11.5px;color:var(--mut);line-height:1.45}
+  .titlecard .brand{display:inline-flex;align-items:center;gap:6px;font-size:11px;
+    color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+  .titlecard .brand i{width:9px;height:9px;background:var(--green);border-radius:2px;display:inline-block}
+
+  /* ── Technique panel ── */
+  details.tech{margin-top:10px;border-top:1px solid var(--line);padding-top:9px}
+  details.tech summary{cursor:pointer;font-size:11.5px;font-weight:700;color:var(--ink);outline:none}
+  details.tech .row{display:flex;gap:8px;font-size:10.8px;color:var(--mut);margin-top:7px;line-height:1.4}
+  details.tech .row b{color:var(--ink);font-weight:600}
+  details.tech .dot{flex:0 0 9px;width:9px;height:9px;border-radius:50%;margin-top:3px}
+
+  /* ── Legend ── */
+  .legend{position:absolute;bottom:18px;right:12px;z-index:1000;background:rgba(18,26,34,.94);
+    border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:11px;min-width:172px;
+    box-shadow:0 6px 24px rgba(0,0,0,.45)}
+  .legend h4{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut)}
+  .ramp{display:flex;height:13px;border-radius:3px;overflow:hidden;margin-bottom:4px}
+  .ramp span{flex:1}
+  .ramp-lab{display:flex;justify-content:space-between;font-size:9.5px;color:var(--mut);margin-bottom:9px}
+  .lg{display:flex;align-items:center;gap:8px;margin-top:6px}
+  .lg .sw{width:13px;height:13px;border-radius:3px;flex:0 0 13px}
+  .lg .ln{width:15px;height:0;border-top:3px solid #f4c430;flex:0 0 15px}
+  .lg .ci{width:13px;height:13px;border-radius:50%;flex:0 0 13px}
+
+  /* ── Readout (top right) ── */
+  .readout{position:absolute;top:12px;right:12px;z-index:1000;background:rgba(18,26,34,.94);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:11px;min-width:150px}
+  .readout .k{display:flex;justify-content:space-between;gap:14px;margin:3px 0}
+  .readout .k b{font-variant-numeric:tabular-nums}
+  .readout .hot{color:var(--rtm4)} .readout .hi{color:var(--rtm3)}
+
+  .leaflet-control-layers{background:rgba(18,26,34,.94)!important;color:var(--ink)!important;
+    border:1px solid var(--line)!important;border-radius:10px!important}
+  .leaflet-control-layers-expanded{padding:9px 11px!important;font-size:12px!important}
+  .leaflet-control-layers label{margin:4px 0!important}
+  .leaflet-bar a{background:#121a22!important;color:var(--ink)!important;border-color:var(--line)!important}
+  .pulse{animation:pulse 1.6s infinite}
+  @keyframes pulse{0%{opacity:.35}50%{opacity:1}100%{opacity:.35}}
+  .inc-pop{font-size:11.5px;line-height:1.5}
+  .inc-pop b{color:#0c1116}
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div class="titlecard">
+  <div class="brand"><i></i> OreSight AI · Safety</div>
+  <h1>Risk Terrain Model — Open-Pit Mine</h1>
+  <div class="sub">A predictive <b>risk surface</b> built from spatial risk factors (haul-road conflict points, crest/edge proximity, blast zone, pit-floor accumulation) — not just past incidents. Bingham Canyon, UT (satellite base).</div>
+  <details class="tech">
+    <summary>Cross-industry techniques in this map</summary>
+    <div class="row"><span class="dot" style="background:var(--rtm4)"></span><div><b>Risk Terrain Modeling</b> — from crime analytics (Caplan &amp; Kennedy). Composite risk from weighted environmental factors → predicts risk where incidents haven't happened yet.</div></div>
+    <div class="row"><span class="dot" style="background:#f4c430"></span><div><b>Conflict-point analysis</b> — from traffic safety. Haul-road switchbacks &amp; intersections = struck-by hot nodes.</div></div>
+    <div class="row"><span class="dot" style="background:var(--red)"></span><div><b>Near-repeat / contagion</b> — from crime &amp; epidemiology. Recent incidents raise short-term risk in adjacent cells.</div></div>
+    <div class="row"><span class="dot" style="background:#7dd3fc"></span><div><b>Common Operating Picture</b> — from military GEOINT. All layers fused into one live situational view.</div></div>
+  </details>
+</div>
+
+<div class="readout" id="readout">
+  <div class="k"><span>Grid cells</span><b id="r-cells">—</b></div>
+  <div class="k"><span class="hot">Very-High (hot)</span><b id="r-hot">—</b></div>
+  <div class="k"><span class="hi">High</span><b id="r-hi">—</b></div>
+  <div class="k"><span>Incidents '18–'24</span><b id="r-inc">—</b></div>
+  <div class="k"><span>Conflict points</span><b id="r-cp">—</b></div>
+</div>
+
+<div class="legend">
+  <h4>RTM Value</h4>
+  <div class="ramp">
+    <span style="background:var(--rtm0)"></span><span style="background:var(--rtm1)"></span>
+    <span style="background:var(--rtm2)"></span><span style="background:var(--rtm3)"></span>
+    <span style="background:var(--rtm4)"></span>
+  </div>
+  <div class="ramp-lab"><span>Very Low</span><span>Very High</span></div>
+  <div class="lg"><span class="ci" style="background:#ff3b30;border:1px solid #fff"></span> Historical incident</div>
+  <div class="lg"><span class="ln"></span> Haul-road network</div>
+  <div class="lg"><span class="sw" style="background:#ff2d55;opacity:.35;border:1px solid #ff2d55"></span> Near-repeat zone</div>
+  <div class="lg"><span class="ci" style="background:#ffd60a;border:1px solid #b8860b"></span> Conflict point</div>
+</div>
+
+<script>
+/* ───────────────────────── Geo helpers ───────────────────────── */
+const C = {lat:40.5230, lng:-112.1510};            // Bingham Canyon pit centre
+const M_LAT = 111320;
+const M_LNG = 111320 * Math.cos(C.lat*Math.PI/180);
+const off = (dx,dy) => [C.lat + dy/M_LAT, C.lng + dx/M_LNG]; // dx=East, dy=North (metres)
+const dist = (ax,ay,bx,by) => Math.hypot(ax-bx, ay-by);
+
+const map = L.map('map',{preferCanvas:true, zoomControl:true}).setView([C.lat,C.lng],14);
+L.control.zoom({position:'bottomleft'}).addTo(map);
+
+const sat = L.tileLayer(
+  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  {maxZoom:19, attribution:'Imagery © Esri, Maxar, Earthstar Geographics'}).addTo(map);
+
+/* ───────────────── Synthetic mine geometry (realistic) ───────────────── */
+// Descending spiral haul road through concentric benches (typical open-pit form)
+const TURNS=4.4, STEPS=440, R_OUT=1700, R_IN=320, DRIFTX=260, DRIFTY=-180;
+const roadM=[], roadLL=[];
+for(let i=0;i<=STEPS;i++){
+  const f=i/STEPS;
+  const r=R_OUT-(R_OUT-R_IN)*f;
+  const th=f*TURNS*2*Math.PI;
+  const x=r*1.18*Math.cos(th)+DRIFTX*f;
+  const y=r*0.92*Math.sin(th)+DRIFTY*f;
+  roadM.push({x,y}); roadLL.push(off(x,y));
+}
+// Crest ring (outer pit edge) — fall-of-ground / rollover factor
+const crestM=[];
+for(let a=0;a<360;a+=6){
+  const th=a*Math.PI/180;
+  crestM.push({x:R_OUT*1.18*Math.cos(th), y:R_OUT*0.92*Math.sin(th)});
+}
+// Conflict points: spiral switchbacks + pit entrance + in-pit crusher
+const conflictM=[];
+[0.10,0.27,0.46,0.64,0.82].forEach(f=>{ const idx=Math.round(f*STEPS); conflictM.push(roadM[idx]); });
+conflictM.push({x:R_OUT*1.05, y:R_OUT*0.55});   // pit entrance ramp
+conflictM.push({x:DRIFTX-60, y:DRIFTY+40});      // in-pit crusher near floor
+// Blast zone (active bench, NE sector)
+const BLAST={x:780, y:980, rad:430};
+
+/* ───────────────── RTM engine — composite weighted risk ───────────────── */
+const GRID=40, EXTENT=2050, CELL=(2*EXTENT)/GRID;
+const W={conflict:1.00, road:0.55, crest:0.62, blast:0.78, floor:0.46};
+const roadSamp = roadM.filter((_,i)=>i%3===0);    // thinned for distance calc
+
+function factorRisk(x,y){
+  // road proximity
+  let dr=1e9; for(const p of roadSamp){ const d=dist(x,y,p.x,p.y); if(d<dr)dr=d; }
+  const road=Math.exp(-dr/130);
+  // conflict points (max influence)
+  let conf=0; for(const p of conflictM){ conf=Math.max(conf,Math.exp(-dist(x,y,p.x,p.y)/200)); }
+  // crest proximity
+  let dc=1e9; for(const p of crestM){ const d=dist(x,y,p.x,p.y); if(d<dc)dc=d; }
+  const crest=Math.exp(-dc/110);
+  // blast zone
+  const db=dist(x,y,BLAST.x,BLAST.y);
+  const blast=db<BLAST.rad ? 1 : Math.exp(-(db-BLAST.rad)/260);
+  // pit-floor accumulation (gas/water near centre/deep)
+  const floor=Math.exp(-dist(x,y,DRIFTX,DRIFTY)/430);
+  return W.road*road + W.conflict*conf + W.crest*crest + W.blast*blast + W.floor*floor;
+}
+
+// Build grid + normalise
+const cells=[]; let maxR=0;
+for(let gx=0;gx<GRID;gx++) for(let gy=0;gy<GRID;gy++){
+  const cx=-EXTENT+(gx+0.5)*CELL, cy=-EXTENT+(gy+0.5)*CELL;
+  const r=factorRisk(cx,cy); if(r>maxR)maxR=r;
+  cells.push({gx,gy,cx,cy,r});
+}
+cells.forEach(c=>c.n=c.r/maxR);
+
+const RAMP=['#13315c','#3f6fb0','#9aa0a6','#cdb27a','#f4d11a'];
+const TH=[0.20,0.38,0.56,0.76];                    // class breaks
+const cls = n => n<TH[0]?0:n<TH[1]?1:n<TH[2]?2:n<TH[3]?3:4;
+
+/* ───────────────── Layers ───────────────── */
+// 1 — RTM risk surface
+const rtmLayer=L.layerGroup();
+let nHot=0,nHi=0;
+cells.forEach(c=>{
+  const k=cls(c.n); if(k===4)nHot++; if(k===3)nHi++;
+  const a=off(c.cx-CELL/2,c.cy-CELL/2), b=off(c.cx+CELL/2,c.cy+CELL/2);
+  L.rectangle([a,b],{stroke:false,fillColor:RAMP[k],fillOpacity:k===0?0.30:0.52})
+    .addTo(rtmLayer);
+});
+rtmLayer.addTo(map);
+
+// 2 — Haul-road network
+const roadLayer=L.layerGroup();
+L.polyline(roadLL,{color:'#f4c430',weight:2.4,opacity:.92}).addTo(roadLayer);
+roadLayer.addTo(map);
+
+// 3 — Conflict points
+const cpLayer=L.layerGroup();
+conflictM.forEach((p,i)=>{
+  L.circleMarker(off(p.x,p.y),{radius:7,color:'#b8860b',weight:2,fillColor:'#ffd60a',fillOpacity:.95})
+    .bindTooltip((i<5?'Switchback conflict node':i===5?'Pit entrance ramp':'In-pit crusher'),
+      {direction:'top'}).addTo(cpLayer);
+});
+cpLayer.addTo(map);
+
+// 4 — Historical incidents (weighted by risk² → cluster in hot zones, with scatter)
+const incLayer=L.layerGroup();
+const N_INC=120, TYPES=['Struck-by (light vehicle)','Fall of ground','Vehicle rollover','Tyre/edge near-miss','Blast exclusion breach','Gas reading exceedance'];
+const wsum=[]; let acc=0;
+cells.forEach(c=>{ acc+=Math.pow(c.n,2.6); wsum.push(acc); });
+function pick(){ const t=Math.random()*acc; let lo=0,hi=wsum.length-1;
+  while(lo<hi){const m=(lo+hi)>>1; if(wsum[m]<t)lo=m+1; else hi=m;} return cells[lo]; }
+const incPts=[];
+for(let i=0;i<N_INC;i++){
+  const c=pick();
+  const jx=(Math.random()-0.5)*CELL, jy=(Math.random()-0.5)*CELL;
+  const ll=off(c.cx+jx, c.cy+jy);
+  incPts.push({ll,n:c.n});
+  const yr=2018+Math.floor(Math.random()*7);
+  const ty=TYPES[Math.min(TYPES.length-1, Math.floor(c.n*TYPES.length))];
+  L.circleMarker(ll,{radius:3.4,color:'#fff',weight:.8,fillColor:'#ff3b30',fillOpacity:.9})
+    .bindPopup(`<div class="inc-pop"><b>${ty}</b><br>Year: ${yr}<br>RTM value: ${(c.n).toFixed(2)}</div>`)
+    .addTo(incLayer);
+}
+incLayer.addTo(map);
+
+// 5 — Near-repeat zones (recent-incident contagion buffers)
+const nrLayer=L.layerGroup();
+incPts.filter(p=>p.n>0.7).slice(0,7).forEach(p=>{
+  L.circle(p.ll,{radius:170,color:'#ff2d55',weight:1.2,dashArray:'5 4',
+    fillColor:'#ff2d55',fillOpacity:.12}).addTo(nrLayer);
+});
+// off by default — toggle on
+// nrLayer.addTo(map);
+
+// 6 — Blast exclusion zone
+const blastLayer=L.layerGroup();
+L.circle(off(BLAST.x,BLAST.y),{radius:BLAST.rad,color:'#ff9f0a',weight:1.5,dashArray:'8 5',
+  fillColor:'#ff9f0a',fillOpacity:.10}).bindTooltip('Active blast exclusion zone',{permanent:false}).addTo(blastLayer);
+
+/* ───────────────── Controls + readout ───────────────── */
+L.control.layers(
+  {'Satellite (Esri)':sat},
+  {
+    'RTM risk surface':rtmLayer,
+    'Historical incidents':incLayer,
+    'Haul-road network':roadLayer,
+    'Conflict points':cpLayer,
+    'Near-repeat zones':nrLayer,
+    'Blast exclusion zone':blastLayer,
+  },
+  {collapsed:false, position:'topright'}
+).addTo(map);
+
+document.getElementById('r-cells').textContent=cells.length;
+document.getElementById('r-hot').textContent=nHot;
+document.getElementById('r-hi').textContent=nHi;
+document.getElementById('r-inc').textContent=N_INC;
+document.getElementById('r-cp').textContent=conflictM.length;
+
+// Frame the pit
+map.fitBounds(L.latLngBounds(off(-EXTENT,-EXTENT), off(EXTENT,EXTENT)).pad(-0.05));
+</script>
+</body>
+</html>
