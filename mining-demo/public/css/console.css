@@ -1,0 +1,102 @@
+/* OreSight AI — shared console design system.
+   Single source of truth for the "Hauling Optimisation" look & feel:
+   cream canvas, white cards, #15803d green, Inter + JetBrains Mono, and a
+   fixed 100vh no-scroll shell (header + KPI/visual/dock left, AI rail right).
+   Every demo page links this file and uses these classes so the whole site is
+   pixel-aligned. Page-specific tweaks go in a small inline <style> per page. */
+
+:root {
+  --os-bg: #eeece3;
+  --os-card: #ffffff;
+  --os-card2: #faf9f3;
+  --os-line: #e7e4d8;
+  --os-line2: #eeece1;
+  --os-green: #15803d;
+  --os-green-d: #0f5c2c;
+  --os-green-soft: #eef6ef;
+  --os-green-line: #cfe3d3;
+  --os-ink: #161b13;
+  --os-ink2: #1a1f17;
+  --os-body: #3a4133;
+  --os-mut: #6b7264;
+  --os-mut2: #8b9182;
+  --os-mut3: #9aa091;
+  --os-amber: #b45309;
+  --os-red: #b91c1c;
+  --os-cyan: #0e7490;
+  --os-font: 'Inter', system-ui, -apple-system, sans-serif;
+  --os-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --os-radius: 16px;
+  --os-radius-sm: 12px;
+  --os-shadow: 0 1px 2px rgba(20, 30, 15, 0.04);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--os-bg); }
+body { font-family: var(--os-font); -webkit-font-smoothing: antialiased; color: var(--os-ink2); }
+button { cursor: pointer; font-family: inherit; }
+a { text-decoration: none; color: inherit; }
+input::placeholder { color: var(--os-mut3); }
+input:focus { outline: none; }
+
+@keyframes osBlink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
+@keyframes osDash { to { stroke-dashoffset: -32; } }
+@keyframes osPulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+
+/* ── Fixed no-scroll shell ─────────────────────────────────────────── */
+.os-app { height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: var(--os-bg); padding: 16px 20px 14px; }
+
+/* ── Header ────────────────────────────────────────────────────────── */
+.os-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-shrink: 0; margin-bottom: 14px; }
+.os-top-l { display: flex; align-items: center; gap: 14px; }
+.os-logo { width: 34px; height: 34px; border-radius: 9px; background: var(--os-green); display: inline-flex; align-items: center; justify-content: center; font-family: var(--os-mono); font-size: 14px; font-weight: 800; color: #fff; flex-shrink: 0; }
+.os-ttl { font-size: 19px; font-weight: 800; letter-spacing: -0.015em; color: var(--os-ink); }
+.os-kicker { font-family: var(--os-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--os-mut3); }
+.os-sub { font-family: var(--os-mono); font-size: 12px; letter-spacing: .04em; color: #7c8473; margin-top: 3px; }
+.os-top-r { display: flex; align-items: center; gap: 14px; }
+.os-clock { font-family: var(--os-mono); font-size: 22px; font-weight: 700; color: var(--os-ink); line-height: 1; }
+.os-clock-l { font-family: var(--os-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--os-mut3); margin-top: 4px; }
+.os-live { display: inline-flex; align-items: center; gap: 8px; padding: 7px 13px; border-radius: 999px; background: #eaf2ea; border: 1px solid #cfe1cf; }
+.os-live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--os-green); animation: osBlink 1.7s infinite; }
+.os-live-t { font-family: var(--os-mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--os-green); font-weight: 600; }
+
+/* ── Body grid: left console + right AI rail ───────────────────────── */
+.os-body { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
+.os-left { display: flex; flex-direction: column; gap: 13px; min-height: 0; }
+.os-rail { min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 13px; padding-right: 4px; }
+.os-rail::-webkit-scrollbar { width: 8px; }
+.os-rail::-webkit-scrollbar-thumb { background: #dcdac9; border-radius: 6px; }
+
+/* ── Cards ─────────────────────────────────────────────────────────── */
+.os-card { background: var(--os-card); border: 1px solid var(--os-line); border-radius: var(--os-radius); padding: 18px 20px; box-shadow: var(--os-shadow); }
+.os-card.sm { border-radius: 14px; padding: 14px 16px; }
+.os-grow { flex: 1; min-height: 0; }
+.os-label { font-family: var(--os-mono); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--os-mut2); font-weight: 600; }
+
+/* ── KPI strip ─────────────────────────────────────────────────────── */
+.os-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 13px; flex-shrink: 0; }
+.os-kpi { background: var(--os-card); border: 1px solid var(--os-line); border-radius: 14px; padding: 13px 15px; box-shadow: var(--os-shadow); }
+.os-kpi .l { font-family: var(--os-mono); font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--os-mut2); font-weight: 600; }
+.os-kpi .v { font-size: 23px; font-weight: 800; color: var(--os-ink); line-height: 1.1; margin-top: 5px; }
+.os-kpi .v .u { font-size: 12px; font-weight: 600; color: var(--os-mut3); }
+.os-kpi .d { font-family: var(--os-mono); font-size: 11px; color: var(--os-mut); margin-top: 4px; }
+
+/* ── Buttons / pills ───────────────────────────────────────────────── */
+.os-btn { border: none; background: var(--os-green); color: #fff; font-size: 13px; font-weight: 700; padding: 10px 17px; border-radius: 10px; }
+.os-btn:hover { background: #1a9648; }
+.os-chip { border: 1px solid var(--os-line); background: var(--os-card2); color: var(--os-body); font-family: var(--os-mono); font-size: 11.5px; letter-spacing: .01em; font-weight: 600; padding: 8px 11px; border-radius: 9px; display: inline-flex; align-items: center; gap: 7px; transition: all .18s; }
+.os-chip:hover { border-color: #cdd3bf; background: #f3f1e6; }
+.os-chip.active { border-color: var(--os-green); background: var(--os-green-soft); color: var(--os-green); }
+.os-toggle { display: flex; gap: 4px; background: #fff; border: 1px solid var(--os-line); border-radius: 10px; padding: 4px; }
+.os-viewbtn { border: none; font-family: var(--os-mono); font-size: 12px; letter-spacing: .03em; font-weight: 600; padding: 7px 14px; border-radius: 7px; background: transparent; color: var(--os-mut2); transition: all .18s; }
+.os-viewbtn.active { background: var(--os-green); color: #fff; }
+.os-input { background: var(--os-card2); border: 1px solid var(--os-line); color: var(--os-ink2); font-family: var(--os-font); font-size: 13px; padding: 10px 13px; border-radius: 10px; }
+
+/* ── AI rail headline block ────────────────────────────────────────── */
+.os-ai-badge { width: 26px; height: 26px; border-radius: 8px; background: var(--os-green); display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #fff; font-family: var(--os-mono); }
+.os-ai-headline { font-size: 20px; font-weight: 700; line-height: 1.4; letter-spacing: -0.01em; color: var(--os-ink); }
+.os-stat { flex: 1; background: var(--os-card2); border: 1px solid var(--os-line2); border-radius: 12px; padding: 13px 15px; }
+.os-stat.opt { background: var(--os-green-soft); border-color: var(--os-green-line); }
+.os-stat .l { font-family: var(--os-mono); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--os-mut3); margin-bottom: 6px; }
+.os-stat .v { font-size: 23px; font-weight: 800; color: var(--os-body); }
+.os-narr { font-size: 13px; line-height: 1.55; color: var(--os-mut); border-top: 1px solid var(--os-line2); padding-top: 12px; }

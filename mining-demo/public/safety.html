@@ -7,49 +7,152 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
+  <!-- console design system (shell, header, cards, KPIs) -->
+  <link rel="stylesheet" href="/css/console.css" />
+  <!-- legacy stylesheet kept ONLY for the analysis-result classes that safety.js
+       renders at runtime (.panel, .severity-banner, .risk-matrix, .comp-flag,
+       .list-block, .ai-panel, .report-input, .chip-btn, .btn-ai, .tag, .spinner…) -->
   <link rel="stylesheet" href="/css/styles.css" />
   <script src="/vendor/chart.umd.min.js"></script>
+  <style>
+    /* safety.js calls renderNav()/renderFooter() unconditionally — the console
+       shell is self-contained (like haul) so hide the injected global chrome. */
+    body > header.nav, body > footer.footer { display: none !important; }
+
+    /* ── KPI strip values ── */
+    .os-kpi .v.red { color: var(--os-red); }
+    .os-kpi .v.amber { color: var(--os-amber); }
+    .os-kpi .v.green { color: var(--os-green); }
+
+    /* Chart cards inside the left dock */
+    .sf-chartcard { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+    .sf-chartcard .os-label { display: flex; align-items: center; gap: 7px; }
+    .sf-chartcard .cv { flex: 1; min-height: 0; position: relative; }
+    .sf-chartcard canvas { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+
+    /* Report card (left, the input console) */
+    .sf-report { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+    .sf-report .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .sf-report textarea.report-input { min-height: 0; flex: 1; resize: none; }
+
+    /* Tame the legacy result classes so they sit cleanly in the white cards */
+    #results { font-size: 14px; }
+    #results .panel { background: var(--os-card2); border: 1px solid var(--os-line2); border-radius: var(--os-radius-sm); padding: 14px 16px; }
+    #results .panel h3 { font-size: 13px; margin-bottom: 10px; }
+    #results .ai-panel { border-radius: var(--os-radius-sm); }
+    #placeholder.os-card { display: grid; place-items: center; }
+
+    /* Right rail owns the only scroll on the page */
+    .os-rail { padding-bottom: 2px; }
+
+    @media (max-width: 1180px) {
+      .os-body { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
+<div class="os-app">
 
-  <div class="container">
-    <div class="breadcrumb"><a href="/index.html#matrix">Value Chain</a><span class="sep">/</span><span>Cross-cutting · HSE</span><span class="sep">/</span><span class="cur">Safety &amp; Compliance Intelligence</span></div>
-    <div class="demo-head">
-      <h1>Safety &amp; Compliance Intelligence <span class="badge-live">▶ LIVE DEMO</span></h1>
-      <div class="site mono">Incident triage · Kepmen ESDM 1827K · Permen ESDM 26/2018 · SMKP Minerba · ISO 45001</div>
-      <p class="pitch">Paste any shift report or incident narrative. The AI classifies hazard and severity, places it on the 5×5 risk matrix, maps it against Indonesian mining regulations, and drafts immediate and preventive actions — in minutes, not days.</p>
+  <!-- header -->
+  <div class="os-top">
+    <div class="os-top-l">
+      <a href="/index.html#matrix" title="Back to use-case matrix" class="os-logo">OS</a>
+      <div style="white-space:nowrap;">
+        <div style="display:flex;align-items:baseline;gap:10px;">
+          <span class="os-ttl">Safety &amp; Compliance Intelligence</span>
+          <span class="os-kicker">OreSight AI</span>
+        </div>
+        <div class="os-sub">Incident triage · Kepmen ESDM 1827K · SMKP Minerba · ISO 45001</div>
+      </div>
     </div>
-
-    <div class="grid-1-2" style="align-items: start;">
-      <div style="display: flex; flex-direction: column; gap: 14px;">
-        <div class="panel">
-          <h3>📄 Incident report <span class="hint">type, paste, or pick a sample</span></h3>
-          <div class="chips" id="sampleChips" style="margin-bottom: 12px;"></div>
-          <textarea class="report-input" id="reportInput" placeholder="Paste an incident or hazard report here…"></textarea>
-          <div style="margin-top: 14px;">
-            <button class="btn-ai" id="analyzeBtn">✦ Analyze with AI</button>
-          </div>
-        </div>
-        <div class="chart-box">
-          <div class="ct">Incidents by category — last 12 months</div>
-          <canvas id="catChart"></canvas>
-        </div>
-        <div class="chart-box">
-          <div class="ct">TRIFR trend (per million hours)</div>
-          <canvas id="trifrChart"></canvas>
-        </div>
+    <div class="os-top-r">
+      <div style="text-align:right;">
+        <div id="safetyClock" class="os-clock">--:--:--</div>
+        <div class="os-clock-l">WITA · Shift A</div>
       </div>
-
-      <div id="resultCol">
-        <div class="panel" id="placeholder" style="display:grid; place-items:center; min-height: 280px; color: var(--muted); font-size: 14px; text-align:center;">
-          <div><div style="font-size: 34px; margin-bottom: 10px;">🦺</div>Select a sample report or paste your own,<br/>then run the analysis.</div>
-        </div>
-        <div id="results" style="display: none; flex-direction: column; gap: 16px;"></div>
-      </div>
+      <span class="os-live">
+        <span class="os-live-dot"></span>
+        <span class="os-live-t">Live</span>
+      </span>
     </div>
   </div>
 
+  <!-- body: [KPIs + report + trend dock] | [AI triage rail] -->
+  <div class="os-body">
+
+    <!-- LEFT console -->
+    <div class="os-left">
+
+      <!-- KPI strip -->
+      <div class="os-kpis">
+        <div class="os-kpi">
+          <div class="l">TRIFR · 12 mo</div>
+          <div class="v green">3.1</div>
+          <div class="d">▼ 35% vs Jul</div>
+        </div>
+        <div class="os-kpi">
+          <div class="l">Open hazards</div>
+          <div class="v amber">18</div>
+          <div class="d">6 high · 12 medium</div>
+        </div>
+        <div class="os-kpi">
+          <div class="l">SMKP compliance</div>
+          <div class="v green">94<span class="u">%</span></div>
+          <div class="d">3 clauses in review</div>
+        </div>
+        <div class="os-kpi">
+          <div class="l">Days LTI-free</div>
+          <div class="v">112</div>
+          <div class="d">site record · 147</div>
+        </div>
+      </div>
+
+      <!-- report console (the big interactive card) -->
+      <div class="os-card os-grow sf-report">
+        <div class="os-label">📄 Incident report <span style="color:#b3b7a6;font-weight:400;text-transform:none;letter-spacing:0;">· type, paste, or pick a sample</span></div>
+        <div class="chips" id="sampleChips"></div>
+        <textarea class="report-input" id="reportInput" placeholder="Paste an incident or hazard report here…"></textarea>
+        <div style="flex-shrink:0;">
+          <button class="btn-ai" id="analyzeBtn">✦ Analyze with AI</button>
+        </div>
+      </div>
+
+      <!-- dock: two trend charts -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px;flex-shrink:0;height:172px;">
+        <div class="os-card sm sf-chartcard">
+          <div class="os-label">Incidents by category · 12 mo</div>
+          <div class="cv"><canvas id="catChart"></canvas></div>
+        </div>
+        <div class="os-card sm sf-chartcard">
+          <div class="os-label">TRIFR trend · per M hours</div>
+          <div class="cv"><canvas id="trifrChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT — AI triage rail (only internal scroll) -->
+    <aside class="os-rail" id="resultCol">
+      <div class="os-card" id="placeholder" style="min-height:280px;color:var(--os-mut);font-size:14px;text-align:center;">
+        <div><div style="font-size:34px;margin-bottom:10px;">🦺</div>Select a sample report or paste your own,<br/>then run the analysis.</div>
+      </div>
+      <div id="results" style="display:none;flex-direction:column;gap:14px;"></div>
+    </aside>
+  </div>
+</div>
+
   <script type="module" src="/js/safety.js"></script>
+  <script>
+    // lightweight WITA clock for the console header (no external dep)
+    (function () {
+      const el = document.getElementById('safetyClock');
+      if (!el) return;
+      const tick = () => {
+        const t = new Date(Date.now() + (8 * 60 - new Date().getTimezoneOffset()) * 60000);
+        el.textContent = t.toISOString().slice(11, 19);
+      };
+      tick(); setInterval(tick, 1000);
+    })();
+  </script>
 <script src="/js/tour.js"></script>
 <script>OreTour.init({"label":"Guided tour","steps":[{"sel":"#sampleChips","title":"Sample incidents","text":"Pick a sample report or paste your own."},{"sel":"#reportInput","title":"Incident report","text":"The free-text hazard/incident description to analyse."},{"sel":"#analyzeBtn","title":"Analyse","text":"Run the HSE analysis — severity, risk matrix and Indonesian-regulation compliance."},{"sel":"#resultCol","title":"Analysis","text":"Severity-of-potential, root causes, actions and compliance flags for the KTT."},{"sel":"#trifrChart","title":"Safety trend","text":"TRIFR and hazard-category trends."}]});</script>
 </body>

@@ -8,54 +8,145 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/styles.css" />
+  <link rel="stylesheet" href="/css/console.css" />
   <script src="/vendor/chart.umd.min.js"></script>
+  <style>
+    /* maintenance.js injects renderNav()/renderFooter() global chrome into <body>;
+       the console shell is self-contained like haul.html, so hide that chrome to
+       keep the fixed no-scroll viewport. */
+    body > header.nav, body > footer.footer { display: none !important; }
+
+    /* The cockpit body is a single viewport: left = KPIs + fleet list + condition
+       charts, right = AI diagnosis rail (internal scroll only). */
+    .mx-left-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 0.82fr 1.4fr; gap: 13px; }
+    .mx-col { display: flex; flex-direction: column; min-height: 0; }
+
+    /* Fleet list card — header fixed, the asset rows scroll internally. */
+    .mx-fleet-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; flex-shrink: 0; }
+    .mx-fleet-head .hint { margin-left: auto; font-family: var(--os-mono); font-size: 10.5px; letter-spacing: .03em; text-transform: uppercase; color: var(--os-mut3); font-weight: 600; }
+    #fleetList { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 8px; padding-right: 3px; }
+    #fleetList::-webkit-scrollbar { width: 8px; }
+    #fleetList::-webkit-scrollbar-thumb { background: #dcdac9; border-radius: 6px; }
+
+    /* Compact the shared fleet-card to the cream/white console look. */
+    .fleet-card { background: var(--os-card2); border-color: var(--os-line); border-radius: 11px; padding: 9px 12px; }
+    .fleet-card:hover { border-color: #cdd3bf; }
+    .fleet-card.active { border-color: var(--os-green); box-shadow: 0 0 0 1px var(--os-green); background: var(--os-green-soft); }
+    .fleet-card .id { width: 58px; font-size: 13px; }
+    .fleet-card svg.spark { width: 60px; height: 24px; }
+
+    /* Detail / charts card — title fixed, charts split the remaining height. */
+    .mx-detail-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; flex-shrink: 0; }
+    #detailTitle { font-size: 15px; font-weight: 800; letter-spacing: -0.01em; color: var(--os-ink); margin: 0; }
+    #detailTitle .hint { font-family: var(--os-mono); font-weight: 500; font-size: 11px; color: var(--os-mut); letter-spacing: .01em; }
+    .mx-charts { flex: 1; min-height: 0; display: grid; grid-template-rows: 1fr 1fr; gap: 12px; }
+    .mx-chart { display: flex; flex-direction: column; min-height: 0; }
+    .mx-chart .ct { font-family: var(--os-mono); font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--os-mut2); font-weight: 600; margin-bottom: 5px; flex-shrink: 0; }
+    .mx-chart canvas { flex: 1; min-height: 0; }
+    .mx-diag-row { display: flex; gap: 12px; align-items: center; flex-shrink: 0; margin-top: 12px; }
+    .btn-ai { background: var(--os-green); border-radius: 10px; font-size: 13px; padding: 10px 17px; }
+
+    /* AI diagnosis rail card — restyle the JS-injected panel to the console look. */
+    #aiPanel.ai-panel { background: var(--os-card); border: 1px solid var(--os-line); border-left: 1px solid var(--os-line); border-radius: var(--os-radius); padding: 20px 22px; box-shadow: var(--os-shadow); }
+    #aiPanel .ai-panel-head .t { font-size: 13px; }
+    #aiPanel .ai-narrative { color: var(--os-mut); border-top-color: var(--os-line2); }
+    .os-rail .placeholder { font-size: 13px; line-height: 1.55; color: var(--os-mut); }
+    /* The placeholder card shows only while the AI diagnosis panel is hidden
+       (maintenance.js toggles #aiPanel's inline display). */
+    #aiPanel:not([style*="display: none"]):not([style*="display:none"]) ~ #aiPlaceholder { display: none; }
+  </style>
 </head>
 <body>
 
-  <div class="container">
-    <div class="breadcrumb"><a href="/index.html#matrix">Value Chain</a><span class="sep">/</span><span>6-month horizon</span><span class="sep">/</span><span class="cur">Maintenance Optimisation</span></div>
-    <div class="demo-head">
-      <h1>Maintenance Optimisation <span class="badge-live">▶ LIVE DEMO</span></h1>
-      <div class="site mono">Morowali Nickel Operations — Pit 2 · <span id="witaClock">--:--:--</span> WITA · streaming fleet telemetry</div>
-      <p class="pitch">Condition monitoring across the mobile fleet and fixed plant. The AI predicts component failures from vibration and temperature signatures, then recommends the cheapest window to intervene.</p>
-    </div>
+<div class="os-app">
 
-    <div class="kpi-row">
-      <div class="kpi-card"><div class="l">Fleet availability</div><div class="v" id="kAvail">91.7<small>%</small></div><div class="d up">+2.3 pts with predictive program</div></div>
-      <div class="kpi-card"><div class="l">Active alerts</div><div class="v" id="kAlerts">—</div><div class="d">across 9 monitored assets</div></div>
-      <div class="kpi-card"><div class="l">MTBF — haul fleet</div><div class="v">412<small>h</small></div><div class="d up">+18% YoY</div></div>
-      <div class="kpi-card"><div class="l">Cost avoidance YTD</div><div class="v">$2.4<small>M</small></div><div class="d">planned vs unplanned interventions</div></div>
+  <!-- header -->
+  <div class="os-top">
+    <div class="os-top-l">
+      <a class="os-logo" href="/index.html#matrix" title="Back to use-case matrix">OS</a>
+      <div style="white-space:nowrap;">
+        <div style="display:flex;align-items:baseline;gap:10px;">
+          <span class="os-ttl">Maintenance Optimisation</span>
+          <span class="os-kicker">OreSight AI</span>
+        </div>
+        <div class="os-sub">Morowali · Pit 2 · 9× monitored assets · condition-based predictive</div>
+      </div>
     </div>
+    <div class="os-top-r">
+      <div style="text-align:right;">
+        <div id="witaClock" class="os-clock">--:--:--</div>
+        <div class="os-clock-l">WITA · Shift A</div>
+      </div>
+      <span class="os-live">
+        <span class="os-live-dot"></span>
+        <span class="os-live-t">Live</span>
+      </span>
+    </div>
+  </div>
 
-    <div class="grid-1-2" style="align-items: start;">
-      <div class="panel" style="padding: 16px;">
-        <h3>Fleet — Pit 2 <span class="hint">click an asset</span></h3>
-        <div id="fleetList" style="display: flex; flex-direction: column; gap: 8px;"></div>
+  <!-- body: [KPIs + fleet + charts] | [AI diagnosis rail] -->
+  <div class="os-body">
+
+    <!-- LEFT -->
+    <div class="os-left">
+
+      <!-- KPI strip -->
+      <div class="os-kpis">
+        <div class="os-kpi"><div class="l">Fleet availability</div><div class="v" id="kAvail">91.7<span class="u">%</span></div><div class="d">+2.3 pts predictive</div></div>
+        <div class="os-kpi"><div class="l">Active alerts</div><div class="v" id="kAlerts">—</div><div class="d">across 9 assets</div></div>
+        <div class="os-kpi"><div class="l">MTBF · haul fleet</div><div class="v">412<span class="u">h</span></div><div class="d">+18% YoY</div></div>
+        <div class="os-kpi"><div class="l">Cost avoidance YTD</div><div class="v">$2.4<span class="u">M</span></div><div class="d">planned vs unplanned</div></div>
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 18px;">
-        <div class="panel" id="detailPanel">
-          <h3 id="detailTitle">—</h3>
-          <div class="grid-2">
-            <div class="chart-box" style="border: none; padding: 0;">
-              <div class="ct">Vibration RMS (mm/s) — final drive, streaming</div>
+      <!-- fleet list + condition charts -->
+      <div class="mx-left-grid">
+
+        <!-- fleet list -->
+        <div class="os-card mx-col" style="padding:14px 14px 12px;">
+          <div class="mx-fleet-head">
+            <span class="os-label">Fleet · Pit 2</span>
+            <span class="hint">click an asset</span>
+          </div>
+          <div id="fleetList"></div>
+        </div>
+
+        <!-- detail / condition charts -->
+        <div class="os-card mx-col" id="detailPanel">
+          <div class="mx-detail-head">
+            <h3 id="detailTitle">—</h3>
+          </div>
+          <div class="mx-charts">
+            <div class="mx-chart">
+              <div class="ct">Vibration RMS (mm/s) · final drive · streaming</div>
               <canvas id="vibChart"></canvas>
             </div>
-            <div class="chart-box" style="border: none; padding: 0;">
-              <div class="ct">Bearing temperature (°C), streaming</div>
+            <div class="mx-chart">
+              <div class="ct">Bearing temperature (°C) · streaming</div>
               <canvas id="tempChart"></canvas>
             </div>
           </div>
-          <div style="margin-top: 16px; display: flex; gap: 12px; align-items: center;">
+          <div class="mx-diag-row">
             <button class="btn-ai" id="diagBtn">✦ Run AI Diagnosis</button>
-            <span style="color: var(--muted); font-size: 12.5px;" id="diagHint">Last 60 samples · 2 s cadence · ISO 10816 bands drawn on chart</span>
+            <span style="color:var(--os-mut);font-size:12px;" id="diagHint">60 samples · 2 s cadence · ISO 10816 bands</span>
           </div>
         </div>
-
-        <div class="ai-panel" id="aiPanel" style="display: none;"></div>
       </div>
     </div>
+
+    <!-- RIGHT — AI diagnosis rail -->
+    <aside class="os-rail">
+      <div class="os-card" id="aiPanel" style="display:none;"></div>
+      <div class="os-card" id="aiPlaceholder">
+        <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px;">
+          <span class="os-ai-badge">AI</span>
+          <span class="os-label" style="letter-spacing:.11em;">OreSight reliability engineer</span>
+        </div>
+        <div class="os-ai-headline" style="margin-bottom:14px;">Select an asset, then run a diagnosis.</div>
+        <div class="placeholder">The model reads the live vibration and bearing-temperature signatures against ISO 10816 zones, predicts the 30-day failure probability and the cheapest intervention window, and returns an action checklist with parts and cost avoidance.</div>
+      </div>
+    </aside>
   </div>
+</div>
 
   <script type="module" src="/js/maintenance.js"></script>
 <script src="/js/tour.js"></script>
