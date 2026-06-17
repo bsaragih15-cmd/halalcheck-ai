@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OreSight AI — 3D RTM (Drone-Survey Style)</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
+<style>
+  :root{--line:#23303c;--ink:#e7eef5;--mut:#90a2b3;--green:#16a34a;
+    --rtm0:#13315c;--rtm1:#3f6fb0;--rtm2:#9aa0a6;--rtm3:#cdb27a;--rtm4:#f4d11a;}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:#05070a;color:var(--ink);overflow:hidden;
+    font-family:Inter,system-ui,Segoe UI,sans-serif}
+  #app{position:absolute;inset:0}
+  .card{position:absolute;z-index:10;background:rgba(15,21,28,.92);border:1px solid var(--line);
+    border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+  .titlecard{top:12px;left:12px;padding:12px 14px;max-width:330px}
+  .titlecard h1{font-size:15px;margin:0 0 2px;font-weight:800}
+  .titlecard .sub{font-size:11.5px;color:var(--mut);line-height:1.45}
+  .brand{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--green);
+    font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+  .brand i{width:9px;height:9px;background:var(--green);border-radius:2px;display:inline-block}
+  .nav{margin-top:9px;display:flex;gap:7px;flex-wrap:wrap}
+  .nav a{font-size:10.5px;color:#9ec5ff;text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:3px 8px;cursor:pointer}
+  .nav a.on{background:#1c2a36;color:#fff;border-color:#2f4a5e}
+  .ctrl{top:12px;right:12px;padding:10px 12px;font-size:11.5px;display:flex;flex-direction:column;gap:8px}
+  .ctrl button{font-size:11.5px;background:#1c2a36;color:#fff;border:1px solid #2f4a5e;border-radius:7px;
+    padding:6px 10px;cursor:pointer;text-align:left}
+  .ctrl button:hover{background:#243545}
+  .ctrl label{display:flex;align-items:center;gap:7px;color:var(--mut);cursor:pointer}
+  .legend{bottom:16px;right:12px;padding:11px 13px;font-size:11px;min-width:172px}
+  .legend h4{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut)}
+  .ramp{display:flex;height:13px;border-radius:3px;overflow:hidden;margin-bottom:4px}
+  .ramp span{flex:1}
+  .ramp-lab{display:flex;justify-content:space-between;font-size:9.5px;color:var(--mut)}
+  .hint{position:absolute;bottom:14px;left:14px;z-index:10;font-size:10.5px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div class="card titlecard">
+  <div class="brand"><i></i> OreSight AI · Safety</div>
+  <h1>3-D Risk Terrain Model</h1>
+  <div class="sub">A drone-survey-style pit DEM with the <b>RTM draped over the real 3-D surface</b>. Risk is computed from the surveyed geometry — <b>slope steepness</b> (fall-of-ground), <b>crest edge</b>, <b>bench faces</b> and <b>pit floor</b>. Swap in a real GeoTIFF DEM to run on live survey data.</div>
+  <div class="nav">
+    <a onclick="location.href='rtm.html'">Schematic</a>
+    <a onclick="location.href='rtm-satellite.html'">Satellite</a>
+    <a onclick="location.href='rtm-section.html'">Cross-section</a>
+    <a class="on">3-D</a>
+  </div>
+</div>
+
+<div class="card ctrl">
+  <button id="modeBtn">Colour: Risk (RTM)</button>
+  <label><input type="checkbox" id="rot" checked> Auto-rotate</label>
+  <label><input type="checkbox" id="wire"> Wireframe</label>
+</div>
+
+<div class="card legend" id="legend">
+  <h4 id="legTitle">RTM Value</h4>
+  <div class="ramp" id="legRamp"></div>
+  <div class="ramp-lab" id="legLab"><span>Very Low</span><span>Very High</span></div>
+</div>
+
+<div class="hint">drag to orbit · scroll to zoom · right-drag to pan</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+/* ───────── scene ───────── */
+const app=document.getElementById('app');
+const scene=new THREE.Scene(); scene.background=new THREE.Color(0x05070a);
+const camera=new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 1, 8000);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight); renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+app.appendChild(renderer.domElement);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);
+controls.enableDamping=true; controls.autoRotate=true; controls.autoRotateSpeed=0.6;
+
+scene.add(new THREE.AmbientLight(0xffffff,0.55));
+const sun=new THREE.DirectionalLight(0xffffff,0.95); sun.position.set(-600,900,400); scene.add(sun);
+const fill=new THREE.DirectionalLight(0x88aaff,0.3); fill.position.set(500,300,-400); scene.add(fill);
+
+/* ───────── pit DEM (procedural, drone-DEM-like) ───────── */
+const N=200, S=1000, Ra=400, Rb=360, DEPTH=300, NB=12;
+function height(x,z){
+  const r=Math.sqrt((x/Ra)**2+(z/Rb)**2);
+  let h;
+  if(r>=1){ h=10*Math.sin(x*0.008)*Math.cos(z*0.009);
+    h+=Math.max(0,22*(1-Math.min(1,(r-1)*5)));          // slight rim berm
+  } else {
+    const t=1-r, lvl=Math.floor(t*NB)/NB, frac=t*NB-Math.floor(t*NB);
+    h=-DEPTH*lvl-(DEPTH/NB)*frac*0.18;                   // benches + small face batter
+  }
+  h+=Math.sin(x*0.05)*Math.cos(z*0.045)*3;               // fine roughness
+  return h;
+}
+const geo=new THREE.PlaneGeometry(S,S,N,N); geo.rotateX(-Math.PI/2);
+const pos=geo.attributes.position, V=pos.count;
+let minH=1e9,maxH=-1e9;
+for(let i=0;i<V;i++){const x=pos.getX(i),z=pos.getZ(i),h=height(x,z);
+  pos.setY(i,h); if(h<minH)minH=h; if(h>maxH)maxH=h;}
+geo.computeVertexNormals();
+const nrm=geo.attributes.normal;
+
+/* ───────── RTM risk per vertex ───────── */
+const risk=new Float32Array(V); let maxRisk=0;
+for(let i=0;i<V;i++){const x=pos.getX(i),z=pos.getZ(i);
+  const r=Math.sqrt((x/Ra)**2+(z/Rb)**2);
+  const slope=1-nrm.getY(i);                              // steep faces → high
+  const crest=Math.exp(-Math.pow((r-1)/0.07,2));          // ring at the rim edge
+  const floor=r<0.34?(0.34-r)/0.34:0;                     // deep floor / loading
+  const ang=Math.atan2(z,x);
+  const blast=(ang>0.5&&ang<1.5&&r<0.85)?0.7:0;           // active blast sector
+  const v=1.25*slope+0.5*crest+0.65*floor+blast;
+  risk[i]=v; if(v>maxRisk)maxRisk=v;}
+
+/* ───────── colour ramps ───────── */
+const STOPS=[[0x13,0x31,0x5c],[0x3f,0x6f,0xb0],[0x9a,0xa0,0xa6],[0xcd,0xb2,0x7a],[0xf4,0xd1,0x1a]];
+function ramp(v){v=Math.max(0,Math.min(1,v)); const s=v*(STOPS.length-1),i=Math.floor(s),f=s-i,
+  a=STOPS[i],b=STOPS[Math.min(i+1,STOPS.length-1)];
+  return [(a[0]+(b[0]-a[0])*f)/255,(a[1]+(b[1]-a[1])*f)/255,(a[2]+(b[2]-a[2])*f)/255];}
+const riskCol=new Float32Array(V*3), elevCol=new Float32Array(V*3), c=new THREE.Color();
+for(let i=0;i<V;i++){
+  const rc=ramp(risk[i]/maxRisk); riskCol[i*3]=rc[0];riskCol[i*3+1]=rc[1];riskCol[i*3+2]=rc[2];
+  const hn=(pos.getY(i)-minH)/(maxH-minH);                // 0 deep → 1 high
+  c.setHSL(0.66*hn,0.85,0.5);                             // blue(deep) → red(high), like a DEM
+  elevCol[i*3]=c.r;elevCol[i*3+1]=c.g;elevCol[i*3+2]=c.b;}
+geo.setAttribute('color',new THREE.BufferAttribute(riskCol.slice(),3));
+
+const mat=new THREE.MeshStandardMaterial({vertexColors:true,flatShading:true,roughness:0.95,metalness:0.0});
+const mesh=new THREE.Mesh(geo,mat); scene.add(mesh);
+
+// thin dark skirt so it reads as a solid block
+const skirtMat=new THREE.MeshStandardMaterial({color:0x161208,roughness:1});
+const skirt=new THREE.Mesh(new THREE.BoxGeometry(S,40,S),skirtMat); skirt.position.y=minH-20; scene.add(skirt);
+
+/* ───────── camera framing ───────── */
+camera.position.set(Ra*1.5, DEPTH*2.0, Rb*2.0);
+controls.target.set(0,-DEPTH*0.35,0); controls.update();
+
+/* ───────── UI ───────── */
+let mode='risk';
+const modeBtn=document.getElementById('modeBtn');
+const legTitle=document.getElementById('legTitle'), legRamp=document.getElementById('legRamp'), legLab=document.getElementById('legLab');
+function paintLegend(){
+  if(mode==='risk'){legTitle.textContent='RTM Value';
+    legRamp.innerHTML=['--rtm0','--rtm1','--rtm2','--rtm3','--rtm4'].map(v=>`<span style="background:var(${v})"></span>`).join('');
+    legLab.innerHTML='<span>Very Low</span><span>Very High</span>';}
+  else{legTitle.textContent='Elevation (DEM)';
+    legRamp.innerHTML='<span style="background:#1a3aa0"></span><span style="background:#1f9e8a"></span><span style="background:#7bd13a"></span><span style="background:#f2c12e"></span><span style="background:#e8412a"></span>';
+    legLab.innerHTML='<span>Pit floor</span><span>Crest / surface</span>';}
+}
+modeBtn.onclick=()=>{ mode=mode==='risk'?'elev':'risk';
+  modeBtn.textContent='Colour: '+(mode==='risk'?'Risk (RTM)':'Elevation (DEM)');
+  geo.attributes.color.array.set(mode==='risk'?riskCol:elevCol);
+  geo.attributes.color.needsUpdate=true; paintLegend();};
+document.getElementById('rot').onchange=e=>controls.autoRotate=e.target.checked;
+document.getElementById('wire').onchange=e=>mat.wireframe=e.target.checked;
+paintLegend();
+
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);});
+(function loop(){requestAnimationFrame(loop); controls.update(); renderer.render(scene,camera);})();
+</script>
+</body>
+</html>
