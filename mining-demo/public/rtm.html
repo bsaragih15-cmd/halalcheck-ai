@@ -9,77 +9,75 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root{
-    --bg:#0c1116; --panel:#121a22; --line:#23303c; --ink:#e7eef5; --mut:#8aa0b2;
-    --green:#16a34a; --amber:#f59e0b; --red:#ef4444;
+    --bg:#0e1411; --panel:#121a22; --line:#23303c; --ink:#e7eef5; --mut:#8aa0b2;
+    --green:#16a34a;
     --rtm0:#13315c; --rtm1:#3f6fb0; --rtm2:#9aa0a6; --rtm3:#cdb27a; --rtm4:#f4d11a;
   }
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
     font-family:Inter,system-ui,Segoe UI,Roboto,sans-serif}
-  #map{position:absolute;inset:0;background:#0c1116}
-  .leaflet-container{background:#0c1116}
+  #map{position:absolute;inset:0;background:#0e1411}
+  .leaflet-container{background:#0e1411}
 
-  .titlecard{position:absolute;top:12px;left:12px;z-index:1000;background:rgba(18,26,34,.94);
-    border:1px solid var(--line);border-radius:10px;padding:12px 14px;max-width:320px;
-    box-shadow:0 6px 24px rgba(0,0,0,.45)}
-  .titlecard h1{font-size:15px;margin:0 0 2px;font-weight:800;letter-spacing:.2px}
+  .card{position:absolute;z-index:1000;background:rgba(18,26,34,.95);
+    border:1px solid var(--line);border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.45)}
+  .titlecard{top:12px;left:12px;padding:12px 14px;max-width:330px}
+  .titlecard h1{font-size:15px;margin:0 0 2px;font-weight:800}
   .titlecard .sub{font-size:11.5px;color:var(--mut);line-height:1.45}
   .titlecard .brand{display:inline-flex;align-items:center;gap:6px;font-size:11px;
     color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
   .titlecard .brand i{width:9px;height:9px;background:var(--green);border-radius:2px;display:inline-block}
-
   details.tech{margin-top:10px;border-top:1px solid var(--line);padding-top:9px}
   details.tech summary{cursor:pointer;font-size:11.5px;font-weight:700;color:var(--ink);outline:none}
   details.tech .row{display:flex;gap:8px;font-size:10.8px;color:var(--mut);margin-top:7px;line-height:1.4}
   details.tech .row b{color:var(--ink);font-weight:600}
   details.tech .dot{flex:0 0 9px;width:9px;height:9px;border-radius:50%;margin-top:3px}
 
-  .legend{position:absolute;bottom:18px;right:12px;z-index:1000;background:rgba(18,26,34,.94);
-    border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:11px;min-width:178px;
-    box-shadow:0 6px 24px rgba(0,0,0,.45)}
+  .legend{bottom:18px;right:12px;padding:11px 13px;font-size:11px;min-width:182px}
   .legend h4{margin:0 0 7px;font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut)}
   .ramp{display:flex;height:13px;border-radius:3px;overflow:hidden;margin-bottom:4px}
   .ramp span{flex:1}
   .ramp-lab{display:flex;justify-content:space-between;font-size:9.5px;color:var(--mut);margin-bottom:9px}
   .lg{display:flex;align-items:center;gap:8px;margin-top:6px}
   .lg .sw{width:13px;height:13px;border-radius:3px;flex:0 0 13px}
-  .lg .ln{width:15px;height:0;border-top:3px solid #f4c430;flex:0 0 15px}
+  .lg .ln{width:15px;border-top:3px solid #f4c430;flex:0 0 15px}
   .lg .ci{width:13px;height:13px;border-radius:50%;flex:0 0 13px}
-  .lg .sq{width:12px;height:12px;flex:0 0 12px;border:2px solid #fff}
+  .lg .sq{width:12px;height:12px;flex:0 0 12px;border:2px solid #34d399;background:rgba(52,211,153,.25)}
 
-  .readout{position:absolute;top:12px;right:12px;z-index:1000;background:rgba(18,26,34,.94);
-    border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:11px;min-width:150px}
+  .readout{top:12px;right:12px;padding:10px 12px;font-size:11px;min-width:150px}
   .readout .k{display:flex;justify-content:space-between;gap:14px;margin:3px 0}
   .readout .k b{font-variant-numeric:tabular-nums}
   .readout .hot{color:var(--rtm4)} .readout .hi{color:var(--rtm3)}
 
-  .leaflet-control-layers{background:rgba(18,26,34,.94)!important;color:var(--ink)!important;
+  .leaflet-control-layers{background:rgba(18,26,34,.95)!important;color:var(--ink)!important;
     border:1px solid var(--line)!important;border-radius:10px!important}
   .leaflet-control-layers-expanded{padding:9px 11px!important;font-size:12px!important}
   .leaflet-control-layers label{margin:4px 0!important}
   .leaflet-bar a{background:#121a22!important;color:var(--ink)!important;border-color:var(--line)!important}
-  .fac-lab{background:rgba(12,17,22,.82);border:1px solid var(--line);border-radius:5px;
-    padding:1px 6px;font-size:10.5px;font-weight:700;color:#fff;white-space:nowrap}
+
+  .fac-lab{background:rgba(10,16,12,.85);border:1px solid #34d399;border-radius:5px;
+    padding:1px 7px;font-size:10.5px;font-weight:700;color:#eafff4;white-space:nowrap;transform:translateY(-20px)}
+  .pit-lab{font-size:11px;font-weight:700;color:#e9d9b8;text-shadow:0 1px 3px #000;white-space:nowrap}
   .inc-pop{font-size:11.5px;line-height:1.5}.inc-pop b{color:#0c1116}
 </style>
 </head>
 <body>
 <div id="map"></div>
 
-<div class="titlecard">
+<div class="card titlecard">
   <div class="brand"><i></i> OreSight AI · Safety</div>
-  <h1>Risk Terrain Model — Small Open-Pit</h1>
-  <div class="sub">A predictive <b>risk surface</b> from spatial risk factors along a simple haul network: access-ramp switchbacks, crest/edge, blast bench, and pit-floor loading. Base: Haile pit, SC.</div>
+  <h1>Risk Terrain Model — Open-Pit Schematic</h1>
+  <div class="sub">A predictive <b>risk surface</b> over a correctly-labeled mine layout. Each station is placed by design (not traced on satellite), so risk factors map exactly to the ramp, crest, blast bench and surface facilities. Schematic — not georeferenced.</div>
   <details class="tech">
     <summary>Cross-industry techniques in this map</summary>
-    <div class="row"><span class="dot" style="background:var(--rtm4)"></span><div><b>Risk Terrain Modeling</b> — crime analytics (Caplan &amp; Kennedy): composite risk from weighted environmental factors, predicts risk before incidents occur.</div></div>
-    <div class="row"><span class="dot" style="background:#f4c430"></span><div><b>Conflict-point analysis</b> — traffic safety: switchbacks &amp; haul-road junctions = struck-by hot nodes.</div></div>
-    <div class="row"><span class="dot" style="background:var(--red)"></span><div><b>Near-repeat / contagion</b> — crime &amp; epidemiology: recent incidents raise short-term risk nearby.</div></div>
-    <div class="row"><span class="dot" style="background:#7dd3fc"></span><div><b>Common Operating Picture</b> — military GEOINT: all layers fused into one live view.</div></div>
+    <div class="row"><span class="dot" style="background:var(--rtm4)"></span><div><b>Risk Terrain Modeling</b> — crime analytics (Caplan &amp; Kennedy): composite risk from weighted environmental factors.</div></div>
+    <div class="row"><span class="dot" style="background:#f4c430"></span><div><b>Conflict-point analysis</b> — traffic safety: ramp switchbacks &amp; haul junctions = struck-by hot nodes.</div></div>
+    <div class="row"><span class="dot" style="background:#ff3b30"></span><div><b>Near-repeat / contagion</b> — crime &amp; epidemiology: recent incidents raise nearby short-term risk.</div></div>
+    <div class="row"><span class="dot" style="background:#7dd3fc"></span><div><b>Common Operating Picture</b> — military GEOINT: fused single situational view.</div></div>
   </details>
 </div>
 
-<div class="readout" id="readout">
+<div class="card readout" id="readout">
   <div class="k"><span>Grid cells</span><b id="r-cells">—</b></div>
   <div class="k"><span class="hot">Very-High (hot)</span><b id="r-hot">—</b></div>
   <div class="k"><span class="hi">High</span><b id="r-hi">—</b></div>
@@ -87,7 +85,7 @@
   <div class="k"><span>Conflict points</span><b id="r-cp">—</b></div>
 </div>
 
-<div class="legend">
+<div class="card legend">
   <h4>RTM Value</h4>
   <div class="ramp">
     <span style="background:var(--rtm0)"></span><span style="background:var(--rtm1)"></span>
@@ -98,141 +96,163 @@
   <div class="lg"><span class="ci" style="background:#ff3b30;border:1px solid #fff"></span> Historical incident</div>
   <div class="lg"><span class="ln"></span> Haul road / ramp</div>
   <div class="lg"><span class="ci" style="background:#ffd60a;border:1px solid #b8860b"></span> Conflict point</div>
-  <div class="lg"><span class="sq" style="background:#22c55e"></span> Site facility</div>
+  <div class="lg"><span class="sq"></span> Surface facility</div>
   <div class="lg"><span class="sw" style="background:#ff2d55;opacity:.35;border:1px solid #ff2d55"></span> Near-repeat zone</div>
 </div>
 
 <script>
-/* ───────── Geo helpers ───────── */
-const C = {lat:34.5767, lng:-80.5411};             // Haile pit, SC
-const M_LAT = 111320, M_LNG = 111320*Math.cos(C.lat*Math.PI/180);
-const off = (dx,dy) => [C.lat + dy/M_LAT, C.lng + dx/M_LNG];   // metres E / N
+/* ───────── Schematic coordinate system (plain x/y units ≈ metres) ───────── */
+const map = L.map('map',{crs:L.CRS.Simple,minZoom:-3,maxZoom:4,zoomControl:false,preferCanvas:true});
+L.control.zoom({position:'bottomleft'}).addTo(map);
+const W=1400, H=1000;
+const pt = (x,y) => [y,x];                              // CRS.Simple: lat=y(up), lng=x
 const dist = (ax,ay,bx,by) => Math.hypot(ax-bx, ay-by);
 
-const map = L.map('map',{preferCanvas:true, zoomControl:false}).setView([C.lat,C.lng],16);
-L.control.zoom({position:'bottomleft'}).addTo(map);
-const sat = L.tileLayer(
-  'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-  {maxZoom:19, attribution:'Imagery © Esri, Maxar, Earthstar Geographics'}).addTo(map);
+/* ───────── Mine layout (authored, so labels are always correct) ───────── */
+const PIT = {cx:880, cy:500, a:300, b:250};
+const BENCH = [1.0, 0.80, 0.61, 0.44, 0.28, 0.14];      // crest → floor
+const FLOOR = {x:PIT.cx, y:PIT.cy};
+const BLAST = {x:PIT.cx+170, y:PIT.cy-40, rad:95};
 
-/* ───────── Simple, hand-authored mine layout (metres, E/N) ───────── */
+// Surface facilities — placed on open ground WEST/SOUTH of the pit (clear of crest)
 const FAC = {
-  rom:   {x:-430, y:240, label:'ROM pad / crusher'},
-  dump:  {x: 360, y:360, label:'Waste dump'},
-  floor: {x:  30, y:-30, label:'Pit floor — loading'},
+  rom:       {x:300, y:600, w:130, h:64, label:'ROM pad'},
+  crusher:   {x:300, y:470, w:130, h:64, label:'Primary crusher'},
+  stockpile: {x:300, y:730, w:130, h:64, label:'Ore stockpile'},
+  waste:     {x:840, y:130, w:230, h:120, label:'Waste rock dump'},
 };
-// Haul network as a few clean polylines (waypoints)
-const ROUTES = {
-  surface_rom_entry: [ {x:-430,y:240}, {x:-360,y:120}, {x:-285,y:35} ],          // ROM → pit entrance
-  ramp:              [ {x:-285,y:35}, {x:130,y:-185}, {x:-120,y:-70}, {x:30,y:-30} ], // 2-switchback descent to floor
-  surface_dump:      [ {x:-430,y:240}, {x:-120,y:330}, {x:160,y:370}, {x:360,y:360} ],// ROM → waste dump
-};
-// Conflict points (struck-by hot nodes)
-const conflictM = [
-  {x:130,y:-185, t:'Switchback A'},
-  {x:-120,y:-70, t:'Switchback B'},
-  {x:-285,y:35,  t:'Pit entrance ramp'},
-  {x:-430,y:240, t:'ROM pad junction'},
-  {x:30,y:-30,   t:'Floor loading bay'},
-];
-// Pit crest (outer edge) + blast bench
-const PIT = {cx:15, cy:-45, a:300, b:235};         // crest ellipse
-const BLAST = {x:215, y:-70, rad:115};
+const PIT_EXIT = {x:PIT.cx-PIT.a, y:PIT.cy};            // ramp meets surface (west crest)
 
-/* densify polylines into metre-points for distance calcs + draw */
-function densify(pts, step){
-  const out=[];
-  for(let i=0;i<pts.length-1;i++){
-    const a=pts[i], b=pts[i+1], d=dist(a.x,a.y,b.x,b.y), n=Math.max(1,Math.ceil(d/step));
-    for(let k=0;k<=n;k++){ const f=k/n; out.push({x:a.x+(b.x-a.x)*f, y:a.y+(b.y-a.y)*f}); }
+// Winding access ramp: floor → west crest exit (~1.15 turns, reads as a switchback ramp)
+const rampM=[];
+{ const TURNS=1.15, N=220;
+  for(let i=0;i<=N;i++){ const t=i/N;
+    const ax=40+(PIT.a-40)*t, by=30+(PIT.b-30)*t;
+    const ang=Math.PI + (1-t)*TURNS*2*Math.PI;
+    rampM.push({x:PIT.cx+ax*Math.cos(ang), y:PIT.cy+by*Math.sin(ang)});
   }
-  return out;
 }
-const roadM = [...densify(ROUTES.surface_rom_entry,15), ...densify(ROUTES.ramp,12), ...densify(ROUTES.surface_dump,18)];
-const crestM=[]; for(let ang=0;ang<360;ang+=6){const th=ang*Math.PI/180;
+// Surface haul routes (waypoints)
+const ROUTES = {
+  ore:   [ {x:PIT_EXIT.x,y:PIT_EXIT.y}, {x:440,y:560}, {x:FAC.rom.x,y:FAC.rom.y} ],
+  feed:  [ {x:FAC.rom.x,y:FAC.rom.y}, {x:FAC.crusher.x,y:FAC.crusher.y} ],
+  waste: [ {x:PIT_EXIT.x,y:PIT_EXIT.y}, {x:560,y:300}, {x:700,y:180}, {x:FAC.waste.x,y:FAC.waste.y} ],
+};
+
+// Conflict points (struck-by hot nodes): ramp switchback extremes + key junctions
+const conflictM = [
+  {...rampM[Math.round(rampM.length*0.36)], t:'Ramp switchback A'},
+  {...rampM[Math.round(rampM.length*0.70)], t:'Ramp switchback B'},
+  {x:PIT_EXIT.x, y:PIT_EXIT.y, t:'Pit exit ramp'},
+  {x:FAC.rom.x, y:FAC.rom.y,   t:'ROM pad junction'},
+  {x:FLOOR.x, y:FLOOR.y,       t:'Floor loading bay'},
+  {x:FAC.waste.x, y:FAC.waste.y, t:'Waste dump tip-head'},
+];
+
+/* densify polylines for distance calc */
+function densify(pts,step){const o=[];for(let i=0;i<pts.length-1;i++){const a=pts[i],b=pts[i+1],
+  d=dist(a.x,a.y,b.x,b.y),n=Math.max(1,Math.ceil(d/step));
+  for(let k=0;k<=n;k++){const f=k/n;o.push({x:a.x+(b.x-a.x)*f,y:a.y+(b.y-a.y)*f});}}return o;}
+const roadM=[...rampM, ...densify(ROUTES.ore,16), ...densify(ROUTES.feed,16), ...densify(ROUTES.waste,18)];
+const crestM=[]; for(let d=0;d<360;d+=6){const th=d*Math.PI/180;
   crestM.push({x:PIT.cx+PIT.a*Math.cos(th), y:PIT.cy+PIT.b*Math.sin(th)});}
 
 /* ───────── RTM engine ───────── */
-const GRID=38, EXTENT=560, CELL=(2*EXTENT)/GRID;
-const W={conflict:1.00, road:0.55, crest:0.60, blast:0.78, floor:0.46};
+const GX=46, GY=33, cw=W/GX, ch=H/GY;
+const WT={conflict:1.00, road:0.55, crest:0.55, blast:0.72, floor:0.44};
 function factorRisk(x,y){
-  let dr=1e9; for(const p of roadM){const d=dist(x,y,p.x,p.y); if(d<dr)dr=d;}
-  const road=Math.exp(-dr/55);
-  let conf=0; for(const p of conflictM){conf=Math.max(conf,Math.exp(-dist(x,y,p.x,p.y)/95));}
-  let dc=1e9; for(const p of crestM){const d=dist(x,y,p.x,p.y); if(d<dc)dc=d;}
-  const crest=Math.exp(-dc/50);
-  const db=dist(x,y,BLAST.x,BLAST.y);
-  const blast=db<BLAST.rad?1:Math.exp(-(db-BLAST.rad)/130);
-  const floor=Math.exp(-dist(x,y,FAC.floor.x,FAC.floor.y)/180);
-  return W.road*road + W.conflict*conf + W.crest*crest + W.blast*blast + W.floor*floor;
+  let dr=1e9; for(const p of roadM){const d=dist(x,y,p.x,p.y);if(d<dr)dr=d;}
+  const road=Math.exp(-dr/46);
+  let conf=0; for(const p of conflictM){conf=Math.max(conf,Math.exp(-dist(x,y,p.x,p.y)/82));}
+  let dc=1e9; for(const p of crestM){const d=dist(x,y,p.x,p.y);if(d<dc)dc=d;}
+  const crest=Math.exp(-dc/44);
+  const db=dist(x,y,BLAST.x,BLAST.y); const blast=db<BLAST.rad?1:Math.exp(-(db-BLAST.rad)/110);
+  const floor=Math.exp(-dist(x,y,FLOOR.x,FLOOR.y)/150);
+  return WT.road*road+WT.conflict*conf+WT.crest*crest+WT.blast*blast+WT.floor*floor;
 }
 const cells=[]; let maxR=0;
-for(let gx=0;gx<GRID;gx++) for(let gy=0;gy<GRID;gy++){
-  const cx=-EXTENT+(gx+0.5)*CELL, cy=-EXTENT+(gy+0.5)*CELL;
-  const r=factorRisk(cx,cy); if(r>maxR)maxR=r; cells.push({cx,cy,r});
-}
+for(let i=0;i<GX;i++)for(let j=0;j<GY;j++){const cx=(i+0.5)*cw, cy=(j+0.5)*ch;
+  const r=factorRisk(cx,cy); if(r>maxR)maxR=r; cells.push({cx,cy,r});}
 cells.forEach(c=>c.n=c.r/maxR);
-const RAMP=['#13315c','#3f6fb0','#9aa0a6','#cdb27a','#f4d11a'], TH=[0.20,0.38,0.56,0.76];
+const RAMP=['#13315c','#3f6fb0','#9aa0a6','#cdb27a','#f4d11a'], TH=[0.18,0.36,0.55,0.75];
 const cls=n=>n<TH[0]?0:n<TH[1]?1:n<TH[2]?2:n<TH[3]?3:4;
 
 /* ───────── Layers ───────── */
+// terrain: terraced benches (visible when RTM toggled off)
+const ellPoly=(cx,cy,a,b,n=56)=>{const o=[];for(let k=0;k<=n;k++){const th=k/n*2*Math.PI;
+  o.push(pt(cx+a*Math.cos(th), cy+b*Math.sin(th)));}return o;};
+const lerpC=(c1,c2,t)=>{const a=[parseInt(c1.slice(1,3),16),parseInt(c1.slice(3,5),16),parseInt(c1.slice(5,7),16)],
+  b=[parseInt(c2.slice(1,3),16),parseInt(c2.slice(3,5),16),parseInt(c2.slice(5,7),16)];
+  return '#'+a.map((v,i)=>Math.round(v+(b[i]-v)*t).toString(16).padStart(2,'0')).join('');};
+const terrain=L.layerGroup();
+L.rectangle([pt(0,0),pt(W,H)],{stroke:false,fillColor:'#171d18',fillOpacity:1}).addTo(terrain); // ground
+BENCH.forEach((s,i)=>{const col=lerpC('#5b4a37','#8c7551',i/(BENCH.length-1));
+  L.polygon(ellPoly(PIT.cx,PIT.cy,PIT.a*s,PIT.b*s),{color:'#3a2f24',weight:1,fillColor:col,fillOpacity:1}).addTo(terrain);});
+terrain.addTo(map);
+
+// RTM surface
 const rtmLayer=L.layerGroup(); let nHot=0,nHi=0;
 cells.forEach(c=>{const k=cls(c.n); if(k===4)nHot++; if(k===3)nHi++;
-  const a=off(c.cx-CELL/2,c.cy-CELL/2), b=off(c.cx+CELL/2,c.cy+CELL/2);
-  L.rectangle([a,b],{stroke:false,fillColor:RAMP[k],fillOpacity:k===0?0.28:0.50}).addTo(rtmLayer);});
+  L.rectangle([pt(c.cx-cw/2,c.cy-ch/2),pt(c.cx+cw/2,c.cy+ch/2)],
+    {stroke:false,fillColor:RAMP[k],fillOpacity:k===0?0.22:0.50}).addTo(rtmLayer);});
 rtmLayer.addTo(map);
 
+// haul roads + ramp
 const roadLayer=L.layerGroup();
-Object.values(ROUTES).forEach(r=>L.polyline(r.map(p=>off(p.x,p.y)),
-  {color:'#f4c430',weight:3,opacity:.95}).addTo(roadLayer));
+L.polyline(rampM.map(p=>pt(p.x,p.y)),{color:'#f4c430',weight:3,opacity:.95}).addTo(roadLayer);
+Object.values(ROUTES).forEach(r=>L.polyline(r.map(p=>pt(p.x,p.y)),{color:'#f4c430',weight:3,opacity:.95}).addTo(roadLayer));
 roadLayer.addTo(map);
 
+// facilities (boxes + labels) + pit label
 const facLayer=L.layerGroup();
 Object.values(FAC).forEach(f=>{
-  L.marker(off(f.x,f.y),{icon:L.divIcon({className:'',html:`<div class="fac-lab">${f.label}</div>`,iconSize:[0,0]})}).addTo(facLayer);
-  L.rectangle([off(f.x-22,f.y-22),off(f.x+22,f.y+22)],{color:'#22c55e',weight:2,fillColor:'#22c55e',fillOpacity:.25}).addTo(facLayer);
+  L.rectangle([pt(f.x-f.w/2,f.y-f.h/2),pt(f.x+f.w/2,f.y+f.h/2)],
+    {color:'#34d399',weight:2,fillColor:'#34d399',fillOpacity:.22}).addTo(facLayer);
+  L.marker(pt(f.x,f.y),{icon:L.divIcon({className:'',html:`<div class="fac-lab">${f.label}</div>`,iconSize:[0,0]})}).addTo(facLayer);
 });
+L.marker(pt(PIT.cx,PIT.cy+PIT.b+34),{icon:L.divIcon({className:'',html:`<div class="pit-lab">OPEN PIT</div>`,iconSize:[0,0]})}).addTo(facLayer);
 facLayer.addTo(map);
 
+// conflict points
 const cpLayer=L.layerGroup();
-conflictM.forEach(p=>L.circleMarker(off(p.x,p.y),
-  {radius:7,color:'#b8860b',weight:2,fillColor:'#ffd60a',fillOpacity:.95})
+conflictM.forEach(p=>L.circleMarker(pt(p.x,p.y),{radius:7,color:'#b8860b',weight:2,fillColor:'#ffd60a',fillOpacity:.95})
   .bindTooltip(p.t,{direction:'top'}).addTo(cpLayer));
 cpLayer.addTo(map);
 
-// incidents weighted by risk² (cluster in hot zones, with scatter)
+// historical incidents (weighted by risk²·⁶)
 const incLayer=L.layerGroup();
 const N_INC=70, TYPES=['Struck-by (light vehicle)','Fall of ground','Vehicle rollover','Tyre/edge near-miss','Blast exclusion breach','Gas reading exceedance'];
 const wsum=[]; let acc=0; cells.forEach(c=>{acc+=Math.pow(c.n,2.6); wsum.push(acc);});
 function pick(){const t=Math.random()*acc; let lo=0,hi=wsum.length-1;
   while(lo<hi){const m=(lo+hi)>>1; if(wsum[m]<t)lo=m+1; else hi=m;} return cells[lo];}
 const incPts=[];
-for(let i=0;i<N_INC;i++){
-  const c=pick(), jx=(Math.random()-0.5)*CELL, jy=(Math.random()-0.5)*CELL, ll=off(c.cx+jx,c.cy+jy);
-  incPts.push({ll,n:c.n});
+for(let i=0;i<N_INC;i++){const c=pick(), jx=(Math.random()-.5)*cw, jy=(Math.random()-.5)*ch;
+  const x=c.cx+jx,y=c.cy+jy; incPts.push({x,y,n:c.n});
   const yr=2018+Math.floor(Math.random()*7), ty=TYPES[Math.min(TYPES.length-1,Math.floor(c.n*TYPES.length))];
-  L.circleMarker(ll,{radius:3.6,color:'#fff',weight:.8,fillColor:'#ff3b30',fillOpacity:.9})
-    .bindPopup(`<div class="inc-pop"><b>${ty}</b><br>Year: ${yr}<br>RTM value: ${c.n.toFixed(2)}</div>`).addTo(incLayer);
-}
+  L.circleMarker(pt(x,y),{radius:3.6,color:'#fff',weight:.8,fillColor:'#ff3b30',fillOpacity:.9})
+    .bindPopup(`<div class="inc-pop"><b>${ty}</b><br>Year: ${yr}<br>RTM value: ${c.n.toFixed(2)}</div>`).addTo(incLayer);}
 incLayer.addTo(map);
 
+// near-repeat contagion zones
 const nrLayer=L.layerGroup();
-incPts.filter(p=>p.n>0.72).slice(0,6).forEach(p=>L.circle(p.ll,
-  {radius:110,color:'#ff2d55',weight:1.2,dashArray:'5 4',fillColor:'#ff2d55',fillOpacity:.12}).addTo(nrLayer));
+incPts.filter(p=>p.n>0.72).slice(0,6).forEach(p=>L.circle(pt(p.x,p.y),
+  {radius:70,color:'#ff2d55',weight:1.2,dashArray:'5 4',fillColor:'#ff2d55',fillOpacity:.12}).addTo(nrLayer));
 
+// blast exclusion zone
 const blastLayer=L.layerGroup();
-L.circle(off(BLAST.x,BLAST.y),{radius:BLAST.rad,color:'#ff9f0a',weight:1.5,dashArray:'8 5',
-  fillColor:'#ff9f0a',fillOpacity:.10}).bindTooltip('Active blast exclusion zone').addTo(blastLayer);
+L.circle(pt(BLAST.x,BLAST.y),{radius:BLAST.rad,color:'#ff9f0a',weight:1.5,dashArray:'8 5',
+  fillColor:'#ff9f0a',fillOpacity:.12}).bindTooltip('Active blast exclusion zone').addTo(blastLayer);
 
 /* ───────── Controls + readout ───────── */
-L.control.layers({'Satellite (Esri)':sat},{
-  'RTM risk surface':rtmLayer,'Historical incidents':incLayer,'Haul road / ramp':roadLayer,
-  'Conflict points':cpLayer,'Site facilities':facLayer,'Near-repeat zones':nrLayer,'Blast exclusion zone':blastLayer,
+L.control.layers(null,{
+  'Terrain &amp; benches':terrain,'RTM risk surface':rtmLayer,'Historical incidents':incLayer,
+  'Haul road / ramp':roadLayer,'Conflict points':cpLayer,'Surface facilities':facLayer,
+  'Near-repeat zones':nrLayer,'Blast exclusion zone':blastLayer,
 },{collapsed:false,position:'topright'}).addTo(map);
 
 r_cells.textContent=cells.length; r_hot.textContent=nHot; r_hi.textContent=nHi;
 r_inc.textContent=N_INC; r_cp.textContent=conflictM.length;
-map.fitBounds(L.latLngBounds(off(-EXTENT,-EXTENT),off(EXTENT,EXTENT)).pad(-0.02));
+map.fitBounds([pt(60,60),pt(W-60,H-60)]);
 </script>
 </body>
 </html>
