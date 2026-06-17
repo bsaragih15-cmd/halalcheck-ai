@@ -27,6 +27,9 @@
   .titlecard .brand{display:inline-flex;align-items:center;gap:6px;font-size:11px;
     color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
   .titlecard .brand i{width:9px;height:9px;background:var(--green);border-radius:2px;display:inline-block}
+  .nav{margin-top:9px;display:flex;gap:7px;flex-wrap:wrap}
+  .nav a{font-size:10.5px;color:#9ec5ff;text-decoration:none;border:1px solid var(--line);border-radius:6px;padding:3px 8px}
+  .nav a.on{background:#1c2a36;color:#fff;border-color:#2f4a5e}
   details.tech{margin-top:10px;border-top:1px solid var(--line);padding-top:9px}
   details.tech summary{cursor:pointer;font-size:11.5px;font-weight:700;color:var(--ink);outline:none}
   details.tech .row{display:flex;gap:8px;font-size:10.8px;color:var(--mut);margin-top:7px;line-height:1.4}
@@ -68,6 +71,11 @@
   <div class="brand"><i></i> OreSight AI · Safety</div>
   <h1>Risk Terrain Model — Open-Pit Schematic</h1>
   <div class="sub">A predictive <b>risk surface</b> over a correctly-labeled mine layout. Each station is placed by design (not traced on satellite), so risk factors map exactly to the ramp, crest, blast bench and surface facilities. Schematic — not georeferenced.</div>
+  <div class="nav">
+    <a class="on">Schematic</a>
+    <a href="rtm-satellite.html">Satellite trace</a>
+    <a href="rtm-section.html">Cross-section</a>
+  </div>
   <details class="tech">
     <summary>Cross-industry techniques in this map</summary>
     <div class="row"><span class="dot" style="background:var(--rtm4)"></span><div><b>Risk Terrain Modeling</b> — crime analytics (Caplan &amp; Kennedy): composite risk from weighted environmental factors.</div></div>
