@@ -85,10 +85,10 @@
 <script>
 /* ════════ CONFIG — adjust after calibration ════════ */
 const CFG = {
-  center:[-8.9667, 116.8667],   // pit centre (lat,lng)
-  pitA:1050, pitB:980,          // crest semi-axes (m): E-W, N-S
+  center:[-8.9655, 116.8676],   // pit centre (lat,lng) — corrected from screenshot
+  pitA:935, pitB:1000,          // crest semi-axes (m): E-W, N-S — tightened to hug rim
   rotDeg:0,                     // rotate whole trace (deg)
-  rampTurns:1.8,                // ramp winds this many turns to floor
+  rampTurns:1.7,                // ramp winds this many turns to floor
 };
 /* ═══════════════════════════════════════════════════ */
 
@@ -121,7 +121,7 @@ const conflictM=[
 const roadSamp=rampM.filter((_,i)=>i%3===0);
 
 /* ───────── RTM engine ───────── */
-const GRID=34, EXT=Math.max(PIT.a,PIT.b)*1.35, CELL=2*EXT/GRID;
+const GRID=34, EXT=Math.max(PIT.a,PIT.b)*1.18, CELL=2*EXT/GRID;
 const WT={conflict:1.0,road:0.55,crest:0.6,floor:0.44};
 function factorRisk(x,y){
   let dr=1e9; for(const p of roadSamp){const d=dist(x,y,p.x,p.y);if(d<dr)dr=d;}
@@ -143,7 +143,7 @@ const cls=n=>n<TH[0]?0:n<TH[1]?1:n<TH[2]?2:n<TH[3]?3:4;
 const rtmLayer=L.layerGroup();
 cells.forEach(c=>{const k=cls(c.n);
   L.rectangle([off(c.cx-CELL/2,c.cy-CELL/2),off(c.cx+CELL/2,c.cy+CELL/2)],
-    {stroke:false,fillColor:RAMP[k],fillOpacity:k===0?0.14:0.42}).addTo(rtmLayer);});
+    {stroke:false,fillColor:RAMP[k],fillOpacity:k===0?0.10:0.40}).addTo(rtmLayer);});
 rtmLayer.addTo(map);
 
 const crestLayer=L.layerGroup();
