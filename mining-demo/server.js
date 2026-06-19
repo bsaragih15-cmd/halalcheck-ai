@@ -9,6 +9,7 @@ import { haulFallback, haulParseFallback, haulCopilotFallback } from './data/hau
 import { irocFallback, irocParseFallback, irocCopilotFallback } from './data/iroc.js';
 import { blastFallback, blastParseFallback, blastCopilotFallback } from './data/blast.js';
 import { shippingFallback, shippingDisruptionFallback, shippingCopilotFallback } from './data/shipping.js';
+import { cockpitBriefFallback } from './data/cockpit.js';
 import { USE_CASES } from './public/js/usecases.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -423,8 +424,46 @@ Return JSON with EXACTLY this structure:
 { "answer": "<2-3 sentence grounded answer, may contain <b> tags>" }
 IMPORTANT: Return ONLY valid JSON, no other text.`;
 
+const COCKPIT_BRIEF_PROMPT = `You are the AI Chief of Staff to the Group CEO of MIND ID (Mining Industry Indonesia / MIND ID), the holding company of Indonesia's state-owned mining enterprises. You focus on PT Bukit Asam (PTBA), the coal subsidiary. Earnings flow to MIND ID as a dividend at 65.93% ownership; the board sets a dividend floor.
+
+You are given the live output of a Monte Carlo "dividend-at-risk" model: the central market view (HBA/ICI coal benchmark in US$/t, USD/IDR, China demand index, Capesize freight in US$/t), any mitigation levers the CEO has applied (coal-price hedge %, FX hedge %, domestic-mix shift, cost-reduction program), and the resulting distribution of the dividend to MIND ID (P10/P50/P90 in Rp trillion), the probability it breaches the board floor, cash-flow-at-risk (P50−P5), and a driver-attribution ranking.
+
+Produce a board-grade executive brief. Return JSON with EXACTLY this structure:
+
+{
+  "confidence": "HIGH" | "MEDIUM" | "LOW",
+  "posture": "DEFENSIVE" | "BALANCED" | "CONSTRUCTIVE",
+  "situation": "<2-3 sentences: where PTBA stands today, citing the median dividend, the P10-P90 band and the breach probability>",
+  "implication": "<1-2 sentences: what it means for the MIND ID consolidated dividend and the PTBA equity thesis>",
+  "actions": [{"action": "<specific CEO/board action>", "rationale": "<one line, grounded in the numbers>"}],
+  "risks": ["<2-3 top risks, each one line>"],
+  "opportunities": ["<1-2 upside opportunities, each one line>"],
+  "sources": ["<2-3 model references / data points the brief rests on>"]
+}
+
+Domain rules:
+- Ground EVERY claim in the numbers provided — quote the median, the band, the breach probability and the dominant driver. Never invent figures.
+- The dominant driver in the attribution ranking is where CEO attention buys the most risk reduction; lead the actions there.
+- Realistic CEO levers: price/FX hedging, anchoring the payout to a conservative percentile, DMO/royalty engagement with ESDM, unit-cost programs, and capital allocation across the MIND ID portfolio. 3-4 actions.
+- If mitigations are already applied, acknowledge the improvement (breach probability before vs after) rather than re-recommending them.
+- Posture: DEFENSIVE if breach probability is high or the median is near/below the floor; CONSTRUCTIVE if cover is comfortable; BALANCED otherwise.
+
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
 // ── Endpoints ─────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, aiMode: aiMode() }));
+
+// CEO Cockpit: AI Chief-of-Staff executive brief over the Monte Carlo state.
+app.post('/api/cockpit/brief', async (req, res) => {
+  const body = req.body || {};
+  const result = await askClaude({
+    label: `cockpit:brief:${body.regime ?? 'base'}`,
+    systemPrompt: COCKPIT_BRIEF_PROMPT,
+    userMessage: `Live dividend-at-risk state:\n${JSON.stringify(body, null, 2).slice(0, 6000)}\n\nReturn only valid JSON.`,
+    fallback: cockpitBriefFallback(body),
+  });
+  res.json(result);
+});
 
 // Serve the AISStream key from an env var so it never lives in the (public) repo.
 // AISStream is a browser-side WebSocket, so the key is necessarily client-visible
