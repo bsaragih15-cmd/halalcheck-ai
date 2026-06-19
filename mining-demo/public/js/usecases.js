@@ -26,6 +26,7 @@ export const VALUE_DRIVERS = {
 // Matrix rows: horizon label + cells. span = [firstStageCol, lastStageCol], 1-based.
 // A cell is either {case} or {stack:[caseA, caseB]} (two half-height cells).
 export const MATRIX_ROWS = [
+  { horizon: 'Exec',  cells: [{ case: 'cockpit', span: [1, 10] }] },
   { horizon: '24h',  cells: [{ case: 'command-center', span: [1, 10] }] },
   { horizon: '4w', cells: [
     { case: 'orebody',  span: [1, 2] },
@@ -46,6 +47,13 @@ const fmtUSD = (n) => '$' + Math.round(n).toLocaleString('en-US');
 export const USE_CASES = {
 
   // ── Flagships (dedicated pages) ────────────────────────────────────────────
+  'cockpit': {
+    title: 'MIND ID CEO Cockpit: Executive strategic monitor',
+    decisions: 'portfolio posture, scenario stress-testing & board-level decisions',
+    stage: 'Cross-chain', horizon: 'Exec', drivers: ['margin', 'npv'],
+    flagship: true, href: '/cockpit.html',
+  },
+
   'control-tower': {
     title: 'Control Tower: End-to-end visibility',
     decisions: 'real-time status across the full value chain',
