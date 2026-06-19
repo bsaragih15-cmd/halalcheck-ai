@@ -136,7 +136,12 @@
   .spinner{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;
     display:inline-block;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:7px}
   @keyframes spin{to{transform:rotate(360deg)}}
+  /* chromeless mode when embedded inside the CEO Cockpit (?embed=1) */
+  .embed .bar{display:none}
+  .embed .wrap{padding-top:16px}
+  .embed aside{top:16px!important}
 </style>
+<script>if(new URLSearchParams(location.search).has('embed'))document.documentElement.classList.add('embed');</script>
 </head>
 <body>
 
