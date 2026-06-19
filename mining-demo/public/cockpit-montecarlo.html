@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MIND ID CEO Cockpit · Scenario Simulator (Monte Carlo)</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23a371f7'/><text x='50' y='70' font-size='60' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23fff'>M</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#07090f; --panel:#0e121b; --panel2:#11161f; --line:#1c2330;
+    --ink:#e8edf5; --muted:#8b98a9; --faint:#5b6678;
+    --grad1:#a371f7; --grad2:#4493f8; --green:#3fb950; --amber:#d29922; --red:#f85149;
+    --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.45;
+    -webkit-font-smoothing:antialiased;padding-bottom:60px}
+  a{color:inherit;text-decoration:none}
+  .mono{font-family:var(--mono)}
+
+  /* ── brand bar ─────────────────────────────────────────────── */
+  .bar{display:flex;align-items:center;gap:16px;padding:14px 26px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#0b0f17,#07090f);position:sticky;top:0;z-index:20}
+  .logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--grad1),var(--grad2));
+    display:grid;place-items:center;font-family:var(--mono);font-weight:700;font-size:19px}
+  .bar h1{font-size:14.5px;font-weight:600;letter-spacing:.2px}
+  .bar h1 b{color:var(--grad1);font-weight:700}
+  .bar .sub{font-size:11px;color:var(--muted);letter-spacing:.4px}
+  .bar .spacer{flex:1}
+  .bar .links{display:flex;gap:8px}
+  .bar .links a{font-size:12px;color:var(--muted);padding:7px 12px;border:1px solid var(--line);
+    border-radius:8px;transition:.15s}
+  .bar .links a:hover{color:var(--ink);border-color:#2b3445;background:var(--panel)}
+  .tag{font-family:var(--mono);font-size:10px;letter-spacing:1.4px;color:var(--faint);text-transform:uppercase}
+
+  .wrap{max-width:1320px;margin:0 auto;padding:22px 26px;display:grid;
+    grid-template-columns:300px 1fr;gap:20px}
+  @media(max-width:980px){.wrap{grid-template-columns:1fr}}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+  .panel h2{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);
+    margin-bottom:14px;font-weight:600}
+
+  /* ── controls ─────────────────────────────────────────────── */
+  .ctrl{margin-bottom:15px}
+  .ctrl .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+  .ctrl label{font-size:12.5px;color:var(--ink)}
+  .ctrl .val{font-family:var(--mono);font-size:12.5px;color:var(--grad2);font-weight:600}
+  .ctrl input[type=range]{width:100%;height:4px;-webkit-appearance:none;appearance:none;
+    background:var(--line);border-radius:3px;outline:none}
+  .ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;
+    border-radius:50%;background:linear-gradient(135deg,var(--grad1),var(--grad2));cursor:pointer;
+    border:2px solid #0b0f17}
+  .ctrl input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;border:2px solid #0b0f17;
+    background:var(--grad2);cursor:pointer}
+  .ctrl .hint{font-size:10.5px;color:var(--faint);margin-top:3px}
+  .seg{display:flex;gap:6px;margin-top:4px}
+  .seg button{flex:1;font-family:var(--mono);font-size:11px;letter-spacing:.5px;padding:7px 0;color:var(--muted);
+    background:var(--panel2);border:1px solid var(--line);border-radius:8px;cursor:pointer;transition:.15s}
+  .seg button.on{color:#fff;border-color:transparent;background:linear-gradient(135deg,var(--grad1),var(--grad2))}
+  .divider{height:1px;background:var(--line);margin:16px 0}
+  .reset{width:100%;padding:9px 0;font-size:12px;color:var(--muted);background:var(--panel2);
+    border:1px solid var(--line);border-radius:9px;cursor:pointer;margin-top:4px;transition:.15s}
+  .reset:hover{color:var(--ink);border-color:#2b3445}
+
+  /* ── KPI tiles ─────────────────────────────────────────────── */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+  @media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px 16px;position:relative;overflow:hidden}
+  .kpi .k{font-size:10.5px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+  .kpi .v{font-family:var(--mono);font-size:26px;font-weight:700;margin-top:7px;letter-spacing:-.5px}
+  .kpi .u{font-size:11px;color:var(--faint);margin-top:2px}
+  .kpi.accent .v{color:var(--grad2)}
+  .kpi .strip{position:absolute;left:0;top:0;bottom:0;width:3px}
+
+  .charts{display:grid;grid-template-columns:1.5fr 1fr;gap:20px}
+  @media(max-width:980px){.charts{grid-template-columns:1fr}}
+  canvas{width:100%;display:block}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--muted)}
+  .legend i{display:inline-block;width:18px;height:0;border-top:2px solid;vertical-align:middle;margin-right:6px}
+
+  /* ── tables ───────────────────────────────────────────────── */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th,td{text-align:right;padding:7px 8px;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  th{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:600}
+  td.mono,th.mono{font-family:var(--mono)}
+  .barcell{position:relative;height:16px;background:var(--panel2);border-radius:4px;overflow:hidden;min-width:90px}
+  .barcell>span{position:absolute;top:0;bottom:0;border-radius:4px}
+  .note{font-size:11.5px;color:var(--faint);margin-top:14px;line-height:1.6}
+  .pill{display:inline-block;font-family:var(--mono);font-size:10px;padding:2px 8px;border-radius:20px;
+    border:1px solid var(--line);color:var(--muted);letter-spacing:.5px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px}
+  @media(max-width:980px){.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <div class="logo">M</div>
+  <div>
+    <h1><b>MIND ID</b> CEO Cockpit · Scenario Simulator</h1>
+    <div class="sub mono">MONTE CARLO · DIVIDEND-AT-RISK · PTBA</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="links">
+    <a href="/cockpit.html">← CEO Cockpit</a>
+    <a href="/index.html#matrix">Value Chain</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ── control panel ─────────────────────────────────────── -->
+  <aside class="panel" style="align-self:start;position:sticky;top:84px">
+    <h2>Scenario drivers · base case</h2>
+
+    <div class="ctrl">
+      <div class="row"><label>Coal benchmark (HBA/ICI)</label><span class="val" id="hbaV">$110</span></div>
+      <input type="range" id="hba" min="55" max="190" value="110" step="1">
+      <div class="hint">Seaborne reference, US$/t · σ 28% lognormal</div>
+    </div>
+    <div class="ctrl">
+      <div class="row"><label>USD / IDR</label><span class="val" id="fxV">16,000</span></div>
+      <input type="range" id="fx" min="14500" max="18000" value="16000" step="50">
+      <div class="hint">Rupiah per dollar · σ 7%</div>
+    </div>
+    <div class="ctrl">
+      <div class="row"><label>China demand index</label><span class="val" id="demV">100</span></div>
+      <input type="range" id="dem" min="78" max="122" value="100" step="1">
+      <div class="hint">100 = plan · drives export price &amp; offtake · σ 12</div>
+    </div>
+    <div class="ctrl">
+      <div class="row"><label>Capesize freight</label><span class="val" id="frtV">$12</span></div>
+      <input type="range" id="frt" min="5" max="30" value="12" step="1">
+      <div class="hint">US$/t · σ 35% lognormal</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="ctrl">
+      <div class="row"><label>Board dividend floor (to MIND ID)</label><span class="val" id="floorV">Rp 1.8 T</span></div>
+      <input type="range" id="floor" min="0.5" max="3.5" value="1.8" step="0.1">
+      <div class="hint">Breach = simulated dividend below this floor</div>
+    </div>
+
+    <div class="ctrl">
+      <label style="display:block;margin-bottom:6px">Volatility regime</label>
+      <div class="seg" id="regime">
+        <button data-r="0.6">CALM</button>
+        <button data-r="1" class="on">BASE</button>
+        <button data-r="1.6">STRESSED</button>
+      </div>
+    </div>
+
+    <div class="ctrl">
+      <div class="row"><label>Simulations</label><span class="val" id="nV">20,000</span></div>
+      <input type="range" id="n" min="2000" max="50000" value="20000" step="1000">
+    </div>
+
+    <button class="reset" id="reset">Reset to plan</button>
+  </aside>
+
+  <!-- ── results ───────────────────────────────────────────── -->
+  <main>
+    <div class="kpis">
+      <div class="kpi accent"><div class="strip" style="background:linear-gradient(180deg,var(--grad1),var(--grad2))"></div>
+        <div class="k">Dividend to MIND ID · P50</div><div class="v" id="p50">—</div><div class="u">Rp trillion · median outcome</div></div>
+      <div class="kpi"><div class="strip" style="background:var(--faint)"></div>
+        <div class="k">P10 – P90 range</div><div class="v" id="range" style="font-size:19px">—</div><div class="u">Rp T · 80% confidence band</div></div>
+      <div class="kpi"><div class="strip" id="breachStrip" style="background:var(--amber)"></div>
+        <div class="k">Floor breach probability</div><div class="v" id="breach">—</div><div class="u" id="breachU">P(dividend &lt; floor)</div></div>
+      <div class="kpi"><div class="strip" style="background:var(--red)"></div>
+        <div class="k">Cash-flow-at-risk</div><div class="v" id="cfar">—</div><div class="u">Rp T · P50 − P5 downside</div></div>
+    </div>
+
+    <div class="charts">
+      <div class="panel">
+        <h2>Dividend-to-MIND-ID distribution <span class="pill" id="convPill">—</span></h2>
+        <canvas id="hist" height="300"></canvas>
+        <div class="legend">
+          <span><i style="border-color:var(--grad2)"></i>P50 median</span>
+          <span><i style="border-color:var(--faint)"></i>P10 / P90</span>
+          <span><i style="border-color:var(--red)"></i>Board floor</span>
+          <span><i style="border-color:var(--red);border-style:dashed"></i>Breach region</span>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Group EBITDA distribution</h2>
+        <canvas id="hist2" height="300"></canvas>
+        <div class="legend"><span><i style="border-color:var(--green)"></i>PTBA EBITDA, Rp T</span></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel">
+        <h2>Downside attribution · what moves the dividend</h2>
+        <table id="attrib"><tbody></tbody></table>
+        <div class="note">Rank-correlation of each driver against simulated dividend across all paths.
+          Longer bar = more explanatory power over the outcome; this is where the CEO's attention buys the most risk reduction.</div>
+      </div>
+      <div class="panel">
+        <h2>Percentiles &amp; central case</h2>
+        <table id="ptable">
+          <thead><tr><th>Metric</th><th class="mono">P10</th><th class="mono">P50</th><th class="mono">P90</th></tr></thead>
+          <tbody></tbody>
+        </table>
+        <div class="note" id="centralNote"></div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:20px">
+      <h2>Model &amp; calibration notes</h2>
+      <div class="note" style="color:var(--muted)">
+        A single-period driver twin of PT Bukit Asam (PTBA) within MIND ID, calibrated to PTBA's public order of
+        magnitude (≈40&nbsp;Mt production, ≈62% domestic via DMO, ~Rp&nbsp;9&nbsp;T EBITDA, ~Rp&nbsp;38&nbsp;T revenue, 75% payout,
+        65.9% MIND ID ownership). The four drivers are sampled together with a realistic correlation structure
+        (coal↔demand positive, coal↔IDR negative, demand↔freight positive). <b>Illustrative, not investment advice</b> —
+        the value is the <i>shape</i> of the risk and the breach probability, not pinpoint figures. This re-implements the
+        cockpit's deterministic model in the browser; per the design brief, the durable version wires Monte Carlo into the
+        cockpit's own <span class="mono">DCLogic</span> from source so the two share one source of truth.
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────
+   PTBA single-period driver model + Monte Carlo
+   Values in US$ millions internally; dividends reported in Rp trillion.
+   ───────────────────────────────────────────────────────────── */
+const BASE = {
+  production: 40,      // Mt
+  domShare: 0.62,      // DMO domestic obligation share
+  hba: 110,            // US$/t  (stochastic)
+  fx: 16000,           // IDR/USD (stochastic)
+  demand: 100,         // index  (stochastic)
+  freight: 12,         // US$/t  (stochastic)
+  quality: 9,          // US$/t  CV discount on export (sub-bituminous)
+  logistics: 7,        // US$/t  inland rail + port
+  dmoRealized: 52,     // US$/t  regulated domestic realized price
+  royaltyRate: 0.135,  // PNBP royalty on revenue
+  cashCost: 40,        // US$/t
+  dda: 6,              // US$/t  depreciation & amortisation
+  tax: 0.22,
+  payout: 0.75,        // dividend payout ratio
+  mindOwn: 0.6593,     // MIND ID ownership of PTBA
+};
+// base volatilities (scaled by the regime multiplier)
+const VOL = { hba:0.28, fx:0.07, demand:12, freight:0.35 };
+
+// correlation matrix, order [hba, fx, demand, freight]
+const CORR = [
+  [ 1.00, -0.30,  0.55,  0.25],
+  [-0.30,  1.00, -0.20, -0.05],
+  [ 0.55, -0.20,  1.00,  0.30],
+  [ 0.25, -0.05,  0.30,  1.00],
+];
+
+// Cholesky decomposition (lower triangular) of a symmetric PD matrix
+function cholesky(A){
+  const n=A.length, L=Array.from({length:n},()=>new Array(n).fill(0));
+  for(let i=0;i<n;i++) for(let j=0;j<=i;j++){
+    let s=0; for(let k=0;k<j;k++) s+=L[i][k]*L[j][k];
+    L[i][j] = i===j ? Math.sqrt(Math.max(1e-12,A[i][i]-s)) : (A[i][j]-s)/L[j][j];
+  }
+  return L;
+}
+const L = cholesky(CORR);
+
+// standard normal (Box–Muller), cached spare
+let spare=null;
+function randn(){
+  if(spare!==null){const v=spare;spare=null;return v;}
+  let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random();
+  const r=Math.sqrt(-2*Math.log(u)), t=2*Math.PI*v;
+  spare=r*Math.sin(t); return r*Math.cos(t);
+}
+
+// deterministic model: drivers -> outputs (one path)
+function model(d){
+  const exShareVol = 1 - d.domShare;
+  const domVol = d.production*d.domShare;                 // DMO fixed
+  const maxExp = d.production - domVol;
+  let expVol = maxExp*(1 + 0.0015*(d.demand-100));         // demand pulls offtake
+  expVol = Math.max(0, Math.min(expVol, maxExp));          // capped by produced spare
+
+  const exportPrice = d.hba*(1 + 0.0025*(d.demand-100)) - d.quality - d.freight - d.logistics;
+  const revenueUSD  = expVol*exportPrice + domVol*d.dmoRealized;   // $M
+  const royaltyUSD  = d.royaltyRate*Math.max(0,revenueUSD);
+  const cashCostUSD = d.production*d.cashCost;
+  const ebitdaUSD   = revenueUSD - royaltyUSD - cashCostUSD;
+  const ebitUSD     = ebitdaUSD - d.production*d.dda;
+  const netUSD      = Math.max(0,ebitUSD)*(1-d.tax);
+
+  const toIDR_T = (usdM)=> usdM*d.fx/1e6;                  // $M -> Rp trillion
+  const netIDR_T = toIDR_T(netUSD);
+  const poolIDR_T = d.payout*netIDR_T;
+  const mindIDR_T = d.mindOwn*poolIDR_T;
+  return {
+    ebitdaIDR_T: toIDR_T(ebitdaUSD),
+    revenueIDR_T: toIDR_T(revenueUSD),
+    netIDR_T, poolIDR_T, mindIDR_T,
+  };
+}
+
+// percentile of a SORTED array
+const pct = (sorted,p)=>{
+  const i=(sorted.length-1)*p, lo=Math.floor(i), hi=Math.ceil(i);
+  return sorted[lo] + (sorted[hi]-sorted[lo])*(i-lo);
+};
+// Pearson correlation
+function corr(a,b){
+  const n=a.length; let ma=0,mb=0; for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];} ma/=n;mb/=n;
+  let cov=0,va=0,vb=0; for(let i=0;i<n;i++){const da=a[i]-ma,db=b[i]-mb;cov+=da*db;va+=da*da;vb+=db*db;}
+  return cov/Math.sqrt(va*vb||1e-9);
+}
+
+// ── run the simulation ──────────────────────────────────────
+let regimeMult = 1;
+function run(){
+  const d0 = {...BASE,
+    hba:+hba.value, fx:+fx.value, demand:+dem.value, freight:+frt.value };
+  const N = +n.value;
+  const floorT = +floor.value;
+  const sv = { hba:VOL.hba*regimeMult, fx:VOL.fx*regimeMult,
+               demand:VOL.demand*regimeMult, freight:VOL.freight*regimeMult };
+
+  const mind=new Float64Array(N), ebit=new Float64Array(N);
+  const dHba=new Float64Array(N), dFx=new Float64Array(N),
+        dDem=new Float64Array(N), dFrt=new Float64Array(N);
+  let breaches=0;
+
+  for(let i=0;i<N;i++){
+    const z=[randn(),randn(),randn(),randn()];
+    // correlate: c = L·z
+    const c=[0,0,0,0];
+    for(let r=0;r<4;r++){let s=0;for(let k=0;k<=r;k++)s+=L[r][k]*z[k];c[r]=s;}
+    // lognormal for price/fx/freight (no negatives), normal for demand
+    const hbaS = d0.hba * Math.exp(sv.hba*c[0] - 0.5*sv.hba*sv.hba);
+    const fxS  = d0.fx  * Math.exp(sv.fx *c[1] - 0.5*sv.fx*sv.fx);
+    const demS = d0.demand + sv.demand*c[2];
+    const frtS = d0.freight * Math.exp(sv.freight*c[3] - 0.5*sv.freight*sv.freight);
+
+    const o = model({...d0, hba:hbaS, fx:fxS, demand:demS, freight:frtS});
+    mind[i]=o.mindIDR_T; ebit[i]=o.ebitdaIDR_T;
+    dHba[i]=hbaS; dFx[i]=fxS; dDem[i]=demS; dFrt[i]=frtS;
+    if(o.mindIDR_T<floorT) breaches++;
+  }
+
+  const sortedM=Float64Array.from(mind).sort(), sortedE=Float64Array.from(ebit).sort();
+  const p10=pct(sortedM,.1), p50=pct(sortedM,.5), p90=pct(sortedM,.9), p5=pct(sortedM,.05);
+  const breachP = breaches/N;
+  const cfar = Math.max(0, p50-p5);
+
+  // KPIs
+  document.getElementById('p50').textContent = p50.toFixed(2);
+  document.getElementById('range').textContent = p10.toFixed(2)+' – '+p90.toFixed(2);
+  const bEl=document.getElementById('breach'); bEl.textContent=(breachP*100).toFixed(1)+'%';
+  const col = breachP>0.25?'var(--red)':breachP>0.1?'var(--amber)':'var(--green)';
+  bEl.style.color=col; document.getElementById('breachStrip').style.background=col;
+  document.getElementById('breachU').textContent='P(dividend < Rp '+floorT.toFixed(1)+' T)';
+  document.getElementById('cfar').textContent = cfar.toFixed(2);
+  document.getElementById('convPill').textContent = N.toLocaleString()+' paths · regime '+
+    (regimeMult<1?'calm':regimeMult>1?'stressed':'base');
+
+  drawHist(document.getElementById('hist'), sortedM, {p10,p50,p90,floor:floorT, accent:'#4493f8', shadeBelowFloor:true});
+  drawHist(document.getElementById('hist2'), sortedE, {p50:pct(sortedE,.5), accent:'#3fb950'});
+
+  // percentile table
+  const rows=[
+    ['Dividend to MIND ID (Rp T)', p10,p50,p90],
+    ['Dividend pool — PTBA (Rp T)', pct(sortedM,.1)/BASE.mindOwn, p50/BASE.mindOwn, pct(sortedM,.9)/BASE.mindOwn],
+    ['Group EBITDA (Rp T)', pct(sortedE,.1), pct(sortedE,.5), pct(sortedE,.9)],
+  ];
+  document.querySelector('#ptable tbody').innerHTML = rows.map(r=>
+    `<tr><td>${r[0]}</td><td class="mono">${r[1].toFixed(2)}</td>
+     <td class="mono" style="color:var(--grad2)">${r[2].toFixed(2)}</td>
+     <td class="mono">${r[3].toFixed(2)}</td></tr>`).join('');
+  document.getElementById('centralNote').innerHTML =
+    `Base-case point estimate (no sampling): dividend to MIND ID <b>Rp ${model(d0).mindIDR_T.toFixed(2)} T</b>, `+
+    `EBITDA Rp ${model(d0).ebitdaIDR_T.toFixed(2)} T. The spread above is the risk the point estimate hides.`;
+
+  // attribution (|correlation| of driver vs dividend)
+  const attr=[
+    ['Coal benchmark (HBA)', corr(dHba,mind)],
+    ['China demand', corr(dDem,mind)],
+    ['USD / IDR', corr(dFx,mind)],
+    ['Capesize freight', corr(dFrt,mind)],
+  ].sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
+  const maxA=Math.max(...attr.map(a=>Math.abs(a[1])))||1;
+  document.querySelector('#attrib tbody').innerHTML = attr.map(a=>{
+    const w=Math.abs(a[1])/maxA*100, pos=a[1]>=0, c=pos?'var(--green)':'var(--red)';
+    return `<tr><td>${a[0]}</td>
+      <td style="width:55%"><div class="barcell"><span style="width:${w}%;background:${c};${pos?'left:0':'left:0'}"></span></div></td>
+      <td class="mono" style="color:${c}">${a[1]>=0?'+':''}${a[1].toFixed(2)}</td></tr>`;
+  }).join('');
+}
+
+/* ── histogram renderer (canvas, HiDPI) ─────────────────────── */
+function drawHist(cv, sorted, opt){
+  const dpr=window.devicePixelRatio||1;
+  const cssW=cv.clientWidth, cssH=cv.height;
+  cv.width=cssW*dpr; cv.height=cssH*dpr;
+  const x=cv.getContext('2d'); x.scale(dpr,dpr);
+  x.clearRect(0,0,cssW,cssH);
+  const padL=8,padR=8,padT=12,padB=26, W=cssW-padL-padR, H=cssH-padT-padB;
+
+  const lo=sorted[0], hi=sorted[sorted.length-1], span=(hi-lo)||1;
+  const BINS=44, bins=new Array(BINS).fill(0);
+  for(let i=0;i<sorted.length;i++){
+    let b=Math.floor((sorted[i]-lo)/span*BINS); if(b>=BINS)b=BINS-1; if(b<0)b=0; bins[b]++;
+  }
+  const maxB=Math.max(...bins);
+  const xPos=v=>padL+(v-lo)/span*W;
+  const floorX = opt.floor!=null ? xPos(opt.floor) : null;
+
+  // breach shading
+  if(opt.shadeBelowFloor && floorX!=null){
+    x.fillStyle='rgba(248,81,73,0.08)';
+    x.fillRect(padL,padT,Math.max(0,floorX-padL),H);
+  }
+  // bars
+  const bw=W/BINS;
+  for(let i=0;i<BINS;i++){
+    const h=bins[i]/maxB*H, bx=padL+i*bw, by=padT+H-h;
+    const center=lo+(i+0.5)/BINS*span;
+    const below = opt.floor!=null && center<opt.floor;
+    x.fillStyle = below ? 'rgba(248,81,73,0.55)' : (opt.accent+'cc');
+    x.fillRect(bx+0.5,by,bw-1,h);
+  }
+  // percentile / floor lines
+  const vline=(v,color,dash)=>{
+    if(v==null)return; const px=xPos(v);
+    x.save();x.strokeStyle=color;x.lineWidth=1.5;x.setLineDash(dash||[]);
+    x.beginPath();x.moveTo(px,padT-4);x.lineTo(px,padT+H);x.stroke();x.restore();
+  };
+  vline(opt.p10,'#5b6678',[3,3]); vline(opt.p90,'#5b6678',[3,3]);
+  vline(opt.p50,'#4493f8',[]);
+  if(opt.floor!=null) vline(opt.floor,'#f85149',[5,3]);
+
+  // x-axis labels
+  x.fillStyle='#5b6678'; x.font='10px IBM Plex Mono, monospace';
+  x.textAlign='center';
+  for(let t=0;t<=4;t++){ const v=lo+span*t/4; x.fillText(v.toFixed(1), padL+W*t/4, cssH-9); }
+  if(opt.p50!=null){ x.fillStyle='#4493f8'; x.textAlign='center';
+    x.fillText('P50 '+opt.p50.toFixed(2), Math.min(Math.max(xPos(opt.p50),30),cssW-30), padT+6); }
+}
+
+/* ── wiring ─────────────────────────────────────────────────── */
+const fmt = n=>(+n).toLocaleString('en-US');
+function syncLabels(){
+  hbaV.textContent='$'+hba.value;
+  fxV.textContent=fmt(fx.value);
+  demV.textContent=dem.value;
+  frtV.textContent='$'+frt.value;
+  floorV.textContent='Rp '+(+floor.value).toFixed(1)+' T';
+  nV.textContent=fmt(n.value);
+}
+let raf=null;
+function schedule(){ syncLabels(); if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run); }
+['hba','fx','dem','frt','floor','n'].forEach(id=>document.getElementById(id).addEventListener('input',schedule));
+
+document.querySelectorAll('#regime button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#regime button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); regimeMult=+b.dataset.r; schedule();
+}));
+document.getElementById('reset').addEventListener('click',()=>{
+  hba.value=110; fx.value=16000; dem.value=100; frt.value=12; floor.value=1.8; n.value=20000;
+  document.querySelectorAll('#regime button').forEach(x=>x.classList.toggle('on',x.dataset.r==='1'));
+  regimeMult=1; schedule();
+});
+window.addEventListener('resize',()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(run);});
+
+syncLabels(); run();
+</script>
+</body>
+</html>
