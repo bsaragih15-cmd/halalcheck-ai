@@ -48,6 +48,43 @@
     color:#b13d35;background:rgba(237,103,93,.12);border:1px solid rgba(237,103,93,.3);
     border-radius:999px;padding:5px 10px;text-transform:uppercase}
 
+  /* market-signals ticker */
+  .ticker{background:radial-gradient(circle at 92% 0%,rgba(34,201,138,.10),transparent 40%),var(--forest);
+    border-bottom:1px solid rgba(34,201,138,.16);padding:9px 14px;overflow-x:auto}
+  .ticker::-webkit-scrollbar{height:6px}
+  .ticker::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:999px}
+  .ticker-row{display:flex;gap:8px;align-items:stretch;min-width:max-content}
+  .ticker-lead{display:flex;flex-direction:column;justify-content:center;padding-right:11px;
+    border-right:1px solid rgba(255,255,255,.13);margin-right:4px;flex:0 0 auto}
+  .ticker-lead b{color:var(--green);font-size:10px;letter-spacing:1px;font-family:var(--mono);font-weight:700}
+  .ticker-lead span{color:#7f968c;font-size:9px;margin-top:3px;letter-spacing:.3px}
+  .sig{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:9px;
+    padding:7px 10px;min-width:118px;flex:0 0 auto}
+  .sig-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .sig-l{font-size:9.5px;color:#9fb4aa;font-weight:600;white-space:nowrap}
+  .sig-tag{font-size:7.5px;font-weight:800;letter-spacing:.3px;padding:1px 5px;border-radius:999px;text-transform:uppercase}
+  .t-ptba{background:rgba(34,201,138,.18);color:#22c98a}
+  .t-antam{background:rgba(229,170,62,.2);color:#e5aa3e}
+  .t-inalum{background:rgba(77,151,223,.22);color:#7fb6ef}
+  .t-timah{background:rgba(137,119,233,.24);color:#b3a6f2}
+  .t-jv{background:rgba(137,119,233,.18);color:#b3a6f2;border:1px dashed rgba(137,119,233,.5)}
+  .t-energy{background:rgba(229,146,15,.2);color:#e5aa3e}
+  .t-carbon{background:rgba(237,103,93,.2);color:#ed8079}
+  .t-macro{background:rgba(255,255,255,.1);color:#b8c9c1}
+  .sig-mid{display:flex;align-items:baseline;gap:2px;margin-top:5px}
+  .sig-v{font-family:var(--mono);font-size:14px;font-weight:700;color:#f4fbf7;letter-spacing:-.3px}
+  .sig-u{font-size:9px;color:#7f968c}
+  .sig-bot{display:flex;align-items:center;justify-content:space-between;gap:9px;margin-top:4px}
+  .sig-chg{font-family:var(--mono);font-size:10px;font-weight:700}
+  .sig-chg.up{color:#22c98a}.sig-chg.dn{color:#ed675d}
+  .spark{width:42px;height:15px;flex:0 0 auto}
+  .ticker-foot{background:var(--forest2);border-bottom:1px solid rgba(196,213,203,.14);
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:6px 16px;
+    font-family:var(--mono);font-size:10px;color:#7f968c;letter-spacing:.3px}
+  .ticker-foot b{color:#b8c9c1;font-weight:600}
+  .ticker-foot .gap{flex:1}
+  .ticker-foot .live{color:var(--green)}
+
   .wrap{max-width:1340px;margin:0 auto;padding:20px 24px;display:grid;
     grid-template-columns:320px 1fr;gap:18px;align-items:start}
   @media(max-width:1000px){.wrap{grid-template-columns:1fr}}
@@ -224,6 +261,17 @@
     <a href="/control-tower.html">Control Tower</a>
     <a href="/index.html#matrix">Value Chain</a>
   </div>
+</div>
+
+<div class="ticker" id="ticker"><div class="ticker-row" id="tickerRow"></div></div>
+<div class="ticker-foot">
+  <span><b>As of</b> 25 Jun 2026 · 05:32 WIB</span>
+  <span>FX/USD <b>16,000</b></span>
+  <span>Brent <b>$78</b></span>
+  <span>UST 10Y <b>4.28%</b></span>
+  <span class="live">● illustrative snapshot — live market feeds wire in at Phase 1</span>
+  <span class="gap"></span>
+  <span>MIND ID Treasury signal board v0.1</span>
 </div>
 
 <div class="wrap">
@@ -863,7 +911,50 @@ document.getElementById('optBtn').addEventListener('click',recommendPackage);
 document.getElementById('copyBrief').addEventListener('click',copyBrief);
 window.addEventListener('resize',()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(run);});
 
-renderLevers(); syncLabels(); run();
+/* ── market-signals ticker (illustrative; Phase-1 live feeds) ───── */
+// Each signal maps to the portfolio factor / subsidiary it drives, so the
+// board can see the upstream market move before it reaches Holding FCF.
+const MARKETS=[
+  { l:'Coal · HBA',        v:'$118',    u:'/t',     chg:-1.1, tag:'PTBA',  cls:'t-ptba',   d:'Thermal coal benchmark — PTBA netback' },
+  { l:'Coal · Newcastle',  v:'$124',    u:'/t',     chg:-0.9, tag:'PTBA',  cls:'t-ptba',   d:'Seaborne thermal reference' },
+  { l:'Gold',              v:'$2,340',  u:'/oz',    chg: 0.6, tag:'ANTAM', cls:'t-antam',  d:'Gold — Antam earnings cushion' },
+  { l:'Nickel · LME',      v:'$16,480', u:'/t',     chg:-1.2, tag:'ANTAM', cls:'t-antam',  d:'LME nickel — Antam ferronickel' },
+  { l:'Nickel ore 1.8%',   v:'$52',     u:'/wmt',   chg:-0.4, tag:'ANTAM', cls:'t-antam',  d:'Indonesian laterite ore (CIF China)' },
+  { l:'Aluminium · LME',   v:'$2,460',  u:'/t',     chg: 0.4, tag:'INALUM',cls:'t-inalum', d:'LME aluminium — Inalum revenue' },
+  { l:'Alumina',           v:'$385',    u:'/t',     chg: 1.8, tag:'INALUM',cls:'t-inalum', d:'Alumina input cost — Inalum margin' },
+  { l:'Tin · LME',         v:'$31,200', u:'/t',     chg:-0.7, tag:'TIMAH', cls:'t-timah',  d:'LME tin — Timah netback' },
+  { l:'Copper · LME',      v:'$9,540',  u:'/t',     chg: 0.3, tag:'JV',    cls:'t-jv',     d:'LME copper — Freeport JV (excluded from cash)' },
+  { l:'Bauxite',           v:'$58',     u:'/t',     chg: 0.2, tag:'ANTAM', cls:'t-antam',  d:'Bauxite CIF — Antam upstream' },
+  { l:'USD / IDR',         v:'16,000',  u:'',       chg: 0.3, tag:'FX',    cls:'t-macro',  d:'Rupiah — export cash vs USD debt service' },
+  { l:'Brent crude',       v:'$78',     u:'/bbl',   chg:-0.8, tag:'ENERGY',cls:'t-energy', d:'Energy complex — power & fuel cost' },
+  { l:'Gas · JKM',         v:'$11.4',   u:'/MMBtu', chg:-1.4, tag:'ENERGY',cls:'t-energy', d:'LNG — smelter power cost proxy' },
+  { l:'Capesize freight',  v:'$14',     u:'/t',     chg: 2.1, tag:'FREIGHT',cls:'t-macro', d:'Bulk freight — coal & bauxite logistics' },
+  { l:'EU carbon · EUA',   v:'€71',     u:'/t',     chg: 1.0, tag:'CARBON',cls:'t-carbon', d:'Carbon price — thermal-coal policy signal' },
+  { l:'China mfg PMI',     v:'49.4',    u:'',       chg:-0.6, tag:'CHINA', cls:'t-macro',  d:'China demand — cross-commodity offtake' },
+  { l:'UST 10Y',           v:'4.28%',   u:'',       chg: 0.9, tag:'RATES', cls:'t-macro',  d:'Rates — financing & refinancing pressure' },
+  { l:'LME metals idx',    v:'312',     u:'',       chg:-0.6, tag:'CYCLE', cls:'t-macro',  d:'Broad commodity cycle' },
+];
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function sparkSVG(seed,up){
+  const r=mulberry32(seed),n=24,a=[];let v=0;
+  for(let i=0;i<n;i++){v+=r()-0.5+(up?0.07:-0.07);a.push(v);}
+  const mn=Math.min(...a),mx=Math.max(...a),sp=(mx-mn)||1,W=42,H=15,p=1.5;
+  const pts=a.map((y,i)=>`${(p+i/(n-1)*(W-2*p)).toFixed(1)},${(H-p-(y-mn)/sp*(H-2*p)).toFixed(1)}`).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline points="${pts}" `+
+    `fill="none" stroke="${up?'#22c98a':'#ed675d'}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+function renderTicker(){
+  const row=document.getElementById('tickerRow');
+  row.innerHTML='<div class="ticker-lead"><b>MARKET</b><span>SIGNALS</span></div>'+
+    MARKETS.map((m,i)=>{const up=m.chg>=0;return `<div class="sig" title="${esc(m.d)}">
+      <div class="sig-top"><span class="sig-l">${m.l}</span><span class="sig-tag ${m.cls}">${m.tag}</span></div>
+      <div class="sig-mid"><span class="sig-v">${m.v}</span><span class="sig-u">${m.u}</span></div>
+      <div class="sig-bot"><span class="sig-chg ${up?'up':'dn'}">${up?'▲':'▼'} ${Math.abs(m.chg).toFixed(1)}%</span>${sparkSVG(i*131+17,up)}</div>
+    </div>`;}).join('');
+}
+
+renderTicker(); renderLevers(); syncLabels(); run();
 
 /* ── guided tour ────────────────────────────────────────────────── */
 const TOUR=[
