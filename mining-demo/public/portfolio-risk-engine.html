@@ -337,7 +337,10 @@
   .embed .wrap{padding-top:14px}
   .embed aside{top:14px}
 </style>
-<script>if(new URLSearchParams(location.search).has('embed'))document.documentElement.classList.add('embed');</script>
+<script>(function(){var d=document.documentElement;
+  if(new URLSearchParams(location.search).has('embed'))d.classList.add('embed');
+  var t='deep';try{t=localStorage.getItem('preTheme')||'deep';}catch(e){}
+  if(t!=='forest')d.setAttribute('data-theme',t);})();</script>
 </head>
 <body>
 
@@ -350,9 +353,9 @@
   <div class="spacer"></div>
   <span class="illus" title="All figures are illustrative placeholders until validated against FY2025 actuals">● Illustrative data</span>
   <div class="themeseg" id="themeSeg" title="Explore design themes — Forest / Editorial / Deep / Warm are forest iterations">
-    <button data-t="forest" class="on">Forest</button>
+    <button data-t="forest">Forest</button>
     <button data-t="editorial">Editorial</button>
-    <button data-t="deep">Deep</button>
+    <button data-t="deep" class="on">Deep</button>
     <button data-t="warm">Warm</button>
     <button data-t="fintech">Fintech</button>
     <button data-t="terminal">Terminal</button>
@@ -1092,7 +1095,7 @@ function setTheme(t){
   if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run);   // redraw canvases to new metrics
 }
 document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.t)));
-let _savedTheme='forest'; try{_savedTheme=localStorage.getItem('preTheme')||'forest';}catch(e){}
+let _savedTheme='deep'; try{_savedTheme=localStorage.getItem('preTheme')||'deep';}catch(e){}
 
 renderTicker(); renderLevers(); syncLabels();
 if(_savedTheme!=='forest') setTheme(_savedTheme); else run();
