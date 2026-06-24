@@ -27,6 +27,10 @@
     --tile-bg:radial-gradient(circle at 84% 16%,rgba(34,201,138,.14),transparent 42%),var(--forest);
     --tile-ink:#f4fbf7; --tile-k:#9fb4aa; --tile-u:#7f968c; --tile-border:transparent;
     --brief-bg:radial-gradient(circle at 88% 12%,rgba(34,201,138,.10),transparent 40%),var(--forest);
+    --bar-bg:rgba(251,253,249,.86); --bar-line:rgba(196,213,203,.82);
+    /* canvas palette (read by pal()) */
+    --cv-ink:#16211d; --cv-faint:#8b9a92; --cv-grid:#dbe8df; --cv-labelbg:255,255,255;
+    --cv-green:#13986c; --cv-red:#b13d35; --cv-gold:#b07d10; --cv-blue:#2b6da9;
   }
 
   /* ───────── THEME: Soft fintech cards ───────── */
@@ -97,6 +101,23 @@
     --tile-ink:#eafff4; --tile-k:#86c7a5; --tile-u:#6aa888;
     --brief-bg:radial-gradient(circle at 86% 12%,rgba(34,201,138,.20),transparent 44%),#06160f;
   }
+  /* Night — full dark, Polymarket-style (near-black, elevated cards, bright accents) */
+  [data-theme="night"]{
+    --app-bg:#0d1117; --paper:#161b22; --paper2:#1c2229; --inset:#1c2229;
+    --ink:#e6edf3; --muted:#9aa7b4; --faint:#6e7b8a; --line:#2a313c; --line2:#222831;
+    --green:#3fb950; --green-dark:#2ea043; --green-soft:rgba(63,185,80,.16);
+    --gold:#d29922; --red:#f85149; --blue:#58a6ff; --violet:#a371f7;
+    --shadow:0 16px 40px rgba(0,0,0,.45); --r-panel:12px; --r-kpi:12px;
+    --bar-bg:rgba(13,17,23,.86); --bar-line:rgba(48,54,61,.8);
+    --ticker-bg:#010409; --ticker-foot-bg:#010409;
+    --tile-bg:linear-gradient(135deg,#1f6feb,#2ea043); --tile-ink:#f0f6fc; --tile-k:#b6e3bd; --tile-u:#8fc794; --tile-border:#30363d;
+    --brief-bg:#0b1f17;
+    --cv-ink:#e6edf3; --cv-faint:#7d8a98; --cv-grid:#2a313c; --cv-labelbg:22,27,34;
+    --cv-green:#3fb950; --cv-red:#f85149; --cv-gold:#d29922; --cv-blue:#58a6ff;
+  }
+  [data-theme="night"] .illus{background:rgba(248,81,73,.14);border-color:rgba(248,81,73,.35);color:#ff8079}
+  [data-theme="night"] .lever .chk{background:var(--inset)}
+
   /* Warm — forest green on cream/ivory paper, gold-forward (earthy commodity) */
   [data-theme="warm"]{
     --app-bg:linear-gradient(180deg,#f6f3ea 0%,#fbf9f2 60%);
@@ -118,8 +139,8 @@
 
   /* top bar */
   .bar{display:flex;align-items:center;gap:13px;padding:13px 24px;flex-wrap:wrap;
-    background:rgba(251,253,249,.86);backdrop-filter:blur(14px);
-    border-bottom:1px solid rgba(196,213,203,.82);position:sticky;top:0;z-index:30}
+    background:var(--bar-bg);backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--bar-line);position:sticky;top:0;z-index:30}
   .logo{width:34px;height:34px;border-radius:9px;background:var(--forest);
     display:grid;place-items:center;color:var(--green);font-family:var(--mono);font-weight:800;font-size:13px;
     border:1px solid rgba(34,201,138,.4)}
@@ -237,6 +258,73 @@
     border-radius:11px;padding:11px 15px;margin-bottom:16px;font-size:12.5px;color:var(--ink);display:none}
   .mitbar.show{display:block}
   .mitbar b{color:var(--gold)}
+
+  /* verdict hero (probability-forward) */
+  .verdict{display:grid;grid-template-columns:1fr 1.1fr;gap:18px;align-items:center;
+    background:var(--paper);border:1px solid var(--line);border-radius:var(--r-panel);
+    box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px;border-left:5px solid var(--green)}
+  .verdict.hold{border-left-color:var(--green)} .verdict.risk{border-left-color:var(--gold)} .verdict.breach{border-left-color:var(--red)}
+  @media(max-width:760px){.verdict{grid-template-columns:1fr}}
+  .vd-status{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.05}
+  .verdict.hold .vd-status{color:var(--green-dark)} .verdict.risk .vd-status{color:var(--gold)} .verdict.breach .vd-status{color:var(--red)}
+  .vd-sub{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5}
+  .vd-prob-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .vd-prob-lbl{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .vd-prob-n{font-family:var(--mono);font-size:22px;font-weight:700}
+  .outcome{display:flex;height:34px;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:var(--inset)}
+  .oc-breach{background:var(--red);color:#fff;display:flex;align-items:center;padding:0 11px;font-size:12px;font-weight:800;
+    font-family:var(--mono);transition:width .5s cubic-bezier(.4,0,.2,1);white-space:nowrap;overflow:hidden}
+  .oc-hold{flex:1;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:flex-end;
+    padding:0 11px;font-size:12px;font-weight:800;font-family:var(--mono);white-space:nowrap}
+
+  /* distribution percentile chips */
+  .distseg{display:inline-flex;gap:3px;margin-left:8px;vertical-align:middle}
+  .distseg button{border:1px solid var(--line);background:var(--inset);color:var(--muted);font-size:9.5px;font-weight:700;
+    font-family:var(--mono);padding:3px 8px;border-radius:7px;cursor:pointer}
+  .distseg button.on{background:var(--green-dark);color:#fff;border-color:transparent}
+
+  /* number polish + card hover */
+  .mono,.kpi .v,.vd-prob-n,td.mono,th.mono,.sig-v{font-variant-numeric:tabular-nums}
+  .panel,.kpi{transition:box-shadow .15s,transform .15s,border-color .15s}
+  .kpi:hover{transform:translateY(-2px)}
+
+  /* scenario preset cards + filters */
+  .pfilters{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+  .pfilter{font-size:10px;font-weight:700;color:var(--muted);background:var(--inset);border:1px solid var(--line);
+    border-radius:999px;padding:4px 9px;cursor:pointer;transition:.12s}
+  .pfilter:hover{border-color:var(--green)} .pfilter.on{background:var(--green-dark);color:#fff;border-color:transparent}
+  .scards{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+  .scard{background:var(--paper2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;cursor:pointer;
+    transition:transform .12s,border-color .12s,box-shadow .12s}
+  .scard:hover{border-color:var(--green);transform:translateY(-1px);box-shadow:var(--shadow)}
+  .scard.on{border-color:var(--green-dark);box-shadow:0 0 0 2px var(--green-soft)}
+  .sc-top{display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .sc-name{font-size:12px;font-weight:700;color:var(--ink)}
+  .sc-cat{font-size:8px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--faint)}
+  .sc-mid{display:flex;align-items:baseline;gap:5px;margin:5px 0 6px}
+  .sc-breach{font-family:var(--mono);font-size:16px;font-weight:700;font-variant-numeric:tabular-nums}
+  .sc-breach.lo{color:var(--green-dark)} .sc-breach.mid{color:var(--gold)} .sc-breach.hi{color:var(--red)}
+  .sc-lbl{font-size:9.5px;color:var(--faint)} .sc-res{margin-left:auto;font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted)}
+  .sc-bar{height:4px;border-radius:3px;background:var(--inset);overflow:hidden}
+  .sc-bar>span{display:block;height:100%;border-radius:3px}
+
+  /* subsidiary cards */
+  .subcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:18px}
+  .subcard{background:var(--paper2);border:1px solid var(--line);border-radius:11px;padding:13px 14px;
+    transition:transform .12s,box-shadow .12s,border-color .12s}
+  .subcard:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+  .subcard.jv{border-style:dashed;opacity:.85}
+  .su-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:3px}
+  .su-id{font-size:15px;font-weight:800;color:var(--ink)}
+  .su-comm{font-size:11px;color:var(--muted);margin-bottom:9px}
+  .su-bar{height:7px;border-radius:4px;background:var(--inset);overflow:hidden;margin-bottom:8px}
+  .su-bar>span{display:block;height:100%;border-radius:4px}
+  .su-bar.excl{background:repeating-linear-gradient(45deg,var(--inset),var(--inset) 4px,var(--line) 4px,var(--line) 8px)}
+  .su-nums{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .su-res{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+  .su-imp{font-family:var(--mono);font-size:12px;font-weight:700}
+  .su-imp.pos{color:var(--green-dark)} .su-imp.neg{color:var(--red)}
+  .su-base{font-size:10px;color:var(--faint);margin-top:7px;line-height:1.4}
 
   .row2{display:grid;grid-template-columns:1.45fr 1fr;gap:16px}
   @media(max-width:980px){.row2{grid-template-columns:1fr}}
@@ -359,6 +447,7 @@
     <button data-t="warm">Warm</button>
     <button data-t="fintech">Fintech</button>
     <button data-t="terminal">Terminal</button>
+    <button data-t="night">Night</button>
   </div>
   <div class="links">
     <button class="tourbtn" id="tourBtn">★ Guided tour</button>
@@ -384,7 +473,8 @@
   <!-- ── control panel ────────────────────────────────────────── -->
   <aside class="panel">
     <div class="seclabel">Scenario presets</div>
-    <div class="presets" id="presets" data-tour="presets"></div>
+    <div class="pfilters" id="presetFilters" data-tour="presets"></div>
+    <div class="scards" id="presetCards"></div>
 
     <div class="seclabel">Common factors · portfolio shocks</div>
     <div data-tour="factors">
@@ -428,6 +518,21 @@
 
   <!-- ── results ──────────────────────────────────────────────── -->
   <main>
+    <div class="verdict" id="verdict" data-tour="verdict">
+      <div class="vd-left">
+        <div class="vd-status" id="vdStatus">—</div>
+        <div class="vd-sub" id="vdSub"></div>
+      </div>
+      <div class="vd-right">
+        <div class="vd-prob-row"><span class="vd-prob-lbl">Cash-floor breach probability · P10 outcome</span>
+          <span class="vd-prob-n" id="vdProbN">—</span></div>
+        <div class="outcome" id="outcome">
+          <div class="oc-breach" id="ocBreach"><span id="ocBreachT"></span></div>
+          <div class="oc-hold" id="ocHold"><span id="ocHoldT"></span></div>
+        </div>
+      </div>
+    </div>
+
     <div class="kpis" data-tour="kpis">
       <div class="kpi dark"><div class="strip" style="background:var(--green)"></div>
         <div class="k">Residual Holding FCF · P50</div><div class="v" id="p50">—</div>
@@ -445,30 +550,29 @@
 
     <div class="mitbar" id="mitbar"></div>
 
-    <div class="panel" data-tour="waterfall">
-      <h2>Holding FCF waterfall · base case <span class="grp" id="wfScn">FY2025 plan</span></h2>
-      <canvas id="waterfall" height="320"></canvas>
-      <div class="legend" id="wfLegend"></div>
-    </div>
-    <!-- Monte Carlo distribution hidden for now — flip SHOW_DIST = true to restore -->
-    <div class="panel mtop" id="distPanel" data-tour="dist" style="display:none">
-      <h2>Residual Holding FCF distribution <span class="grp" id="convPill">—</span></h2>
-      <canvas id="hist" height="300"></canvas>
-      <div class="legend">
-        <span><i style="border-color:var(--green-dark)"></i>P50</span>
-        <span><i style="border-color:var(--faint)"></i>P10 / P90</span>
-        <span><i style="border-color:var(--red)"></i>Cash floor</span>
-        <span id="refLeg" style="display:none"><i style="border-color:var(--gold);border-style:dashed"></i>Before action</span>
+    <div class="row2">
+      <div class="panel" data-tour="waterfall">
+        <h2>Holding FCF waterfall · base case <span class="grp" id="wfScn">FY2025 plan</span></h2>
+        <canvas id="waterfall" height="320"></canvas>
+        <div class="legend" id="wfLegend"></div>
+      </div>
+      <div class="panel" id="distPanel" data-tour="dist">
+        <h2>FCF distribution
+          <span class="distseg" id="distHi"><button data-p="P10">P10</button><button data-p="P50" class="on">P50</button><button data-p="P90">P90</button></span>
+          <span class="grp" id="convPill">—</span></h2>
+        <canvas id="hist" height="320"></canvas>
+        <div class="legend">
+          <span><i style="border-color:var(--green-dark)"></i>density</span>
+          <span><i style="border-color:var(--red)"></i>cash floor</span>
+          <span><i class="sq" style="background:rgba(220,90,80,.3)"></i>breach region</span>
+          <span id="refLeg" style="display:none"><i style="border-color:var(--gold);border-style:dashed"></i>before action</span>
+        </div>
       </div>
     </div>
 
     <div class="panel mtop" data-tour="subs">
       <h2>Subsidiary cash bridges · upstreaming to MIND ID <span class="grp">FY2025 baseline</span></h2>
-      <table id="subTable">
-        <thead><tr><th>Subsidiary</th><th>Commodity</th><th class="mono">Baseline</th><th class="mono">Scenario impact</th>
-          <th class="mono">Residual</th><th>Confidence</th></tr></thead>
-        <tbody></tbody>
-      </table>
+      <div class="subcards" id="subCards"></div>
       <div class="note"><b>Freeport Indonesia</b> is kept visible as strategic JV exposure in the scenario narrative and
         diversification map, but excluded from quantified cash upstreaming until validated JV data is approved.
         Baseline / impact / residual in Rp&nbsp;trillion.</div>
@@ -630,9 +734,26 @@ const PRESETS = {
   'Perfect storm':     { china:82,  cycle:-34, fx:17600, energy:40, carbon:55, reg:25, fin:340 },
 };
 let activePreset='FY2025 plan';
+// scenario category for filter chips
+const PRESET_CAT={ 'FY2025 plan':'base','China hard landing':'macro','Commodity downcycle':'commodity',
+  'Energy / power shock':'commodity','Refinancing squeeze':'financing','Perfect storm':'stress' };
+const CAT_LABEL={base:'Base',macro:'Macro',commodity:'Commodity',financing:'Financing',stress:'Stress'};
+
+// quick breach estimate for a scenario (light MC, no mitigation) — drives the cards
+function quickBreach(scn,floorT){
+  const cenSh=FACTORS.map(f=>f.to(scn[f.id])), cenFin=FIN.to(scn.fin), N=1200, ref=mitFromLevers([]);
+  let breach=0; const fcf=new Float64Array(N);
+  for(let i=0;i<N;i++){ const macro=randn(), sh=new Array(6);
+    for(let k=0;k<6;k++){ const f=FACTORS[k], v=f.vol*regimeMult;
+      sh[k]=cenSh[k]+v*(f.macro*macro+Math.sqrt(Math.max(0,1-f.macro*f.macro))*randn()); }
+    const finSh=cenFin+FIN.vol*regimeMult*(FIN.macro*macro+Math.sqrt(Math.max(0,1-FIN.macro*FIN.macro))*randn());
+    const ff=holdingFCF(sh,finSh,sh[2],ref).fcf; fcf[i]=ff; if(ff<floorT)breach++; }
+  const s=Float64Array.from(fcf).sort();
+  return { breach:breach/N, p50:pct(s,.5), residual:holdingFCF(cenSh,cenFin,cenSh[2],ref).fcf };
+}
 
 /* ── core run ───────────────────────────────────────────────────── */
-let regimeMult=1, lastState=null;
+let regimeMult=1, lastState=null, distHi='P50';
 function readFactors(){
   const o={}; for(const f of FACTORS) o[f.id]=+document.getElementById(f.id).value;
   o.fin=+document.getElementById('fin').value; return o;
@@ -671,10 +792,11 @@ function run(){
   const bP=breach/N, bPR=breachR/N;
 
   // KPIs
-  setText('p50',p50.toFixed(2)); setText('far',far.toFixed(2));
-  const bEl=document.getElementById('breach'); bEl.textContent=(bP*100).toFixed(1)+'%';
+  tweenEl(document.getElementById('p50'),p50,2); tweenEl(document.getElementById('far'),far,2);
+  const bEl=document.getElementById('breach'); tweenEl(bEl,bP*100,1,'%');
   const col=bP>.25?'var(--red)':bP>.1?'var(--gold)':'var(--green-dark)';
   bEl.style.color=col; document.getElementById('breachStrip').style.background=col;
+  updateVerdict(p50,baseFCF,far,bP,floorT);
 
   // attribution: |corr(factor, fcf)| weighted by exposure → largest contributor
   const attr=[];
@@ -707,23 +829,32 @@ function run(){
   // charts
   drawWaterfall(document.getElementById('waterfall'), holdingFCF(cenSh,cenFin,cenFx,mit), floorT);
   const histCv=document.getElementById('hist');           // Monte Carlo histogram hidden for now
-  if(histCv && histCv.offsetParent!==null) drawHist(histCv, sA, {p10,p50,p90,floor:floorT,ref:hasAnyMit()?sR:null});
+  if(histCv && histCv.offsetParent!==null) drawHist(histCv, sA, {p10,p50,p90,floor:floorT,hi:distHi,ref:hasAnyMit()?sR:null});
   drawRunway(document.getElementById('runway'), baseFCF, floorT, mit);
   drawDivMap(cenSh);
 
-  // subsidiary table
+  // subsidiary cards
   const central=holdingFCF(cenSh,cenFin,cenFx,mit);
-  document.querySelector('#subTable tbody').innerHTML = SUBS.map((s,i)=>{
+  const maxBase=Math.max(...SUBS.map(s=>s.base));
+  document.getElementById('subCards').innerHTML = SUBS.map((s,i)=>{
     const res=central.perSub[i], imp=res-s.base, ic=imp<-0.001?'neg':imp>0.001?'pos':'';
-    return `<tr><td class="sub-name">${s.id}<div class="driver">${s.driver}</div></td>
-      <td>${s.commodity}</td><td class="mono">${s.base.toFixed(2)}</td>
-      <td class="mono ${ic}">${imp>=0?'+':''}${imp.toFixed(2)}</td>
-      <td class="mono" style="font-weight:700">${res.toFixed(2)}</td>
-      <td><span class="tag ${s.conf}">${s.conf}</span></td></tr>`;
+    const bw=clamp(res/maxBase*100,2,100);
+    return `<div class="subcard">
+      <div class="su-top"><span class="su-id">${s.id}</span><span class="tag ${s.conf}">${s.conf}</span></div>
+      <div class="su-comm">${s.commodity}</div>
+      <div class="su-bar"><span style="width:${bw}%;background:${SUBCOL[s.id]}"></span></div>
+      <div class="su-nums"><span class="su-res">Rp ${res.toFixed(2)}T</span>
+        <span class="su-imp ${ic}">${imp>=0?'+':''}${imp.toFixed(2)}</span></div>
+      <div class="su-base">baseline Rp ${s.base.toFixed(2)}T · ${s.driver}</div>
+    </div>`;
   }).join('') +
-    `<tr style="opacity:.78"><td class="sub-name">${FREEPORT.id}<div class="driver">${FREEPORT.note}</div></td>
-      <td>${FREEPORT.commodity}</td><td class="mono">—</td><td class="mono">—</td><td class="mono">excl.</td>
-      <td><span class="tag jv">JV excluded</span></td></tr>`;
+    `<div class="subcard jv">
+      <div class="su-top"><span class="su-id">${FREEPORT.id}</span><span class="tag jv">JV excluded</span></div>
+      <div class="su-comm">${FREEPORT.commodity}</div>
+      <div class="su-bar excl"></div>
+      <div class="su-nums"><span class="su-res">—</span></div>
+      <div class="su-base">visible exposure · excluded from quantified cash</div>
+    </div>`;
 
   // levers benefit estimate (marginal P10 lift, computed cheaply on central path set sample)
   estimateLeverBenefits(cenSh,cenFin,cenFx,floorT);
@@ -739,6 +870,26 @@ function corr(a,b){const n=a.length;let ma=0,mb=0;for(let i=0;i<n;i++){ma+=a[i];
   let c=0,va=0,vb=0;for(let i=0;i<n;i++){const da=a[i]-ma,db=b[i]-mb;c+=da*db;va+=da*da;vb+=db*db;}
   return c/Math.sqrt(va*vb||1e-9);}
 const setText=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
+// tween a numeric element toward a value (ease-out cubic)
+function tweenEl(el,to,dec,suffix){ if(!el)return; suffix=suffix||'';
+  const from=parseFloat(el.dataset.v!=null?el.dataset.v:String(el.textContent).replace(/[^\d.-]/g,''))||0;
+  el.dataset.v=to; if(Math.abs(to-from)<0.005){el.textContent=(+to).toFixed(dec)+suffix;return;}
+  const t0=performance.now();
+  (function f(t){const k=Math.min(1,(t-t0)/420);const v=from+(to-from)*(1-Math.pow(1-k,3));
+    el.textContent=v.toFixed(dec)+suffix; if(k<1)requestAnimationFrame(f);})(performance.now());}
+// probability-forward verdict hero
+function updateVerdict(p50,baseFCF,far,bP,floorT){
+  const v=document.getElementById('verdict'); if(!v)return;
+  const state = (baseFCF>=floorT && bP<0.12) ? 'hold' : (baseFCF<floorT || bP>0.35) ? 'breach' : 'risk';
+  v.classList.remove('hold','risk','breach'); v.classList.add(state);
+  setText('vdStatus', state==='hold'?'CASH FLOOR HOLDS':state==='risk'?'CASH FLOOR AT RISK':'CASH FLOOR BREACHED');
+  setText('vdSub', `Residual Holding FCF Rp ${p50.toFixed(2)} T (P50) vs Rp ${(+floorT).toFixed(1)} T board floor · FCF-at-Risk Rp ${far.toFixed(2)} T${hasAnyMit()?' · after action':''}`);
+  tweenEl(document.getElementById('vdProbN'), bP*100, 1, '%');
+  const breachPct=Math.round(bP*100), holdPct=100-breachPct;
+  const ob=document.getElementById('ocBreach'); ob.style.width=Math.max(0,Math.min(100,breachPct))+'%';
+  document.getElementById('ocBreachT').textContent = breachPct>=9 ? breachPct+'% breach' : '';
+  document.getElementById('ocHoldT').textContent = holdPct+'% hold';
+}
 function delta(id,v,unit,lowerGood){const el=document.getElementById(id);if(!el)return;
   if(!hasAnyMit()){el.textContent='';return;}
   const good=lowerGood?v<0:v>0,arrow=v>0?'▲':v<0?'▼':'·';
@@ -762,8 +913,13 @@ function dpr(cv){const d=window.devicePixelRatio||1;
   cv.width=w*d;cv.height=h*d;
   const x=cv.getContext('2d');x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,w,h);return {x,w,h};}
 const SUBCOL={PTBA:'#d9920f', Antam:'#15a06d', Inalum:'#3f86cf', Timah:'#dc5a50'};
+// read canvas palette from CSS so charts adapt to the active theme (incl. Night)
+function pal(){const s=getComputedStyle(document.documentElement),g=n=>s.getPropertyValue(n).trim();
+  return {ink:g('--cv-ink')||'#16211d', faint:g('--cv-faint')||'#8b9a92', grid:g('--cv-grid')||'#dbe8df',
+    labelbg:g('--cv-labelbg')||'255,255,255', green:g('--cv-green')||'#13986c', red:g('--cv-red')||'#b13d35',
+    gold:g('--cv-gold')||'#b07d10', blue:g('--cv-blue')||'#2b6da9'};}
 function drawWaterfall(cv, res, floorT){
-  const {x,w,h}=dpr(cv);
+  const {x,w,h}=dpr(cv); const P=pal();
   const o=res.o;
   const steps=[
     {n:'Opening cash', v:o.openingCash, t:'in'}, {n:'Upstreaming', v:res.up, t:'in', stack:true},
@@ -783,8 +939,8 @@ function drawWaterfall(cv, res, floorT){
     x.beginPath(); x.moveTo(padL,fy); x.lineTo(w-padR,fy); x.stroke(); x.setLineDash([]);
     const fl='Board floor '+(+floorT).toFixed(1); x.font='9.5px IBM Plex Mono, monospace'; x.textAlign='left';
     const tw=x.measureText(fl).width;
-    x.fillStyle='rgba(255,255,255,.82)'; x.fillRect(padL,fy-15,tw+8,13);
-    x.fillStyle='#b07d10'; x.fillText(fl, padL+4, fy-5); }
+    x.fillStyle='rgba('+P.labelbg+',.82)'; x.fillRect(padL,fy-15,tw+8,13);
+    x.fillStyle=P.gold; x.fillText(fl, padL+4, fy-5); }
   x.textAlign='center';
   for(let i=0;i<steps.length;i++){
     const s=steps[i], [a,b]=tops[i], up=s.v>=0, xx=padL+i*(bw+gap);
@@ -803,10 +959,10 @@ function drawWaterfall(cv, res, floorT){
       x.globalAlpha = s.t==='pinch'?1:.92; x.fillRect(xx,y0,bw,bh); x.globalAlpha=1;
       if(s.t==='pinch'){ x.strokeStyle='#9c6a0a'; x.lineWidth=1.3; x.strokeRect(xx+.6,y0+.6,bw-1.2,bh-1.2); }
     }
-    x.fillStyle = up?'#13986c' : s.t==='pinch'?'#b07d10' : '#b13d35';
+    x.fillStyle = up?P.green : s.t==='pinch'?P.gold : P.red;
     x.font='10px IBM Plex Mono, monospace';
     x.fillText((s.v>=0?'+':'')+s.v.toFixed(1), xx+bw/2, y0-5);
-    x.fillStyle = s.t==='pinch'?'#b07d10':'#64756f';
+    x.fillStyle = s.t==='pinch'?P.gold:P.faint;
     x.font=(s.t==='pinch'?'700 ':'')+'9.5px Inter, sans-serif';
     x.fillText(s.n, xx+bw/2, h-24);
   }
@@ -814,10 +970,10 @@ function drawWaterfall(cv, res, floorT){
   const xx=padL+steps.length*(bw+gap), ry0=y(Math.max(0,residual)), ry1=y(Math.min(0,residual));
   x.fillStyle = residual>=(floorT||0) ? '#0f8a5f' : '#dc5a50';
   x.fillRect(xx,ry0,bw,Math.max(2,ry1-ry0));
-  x.fillStyle = residual>=(floorT||0) ? '#0f8a5f':'#b13d35'; x.font='10px IBM Plex Mono, monospace';
+  x.fillStyle = residual>=(floorT||0) ? P.green:P.red; x.font='10px IBM Plex Mono, monospace';
   x.fillText((residual>=0?'+':'')+residual.toFixed(1), xx+bw/2, ry0-5);
-  x.fillStyle='#16211d'; x.font='700 9.5px Inter, sans-serif'; x.fillText('Residual FCF', xx+bw/2, h-24);
-  x.strokeStyle='#dbe8df'; x.lineWidth=1; x.beginPath(); x.moveTo(padL,y(0)); x.lineTo(w-padR,y(0)); x.stroke();
+  x.fillStyle=P.ink; x.font='700 9.5px Inter, sans-serif'; x.fillText('Residual FCF', xx+bw/2, h-24);
+  x.strokeStyle=P.grid; x.lineWidth=1; x.beginPath(); x.moveTo(padL,y(0)); x.lineTo(w-padR,y(0)); x.stroke();
   // dynamic subsidiary legend
   const leg=document.getElementById('wfLegend');
   if(leg) leg.innerHTML = SUBS.map((s,si)=>
@@ -828,33 +984,38 @@ function drawWaterfall(cv, res, floorT){
 /* ── canvas: histogram ──────────────────────────────────────────── */
 const maxArr=a=>{let m=0;for(const v of a)if(v>m)m=v;return m;};
 function drawHist(cv, sorted, opt){
-  const {x,w,h}=dpr(cv);
-  const padL=8,padR=8,padT=12,padB=26,W=w-padL-padR,H=h-padT-padB;
-  const all=opt.ref?[sorted[0],opt.ref[0],sorted[sorted.length-1],opt.ref[opt.ref.length-1]]:[sorted[0],sorted[sorted.length-1]];
-  let lo=Math.min(...all,opt.floor), hi=Math.max(...all), span=(hi-lo)||1;
-  const BINS=44;
-  const binOf=a=>{const b=new Array(BINS).fill(0);for(let i=0;i<a.length;i++){let k=Math.floor((a[i]-lo)/span*BINS);if(k>=BINS)k=BINS-1;if(k<0)k=0;b[k]++;}return b;};
-  const bins=binOf(sorted), refBins=opt.ref?binOf(opt.ref):null;
-  const maxB=Math.max(maxArr(bins),refBins?maxArr(refBins):0)||1;
-  const xPos=v=>padL+(v-lo)/span*W, bw=W/BINS;
-  if(opt.floor!=null){x.fillStyle='rgba(220,90,80,0.08)';x.fillRect(padL,padT,Math.max(0,xPos(opt.floor)-padL),H);}
-  for(let i=0;i<BINS;i++){const hh=bins[i]/maxB*H, center=lo+(i+0.5)/BINS*span, below=center<opt.floor;
-    x.fillStyle=below?'rgba(220,90,80,0.6)':'rgba(21,160,109,0.78)';
-    x.fillRect(padL+i*bw+0.5,padT+H-hh,bw-1,hh);}
-  if(refBins){x.strokeStyle='#d9920f';x.lineWidth=1.4;x.setLineDash([4,3]);x.beginPath();
-    for(let i=0;i<BINS;i++){const hh=refBins[i]/maxB*H,px=padL+i*bw+bw/2,py=padT+H-hh;i?x.lineTo(px,py):x.moveTo(px,py);}
-    x.stroke();x.setLineDash([]);}
-  const vline=(v,c,d)=>{if(v==null)return;const px=xPos(v);x.save();x.strokeStyle=c;x.lineWidth=1.5;x.setLineDash(d||[]);
-    x.beginPath();x.moveTo(px,padT-4);x.lineTo(px,padT+H);x.stroke();x.restore();};
-  vline(opt.p10,'#8b9a92',[3,3]);vline(opt.p90,'#8b9a92',[3,3]);vline(opt.p50,'#13986c',[]);vline(opt.floor,'#dc5a50',[5,3]);
-  x.fillStyle='#8b9a92';x.font='10px IBM Plex Mono, monospace';x.textAlign='center';
+  const {x,w,h}=dpr(cv); const P=pal();
+  const padL=10,padR=10,padT=16,padB=28,W=w-padL-padR,H=h-padT-padB;
+  const refA=opt.ref;
+  const ends=refA?[sorted[0],refA[0],sorted[sorted.length-1],refA[refA.length-1]]:[sorted[0],sorted[sorted.length-1]];
+  let lo=Math.min(...ends,opt.floor), hi=Math.max(...ends,opt.floor), span=(hi-lo)||1; lo-=span*0.05; hi+=span*0.05; span=hi-lo;
+  const BINS=48;
+  const dens=a=>{const b=new Array(BINS).fill(0);for(let i=0;i<a.length;i++){let k=Math.floor((a[i]-lo)/span*BINS);if(k<0)k=0;if(k>=BINS)k=BINS-1;b[k]++;}
+    const s=new Array(BINS).fill(0);for(let i=0;i<BINS;i++){let acc=0,c=0;for(let j=-2;j<=2;j++){const k=i+j,wj=3-Math.abs(j);if(k>=0&&k<BINS){acc+=b[k]*wj;c+=wj;}}s[i]=acc/c;}return s;};
+  const d=dens(sorted), dr=refA?dens(refA):null, maxB=Math.max(maxArr(d),dr?maxArr(dr):0)||1;
+  const cx=i=>padL+(i+0.5)/BINS*W, cy=v=>padT+H-(v/maxB)*H, base=padT+H, xPos=v=>padL+(v-lo)/span*W;
+  const fx=xPos(opt.floor);
+  // breach region shade + split area fill (green right / red left of floor)
+  x.fillStyle='rgba(220,90,80,0.10)'; x.fillRect(padL,padT,Math.max(0,fx-padL),H);
+  const area=col=>{x.beginPath();x.moveTo(cx(0),base);for(let i=0;i<BINS;i++)x.lineTo(cx(i),cy(d[i]));x.lineTo(cx(BINS-1),base);x.closePath();x.fillStyle=col;x.fill();};
+  area('rgba(21,160,109,0.20)');
+  x.save();x.beginPath();x.rect(padL,padT,Math.max(0,fx-padL),H);x.clip();area('rgba(220,90,80,0.30)');x.restore();
+  // density curve
+  x.beginPath();for(let i=0;i<BINS;i++){const px=cx(i),py=cy(d[i]);i?x.lineTo(px,py):x.moveTo(px,py);}x.strokeStyle=P.green;x.lineWidth=1.7;x.lineJoin='round';x.stroke();
+  if(dr){x.beginPath();for(let i=0;i<BINS;i++){const px=cx(i),py=cy(dr[i]);i?x.lineTo(px,py):x.moveTo(px,py);}x.strokeStyle=P.gold;x.lineWidth=1.3;x.setLineDash([4,3]);x.stroke();x.setLineDash([]);}
+  const vline=(v,c,dash,lw)=>{if(v==null)return;const px=xPos(v);x.save();x.strokeStyle=c;x.lineWidth=lw||1.4;x.setLineDash(dash||[]);x.beginPath();x.moveTo(px,padT-3);x.lineTo(px,base);x.stroke();x.restore();};
+  vline(opt.p10,P.faint,[3,3],opt.hi==='P10'?2.2:1.3);vline(opt.p90,P.faint,[3,3],opt.hi==='P90'?2.2:1.3);
+  vline(opt.p50,P.green,[],opt.hi==='P50'?2.4:1.8);vline(opt.floor,'#dc5a50',[5,3],1.6);
+  x.fillStyle=P.faint;x.font='10px IBM Plex Mono, monospace';x.textAlign='center';
   for(let t=0;t<=4;t++){const v=lo+span*t/4;x.fillText(v.toFixed(1),padL+W*t/4,h-9);}
-  if(opt.p50!=null){x.fillStyle='#13986c';x.fillText('P50 '+opt.p50.toFixed(2),clamp(xPos(opt.p50),38,w-38),padT+6);}
+  const hp=opt.hi==='P10'?opt.p10:opt.hi==='P90'?opt.p90:opt.p50;
+  x.fillStyle=P.green;x.fillText((opt.hi||'P50')+' '+(+hp).toFixed(2),clamp(xPos(hp),40,w-40),padT+2);
+  x.fillStyle='#dc5a50';x.fillText('floor',clamp(fx,18,w-18),base+16);
 }
 
 /* ── canvas: cash runway / debt wall ────────────────────────────── */
 function drawRunway(cv, annualFCF, floorT, mit){
-  const {x,w,h}=dpr(cv);
+  const {x,w,h}=dpr(cv); const P=pal();
   const padL=30,padR=10,padT=14,padB=28,W=w-padL-padR,H=h-padT-padB;
   // lumpy principal profile across quarters (sums ~ to scenario principal)
   const o=holdObligations(0,0,mit);
@@ -881,17 +1042,17 @@ function drawRunway(cv, annualFCF, floorT, mit){
     // principal wall bar
     const py=y(wall[q]); x.fillStyle='rgba(217,146,15,.85)';
     x.fillRect(cx+gw*0.54,py,gw*0.3,Math.max(2,y(0)-py));
-    x.fillStyle='#64756f';x.font='9.5px IBM Plex Mono, monospace';x.fillText('Q'+(q+1),cx+gw/2,h-9);
+    x.fillStyle=P.faint;x.font='9.5px IBM Plex Mono, monospace';x.fillText('Q'+(q+1),cx+gw/2,h-9);
   }
-  x.strokeStyle='#dbe8df';x.beginPath();x.moveTo(padL,y(0));x.lineTo(w-padR,y(0));x.stroke();
+  x.strokeStyle=P.grid;x.beginPath();x.moveTo(padL,y(0));x.lineTo(w-padR,y(0));x.stroke();
   // y axis ticks
-  x.fillStyle='#8b9a92';x.textAlign='right';
+  x.fillStyle=P.faint;x.textAlign='right';
   for(let t=0;t<=3;t++){const v=maxV*t/3;x.fillText(v.toFixed(0),padL-4,y(v)+3);}
 }
 
 /* ── svg: diversification-break map ─────────────────────────────── */
 function drawDivMap(sh){
-  const svg=document.getElementById('divmap'); if(!svg)return;
+  const svg=document.getElementById('divmap'); if(!svg)return; const P=pal();
   const W=520,H=260, lx=120, rx=400;
   const factors=FNAME.map((n,k)=>({n,k,y:24+k*((H-48)/5)}));
   const assets=[...SUBS.map(s=>({id:s.id,beta:s.beta})), {id:'Freeport',jv:true,beta:[0.5,0.85,0.35,-0.1,-0.05,-0.2]}];
@@ -909,12 +1070,12 @@ function drawDivMap(sh){
   }
   let nodes='';
   for(const f of factors){ const active=Math.abs(sh[f.k])>0.04;
-    nodes+=`<circle cx="${lx}" cy="${f.y}" r="5" fill="${active?'#13986c':'#c4d5cb'}"/>`+
-      `<text x="${lx-10}" y="${f.y+3.5}" text-anchor="end" class="maplbl" fill="#64756f" font-family="Inter">${f.n}</text>`;
+    nodes+=`<circle cx="${lx}" cy="${f.y}" r="5" fill="${active?P.green:P.grid}"/>`+
+      `<text x="${lx-10}" y="${f.y+3.5}" text-anchor="end" class="maplbl" fill="${P.faint}" font-family="Inter">${f.n}</text>`;
   }
   for(let i=0;i<assets.length;i++){ const a=assets[i];
-    nodes+=`<circle cx="${rx}" cy="${ay(i)}" r="6" fill="${a.jv?'#7d6be0':'#071811'}" ${a.jv?'stroke="#7d6be0" stroke-dasharray="3 2" fill="#fff"':''}/>`+
-      `<text x="${rx+11}" y="${ay(i)+3.5}" class="maplbl" fill="${a.jv?'#6655bf':'#16211d'}" font-weight="700" font-family="Inter">${a.id}${a.jv?' · JV':''}</text>`;
+    nodes+=`<circle cx="${rx}" cy="${ay(i)}" r="6" fill="${a.jv?'#7d6be0':P.ink}" ${a.jv?'stroke="#7d6be0" stroke-dasharray="3 2" fill="'+P.grid+'"':''}/>`+
+      `<text x="${rx+11}" y="${ay(i)+3.5}" class="maplbl" fill="${a.jv?'#8b7df0':P.ink}" font-weight="700" font-family="Inter">${a.id}${a.jv?' · JV':''}</text>`;
   }
   svg.innerHTML=links+nodes;
 }
@@ -1014,34 +1175,59 @@ let raf=null;
 function schedule(){ syncLabels(); if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run); }
 ['china','cycle','fx','energy','carbon','reg','fin'].forEach(id=>
   document.getElementById(id).addEventListener('input',()=>{ markCustom(); schedule(); }));
-['floor','n'].forEach(id=>document.getElementById(id).addEventListener('input',schedule));
-function markCustom(){ activePreset='Custom'; document.querySelectorAll('.preset').forEach(p=>p.classList.remove('on')); }
+document.getElementById('n').addEventListener('input',schedule);
+document.getElementById('floor').addEventListener('input',schedule);          // live sim while dragging
+document.getElementById('floor').addEventListener('change',renderPresetCards); // refresh cards on release
+function markCustom(){ activePreset='Custom'; document.querySelectorAll('.scard').forEach(p=>p.classList.remove('on')); }
 
 document.querySelectorAll('#regime button').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('#regime button').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); regimeMult=+b.dataset.r; schedule(); }));
+  b.classList.add('on'); regimeMult=+b.dataset.r; renderPresetCards(); schedule(); }));
 
-// presets
-const pr=document.getElementById('presets');
-pr.innerHTML=Object.keys(PRESETS).map(k=>`<button class="preset ${k==='FY2025 plan'?'on':''}" data-k="${k}">${k}</button>`).join('');
-pr.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>{
-  const p=PRESETS[b.dataset.k]; activePreset=b.dataset.k;
-  document.querySelectorAll('.preset').forEach(x=>x.classList.toggle('on',x===b));
-  for(const k in p) document.getElementById(k).value=p[k];
-  schedule();
-}));
+// scenario preset cards + category filters
+let presetFilter='All';
+function loadPreset(k){ const p=PRESETS[k]; activePreset=k;
+  for(const kk in p) document.getElementById(kk).value=p[kk];
+  renderPresetCards(); schedule(); }
+function renderFilters(){
+  const cats=['All',...[...new Set(Object.values(PRESET_CAT))].map(c=>CAT_LABEL[c])];
+  document.getElementById('presetFilters').innerHTML=cats.map(c=>
+    `<button class="pfilter ${c===presetFilter?'on':''}" data-c="${c}">${c}</button>`).join('');
+  document.querySelectorAll('#presetFilters .pfilter').forEach(b=>b.addEventListener('click',()=>{
+    presetFilter=b.dataset.c; renderFilters(); renderPresetCards(); }));
+}
+function renderPresetCards(){
+  const floorT=+document.getElementById('floor').value;
+  const keys=Object.keys(PRESETS).filter(k=>presetFilter==='All'||CAT_LABEL[PRESET_CAT[k]]===presetFilter);
+  document.getElementById('presetCards').innerHTML=keys.map(k=>{
+    const q=quickBreach(PRESETS[k],floorT), pc=q.breach*100;
+    const lvl=pc<12?'lo':pc<32?'mid':'hi', barc=pc<12?'var(--green)':pc<32?'var(--gold)':'var(--red)';
+    return `<div class="scard ${k===activePreset?'on':''}" data-k="${k}">
+      <div class="sc-top"><span class="sc-name">${k}</span><span class="sc-cat">${CAT_LABEL[PRESET_CAT[k]]}</span></div>
+      <div class="sc-mid"><span class="sc-breach ${lvl}">${pc.toFixed(0)}%</span><span class="sc-lbl">breach</span>
+        <span class="sc-res">Rp ${q.residual.toFixed(1)}T</span></div>
+      <div class="sc-bar"><span style="width:${clamp(pc,2,100)}%;background:${barc}"></span></div>
+    </div>`;
+  }).join('');
+  document.querySelectorAll('#presetCards .scard').forEach(c=>c.addEventListener('click',()=>loadPreset(c.dataset.k)));
+}
 
 document.getElementById('reset').addEventListener('click',()=>{
   const p=PRESETS['FY2025 plan']; for(const k in p) document.getElementById(k).value=p[k];
   document.getElementById('floor').value=2; document.getElementById('n').value=20000;
   LEVERS.forEach(l=>{l.on=false;l._rec=false;});
   document.querySelectorAll('#regime button').forEach(x=>x.classList.toggle('on',x.dataset.r==='1')); regimeMult=1;
-  activePreset='FY2025 plan'; document.querySelectorAll('.preset').forEach(x=>x.classList.toggle('on',x.dataset.k==='FY2025 plan'));
+  activePreset='FY2025 plan'; presetFilter='All'; renderFilters(); renderPresetCards();
   document.getElementById('optbox').classList.remove('show'); schedule();
 });
 document.getElementById('optBtn').addEventListener('click',recommendPackage);
 document.getElementById('copyBrief').addEventListener('click',copyBrief);
 window.addEventListener('resize',()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(run);});
+
+document.querySelectorAll('#distHi button').forEach(b=>b.addEventListener('click',()=>{
+  distHi=b.dataset.p; document.querySelectorAll('#distHi button').forEach(x=>x.classList.toggle('on',x===b));
+  if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run);
+}));
 
 /* ── market-signals ticker (illustrative; Phase-1 live feeds) ───── */
 // Each signal maps to the portfolio factor / subsidiary it drives, so the
@@ -1097,12 +1283,13 @@ function setTheme(t){
 document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.t)));
 let _savedTheme='deep'; try{_savedTheme=localStorage.getItem('preTheme')||'deep';}catch(e){}
 
-renderTicker(); renderLevers(); syncLabels();
+renderTicker(); renderLevers(); renderFilters(); renderPresetCards(); syncLabels();
 if(_savedTheme!=='forest') setTheme(_savedTheme); else run();
 
 /* ── guided tour ────────────────────────────────────────────────── */
 const TOUR=[
-  {sel:'[data-tour=presets]',t:'1 · Pick a scenario',b:'Start from a board-ready preset — China hard landing, energy shock, refinancing squeeze, perfect storm — or build your own with the common-factor sliders below.'},
+  {sel:'[data-tour=verdict]',t:'1 · The board verdict',b:'The headline answer first: does the holding cash floor HOLD, sit AT RISK, or BREACH — with the breach probability shown as an outcome bar (red breach vs green hold), the way a prediction market frames an outcome.'},
+  {sel:'[data-tour=presets]',t:'2 · Pick a scenario',b:'Start from a board-ready preset — China hard landing, energy shock, refinancing squeeze, perfect storm — or build your own with the common-factor sliders below.'},
   {sel:'[data-tour=factors]',t:'2 · Common factors',b:'Seven shared shocks (China demand, commodity cycle, FX, energy, carbon, regulation, financing) drive every subsidiary together. They are sampled around a macro latent, so a downturn hits several assets at once — that is where diversification fails.'},
   {sel:'[data-tour=kpis]',t:'3 · The board answer',b:'Residual Holding FCF (P50), Holding FCF-at-Risk including debt principal, the probability of breaching the cash floor, and the largest single contributor to the downside.'},
   {sel:'[data-tour=waterfall]',t:'4 · Where the cash goes',b:'Opening cash, then upstreaming stacked by subsidiary (PTBA, Antam, Inalum, Timah) so you can see each contribution; then holding opex, interest, debt principal, capex and equity drawn down. Debt principal is highlighted as the pinch, and the dashed line is the board cash floor the residual must clear.'},
