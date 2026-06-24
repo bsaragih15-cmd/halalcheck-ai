@@ -151,6 +151,7 @@
   .stack{display:flex;flex-direction:column;gap:16px}
   .mtop{margin-top:16px}
   canvas{width:100%;display:block}
+  #waterfall{height:320px} #hist{height:300px} #runway{height:280px}
   .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:11px;font-size:10.5px;color:var(--muted)}
   .legend i{display:inline-block;width:16px;height:0;border-top:3px solid;vertical-align:middle;margin-right:5px;border-radius:2px}
   .legend i.sq{height:10px;border-top:0;border-radius:2px}
@@ -340,25 +341,20 @@
 
     <div class="mitbar" id="mitbar"></div>
 
-    <div class="row2">
-      <div class="panel" data-tour="waterfall">
-        <h2>Holding FCF waterfall · base case <span class="grp" id="wfScn">FY2025 plan</span></h2>
-        <canvas id="waterfall" height="300"></canvas>
-        <div class="legend">
-          <span><i class="sq" style="background:var(--green)"></i>Inflow / opening cash</span>
-          <span><i class="sq" style="background:var(--red)"></i>Obligation outflow</span>
-          <span><i class="sq" style="background:var(--forest)"></i>Residual Holding FCF</span>
-        </div>
-      </div>
-      <div class="panel" data-tour="dist">
-        <h2>Residual Holding FCF distribution <span class="grp" id="convPill">—</span></h2>
-        <canvas id="hist" height="300"></canvas>
-        <div class="legend">
-          <span><i style="border-color:var(--green-dark)"></i>P50</span>
-          <span><i style="border-color:var(--faint)"></i>P10 / P90</span>
-          <span><i style="border-color:var(--red)"></i>Cash floor</span>
-          <span id="refLeg" style="display:none"><i style="border-color:var(--gold);border-style:dashed"></i>Before action</span>
-        </div>
+    <div class="panel" data-tour="waterfall">
+      <h2>Holding FCF waterfall · base case <span class="grp" id="wfScn">FY2025 plan</span></h2>
+      <canvas id="waterfall" height="320"></canvas>
+      <div class="legend" id="wfLegend"></div>
+    </div>
+    <!-- Monte Carlo distribution hidden for now — flip SHOW_DIST = true to restore -->
+    <div class="panel mtop" id="distPanel" data-tour="dist" style="display:none">
+      <h2>Residual Holding FCF distribution <span class="grp" id="convPill">—</span></h2>
+      <canvas id="hist" height="300"></canvas>
+      <div class="legend">
+        <span><i style="border-color:var(--green-dark)"></i>P50</span>
+        <span><i style="border-color:var(--faint)"></i>P10 / P90</span>
+        <span><i style="border-color:var(--red)"></i>Cash floor</span>
+        <span id="refLeg" style="display:none"><i style="border-color:var(--gold);border-style:dashed"></i>Before action</span>
       </div>
     </div>
 
@@ -605,8 +601,9 @@ function run(){
   } else { mb.classList.remove('show'); document.getElementById('refLeg').style.display='none'; }
 
   // charts
-  drawWaterfall(document.getElementById('waterfall'), holdingFCF(cenSh,cenFin,cenFx,mit));
-  drawHist(document.getElementById('hist'), sA, {p10,p50,p90,floor:floorT,ref:hasAnyMit()?sR:null});
+  drawWaterfall(document.getElementById('waterfall'), holdingFCF(cenSh,cenFin,cenFx,mit), floorT);
+  const histCv=document.getElementById('hist');           // Monte Carlo histogram hidden for now
+  if(histCv && histCv.offsetParent!==null) drawHist(histCv, sA, {p10,p50,p90,floor:floorT,ref:hasAnyMit()?sR:null});
   drawRunway(document.getElementById('runway'), baseFCF, floorT, mit);
   drawDivMap(cenSh);
 
@@ -656,41 +653,70 @@ function estimateLeverBenefits(sh,finSh,fxSh,floorT){
 }
 
 /* ── canvas: waterfall ──────────────────────────────────────────── */
-function dpr(cv){const d=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.height;cv.width=w*d;cv.height=h*d;
-  const x=cv.getContext('2d');x.scale(d,d);x.clearRect(0,0,w,h);return {x,w,h};}
-function drawWaterfall(cv, res){
+function dpr(cv){const d=window.devicePixelRatio||1;
+  const w=cv.clientWidth||300, h=cv.clientHeight||280;     // CSS-locked px, stable across redraws
+  cv.width=w*d;cv.height=h*d;
+  const x=cv.getContext('2d');x.setTransform(d,0,0,d,0,0);x.clearRect(0,0,w,h);return {x,w,h};}
+const SUBCOL={PTBA:'#d9920f', Antam:'#15a06d', Inalum:'#3f86cf', Timah:'#dc5a50'};
+function drawWaterfall(cv, res, floorT){
   const {x,w,h}=dpr(cv);
   const o=res.o;
   const steps=[
-    ['Opening cash', o.openingCash, 'in'], ['Upstreaming', res.up, 'in'], ['Other in', o.otherInflows, 'in'],
-    ['Opex', -o.opex,'out'], ['Interest', -o.interest,'out'], ['Principal', -o.principal,'out'],
-    ['Capex', -o.capex,'out'], ['Equity inj.', -o.equity,'out'], ['Other out', -o.otherOut,'out'],
+    {n:'Opening cash', v:o.openingCash, t:'in'}, {n:'Upstreaming', v:res.up, t:'in', stack:true},
+    {n:'Other in', v:o.otherInflows, t:'in'}, {n:'Opex', v:-o.opex, t:'out'},
+    {n:'Interest', v:-o.interest, t:'out'}, {n:'Principal', v:-o.principal, t:'pinch'},
+    {n:'Capex', v:-o.capex, t:'out'}, {n:'Equity', v:-o.equity, t:'out'}, {n:'Other out', v:-o.otherOut, t:'out'},
   ];
   const residual=res.fcf;
-  const padL=8,padR=8,padT=14,padB=40,W=w-padL-padR,H=h-padT-padB;
-  let cum=0, maxV=0; let c2=0; const tops=[];
-  for(const s of steps){ const start=c2; c2+=s[1]; tops.push([start,c2]); maxV=Math.max(maxV,start,c2); }
-  maxV=Math.max(maxV,residual)*1.08;
-  const n=steps.length+1, gap=8, bw=(W-gap*(n-1))/n;
+  const padL=8,padR=8,padT=20,padB=42,W=w-padL-padR,H=h-padT-padB;
+  let c=0, maxV=0; const tops=[];
+  for(const s of steps){ const start=c; c+=s.v; tops.push([start,c]); maxV=Math.max(maxV,start,c); }
+  maxV=Math.max(maxV,residual,floorT||0)*1.08;
+  const n=steps.length+1, gap=7, bw=(W-gap*(n-1))/n;
   const y=v=>padT+H-(v/maxV)*H;
-  x.font='9px IBM Plex Mono, monospace'; x.textAlign='center';
+  // board floor line
+  if(floorT!=null){ const fy=y(floorT); x.strokeStyle='#d9920f'; x.lineWidth=1.3; x.setLineDash([5,4]);
+    x.beginPath(); x.moveTo(padL,fy); x.lineTo(w-padR,fy); x.stroke(); x.setLineDash([]);
+    x.fillStyle='#b07d10'; x.font='9.5px IBM Plex Mono, monospace'; x.textAlign='left';
+    x.fillText('Board floor '+(+floorT).toFixed(1), padL+2, fy-4); }
+  x.textAlign='center';
   for(let i=0;i<steps.length;i++){
-    const [a,b]=tops[i], up=steps[i][2]==='in', xx=padL+i*(bw+gap);
-    const y0=y(Math.max(a,b)), y1=y(Math.min(a,b));
-    x.fillStyle=up?'#15a06d':'#dc5a50'; x.globalAlpha=.92;
-    x.fillRect(xx,y0,bw,Math.max(2,y1-y0)); x.globalAlpha=1;
-    x.fillStyle='#64756f';
-    x.fillText(steps[i][0], xx+bw/2, h-24);
-    x.fillStyle=up?'#13986c':'#b13d35';
-    x.fillText((steps[i][1]>=0?'+':'')+steps[i][1].toFixed(1), xx+bw/2, y0-4);
+    const s=steps[i], [a,b]=tops[i], up=s.v>=0, xx=padL+i*(bw+gap);
+    const y0=y(Math.max(a,b)), y1=y(Math.min(a,b)), bh=Math.max(2,y1-y0);
+    if(s.stack){                                   // Upstreaming → stacked by subsidiary
+      let cum=a;
+      for(let si=0;si<SUBS.length;si++){ const val=res.perSub[si];
+        const segTop=y(cum+val), sh2=Math.max(1,y(cum)-segTop);
+        x.fillStyle=SUBCOL[SUBS[si].id]; x.globalAlpha=.95; x.fillRect(xx,segTop,bw,sh2); x.globalAlpha=1;
+        x.strokeStyle='rgba(251,253,249,.6)'; x.lineWidth=1; x.strokeRect(xx+.5,segTop+.5,bw-1,sh2-1);
+        if(sh2>13){ x.fillStyle='#fff'; x.font='9px Inter, sans-serif'; x.fillText(SUBS[si].id, xx+bw/2, segTop+sh2/2+3); }
+        cum+=val;
+      }
+    } else {
+      x.fillStyle = s.t==='pinch' ? '#d9920f' : up ? '#15a06d' : '#c2615a';
+      x.globalAlpha = s.t==='pinch'?1:.92; x.fillRect(xx,y0,bw,bh); x.globalAlpha=1;
+      if(s.t==='pinch'){ x.strokeStyle='#9c6a0a'; x.lineWidth=1.3; x.strokeRect(xx+.6,y0+.6,bw-1.2,bh-1.2); }
+    }
+    x.fillStyle = up?'#13986c' : s.t==='pinch'?'#b07d10' : '#b13d35';
+    x.font='10px IBM Plex Mono, monospace';
+    x.fillText((s.v>=0?'+':'')+s.v.toFixed(1), xx+bw/2, y0-5);
+    x.fillStyle = s.t==='pinch'?'#b07d10':'#64756f';
+    x.font=(s.t==='pinch'?'700 ':'')+'9.5px Inter, sans-serif';
+    x.fillText(s.n, xx+bw/2, h-24);
   }
-  // residual bar
-  const xx=padL+steps.length*(bw+gap), y0=y(Math.max(0,residual)), y1=y(Math.min(0,residual));
-  x.fillStyle='#071811'; x.fillRect(xx,y0,bw,Math.max(2,y1-y0));
-  x.fillStyle='#16211d'; x.font='10px IBM Plex Mono, monospace';
-  x.fillText('Residual', xx+bw/2, h-24); x.fillText('Rp '+residual.toFixed(1)+'T', xx+bw/2, y0-4);
-  // connector line baseline
-  x.strokeStyle='#dbe8df'; x.beginPath(); x.moveTo(padL,y(0)); x.lineTo(w-padR,y(0)); x.stroke();
+  // residual total bar
+  const xx=padL+steps.length*(bw+gap), ry0=y(Math.max(0,residual)), ry1=y(Math.min(0,residual));
+  x.fillStyle = residual>=(floorT||0) ? '#0f8a5f' : '#dc5a50';
+  x.fillRect(xx,ry0,bw,Math.max(2,ry1-ry0));
+  x.fillStyle = residual>=(floorT||0) ? '#0f8a5f':'#b13d35'; x.font='10px IBM Plex Mono, monospace';
+  x.fillText((residual>=0?'+':'')+residual.toFixed(1), xx+bw/2, ry0-5);
+  x.fillStyle='#16211d'; x.font='700 9.5px Inter, sans-serif'; x.fillText('Residual FCF', xx+bw/2, h-24);
+  x.strokeStyle='#dbe8df'; x.lineWidth=1; x.beginPath(); x.moveTo(padL,y(0)); x.lineTo(w-padR,y(0)); x.stroke();
+  // dynamic subsidiary legend
+  const leg=document.getElementById('wfLegend');
+  if(leg) leg.innerHTML = SUBS.map((s,si)=>
+      `<span><i class="sq" style="background:${SUBCOL[s.id]}"></i>${s.id} ${res.perSub[si].toFixed(1)} tn</span>`).join('')
+    + `<span style="margin-left:4px"><i class="sq" style="background:#d9920f"></i><b style="color:#b07d10">Debt principal — the pinch</b></span>`;
 }
 
 /* ── canvas: histogram ──────────────────────────────────────────── */
@@ -961,7 +987,7 @@ const TOUR=[
   {sel:'[data-tour=presets]',t:'1 · Pick a scenario',b:'Start from a board-ready preset — China hard landing, energy shock, refinancing squeeze, perfect storm — or build your own with the common-factor sliders below.'},
   {sel:'[data-tour=factors]',t:'2 · Common factors',b:'Seven shared shocks (China demand, commodity cycle, FX, energy, carbon, regulation, financing) drive every subsidiary together. They are sampled around a macro latent, so a downturn hits several assets at once — that is where diversification fails.'},
   {sel:'[data-tour=kpis]',t:'3 · The board answer',b:'Residual Holding FCF (P50), Holding FCF-at-Risk including debt principal, the probability of breaching the cash floor, and the largest single contributor to the downside.'},
-  {sel:'[data-tour=waterfall]',t:'4 · Where the cash goes',b:'Opening cash and subsidiary upstreaming in green; holding opex, interest, debt principal, capex and equity injections in red. The dark bar is what survives — residual Holding FCF.'},
+  {sel:'[data-tour=waterfall]',t:'4 · Where the cash goes',b:'Opening cash, then upstreaming stacked by subsidiary (PTBA, Antam, Inalum, Timah) so you can see each contribution; then holding opex, interest, debt principal, capex and equity drawn down. Debt principal is highlighted as the pinch, and the dashed line is the board cash floor the residual must clear.'},
   {sel:'[data-tour=subs]',t:'5 · Subsidiary cash bridges',b:'PTBA, Antam, Inalum and Timah quantified, each with a confidence tag. Freeport stays visible as JV exposure but is excluded from quantified cash.'},
   {sel:'[data-tour=divmap]',t:'6 · Diversification-break map',b:'Links light up where a shared factor hits an asset in this scenario. Red = adverse, green = favourable, dashed violet = Freeport JV. Converging links mean correlated downside.'},
   {sel:'[data-tour=levers]',t:'7 · Pull the levers',b:'Hedge price or FX, refinance the wall, defer capex, run a cost program. Each lever shows owner, time-to-impact and benefit. Hit “Recommend package” for the cheapest set that protects the floor.'},
