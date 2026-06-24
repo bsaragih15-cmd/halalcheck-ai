@@ -136,6 +136,24 @@
   .spinner{width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;
     display:inline-block;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:7px}
   @keyframes spin{to{transform:rotate(360deg)}}
+  /* guided tour */
+  .tourbtn{font-size:12px;color:#fff;background:linear-gradient(135deg,var(--grad1),var(--grad2));
+    border:none;border-radius:8px;padding:7px 13px;cursor:pointer;font-weight:600;font-family:var(--sans)}
+  .tour-spot{position:fixed;border-radius:11px;box-shadow:0 0 0 9999px rgba(5,7,12,.82);
+    border:2px solid var(--grad2);z-index:9998;pointer-events:none;transition:all .22s ease}
+  .tour-tip{position:fixed;z-index:10000;width:330px;max-width:88vw;background:#0e121b;border:1px solid #2b3445;
+    border-radius:13px;padding:16px 17px;box-shadow:0 18px 50px rgba(0,0,0,.6);transition:all .22s ease}
+  .tour-tip .tt{font-size:14px;font-weight:700;margin-bottom:7px;color:var(--ink)}
+  .tour-tip .tb{font-size:12.5px;color:var(--muted);line-height:1.6}
+  .tour-tip .tf{display:flex;align-items:center;gap:8px;margin-top:15px}
+  .tour-tip .prog{font-family:var(--mono);font-size:11px;color:var(--faint);margin-right:auto}
+  .tour-tip button{font-size:12px;border-radius:8px;padding:6px 14px;cursor:pointer;border:1px solid var(--line);
+    background:var(--panel2);color:var(--muted);font-family:var(--sans)}
+  .tour-tip button.primary{background:linear-gradient(135deg,var(--grad1),var(--grad2));color:#fff;
+    border-color:transparent;font-weight:600}
+  .tour-skip{position:fixed;top:15px;right:18px;z-index:10000;font-size:12px;color:#cdd6e3;
+    background:rgba(20,25,35,.85);border:1px solid #2b3445;border-radius:8px;padding:6px 12px;cursor:pointer;
+    font-family:var(--sans)}
   /* chromeless mode when embedded inside the CEO Cockpit (?embed=1) */
   .embed .bar{display:none}
   .embed .wrap{padding-top:16px}
@@ -153,6 +171,7 @@
   </div>
   <div class="spacer"></div>
   <div class="links">
+    <button class="tourbtn" id="tourBtn">★ Guided tour</button>
     <a href="/cockpit.html">← CEO Cockpit</a>
     <a href="/index.html#matrix">Value Chain</a>
   </div>
@@ -164,6 +183,7 @@
   <aside class="panel" style="align-self:start;position:sticky;top:84px">
     <div class="seclabel">Market view · base case</div>
 
+    <div data-tour="drivers">
     <div class="ctrl">
       <div class="row"><label>Coal benchmark (HBA/ICI)</label><span class="val" id="hbaV">$110</span></div>
       <input type="range" id="hba" min="55" max="190" value="110" step="1">
@@ -184,10 +204,12 @@
       <input type="range" id="frt" min="5" max="30" value="12" step="1">
       <div class="hint">US$/t · σ 35%</div>
     </div>
+    </div>
 
     <div class="divider"></div>
     <div class="seclabel mit">Mitigation levers · management action</div>
 
+    <div data-tour="mitigation">
     <div class="ctrl mit">
       <div class="row"><label>Coal-price hedge</label><span class="val" id="hpV" style="color:var(--green)">0%</span></div>
       <input type="range" id="hp" min="0" max="100" value="0" step="5">
@@ -208,8 +230,10 @@
       <input type="range" id="cc" min="0" max="15" value="0" step="1">
       <div class="hint">Unit cash-cost reduction across the operation</div>
     </div>
+    </div>
 
     <div class="divider"></div>
+    <div data-tour="risk">
     <div class="ctrl">
       <div class="row"><label>Board dividend floor</label><span class="val" id="floorV">Rp 1.2 T</span></div>
       <input type="range" id="floor" min="0.5" max="3.5" value="1.2" step="0.1">
@@ -223,6 +247,7 @@
         <button data-r="1.6">STRESSED</button>
       </div>
     </div>
+    </div>
     <div class="ctrl">
       <div class="row"><label>Simulations</label><span class="val" id="nV">20,000</span></div>
       <input type="range" id="n" min="2000" max="50000" value="20000" step="1000">
@@ -232,7 +257,7 @@
 
   <!-- ── results ───────────────────────────────────────────── -->
   <main>
-    <div class="kpis">
+    <div class="kpis" data-tour="kpis">
       <div class="kpi accent"><div class="strip" style="background:linear-gradient(180deg,var(--grad1),var(--grad2))"></div>
         <div class="k">Dividend to MIND ID · P50</div><div class="v" id="p50">—</div>
         <div class="delta" id="p50d"></div></div>
@@ -250,7 +275,7 @@
     <div class="mitbar" id="mitbar"></div>
 
     <div class="charts">
-      <div class="panel">
+      <div class="panel" data-tour="dist">
         <h2>Dividend-to-MIND-ID distribution <span class="pill" id="convPill">—</span></h2>
         <canvas id="hist" height="300"></canvas>
         <div class="legend">
@@ -268,7 +293,7 @@
     </div>
 
     <!-- ── AI Executive Brief ──────────────────────────────── -->
-    <div class="panel brief">
+    <div class="panel brief" data-tour="brief">
       <div class="head">
         <div class="spark">✦</div>
         <div>
@@ -286,7 +311,7 @@
     <div class="grid2">
       <div class="panel">
         <h2>Downside attribution · what moves the dividend</h2>
-        <table id="attrib"><tbody></tbody></table>
+        <table id="attrib" data-tour="attrib"><tbody></tbody></table>
         <div class="note">Correlation of each driver against the simulated dividend. Longer bar = more
           explanatory power; this is where the CEO's attention (and a hedge) buys the most risk reduction.</div>
       </div>
@@ -616,6 +641,67 @@ document.getElementById('genBrief').addEventListener('click',generateBrief);
 window.addEventListener('resize',()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(run);});
 
 syncLabels(); run();
+
+/* ── guided tour ────────────────────────────────────────────── */
+const TOUR=[
+  {sel:'[data-tour=drivers]',t:'1 · Set the market view',b:'These four exogenous drivers — coal benchmark (HBA/ICI), USD/IDR, China demand and freight — define the central case. Every Monte Carlo path is sampled around them with a realistic correlation structure (coal↔demand positive, coal↔IDR negative).'},
+  {sel:'[data-tour=risk]',t:'2 · Board floor & regime',b:'Set the dividend floor the board must protect, and the volatility regime — calm, base or stressed. A “breach” is any simulated path whose dividend lands below the floor.'},
+  {sel:'[data-tour=kpis]',t:'3 · The answer, four ways',b:'Median dividend to MIND ID (P50), the 80% confidence band (P10–P90), the probability of breaching the floor, and cash-flow-at-risk — the downside the single point estimate hides.'},
+  {sel:'[data-tour=dist]',t:'4 · The full distribution',b:'Every path as a histogram. Red bars and the shaded region are paths that breach the board floor; the blue line marks the median. This is the shape of the risk, not a single number.'},
+  {sel:'[data-tour=mitigation]',t:'5 · Pull the management levers',b:'Hedge the coal price or FX, shift volume to regulated domestic sales, or run a cost program. Each lever re-runs the SAME random paths, so the before/after deltas on the tiles above isolate exactly what the action buys.'},
+  {sel:'[data-tour=brief]',t:'6 · AI Chief of Staff',b:'Generates a board-grade brief — posture, situation, implication and recommended actions — grounded in the live numbers. Press “Generate brief” whenever the scenario changes.'},
+  {sel:'[data-tour=attrib]',t:'7 · Where the risk lives',b:'Ranks each driver by how much it moves the dividend across all paths. The top driver is where a hedge — and the CEO’s attention — buys the most risk reduction.'},
+];
+let tourI=-1, tourEls=null;
+function tourBuild(){
+  const spot=document.createElement('div'); spot.className='tour-spot';
+  const tip=document.createElement('div'); tip.className='tour-tip';
+  const skip=document.createElement('button'); skip.className='tour-skip'; skip.textContent='✕ End tour';
+  skip.onclick=tourEnd;
+  document.body.append(spot,tip,skip);
+  tourEls={spot,tip,skip};
+}
+function tourShow(){            // step change: scroll target into view, then place
+  if(tourI<0) return;
+  const el=document.querySelector(TOUR[tourI].sel);
+  if(!el){ tourNext(); return; }
+  el.scrollIntoView({block:'center',behavior:'auto'});
+  tourPlace();
+}
+function tourPlace(){           // reposition only (safe to call on scroll/resize)
+  if(tourI<0||!tourEls) return;
+  const step=TOUR[tourI];
+  let el=document.querySelector(step.sel);
+  if(!el){ tourNext(); return; }
+  const r=el.getBoundingClientRect(), p=7, vw=innerWidth, vh=innerHeight;
+  const {spot,tip}=tourEls;
+  spot.style.left=Math.max(4,r.left-p)+'px'; spot.style.top=Math.max(4,r.top-p)+'px';
+  spot.style.width=Math.min(vw-8,r.width+2*p)+'px'; spot.style.height=Math.min(vh-8,r.height+2*p)+'px';
+  tip.innerHTML=`<div class="tt">${step.t}</div><div class="tb">${step.b}</div>
+    <div class="tf"><span class="prog">${tourI+1} / ${TOUR.length}</span>
+    ${tourI>0?'<button id="tPrev">Back</button>':''}
+    <button class="primary" id="tNext">${tourI<TOUR.length-1?'Next':'Done'}</button></div>`;
+  tip.querySelector('#tNext').onclick=tourNext;
+  const pv=tip.querySelector('#tPrev'); if(pv) pv.onclick=()=>{tourI--;tourShow();};
+  // position the tip: below the spot if room, else above; clamp horizontally
+  const th=tip.offsetHeight||180, tw=tip.offsetWidth||330;
+  let top=r.bottom+14; if(top+th>vh-10) top=Math.max(10,r.top-th-14);
+  let left=Math.min(Math.max(10,r.left), vw-tw-10);
+  tip.style.top=top+'px'; tip.style.left=left+'px';
+}
+function tourNext(){ if(tourI<TOUR.length-1){tourI++;tourShow();} else tourEnd(); }
+function tourStart(){ if(!tourEls) tourBuild(); tourI=0; tourShow(); }
+function tourEnd(){ tourI=-1; if(tourEls){tourEls.spot.remove();tourEls.tip.remove();tourEls.skip.remove();tourEls=null;}
+  try{localStorage.setItem('cockpitTourSeen','1');}catch(e){} }
+document.getElementById('tourBtn').addEventListener('click',tourStart);
+addEventListener('keydown',e=>{ if(tourI<0)return;
+  if(e.key==='Escape')tourEnd(); else if(e.key==='ArrowRight'||e.key==='Enter')tourNext();
+  else if(e.key==='ArrowLeft'&&tourI>0){tourI--;tourShow();} });
+addEventListener('resize',()=>{if(tourI>=0)tourPlace();});
+addEventListener('scroll',()=>{if(tourI>=0)tourPlace();},{passive:true});
+// auto-offer once for first-time visitors (not when embedded in the cockpit)
+try{ if(!document.documentElement.classList.contains('embed') && !localStorage.getItem('cockpitTourSeen'))
+  setTimeout(tourStart,800); }catch(e){}
 </script>
 </body>
 </html>
