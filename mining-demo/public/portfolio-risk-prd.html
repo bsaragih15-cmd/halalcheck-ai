@@ -1,0 +1,1515 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OreSight AI — MIND ID Portfolio Risk Engine PRD</title>
+    <meta
+      name="description"
+      content="Product Requirements Document for the MIND ID Portfolio Scenario and Risk Engine."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>"
+    />
+    <style>
+      :root {
+        --bg: #eef4ef;
+        --paper: #fbfdf9;
+        --paper-strong: #ffffff;
+        --ink: #16211d;
+        --muted: #64756f;
+        --soft: #dbe8df;
+        --line: #c4d5cb;
+        --forest: #071811;
+        --forest-2: #0d261c;
+        --green: #22c98a;
+        --green-dark: #13986c;
+        --gold: #e5aa3e;
+        --red: #ed675d;
+        --blue: #4d97df;
+        --violet: #8977e9;
+        --shadow: 0 20px 70px rgba(8, 24, 17, 0.12);
+        --radius: 8px;
+        --mono: "SFMono-Regular", "Roboto Mono", Consolas, monospace;
+        --sans:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background:
+          radial-gradient(circle at 8% 0%, rgba(34, 201, 138, 0.12), transparent 30%),
+          linear-gradient(180deg, #edf5ee 0%, #f8fbf7 42%, #eef4ef 100%);
+        color: var(--ink);
+        font-family: var(--sans);
+        margin: 0;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .topbar {
+        backdrop-filter: blur(18px);
+        background: rgba(251, 253, 249, 0.86);
+        border-bottom: 1px solid rgba(196, 213, 203, 0.82);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+      }
+
+      .topbar-inner {
+        align-items: center;
+        display: flex;
+        gap: 18px;
+        justify-content: space-between;
+        margin: 0 auto;
+        max-width: 1180px;
+        min-height: 64px;
+        padding: 0 22px;
+      }
+
+      .brand {
+        align-items: center;
+        display: flex;
+        gap: 10px;
+        min-width: 230px;
+      }
+
+      .brand-mark {
+        align-items: center;
+        background: var(--forest);
+        border: 1px solid rgba(34, 201, 138, 0.38);
+        border-radius: 7px;
+        color: var(--green);
+        display: grid;
+        font-family: var(--mono);
+        font-size: 13px;
+        font-weight: 800;
+        height: 34px;
+        place-items: center;
+        width: 34px;
+      }
+
+      .brand strong {
+        display: block;
+        font-size: 13px;
+        line-height: 1.1;
+      }
+
+      .brand span {
+        color: var(--muted);
+        display: block;
+        font-size: 11px;
+        margin-top: 2px;
+      }
+
+      .nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        justify-content: flex-end;
+      }
+
+      .nav a {
+        border: 1px solid transparent;
+        border-radius: 999px;
+        color: #40514b;
+        font-size: 11px;
+        font-weight: 750;
+        padding: 7px 10px;
+      }
+
+      .nav a:hover {
+        background: #edf5ef;
+        border-color: var(--line);
+        color: var(--forest);
+      }
+
+      .hero {
+        background:
+          radial-gradient(circle at 76% 18%, rgba(34, 201, 138, 0.18), transparent 25%),
+          radial-gradient(circle at 28% 90%, rgba(229, 170, 62, 0.14), transparent 32%),
+          linear-gradient(135deg, #06150f 0%, #0b241a 56%, #06150f 100%);
+        color: #f4fbf7;
+        margin: 22px auto 0;
+        max-width: 1180px;
+        overflow: hidden;
+        padding: 34px;
+        position: relative;
+      }
+
+      .hero::after {
+        background:
+          linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+        background-size: 56px 56px;
+        content: "";
+        inset: 0;
+        opacity: 0.26;
+        pointer-events: none;
+        position: absolute;
+      }
+
+      .hero-grid {
+        display: grid;
+        gap: 30px;
+        grid-template-columns: minmax(0, 1.2fr) minmax(340px, 0.8fr);
+        position: relative;
+        z-index: 1;
+      }
+
+      .kicker {
+        color: var(--green);
+        display: block;
+        font-size: 11px;
+        font-weight: 850;
+        letter-spacing: 1.1px;
+        margin-bottom: 18px;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        font-size: clamp(38px, 6vw, 76px);
+        letter-spacing: 0;
+        line-height: 0.94;
+        margin: 0;
+        max-width: 850px;
+      }
+
+      .hero-copy p {
+        color: #b8c9c1;
+        font-size: 16px;
+        line-height: 1.65;
+        margin: 22px 0 0;
+        max-width: 680px;
+      }
+
+      .doc-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 28px;
+      }
+
+      .doc-meta span {
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 999px;
+        color: #dbe9e2;
+        font-size: 11px;
+        font-weight: 760;
+        padding: 8px 10px;
+      }
+
+      .metric-stack {
+        display: grid;
+        gap: 10px;
+      }
+
+      .metric {
+        background: rgba(255, 255, 255, 0.065);
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: var(--radius);
+        padding: 14px;
+      }
+
+      .metric span {
+        color: #98aaa2;
+        display: block;
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: 0.9px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+      }
+
+      .metric strong {
+        display: block;
+        font-family: var(--mono);
+        font-size: 18px;
+      }
+
+      .metric p {
+        color: #adbeb6;
+        font-size: 12px;
+        line-height: 1.5;
+        margin: 8px 0 0;
+      }
+
+      .publish-note {
+        background: #102a20;
+        border-left: 3px solid var(--gold);
+        color: #d7e7df;
+        font-size: 12px;
+        line-height: 1.55;
+        margin-top: 10px;
+        padding: 12px;
+      }
+
+      .layout {
+        align-items: start;
+        display: grid;
+        gap: 22px;
+        grid-template-columns: 250px minmax(0, 1fr);
+        margin: 22px auto 54px;
+        max-width: 1180px;
+        padding: 0 22px;
+      }
+
+      .toc {
+        background: rgba(251, 253, 249, 0.92);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        padding: 16px;
+        position: sticky;
+        top: 86px;
+      }
+
+      .toc strong {
+        display: block;
+        font-size: 12px;
+        margin-bottom: 10px;
+      }
+
+      .toc a {
+        border-left: 2px solid transparent;
+        color: #52645d;
+        display: block;
+        font-size: 12px;
+        line-height: 1.25;
+        padding: 7px 0 7px 10px;
+      }
+
+      .toc a:hover {
+        border-left-color: var(--green);
+        color: var(--forest);
+      }
+
+      .content {
+        display: grid;
+        gap: 16px;
+        min-width: 0;
+      }
+
+      .section-card {
+        background: rgba(251, 253, 249, 0.96);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        padding: 28px;
+      }
+
+      .section-card.dark {
+        background:
+          radial-gradient(circle at 82% 20%, rgba(34, 201, 138, 0.12), transparent 34%),
+          var(--forest);
+        color: #f4fbf7;
+      }
+
+      .section-card h2 {
+        font-size: 28px;
+        line-height: 1.1;
+        margin: 0 0 14px;
+      }
+
+      .section-card h3 {
+        font-size: 18px;
+        line-height: 1.25;
+        margin: 0 0 8px;
+      }
+
+      .section-card p {
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.68;
+        margin: 0;
+      }
+
+      .section-card.dark p {
+        color: #b8c9c1;
+      }
+
+      .section-card + .section-card {
+        scroll-margin-top: 86px;
+      }
+
+      .section-label {
+        align-items: center;
+        color: var(--green-dark);
+        display: flex;
+        font-size: 10px;
+        font-weight: 850;
+        gap: 8px;
+        letter-spacing: 1px;
+        margin-bottom: 11px;
+        text-transform: uppercase;
+      }
+
+      .section-label::before {
+        background: var(--green);
+        border-radius: 999px;
+        content: "";
+        display: inline-block;
+        height: 7px;
+        width: 7px;
+      }
+
+      .dark .section-label {
+        color: var(--green);
+      }
+
+      .summary-grid,
+      .goal-grid,
+      .persona-grid,
+      .scope-grid,
+      .roadmap-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        margin-top: 18px;
+      }
+
+      .summary-item,
+      .goal-card,
+      .persona,
+      .scope-card,
+      .roadmap-card,
+      .confidence-item {
+        background: var(--paper-strong);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 15px;
+      }
+
+      .dark .summary-item {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+
+      .summary-item span,
+      .goal-card span,
+      .persona span,
+      .scope-card span,
+      .roadmap-card span,
+      .confidence-item span {
+        color: var(--green-dark);
+        display: block;
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: 0.8px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+      }
+
+      .summary-item strong,
+      .goal-card strong,
+      .persona strong,
+      .scope-card strong,
+      .roadmap-card strong,
+      .confidence-item strong {
+        display: block;
+        font-size: 15px;
+        line-height: 1.28;
+        margin-bottom: 8px;
+      }
+
+      .dark .summary-item span {
+        color: var(--green);
+      }
+
+      .dark .summary-item p {
+        color: #c1d3cb;
+      }
+
+      .callout {
+        background: #f4f8f4;
+        border: 1px solid var(--line);
+        border-left: 4px solid var(--green);
+        border-radius: var(--radius);
+        margin-top: 18px;
+        padding: 15px;
+      }
+
+      .callout strong {
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      .callout.warning {
+        border-left-color: var(--gold);
+      }
+
+      .pipeline {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        margin-top: 20px;
+      }
+
+      .pipeline-step {
+        background: #f8fbf8;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        min-height: 150px;
+        padding: 14px;
+        position: relative;
+      }
+
+      .pipeline-step::after {
+        background: var(--green);
+        content: "";
+        height: 2px;
+        position: absolute;
+        right: -11px;
+        top: 34px;
+        width: 11px;
+      }
+
+      .pipeline-step:last-child::after {
+        display: none;
+      }
+
+      .pipeline-step b {
+        align-items: center;
+        background: var(--forest);
+        border-radius: 999px;
+        color: var(--green);
+        display: grid;
+        font-family: var(--mono);
+        font-size: 11px;
+        height: 28px;
+        margin-bottom: 12px;
+        place-items: center;
+        width: 28px;
+      }
+
+      .pipeline-step strong {
+        display: block;
+        font-size: 13px;
+        line-height: 1.3;
+        margin-bottom: 7px;
+      }
+
+      .pipeline-step p {
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .model-box {
+        background: #0a1d15;
+        border: 1px solid rgba(34, 201, 138, 0.26);
+        border-radius: var(--radius);
+        color: #ecf8f2;
+        font-family: var(--mono);
+        font-size: 12px;
+        line-height: 1.65;
+        margin-top: 16px;
+        overflow-x: auto;
+        padding: 16px;
+        white-space: pre;
+      }
+
+      .req-table {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        margin-top: 18px;
+        overflow: hidden;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        font-size: 12px;
+        line-height: 1.48;
+        padding: 11px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: #eef5ef;
+        color: #42534c;
+        font-size: 10px;
+        font-weight: 850;
+        letter-spacing: 0.9px;
+        text-transform: uppercase;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      td:first-child {
+        color: var(--green-dark);
+        font-family: var(--mono);
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .priority {
+        border-radius: 999px;
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 850;
+        padding: 4px 7px;
+      }
+
+      .p0 {
+        background: rgba(237, 103, 93, 0.12);
+        color: #b13d35;
+      }
+
+      .p1 {
+        background: rgba(229, 170, 62, 0.16);
+        color: #91610d;
+      }
+
+      .p2 {
+        background: rgba(77, 151, 223, 0.14);
+        color: #2c689d;
+      }
+
+      .list {
+        display: grid;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .list-item {
+        align-items: start;
+        background: #f8fbf8;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 28px minmax(0, 1fr);
+        padding: 13px;
+      }
+
+      .list-item b {
+        align-items: center;
+        background: rgba(34, 201, 138, 0.12);
+        border-radius: 999px;
+        color: var(--green-dark);
+        display: grid;
+        font-family: var(--mono);
+        font-size: 11px;
+        height: 28px;
+        place-items: center;
+        width: 28px;
+      }
+
+      .list-item strong {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 4px;
+      }
+
+      .list-item p {
+        font-size: 13px;
+      }
+
+      .confidence-grid {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        margin-top: 18px;
+      }
+
+      .tag {
+        border-radius: 999px;
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 850;
+        margin-top: 8px;
+        padding: 5px 8px;
+      }
+
+      .tag.reported {
+        background: rgba(34, 201, 138, 0.13);
+        color: var(--green-dark);
+      }
+
+      .tag.derived {
+        background: rgba(77, 151, 223, 0.13);
+        color: #2b6da9;
+      }
+
+      .tag.management {
+        background: rgba(229, 170, 62, 0.16);
+        color: #936414;
+      }
+
+      .tag.illustrative {
+        background: rgba(237, 103, 93, 0.12);
+        color: #b13d35;
+      }
+
+      .tag.jv {
+        background: rgba(137, 119, 233, 0.14);
+        color: #6655bf;
+      }
+
+      .footer {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.6;
+        margin: 8px auto 38px;
+        max-width: 1180px;
+        padding: 0 22px;
+      }
+
+      @media (max-width: 980px) {
+        .topbar-inner {
+          align-items: flex-start;
+          flex-direction: column;
+          padding-bottom: 12px;
+          padding-top: 12px;
+        }
+
+        .nav {
+          justify-content: flex-start;
+          width: 100%;
+        }
+
+        .hero-grid,
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .toc {
+          position: static;
+        }
+
+        .summary-grid,
+        .goal-grid,
+        .persona-grid,
+        .scope-grid,
+        .roadmap-grid,
+        .pipeline,
+        .confidence-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 640px) {
+        .hero {
+          margin-top: 12px;
+          padding: 24px 18px;
+        }
+
+        .layout {
+          padding: 0 12px;
+        }
+
+        .section-card {
+          padding: 20px 16px;
+        }
+
+        .summary-grid,
+        .goal-grid,
+        .persona-grid,
+        .scope-grid,
+        .roadmap-grid,
+        .pipeline,
+        .confidence-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .req-table {
+          overflow-x: auto;
+        }
+
+        table {
+          min-width: 760px;
+        }
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+
+        .topbar,
+        .toc {
+          display: none;
+        }
+
+        .hero,
+        .section-card {
+          box-shadow: none;
+          break-inside: avoid;
+        }
+
+        .hero {
+          color: #111;
+          margin: 0;
+          padding: 20px 0;
+        }
+
+        .hero::after {
+          display: none;
+        }
+
+        .hero-copy p,
+        .metric p,
+        .section-card p {
+          color: #333;
+        }
+
+        .layout {
+          display: block;
+          margin: 0;
+          max-width: none;
+          padding: 0;
+        }
+
+        .content {
+          gap: 12px;
+        }
+
+        .section-card,
+        .section-card.dark {
+          background: #fff;
+          border-color: #ccc;
+          color: #111;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="/index.html#matrix" title="Back to OreSight">
+          <span class="brand-mark">OS</span>
+          <span>
+            <strong>MIND ID Portfolio Risk Engine</strong>
+            <span>OreSight AI · Product requirements document</span>
+          </span>
+        </a>
+        <nav class="nav" aria-label="Document sections">
+          <a href="#summary">Summary</a>
+          <a href="#scope">Scope</a>
+          <a href="#requirements">Requirements</a>
+          <a href="#data">Data</a>
+          <a href="#roadmap">Roadmap</a>
+          <a href="/control-tower.html">Control Tower</a>
+        </nav>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <span class="kicker">PRD v1.0 - FY2025 baseline</span>
+          <h1>Portfolio scenarios translated into holding cash decisions.</h1>
+          <p>
+            This PRD defines the v1 product requirements for a MIND ID
+            portfolio scenario and risk engine. The engine federates a thin set
+            of subsidiary risk signals, applies explainable common-factor
+            scenarios, and converts portfolio stress into Holding Free Cash
+            Flow at Risk, including debt principal repayments.
+          </p>
+          <div class="doc-meta" aria-label="Document metadata">
+            <span>Status: publish-ready draft</span>
+            <span>Prepared: 25 Jun 2026</span>
+            <span>Baseline: FY2025 annual reports</span>
+            <span>Metric: Holding FCF-at-Risk</span>
+          </div>
+        </div>
+        <aside class="metric-stack" aria-label="PRD highlights">
+          <div class="metric">
+            <span>Headline decision</span>
+            <strong>Can holding cash absorb the portfolio shock?</strong>
+            <p>
+              The board-facing output is residual holding cash capacity after
+              subsidiary upstreaming, obligations, debt principal, and
+              management actions.
+            </p>
+          </div>
+          <div class="metric">
+            <span>Portfolio scope</span>
+            <strong>PTBA, Antam, Inalum, Timah, Freeport</strong>
+            <p>
+              PTBA, Antam, Inalum, and Timah are quantified. Freeport remains
+              visible as strategic JV exposure until validated upstreaming data
+              is available.
+            </p>
+          </div>
+          <div class="metric">
+            <span>Engine choice</span>
+            <strong>Common-factor portfolio model</strong>
+            <p>
+              Shared shocks drive correlated downside, revealing where
+              diversification fails and where management action protects cash.
+            </p>
+          </div>
+          <div class="publish-note">
+            All numeric outputs in the prototype remain illustrative until
+            FY2025 actuals, ownership, dividend receipts, and holding
+            obligations are validated by MIND ID.
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <main class="layout">
+      <aside class="toc" aria-label="Table of contents">
+        <strong>Contents</strong>
+        <a href="#summary">1. Executive Summary</a>
+        <a href="#problem">2. Problem And Users</a>
+        <a href="#goals">3. Goals And Non-Goals</a>
+        <a href="#scope">4. V1 Scope</a>
+        <a href="#experience">5. Product Experience</a>
+        <a href="#model">6. Risk Model</a>
+        <a href="#requirements">7. Functional Requirements</a>
+        <a href="#data">8. Data And Governance</a>
+        <a href="#acceptance">9. Acceptance Criteria</a>
+        <a href="#roadmap">10. Roadmap</a>
+        <a href="#questions">11. Open Questions</a>
+      </aside>
+
+      <div class="content">
+        <section class="section-card dark" id="summary">
+          <span class="section-label">Executive summary</span>
+          <h2>Build a holding-company risk cockpit, not another asset model.</h2>
+          <p>
+            MIND ID needs a portfolio-level engine that turns subsidiary risk
+            signals into a board-grade view of holding-company cash capacity.
+            The product should make it clear how common macro and commodity
+            shocks flow through PTBA, Antam, Inalum, and Timah, how those
+            shocks affect cash upstreaming, and whether holding-level
+            obligations create a cash floor breach after management actions.
+          </p>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span>Primary metric</span>
+              <strong>Holding FCF-at-Risk</strong>
+              <p>
+                Includes opening cash, upstreaming, interest, principal,
+                committed capex, equity injections, and mandatory outflows.
+              </p>
+            </div>
+            <div class="summary-item">
+              <span>Primary behavior</span>
+              <strong>Scenario to action</strong>
+              <p>
+                Show gross downside, mitigation benefit, residual risk, and
+                the owners responsible for each action.
+              </p>
+            </div>
+            <div class="summary-item">
+              <span>Primary constraint</span>
+              <strong>Decision-grade transparency</strong>
+              <p>
+                Every output must carry confidence treatment so illustrative
+                assumptions do not look like reported facts.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-card" id="problem">
+          <span class="section-label">Problem and users</span>
+          <h2>The board question is about cash resilience, not only EBITDA.</h2>
+          <p>
+            Existing subsidiary views can explain asset-level drivers, but they
+            do not consistently answer whether MIND ID's holding cash position
+            can absorb a combined portfolio shock. A coal downturn, nickel
+            weakness, aluminium power-cost pressure, tin stress, regulatory
+            change, FX movement, and refinancing squeeze can hit the portfolio
+            in the same window. The product must expose that combined effect in
+            language a board, CFO office, and transformation team can use.
+          </p>
+          <div class="persona-grid">
+            <div class="persona">
+              <span>Board and executive committee</span>
+              <strong>Needs a one-page risk answer</strong>
+              <p>
+                What changed, why cash is at risk, which decision is needed,
+                and what management action protects the floor.
+              </p>
+            </div>
+            <div class="persona">
+              <span>CFO and treasury office</span>
+              <strong>Needs funding pressure visibility</strong>
+              <p>
+                Debt principal, interest, refinancing room, liquidity buffer,
+                and quarterly debt-wall timing.
+              </p>
+            </div>
+            <div class="persona">
+              <span>Portfolio and transformation office</span>
+              <strong>Needs coordinated action ownership</strong>
+              <p>
+                Which levers sit at holding level, which sit with
+                subsidiaries, and how fast each can preserve cash.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-card" id="goals">
+          <span class="section-label">Goals and non-goals</span>
+          <h2>V1 should be explainable, calibrated, and action-oriented.</h2>
+          <div class="goal-grid">
+            <div class="goal-card">
+              <span>Goal 01</span>
+              <strong>Federate a thin data set</strong>
+              <p>
+                Request only the FY2025 fields required for holding-level
+                decision making: revenue mix, EBITDA, capex, dividends, debt,
+                ownership, payout behavior, and obligations.
+              </p>
+            </div>
+            <div class="goal-card">
+              <span>Goal 02</span>
+              <strong>Expose correlated downside</strong>
+              <p>
+                Use common factors so China demand, commodity cycle, FX,
+                energy, regulation, and financing shocks can hit several assets
+                together.
+              </p>
+            </div>
+            <div class="goal-card">
+              <span>Goal 03</span>
+              <strong>Recommend actions</strong>
+              <p>
+                Compare management packages by benefit, cost score, time to
+                impact, owner, and whether P10 holding cash clears the floor.
+              </p>
+            </div>
+          </div>
+          <div class="callout warning">
+            <strong>Non-goals for v1</strong>
+            <p>
+              V1 will not replace subsidiary control rooms, provide audited
+              forecasts, quantify Freeport upstreaming without validated JV
+              data, run live ERP integration, or optimize portfolio valuation.
+              It is a board-facing decision engine built on validated FY2025
+              baselines and transparent scenario assumptions.
+            </p>
+          </div>
+        </section>
+
+        <section class="section-card" id="scope">
+          <span class="section-label">V1 scope</span>
+          <h2>Quantify four subsidiaries, keep Freeport visible, and include debt principal.</h2>
+          <p>
+            The approved v1 scope covers PTBA, Antam, Inalum, Timah, and
+            Freeport Indonesia. PTBA, Antam, Inalum, and Timah are quantified
+            in holding cash upstreaming. Freeport is visible in the risk radar,
+            scenario narrative, and diversification-break view, but excluded
+            from quantified cash claims until validated JV data is approved.
+          </p>
+          <div class="scope-grid">
+            <div class="scope-card">
+              <span>PTBA</span>
+              <strong>Thermal coal cash bridge</strong>
+              <p>
+                Coal price, DMO mix, stripping ratio, freight, USD/IDR,
+                royalties, capex, and dividend capacity.
+              </p>
+              <span class="tag illustrative">prototype illustrative</span>
+            </div>
+            <div class="scope-card">
+              <span>Antam</span>
+              <strong>Gold, nickel, bauxite split</strong>
+              <p>
+                Segment exposure must separate gold resilience from nickel and
+                ferronickel cyclicality.
+              </p>
+              <span class="tag illustrative">prototype illustrative</span>
+            </div>
+            <div class="scope-card">
+              <span>Inalum</span>
+              <strong>Aluminium and power-cost bridge</strong>
+              <p>
+                Aluminium price, alumina input cost, smelter utilization,
+                power cost, FX, and downstream investment commitments.
+              </p>
+              <span class="tag illustrative">prototype illustrative</span>
+            </div>
+            <div class="scope-card">
+              <span>Timah</span>
+              <strong>Tin cash bridge</strong>
+              <p>
+                Tin price, ore grade, production recovery, offshore mining
+                cost, royalty, FX, and working-capital pressure.
+              </p>
+              <span class="tag illustrative">prototype illustrative</span>
+            </div>
+            <div class="scope-card">
+              <span>Freeport Indonesia</span>
+              <strong>Strategic JV visibility</strong>
+              <p>
+                Copper and gold exposure remains visible in narratives and
+                correlation views, but excluded from quantified upstreaming.
+              </p>
+              <span class="tag jv">JV excluded from quantified cash</span>
+            </div>
+            <div class="scope-card">
+              <span>Holding obligations</span>
+              <strong>Cash deductions in headline</strong>
+              <p>
+                Holding opex, interest, principal repayments, committed capex,
+                equity injections, other mandatory outflows, and other inflows.
+              </p>
+              <span class="tag management">management assumption</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-card" id="experience">
+          <span class="section-label">Product experience</span>
+          <h2>The screen flow should move from scenario setup to board decision.</h2>
+          <p>
+            V1 should feel like a holding-company war room. The first screen
+            must answer how much cash is at risk, why, where it comes from, and
+            which action package preserves the holding cash floor.
+          </p>
+          <div class="pipeline" aria-label="Product workflow">
+            <div class="pipeline-step">
+              <b>01</b>
+              <strong>Select scenario</strong>
+              <p>
+                Choose preset shocks or adjust common-factor sliders for China,
+                commodity cycle, FX, energy, carbon, regulation, and financing.
+              </p>
+            </div>
+            <div class="pipeline-step">
+              <b>02</b>
+              <strong>Read holding cash risk</strong>
+              <p>
+                Show residual Holding FCF, P10 downside, cash-floor breach
+                probability, largest driver, and largest contributor.
+              </p>
+            </div>
+            <div class="pipeline-step">
+              <b>03</b>
+              <strong>Diagnose portfolio breakage</strong>
+              <p>
+                Display waterfall, distribution, cash runway, debt wall, and
+                diversification-break map.
+              </p>
+            </div>
+            <div class="pipeline-step">
+              <b>04</b>
+              <strong>Choose mitigation</strong>
+              <p>
+                Compare holding and subsidiary levers, then apply the
+                recommended package if it protects the cash floor.
+              </p>
+            </div>
+            <div class="pipeline-step">
+              <b>05</b>
+              <strong>Publish board brief</strong>
+              <p>
+                Generate a narrative covering what changed, why it matters,
+                which decision is needed, and data caveats.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-card" id="model">
+          <span class="section-label">Risk model</span>
+          <h2>The model starts with FY2025 actuals and applies transparent common factors.</h2>
+          <p>
+            The engine should remain explainable. It should translate shared
+            factors into asset-specific impacts through calibrated sensitivity
+            tables, convert those impacts into upstreaming outcomes, and then
+            roll them through holding obligations.
+          </p>
+          <div class="model-box" aria-label="Holding FCF formula">Holding FCF =
+  Opening holding cash
++ Dividends and cash distributions from subsidiaries
++ Other holding cash inflows
+- Holding operating costs
+- Interest expense
+- Debt principal repayments
+- Committed holding capex
+- Equity injections and strategic investment drawdowns
+- Other mandatory cash outflows
+
+Holding FCF-at-Risk =
+  Base-case Holding FCF
+- Downside percentile Holding FCF</div>
+          <div class="callout">
+            <strong>Board-facing percentile</strong>
+            <p>
+              P10 is the v1 downside case. P50 and P90 remain visible for
+              context, and breach probability is calculated against the board
+              cash floor or funding threshold.
+            </p>
+          </div>
+        </section>
+
+        <section class="section-card" id="requirements">
+          <span class="section-label">Functional requirements</span>
+          <h2>V1 requirements are organized around decision flow.</h2>
+          <p>
+            P0 requirements are needed for a credible publishable v1. P1
+            requirements create the board-room wow factor and should remain in
+            scope for the executive demo. P2 requirements can follow once the
+            baseline data and governance path are approved.
+          </p>
+          <div class="req-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Requirement</th>
+                  <th>Priority</th>
+                  <th>Acceptance evidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>REQ-01</td>
+                  <td>
+                    Provide preset scenarios and custom common-factor sliders
+                    for China demand, commodity cycle, USD/IDR, energy and
+                    power cost, carbon policy, Indonesia regulation, and
+                    financing pressure.
+                  </td>
+                  <td><span class="priority p0">P0</span></td>
+                  <td>
+                    Changing any factor recomputes subsidiary impacts, holding
+                    FCF, distribution, breach probability, and narrative.
+                  </td>
+                </tr>
+                <tr>
+                  <td>REQ-02</td>
+                  <td>
+                    Calculate Holding FCF-at-Risk with debt principal
+                    repayments included in the headline metric.
+                  </td>
+                  <td><span class="priority p0">P0</span></td>
+                  <td>
+                    Formula visibly includes opening cash, upstreaming, opex,
+                    interest, principal, capex, equity injections, and other
+                    mandatory outflows.
+                  </td>
+                </tr>
+                <tr>
+                  <td>REQ-03</td>
+                  <td>
+                    Quantify PTBA, Antam, Inalum, and Timah through FY2025
+                    baseline cash bridges.
+                  </td>
+                  <td><span class="priority p0">P0</span></td>
+                  <td>
+                    Each quantified subsidiary shows commodity, baseline cash,
+                    impact, residual cash, confidence tag, and driver note.
+                  </td>
+                </tr>
+                <tr>
+                  <td>REQ-04</td>
+                  <td>
+                    Keep Freeport Indonesia visible as strategic JV exposure
+                    while excluding it from quantified cash upstreaming.
+                  </td>
+                  <td><span class="priority p0">P0</span></td>
+                  <td>
+                    Freeport appears in correlation and narrative views with a
+                    JV tag, and its quantified upstreaming value remains
+                    excluded.
+                  </td>
+                </tr>
+                <tr>
+                  <td>REQ-05</td>
+                  <td>
+                    Show gross downside, mitigation benefit, residual
+                    FCF-at-Risk, and the selected management levers.
+                  </td>
+                  <td><span class="priority p0">P0</span></td>
+                  <td>
+                    Selecting or deselecting a lever updates mitigation benefit,
+                    residual FCF-at-Risk, P10, and breach probability.
+                  </td>
+                </tr>
+                <tr>
+                  <td>REQ-06</td>
+                  <td>
+                    Recommend an optimized action package based on cash-floor
+                    protection, total cost score, and number of levers.
+                  </td>
+                  <td><span class="priority p1">P1</span></td>
+                  <td>
+                    The optimizer shows recommended P10, benefit, cost score,
+                    action owners, time to impact, and an apply action.
+                  </td>
+                </tr>
+                <tr>
+                  <td>REQ-07</td>
+                  <td>
+                    Show cash runway and debt wall across quarters so timing
+                    risk is visible.
+                  </td>
+                  <td><span class="priority p1">P1</span></td>
+                  <td>
+                    Quarterly base cash, after-action cash, principal wall, and
+                    cash floor are visible in a single chart.
+                  </td>
+                </tr>
+                <tr>
+                  <td>REQ-08</td>
+                  <td>
+                    Show a diversification-break map that links shared factors
+                    to assets hit in the same scenario window.
+                  </td>
+                  <td><span class="priority p1">P1</span></td>
+                  <td>
+                    Active stress links connect common factors to affected
+                    assets, with Freeport shown as a dashed JV exposure.
+                  </td>
+                </tr>
+                <tr>
+                  <td>REQ-09</td>
+                  <td>
+                    Generate a board-grade scenario brief explaining what
+                    changed, why it matters, decision needed, and data caveat.
+                  </td>
+                  <td><span class="priority p1">P1</span></td>
+                  <td>
+                    Brief updates with scenario outputs and names Freeport's
+                    quantified exclusion where relevant.
+                  </td>
+                </tr>
+                <tr>
+                  <td>REQ-10</td>
+                  <td>
+                    Export or publish a one-page scenario brief for board
+                    circulation.
+                  </td>
+                  <td><span class="priority p2">P2</span></td>
+                  <td>
+                    User can generate a static shareable brief with scenario
+                    title, outputs, action list, caveats, and timestamp.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="section-card" id="data">
+          <span class="section-label">Data and governance</span>
+          <h2>Confidence tags are a product requirement, not decoration.</h2>
+          <p>
+            The engine mixes reported FY2025 actuals, derived sensitivities,
+            management assumptions, and illustrative prototype placeholders.
+            V1 must make those distinctions visible so the model earns trust
+            without pretending to have precision it does not yet have.
+          </p>
+          <div class="confidence-grid">
+            <div class="confidence-item">
+              <span>Level 1</span>
+              <strong>Reported actuals</strong>
+              <p>FY2025 revenue, EBITDA, capex, dividends, debt, production.</p>
+              <span class="tag reported">reported</span>
+            </div>
+            <div class="confidence-item">
+              <span>Level 2</span>
+              <strong>Derived assumptions</strong>
+              <p>Sensitivities inferred from segment mix, cost structure, or history.</p>
+              <span class="tag derived">derived</span>
+            </div>
+            <div class="confidence-item">
+              <span>Level 3</span>
+              <strong>Management inputs</strong>
+              <p>Holding obligations, liquidity thresholds, refinancing plans.</p>
+              <span class="tag management">management</span>
+            </div>
+            <div class="confidence-item">
+              <span>Level 4</span>
+              <strong>Prototype placeholders</strong>
+              <p>Illustrative figures used only until validation is complete.</p>
+              <span class="tag illustrative">illustrative</span>
+            </div>
+            <div class="confidence-item">
+              <span>JV treatment</span>
+              <strong>Freeport visibility</strong>
+              <p>Visible as strategic exposure, excluded from cash claims.</p>
+              <span class="tag jv">jv</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-card" id="acceptance">
+          <span class="section-label">Acceptance criteria</span>
+          <h2>A successful v1 changes how fast leadership can make a funding decision.</h2>
+          <div class="list">
+            <div class="list-item">
+              <b>1</b>
+              <div>
+                <strong>Scenario turnaround is under five minutes.</strong>
+                <p>
+                  A user can open the tool, select a preset, adjust common
+                  factors, apply mitigation, and read the board narrative
+                  without editing a spreadsheet.
+                </p>
+              </div>
+            </div>
+            <div class="list-item">
+              <b>2</b>
+              <div>
+                <strong>Debt principal is never hidden from the headline.</strong>
+                <p>
+                  Holding FCF-at-Risk explicitly includes debt principal
+                  repayments and shows debt-wall timing in the cash runway.
+                </p>
+              </div>
+            </div>
+            <div class="list-item">
+              <b>3</b>
+              <div>
+                <strong>Freeport treatment is consistent everywhere.</strong>
+                <p>
+                  Freeport appears in portfolio risk visibility and narrative
+                  context, but no quantified cash upstreaming claim is made
+                  without validated JV data.
+                </p>
+              </div>
+            </div>
+            <div class="list-item">
+              <b>4</b>
+              <div>
+                <strong>Action ownership is visible.</strong>
+                <p>
+                  Each mitigation lever shows owner, time to impact, confidence
+                  or constraint, estimated benefit, and effect on residual risk.
+                </p>
+              </div>
+            </div>
+            <div class="list-item">
+              <b>5</b>
+              <div>
+                <strong>Data caveats travel with the decision.</strong>
+                <p>
+                  Board outputs include confidence notes for reported, derived,
+                  management, illustrative, and JV-excluded data.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-card" id="roadmap">
+          <span class="section-label">Roadmap</span>
+          <h2>Move from illustrative prototype to validated executive cockpit.</h2>
+          <div class="roadmap-grid">
+            <div class="roadmap-card">
+              <span>Phase 0</span>
+              <strong>Prototype narrative</strong>
+              <p>
+                Validate the board story, scenario flow, war-room panels, and
+                management action logic using illustrative placeholder values.
+              </p>
+            </div>
+            <div class="roadmap-card">
+              <span>Phase 1</span>
+              <strong>FY2025 calibration</strong>
+              <p>
+                Replace placeholders with annual-report extraction, ownership
+                percentages, dividend receipts, holding obligations, and cash
+                floor.
+              </p>
+            </div>
+            <div class="roadmap-card">
+              <span>Phase 2</span>
+              <strong>Board-ready operating model</strong>
+              <p>
+                Add brief export, scenario library, versioned assumptions,
+                owner-specific actions, and review workflow.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section class="section-card" id="questions">
+          <span class="section-label">Open questions</span>
+          <h2>These inputs must be confirmed before production use.</h2>
+          <div class="list">
+            <div class="list-item">
+              <b>Q</b>
+              <div>
+                <strong>Which FY2025 source documents are authoritative?</strong>
+                <p>
+                  Confirm annual-report availability and source fields for
+                  PTBA, Antam, Inalum, and Timah.
+                </p>
+              </div>
+            </div>
+            <div class="list-item">
+              <b>Q</b>
+              <div>
+                <strong>What ownership and dividend receipts should be used?</strong>
+                <p>
+                  Validate MIND ID ownership percentages, payout history, and
+                  actual FY2025 dividends or distributions.
+                </p>
+              </div>
+            </div>
+            <div class="list-item">
+              <b>Q</b>
+              <div>
+                <strong>What is the approved board cash floor?</strong>
+                <p>
+                  Confirm the liquidity threshold or funding trigger used for
+                  breach probability and optimizer feasibility.
+                </p>
+              </div>
+            </div>
+            <div class="list-item">
+              <b>Q</b>
+              <div>
+                <strong>Which mitigation levers are governance-realistic?</strong>
+                <p>
+                  Confirm which actions can be activated under SOE governance,
+                  lender constraints, and subsidiary autonomy.
+                </p>
+              </div>
+            </div>
+            <div class="list-item">
+              <b>Q</b>
+              <div>
+                <strong>Can any Freeport data be shared?</strong>
+                <p>
+                  If not, keep Freeport visible but excluded from quantified
+                  dividend-at-risk and holding cash upstreaming.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      This PRD is a publishable product document for the MIND ID Portfolio
+      Scenario and Risk Engine prototype. It should be treated as a v1 product
+      contract, not a financial forecast. Replace all illustrative assumptions
+      with validated FY2025 data before external decision use.
+    </footer>
+  </body>
+</html>

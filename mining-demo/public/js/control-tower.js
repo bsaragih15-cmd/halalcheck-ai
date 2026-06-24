@@ -125,6 +125,7 @@ function renderShell() {
       <a class="ct-brand" href="/index.html#matrix" title="Back to OreSight"><span class="ct-logo">OS</span>
         <span><span class="ct-bt1">IROC · Batu Hijau Pit</span><br><span class="ct-bt2">Integrated Operations Centre · OreSight AI</span></span></a>
       <span class="ct-spacer"></span>
+      <a class="ct-ico" href="/portfolio-risk-prd.html" title="MIND ID Portfolio Risk Engine — PRD" style="width:auto;padding:0 12px;gap:7px;font-size:11px;font-weight:600;text-decoration:none;letter-spacing:.04em;">📄 PRD</a>
       <div class="ct-seg" id="ctVariant">${['console', 'blueprint', 'warm'].map((v) => `<button data-v="${v}">${v}</button>`).join('')}</div>
       <div><div class="ct-clock mono" id="ctClock">--:--:--</div><div class="ct-shift">Shift A · 06:00–18:00</div></div>
       <button class="ct-ico" id="ctBell" title="Alarms">⚑<span class="ct-badge" id="ctBadge">4</span></button>
