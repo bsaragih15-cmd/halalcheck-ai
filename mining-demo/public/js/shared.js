@@ -37,6 +37,7 @@ export function renderNav(active = '') {
         <a href="/index.html#matrix" ${active === 'matrix' ? 'class="active"' : ''}>Value Chain</a>
         <a href="/cockpit.html" ${active === 'cockpit' ? 'class="active"' : ''}>CEO Cockpit</a>
         <a href="/cockpit-montecarlo.html" ${active === 'cockpit-sim' ? 'class="active"' : ''}>Cockpit Sim</a>
+        <a href="/portfolio-risk-engine.html" ${active === 'portfolio-risk' ? 'class="active"' : ''}>Portfolio Risk</a>
         <a href="/fsp.html" ${active === 'fsp' ? 'class="active"' : ''}>Scheduler (FSP)</a>
         <a href="/payload.html" ${active === 'payload' ? 'class="active"' : ''}>Payload</a>
         <a href="/blast.html" ${active === 'blast' ? 'class="active"' : ''}>Blast</a>

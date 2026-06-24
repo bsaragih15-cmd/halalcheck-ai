@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>OreSight AI — MIND ID Portfolio Risk Engine</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#eef4ef; --paper:#fbfdf9; --paper2:#ffffff; --inset:#f2f7f2;
+    --ink:#16211d; --muted:#64756f; --faint:#8b9a92; --line:#c4d5cb; --line2:#dbe8df;
+    --forest:#071811; --forest2:#0d261c;
+    --green:#15a06d; --green-dark:#13986c; --green-soft:rgba(34,201,138,.12);
+    --gold:#d9920f; --red:#dc5a50; --blue:#3f86cf; --violet:#7d6be0;
+    --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'Inter',system-ui,sans-serif;
+    --shadow:0 14px 44px rgba(8,24,17,.10);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:
+      radial-gradient(circle at 8% 0%, rgba(34,201,138,.10), transparent 28%),
+      linear-gradient(180deg,#edf5ee 0%,#f8fbf7 42%,#eef4ef 100%);
+    color:var(--ink);font-family:var(--sans);line-height:1.45;-webkit-font-smoothing:antialiased;
+    min-height:100vh;padding-bottom:54px}
+  a{color:inherit;text-decoration:none}
+  .mono{font-family:var(--mono)}
+
+  /* top bar */
+  .bar{display:flex;align-items:center;gap:15px;padding:13px 24px;
+    background:rgba(251,253,249,.86);backdrop-filter:blur(14px);
+    border-bottom:1px solid rgba(196,213,203,.82);position:sticky;top:0;z-index:30}
+  .logo{width:34px;height:34px;border-radius:9px;background:var(--forest);
+    display:grid;place-items:center;color:var(--green);font-family:var(--mono);font-weight:800;font-size:13px;
+    border:1px solid rgba(34,201,138,.4)}
+  .bar h1{font-size:14.5px;font-weight:700;letter-spacing:-.01em}
+  .bar h1 b{color:var(--green-dark)}
+  .bar .sub{font-size:10px;color:var(--faint);letter-spacing:.7px;text-transform:uppercase;margin-top:2px}
+  .bar .spacer{flex:1}
+  .bar .links{display:flex;gap:7px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  .bar .links a{font-size:11.5px;color:#40514b;padding:7px 11px;border:1px solid transparent;
+    border-radius:999px;transition:.15s;font-weight:650}
+  .bar .links a:hover{background:#edf5ef;border-color:var(--line);color:var(--forest)}
+  .tourbtn{font-size:12px;color:#fff;background:var(--green-dark);border:none;border-radius:999px;
+    padding:7px 14px;cursor:pointer;font-weight:700;font-family:var(--sans)}
+  .illus{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.5px;
+    color:#b13d35;background:rgba(237,103,93,.12);border:1px solid rgba(237,103,93,.3);
+    border-radius:999px;padding:5px 10px;text-transform:uppercase}
+
+  .wrap{max-width:1340px;margin:0 auto;padding:20px 24px;display:grid;
+    grid-template-columns:320px 1fr;gap:18px;align-items:start}
+  @media(max-width:1000px){.wrap{grid-template-columns:1fr}}
+
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:17px;box-shadow:var(--shadow)}
+  .panel h2{font-size:10.5px;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);
+    margin-bottom:13px;font-weight:800;display:flex;align-items:center;gap:8px}
+  .panel h2 .grp{margin-left:auto;font-size:9.5px;color:var(--faint);letter-spacing:.6px;font-weight:700}
+
+  aside{position:sticky;top:78px}
+  @media(max-width:1000px){aside{position:static}}
+  .seclabel{font-size:9.5px;letter-spacing:1.1px;text-transform:uppercase;color:var(--green-dark);
+    margin:2px 0 11px;font-weight:800}
+  .seclabel.mit{color:var(--gold)}
+  .presets{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+  .preset{font-size:11px;font-weight:650;color:#40514b;background:var(--inset);border:1px solid var(--line);
+    border-radius:999px;padding:6px 10px;cursor:pointer;transition:.15s}
+  .preset:hover{border-color:var(--green);color:var(--green-dark)}
+  .preset.on{background:var(--forest);border-color:transparent;color:var(--green)}
+  .ctrl{margin-bottom:12px}
+  .ctrl .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+  .ctrl label{font-size:12px;color:var(--ink);font-weight:550}
+  .ctrl .val{font-family:var(--mono);font-size:12px;color:var(--green-dark);font-weight:700}
+  .ctrl input[type=range]{width:100%;height:4px;-webkit-appearance:none;appearance:none;
+    background:var(--line2);border-radius:3px;outline:none}
+  .ctrl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+    background:var(--green);cursor:pointer;border:2px solid #fff;box-shadow:0 1px 4px rgba(8,24,17,.25)}
+  .ctrl input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;border:2px solid #fff;
+    background:var(--green);cursor:pointer}
+  .ctrl.mit input[type=range]::-webkit-slider-thumb{background:var(--gold)}
+  .ctrl.mit input[type=range]::-moz-range-thumb{background:var(--gold)}
+  .ctrl .hint{font-size:10px;color:var(--faint);margin-top:3px;line-height:1.4}
+  .divider{height:1px;background:var(--line2);margin:14px 0}
+  .seg{display:flex;gap:6px;margin-top:4px}
+  .seg button{flex:1;font-family:var(--mono);font-size:10.5px;letter-spacing:.4px;padding:7px 0;color:var(--muted);
+    background:var(--inset);border:1px solid var(--line);border-radius:8px;cursor:pointer;transition:.15s;font-weight:700}
+  .seg button.on{color:#fff;border-color:transparent;background:var(--green-dark)}
+  .reset{width:100%;padding:9px 0;font-size:12px;color:var(--muted);background:var(--inset);
+    border:1px solid var(--line);border-radius:9px;cursor:pointer;margin-top:8px;transition:.15s;font-weight:650}
+  .reset:hover{color:var(--ink);border-color:var(--green)}
+
+  /* KPIs */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:16px}
+  @media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:14px 15px;position:relative;
+    overflow:hidden;box-shadow:var(--shadow)}
+  .kpi .k{font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .kpi .v{font-family:var(--mono);font-size:24px;font-weight:700;margin-top:8px;letter-spacing:-.5px}
+  .kpi .u{font-size:10.5px;color:var(--faint);margin-top:3px}
+  .kpi .delta{font-family:var(--mono);font-size:10.5px;margin-top:5px;font-weight:700;min-height:14px}
+  .kpi .strip{position:absolute;left:0;top:0;bottom:0;width:3px}
+  .kpi.dark{background:radial-gradient(circle at 84% 16%,rgba(34,201,138,.14),transparent 42%),var(--forest);
+    border-color:transparent}
+  .kpi.dark .k{color:#9fb4aa}.kpi.dark .v{color:#f4fbf7}.kpi.dark .u{color:#7f968c}
+
+  .mitbar{background:linear-gradient(90deg,rgba(217,146,15,.10),transparent);border:1px solid rgba(217,146,15,.32);
+    border-radius:11px;padding:11px 15px;margin-bottom:16px;font-size:12.5px;color:var(--ink);display:none}
+  .mitbar.show{display:block}
+  .mitbar b{color:var(--gold)}
+
+  .row2{display:grid;grid-template-columns:1.45fr 1fr;gap:16px}
+  @media(max-width:980px){.row2{grid-template-columns:1fr}}
+  .row2.even{grid-template-columns:1fr 1fr}
+  .stack{display:flex;flex-direction:column;gap:16px}
+  .mtop{margin-top:16px}
+  canvas{width:100%;display:block}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:11px;font-size:10.5px;color:var(--muted)}
+  .legend i{display:inline-block;width:16px;height:0;border-top:3px solid;vertical-align:middle;margin-right:5px;border-radius:2px}
+  .legend i.sq{height:10px;border-top:0;border-radius:2px}
+
+  /* tables */
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{text-align:right;padding:8px 9px;border-bottom:1px solid var(--line2)}
+  th:first-child,td:first-child{text-align:left}
+  th{font-size:9.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:800}
+  tr:last-child td{border-bottom:0}
+  td.mono,th.mono{font-family:var(--mono)}
+  .sub-name{font-weight:700}
+  .driver{font-size:10.5px;color:var(--faint);font-weight:400}
+  .note{font-size:11px;color:var(--faint);margin-top:13px;line-height:1.6}
+  .neg{color:var(--red)}.pos{color:var(--green-dark)}
+
+  .tag{display:inline-block;font-family:var(--mono);font-size:9px;font-weight:700;padding:3px 7px;border-radius:999px;
+    letter-spacing:.3px;white-space:nowrap}
+  .tag.reported{background:rgba(34,201,138,.13);color:var(--green-dark)}
+  .tag.derived{background:rgba(77,151,223,.14);color:#2b6da9}
+  .tag.management{background:rgba(229,170,62,.18);color:#936414}
+  .tag.illustrative{background:rgba(237,103,93,.12);color:#b13d35}
+  .tag.jv{background:rgba(137,119,233,.16);color:#6655bf}
+
+  /* mitigation levers */
+  .levers{display:flex;flex-direction:column;gap:9px}
+  .lever{display:grid;grid-template-columns:24px 1fr auto;gap:11px;align-items:center;background:var(--inset);
+    border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;transition:.15s}
+  .lever:hover{border-color:var(--gold)}
+  .lever.on{border-color:var(--gold);background:rgba(229,170,62,.09)}
+  .lever .chk{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);display:grid;place-items:center;
+    font-size:12px;color:#fff;background:#fff}
+  .lever.on .chk{background:var(--gold);border-color:var(--gold)}
+  .lever .a{font-size:12.5px;font-weight:650;color:var(--ink)}
+  .lever .m{font-size:10.5px;color:var(--muted);margin-top:2px}
+  .lever .ben{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--green-dark);text-align:right}
+  .lever .ben small{display:block;color:var(--faint);font-size:9.5px;font-weight:600;margin-top:1px}
+  .lever.rec{box-shadow:0 0 0 2px rgba(34,201,138,.18)}
+  .recflag{font-size:8.5px;font-weight:800;letter-spacing:.4px;color:var(--green-dark);
+    background:var(--green-soft);border-radius:999px;padding:2px 6px;margin-left:6px;text-transform:uppercase}
+  .optbtn{font-size:12px;color:#fff;background:var(--green-dark);border:none;border-radius:9px;padding:9px 15px;
+    cursor:pointer;font-weight:700;font-family:var(--sans)}
+  .optbtn:hover{background:var(--green)}
+  .optbox{background:var(--forest);color:#dbeee5;border-radius:11px;padding:13px 15px;margin-top:13px;display:none;
+    font-size:12px;line-height:1.6}
+  .optbox.show{display:block}
+  .optbox b{color:var(--green)}
+
+  /* board brief */
+  .brief{background:radial-gradient(circle at 88% 12%,rgba(34,201,138,.10),transparent 40%),var(--forest);
+    border-color:transparent;color:#eaf4ee}
+  .brief h2{color:#9fb4aa}
+  .brief .badges{display:flex;gap:8px;margin:4px 0 12px;flex-wrap:wrap}
+  .badge{font-family:var(--mono);font-size:10px;letter-spacing:.4px;padding:4px 11px;border-radius:999px;
+    border:1px solid rgba(255,255,255,.16);color:#cfe0d7}
+  .badge.posture{color:#06150f;font-weight:800}
+  .bsec{margin-top:13px}
+  .bsec .lbl{font-size:9.5px;letter-spacing:.9px;text-transform:uppercase;color:#7f968c;margin-bottom:5px;font-weight:800}
+  .bsec p{font-size:13px;line-height:1.62;color:#dbeee5}
+  .acts{display:flex;flex-direction:column;gap:8px}
+  .bact{display:flex;gap:10px;align-items:flex-start;background:rgba(255,255,255,.05);
+    border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:9px 12px}
+  .bact .n{font-family:var(--mono);font-size:11px;color:var(--green);font-weight:700;margin-top:1px}
+  .bact .a{font-size:12.5px;font-weight:650;color:#eaf4ee}
+  .bact .r{font-size:11px;color:#a9bfb5;margin-top:2px;line-height:1.5}
+  .caveat{margin-top:13px;font-size:11px;color:#9fb4aa;line-height:1.6;border-top:1px solid rgba(255,255,255,.1);padding-top:11px}
+  .copybtn{font-size:11px;color:#dbeee5;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);
+    border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:650;margin-left:auto}
+
+  /* diversification map */
+  #divmap{width:100%;height:260px;display:block}
+  .maplbl{font-size:11px}
+
+  /* guided tour */
+  .tour-spot{position:fixed;border-radius:11px;box-shadow:0 0 0 9999px rgba(6,21,15,.72);
+    border:2px solid var(--green);z-index:9998;pointer-events:none;transition:all .22s ease}
+  .tour-tip{position:fixed;z-index:10000;width:340px;max-width:88vw;background:var(--paper);border:1px solid var(--line);
+    border-radius:13px;padding:16px 17px;box-shadow:0 18px 50px rgba(8,24,17,.3);transition:all .22s ease}
+  .tour-tip .tt{font-size:14px;font-weight:700;margin-bottom:7px}
+  .tour-tip .tb{font-size:12.5px;color:var(--muted);line-height:1.6}
+  .tour-tip .tf{display:flex;align-items:center;gap:8px;margin-top:15px}
+  .tour-tip .prog{font-family:var(--mono);font-size:11px;color:var(--faint);margin-right:auto}
+  .tour-tip button{font-size:12px;border-radius:8px;padding:6px 14px;cursor:pointer;border:1px solid var(--line);
+    background:var(--inset);color:var(--muted);font-family:var(--sans)}
+  .tour-tip button.primary{background:var(--green-dark);color:#fff;border-color:transparent;font-weight:700}
+  .tour-skip{position:fixed;top:15px;right:18px;z-index:10000;font-size:12px;color:var(--ink);
+    background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer;font-family:var(--sans)}
+
+  .embed .bar{display:none}
+  .embed .wrap{padding-top:14px}
+  .embed aside{top:14px}
+</style>
+<script>if(new URLSearchParams(location.search).has('embed'))document.documentElement.classList.add('embed');</script>
+</head>
+<body>
+
+<div class="bar">
+  <div class="logo">OS</div>
+  <div>
+    <h1><b>MIND ID</b> Portfolio Risk Engine</h1>
+    <div class="sub mono">Common-factor scenarios · Holding FCF-at-Risk · board war room</div>
+  </div>
+  <div class="spacer"></div>
+  <span class="illus" title="All figures are illustrative placeholders until validated against FY2025 actuals">● Illustrative data</span>
+  <div class="links">
+    <button class="tourbtn" id="tourBtn">★ Guided tour</button>
+    <a href="/portfolio-risk-prd.html">PRD</a>
+    <a href="/control-tower.html">Control Tower</a>
+    <a href="/index.html#matrix">Value Chain</a>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- ── control panel ────────────────────────────────────────── -->
+  <aside class="panel">
+    <div class="seclabel">Scenario presets</div>
+    <div class="presets" id="presets" data-tour="presets"></div>
+
+    <div class="seclabel">Common factors · portfolio shocks</div>
+    <div data-tour="factors">
+      <div class="ctrl"><div class="row"><label>China demand index</label><span class="val" id="chinaV">100</span></div>
+        <input type="range" id="china" min="78" max="122" value="100" step="1">
+        <div class="hint">100 = plan · drives coal, nickel, aluminium & tin offtake</div></div>
+      <div class="ctrl"><div class="row"><label>Commodity price cycle</label><span class="val" id="cycleV">0%</span></div>
+        <input type="range" id="cycle" min="-40" max="40" value="0" step="1">
+        <div class="hint">Broad commodity basket vs plan</div></div>
+      <div class="ctrl"><div class="row"><label>USD / IDR</label><span class="val" id="fxV">16,000</span></div>
+        <input type="range" id="fx" min="14500" max="18000" value="16000" step="50">
+        <div class="hint">Weaker IDR lifts export cash but raises USD debt service</div></div>
+      <div class="ctrl"><div class="row"><label>Energy &amp; power cost</label><span class="val" id="energyV">0%</span></div>
+        <input type="range" id="energy" min="-30" max="60" value="0" step="1">
+        <div class="hint">Smelter power — hits Inalum hardest</div></div>
+      <div class="ctrl"><div class="row"><label>Carbon policy stringency</label><span class="val" id="carbonV">20</span></div>
+        <input type="range" id="carbon" min="0" max="100" value="20" step="1">
+        <div class="hint">Higher = tighter · weighs on thermal coal (PTBA)</div></div>
+      <div class="ctrl"><div class="row"><label>Indonesia regulation (royalty / DMO)</label><span class="val" id="regV">0</span></div>
+        <input type="range" id="reg" min="-20" max="40" value="0" step="1">
+        <div class="hint">Higher = tighter royalty / domestic obligation</div></div>
+      <div class="ctrl"><div class="row"><label>Financing pressure</label><span class="val" id="finV">+100 bps</span></div>
+        <input type="range" id="fin" min="-50" max="450" value="100" step="10">
+        <div class="hint">Credit-spread move on holding interest &amp; refinancing</div></div>
+    </div>
+
+    <div class="divider"></div>
+    <div data-tour="floor">
+      <div class="ctrl"><div class="row"><label>Board cash floor</label><span class="val" id="floorV">Rp 2.0 T</span></div>
+        <input type="range" id="floor" min="0" max="6" value="2" step="0.1">
+        <div class="hint">Breach = residual Holding FCF below this</div></div>
+      <div class="ctrl"><label style="display:block;margin-bottom:6px">Volatility regime</label>
+        <div class="seg" id="regime">
+          <button data-r="0.6">CALM</button><button data-r="1" class="on">BASE</button><button data-r="1.7">STRESSED</button>
+        </div></div>
+      <div class="ctrl"><div class="row"><label>Simulations</label><span class="val" id="nV">20,000</span></div>
+        <input type="range" id="n" min="2000" max="50000" value="20000" step="1000"></div>
+    </div>
+    <button class="reset" id="reset">Reset to FY2025 plan</button>
+  </aside>
+
+  <!-- ── results ──────────────────────────────────────────────── -->
+  <main>
+    <div class="kpis" data-tour="kpis">
+      <div class="kpi dark"><div class="strip" style="background:var(--green)"></div>
+        <div class="k">Residual Holding FCF · P50</div><div class="v" id="p50">—</div>
+        <div class="u">Rp T · after upstreaming &amp; obligations</div><div class="delta" id="p50d"></div></div>
+      <div class="kpi"><div class="strip" style="background:var(--gold)"></div>
+        <div class="k">Holding FCF-at-Risk</div><div class="v" id="far" style="color:var(--gold)">—</div>
+        <div class="u">Rp T · base − P10 downside</div><div class="delta" id="fard"></div></div>
+      <div class="kpi"><div class="strip" id="breachStrip" style="background:var(--red)"></div>
+        <div class="k">Cash-floor breach prob.</div><div class="v" id="breach">—</div>
+        <div class="u">paths below board floor</div><div class="delta" id="breachd"></div></div>
+      <div class="kpi"><div class="strip" style="background:var(--blue)"></div>
+        <div class="k">Largest contributor</div><div class="v" id="topc" style="font-size:17px">—</div>
+        <div class="u" id="topcU">driver of downside</div><div class="delta" id="topd"></div></div>
+    </div>
+
+    <div class="mitbar" id="mitbar"></div>
+
+    <div class="row2">
+      <div class="panel" data-tour="waterfall">
+        <h2>Holding FCF waterfall · base case <span class="grp" id="wfScn">FY2025 plan</span></h2>
+        <canvas id="waterfall" height="300"></canvas>
+        <div class="legend">
+          <span><i class="sq" style="background:var(--green)"></i>Inflow / opening cash</span>
+          <span><i class="sq" style="background:var(--red)"></i>Obligation outflow</span>
+          <span><i class="sq" style="background:var(--forest)"></i>Residual Holding FCF</span>
+        </div>
+      </div>
+      <div class="panel" data-tour="dist">
+        <h2>Residual Holding FCF distribution <span class="grp" id="convPill">—</span></h2>
+        <canvas id="hist" height="300"></canvas>
+        <div class="legend">
+          <span><i style="border-color:var(--green-dark)"></i>P50</span>
+          <span><i style="border-color:var(--faint)"></i>P10 / P90</span>
+          <span><i style="border-color:var(--red)"></i>Cash floor</span>
+          <span id="refLeg" style="display:none"><i style="border-color:var(--gold);border-style:dashed"></i>Before action</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel mtop" data-tour="subs">
+      <h2>Subsidiary cash bridges · upstreaming to MIND ID <span class="grp">FY2025 baseline</span></h2>
+      <table id="subTable">
+        <thead><tr><th>Subsidiary</th><th>Commodity</th><th class="mono">Baseline</th><th class="mono">Scenario impact</th>
+          <th class="mono">Residual</th><th>Confidence</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="note"><b>Freeport Indonesia</b> is kept visible as strategic JV exposure in the scenario narrative and
+        diversification map, but excluded from quantified cash upstreaming until validated JV data is approved.
+        Baseline / impact / residual in Rp&nbsp;trillion.</div>
+    </div>
+
+    <div class="row2 mtop">
+      <div class="panel" data-tour="runway">
+        <h2>Cash runway &amp; debt wall · next 4 quarters</h2>
+        <canvas id="runway" height="280"></canvas>
+        <div class="legend">
+          <span><i class="sq" style="background:var(--green)"></i>After-action cash cushion</span>
+          <span><i class="sq" style="background:var(--gold)"></i>Principal wall</span>
+          <span><i style="border-color:var(--red);border-style:dashed"></i>Cash floor</span>
+        </div>
+      </div>
+      <div class="panel" data-tour="divmap">
+        <h2>Diversification-break map <span class="grp">shared factors → assets</span></h2>
+        <svg id="divmap" viewBox="0 0 520 260" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="note">Active stress links connect common factors to the assets they hit in the same scenario
+          window. Freeport shows as a dashed JV exposure. When several links converge, diversification is failing.</div>
+      </div>
+    </div>
+
+    <div class="panel mtop" data-tour="levers">
+      <h2>Mitigation levers · management action
+        <span class="grp"><button class="optbtn" id="optBtn">⚡ Recommend package</button></span></h2>
+      <div class="levers" id="levers"></div>
+      <div class="optbox" id="optbox"></div>
+      <div class="note">Each lever shows its owner, time-to-impact and estimated benefit to the P10 downside. Toggle
+        levers to see residual FCF-at-Risk, P10 and breach probability update against the same simulated paths.</div>
+    </div>
+
+    <div class="panel brief mtop" data-tour="brief">
+      <h2>Board scenario brief
+        <button class="copybtn" id="copyBrief">Copy brief</button></h2>
+      <div id="briefBody"></div>
+    </div>
+
+    <div class="panel mtop">
+      <h2>Model &amp; governance notes</h2>
+      <div class="note" style="color:var(--muted)">
+        A single-period, common-factor portfolio twin of MIND ID. Seven shared factors are sampled together around a
+        macro latent (so China, the commodity cycle and FX co-move and diversification can fail across assets at once),
+        mapped to subsidiary upstreaming through calibrated sensitivities, then rolled through holding obligations —
+        <b>including debt principal repayments</b> — to a residual Holding-FCF distribution. PTBA, Antam, Inalum and
+        Timah are quantified; Freeport is visible but excluded from quantified cash. Mitigation re-runs every path under
+        the same random draws (common random numbers) so before/after deltas isolate the management action.
+        <b>All numbers are illustrative placeholders</b> until validated against FY2025 actuals, ownership, dividend
+        receipts and holding obligations — confidence tags travel with every output. Not investment advice.
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   MIND ID common-factor portfolio model + Monte Carlo
+   Cash in Rp trillion. Illustrative placeholders (PRD Phase 0).
+   ════════════════════════════════════════════════════════════════ */
+
+// Quantified subsidiaries: baseline upstreaming to MIND ID (Rp T) + factor betas.
+// Factor order: [china, cycle, fx, energy, carbon, reg]  (financing handled at holding level)
+const SUBS = [
+  { id:'PTBA',   commodity:'Thermal coal',            base:3.5, conf:'illustrative',
+    beta:[ 0.60, 0.95, 0.40, -0.10, -0.70, -0.55], driver:'coal price, DMO mix, carbon policy' },
+  { id:'Antam',  commodity:'Gold · nickel · bauxite', base:1.8, conf:'illustrative',
+    beta:[ 0.45, 0.65, 0.35, -0.15, -0.10, -0.30], driver:'gold cushions nickel cyclicality' },
+  { id:'Inalum', commodity:'Aluminium',               base:2.2, conf:'illustrative',
+    beta:[ 0.50, 0.80, 0.30, -1.05, -0.30, -0.25], driver:'power cost & alumina input' },
+  { id:'Timah',  commodity:'Tin',                     base:0.3, conf:'illustrative',
+    beta:[ 0.55, 1.00, 0.40, -0.10, -0.05, -0.60], driver:'tin price & offshore mining cost' },
+];
+const FREEPORT = { id:'Freeport', commodity:'Copper · gold (JV)', note:'JV — excluded from quantified cash' };
+
+// Holding obligations (Rp T). management = assumption; reported/illustrative tagged in UI.
+const HOLD = {
+  openingCash:12.0, otherInflows:0.5, opex:1.2, interest:2.5, principal:4.0,
+  capex:3.5, equity:5.0, otherOut:0.8,
+};
+
+// Factor model. Each: slider id, base value, scale to normalised shock, vol (shock σ), macro loading.
+const FACTORS = [
+  { id:'china',  base:100,   to:v=>(v-100)/100,    vol:0.08, macro: 0.80 },
+  { id:'cycle',  base:0,     to:v=>v/100,          vol:0.14, macro: 0.85 },
+  { id:'fx',     base:16000, to:v=>(v-16000)/16000,vol:0.05, macro:-0.55 },
+  { id:'energy', base:0,     to:v=>v/100,          vol:0.12, macro: 0.20 },
+  { id:'carbon', base:20,    to:v=>(v-20)/100,     vol:0.05, macro: 0.05 },
+  { id:'reg',    base:0,     to:v=>v/100,          vol:0.06, macro: 0.10 },
+];
+const FIN = { id:'fin', base:100, to:v=>(v-100)/400, vol:0.18, macro:-0.70 };
+const FNAME = ['China demand','Commodity cycle','USD/IDR','Energy cost','Carbon policy','Regulation'];
+
+let spare=null;
+function randn(){ if(spare!==null){const v=spare;spare=null;return v;}
+  let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random();
+  const r=Math.sqrt(-2*Math.log(u)),t=2*Math.PI*v; spare=r*Math.sin(t); return r*Math.cos(t); }
+const pct=(s,p)=>{const i=(s.length-1)*p,lo=Math.floor(i),hi=Math.ceil(i);return s[lo]+(s[hi]-s[lo])*(i-lo);};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+// upstreaming multiplier for one subsidiary given normalised factor shocks + mitigation
+function subMult(beta, sh, mit){
+  let m=1; for(let k=0;k<6;k++){
+    let s=sh[k];
+    if(mit){
+      if(k===1) s*= (1-mit.cmdHedge);        // commodity-cycle hedge dampens downside & upside
+      if(k===2) s*= (1-0.0*mit.fxHedge);     // fx on subs untouched (hedge protects debt, below)
+    }
+    m += beta[k]*s;
+  }
+  return clamp(m,0,2.2);
+}
+
+// holding obligations under a financing/fx shock + mitigation
+function holdObligations(finSh, fxSh, mit){
+  const m = mit||{cmdHedge:0,fxHedge:0,refi:0,capexCut:0,opexCut:0,equityDefer:0};
+  const interest = HOLD.interest*(1 + 0.60*finSh + 0.20*Math.max(0,fxSh)*(1-m.fxHedge));
+  const principal = HOLD.principal*(1 - 0.55*m.refi)*(1 + 0.45*Math.max(0,fxSh)*(1-m.fxHedge));
+  const capex = HOLD.capex*(1 - m.capexCut);
+  const opex = HOLD.opex*(1 - m.opexCut);
+  const equity = HOLD.equity*(1 - m.equityDefer);
+  return { interest, principal, capex, opex, equity,
+    openingCash:HOLD.openingCash, otherInflows:HOLD.otherInflows, otherOut:HOLD.otherOut };
+}
+
+// full holding FCF for one path. sh = 6 factor shocks, finSh financing, fxSh fx
+function holdingFCF(sh, finSh, fxSh, mit){
+  let up=0; const perSub=[];
+  for(const s of SUBS){ const r=s.base*subMult(s.beta,sh,mit); perSub.push(r); up+=r; }
+  if(mit&&mit.divPull) up += 0.9*mit.divPull;          // special dividend from subs (governance-limited)
+  const o=holdObligations(finSh,fxSh,mit);
+  const fcf = o.openingCash + up + o.otherInflows - o.opex - o.interest - o.principal - o.capex - o.equity - o.otherOut;
+  return { fcf, up, perSub, o };
+}
+
+/* ── mitigation levers ──────────────────────────────────────────── */
+const LEVERS = [
+  { id:'cmdHedge',   on:false, label:'Hedge coal & commodity price (2 quarters)', owner:'Group Treasury',  time:'2–4 wk',  cost:2, apply:m=>m.cmdHedge=0.5 },
+  { id:'fxHedge',    on:false, label:'Hedge USD debt service (FX forward)',        owner:'Group Treasury',  time:'1–2 wk',  cost:1, apply:m=>m.fxHedge=1.0 },
+  { id:'refi',       on:false, label:'Refinance / extend near-term maturities',    owner:'CFO · Treasury',  time:'1–2 mo',  cost:3, apply:m=>m.refi=1.0 },
+  { id:'capexCut',   on:false, label:'Defer non-critical committed capex',         owner:'Portfolio Office',time:'4–8 wk',  cost:3, apply:m=>m.capexCut=0.4 },
+  { id:'opexCut',    on:false, label:'Holding cost-reduction program',             owner:'COO · Holding',   time:'1 quarter',cost:2, apply:m=>m.opexCut=0.25 },
+  { id:'divPull',    on:false, label:'Accelerate subsidiary special dividend',     owner:'Subsidiary boards',time:'1 quarter',cost:4, apply:m=>m.divPull=1 },
+  { id:'equityDefer',on:false, label:'Stage hilirisasi equity injections',         owner:'Investment Cmte', time:'1–2 mo',  cost:4, apply:m=>m.equityDefer=0.4 },
+];
+function mitFromLevers(levers){
+  const m={cmdHedge:0,fxHedge:0,refi:0,capexCut:0,opexCut:0,equityDefer:0,divPull:0};
+  for(const l of levers) if(l.on) l.apply(m);
+  return m;
+}
+const hasAnyMit = ()=>LEVERS.some(l=>l.on);
+
+/* ── presets ────────────────────────────────────────────────────── */
+const PRESETS = {
+  'FY2025 plan':       { china:100, cycle:0,   fx:16000, energy:0,  carbon:20, reg:0,  fin:100 },
+  'China hard landing':{ china:84,  cycle:-22, fx:16900, energy:-5, carbon:30, reg:5,  fin:180 },
+  'Commodity downcycle':{china:92,  cycle:-30, fx:16600, energy:5,  carbon:35, reg:10, fin:160 },
+  'Energy / power shock':{china:98, cycle:-6,  fx:16400, energy:48, carbon:45, reg:5,  fin:140 },
+  'Refinancing squeeze':{china:96,  cycle:-10, fx:17200, energy:8,  carbon:25, reg:8,  fin:380 },
+  'Perfect storm':     { china:82,  cycle:-34, fx:17600, energy:40, carbon:55, reg:25, fin:340 },
+};
+let activePreset='FY2025 plan';
+
+/* ── core run ───────────────────────────────────────────────────── */
+let regimeMult=1, lastState=null;
+function readFactors(){
+  const o={}; for(const f of FACTORS) o[f.id]=+document.getElementById(f.id).value;
+  o.fin=+document.getElementById('fin').value; return o;
+}
+function run(){
+  const cen=readFactors();
+  const N=+document.getElementById('n').value, floorT=+document.getElementById('floor').value;
+  const mit=mitFromLevers(LEVERS), ref=mitFromLevers([]);
+  const cenSh=FACTORS.map(f=>f.to(cen[f.id])), cenFin=FIN.to(cen.fin), cenFx=FACTORS[2].to(cen.fx);
+
+  const fcfA=new Float64Array(N), fcfR=new Float64Array(N);
+  const fStore=[[],[],[],[],[],[]];           // store sampled factor shocks for attribution
+  const subStore=SUBS.map(()=>new Float64Array(N));
+  let breach=0, breachR=0;
+
+  for(let i=0;i<N;i++){
+    const macro=randn();
+    const sh=new Array(6);
+    for(let k=0;k<6;k++){
+      const f=FACTORS[k], v=f.vol*regimeMult;
+      sh[k]=cenSh[k] + v*(f.macro*macro + Math.sqrt(Math.max(0,1-f.macro*f.macro))*randn());
+      fStore[k][i]=sh[k];
+    }
+    const finSh=cenFin + FIN.vol*regimeMult*(FIN.macro*macro + Math.sqrt(Math.max(0,1-FIN.macro*FIN.macro))*randn());
+    const fxSh=sh[2];
+    const a=holdingFCF(sh,finSh,fxSh,mit), r=holdingFCF(sh,finSh,fxSh,ref);
+    fcfA[i]=a.fcf; fcfR[i]=r.fcf;
+    for(let s=0;s<SUBS.length;s++) subStore[s][i]=a.perSub[s];
+    if(a.fcf<floorT) breach++; if(r.fcf<floorT) breachR++;
+  }
+  const sA=Float64Array.from(fcfA).sort(), sR=Float64Array.from(fcfR).sort();
+  const p10=pct(sA,.1),p50=pct(sA,.5),p90=pct(sA,.9);
+  const baseFCF=holdingFCF(cenSh,cenFin,cenFx,mit).fcf;       // central (no sampling) with mitigation
+  const baseFCF_R=holdingFCF(cenSh,cenFin,cenFx,ref).fcf;
+  const far=Math.max(0,baseFCF-p10), farR=Math.max(0,baseFCF_R-pct(sR,.1));
+  const bP=breach/N, bPR=breachR/N;
+
+  // KPIs
+  setText('p50',p50.toFixed(2)); setText('far',far.toFixed(2));
+  const bEl=document.getElementById('breach'); bEl.textContent=(bP*100).toFixed(1)+'%';
+  const col=bP>.25?'var(--red)':bP>.1?'var(--gold)':'var(--green-dark)';
+  bEl.style.color=col; document.getElementById('breachStrip').style.background=col;
+
+  // attribution: |corr(factor, fcf)| weighted by exposure → largest contributor
+  const attr=[];
+  for(let k=0;k<6;k++) attr.push([FNAME[k], corr(fStore[k],fcfA)]);
+  attr.sort((a,b)=>Math.abs(b[1])-Math.abs(a[1]));
+  // largest single subsidiary contributor to downside (loss vs base)
+  let topSub='—',worst=0;
+  for(let s=0;s<SUBS.length;s++){ const loss=SUBS[s].base - pct(Float64Array.from(subStore[s]).sort(),.1);
+    if(loss>worst){worst=loss;topSub=SUBS[s].id;} }
+  setText('topc',topSub); document.getElementById('topcU').textContent=worst>0?('−Rp '+worst.toFixed(2)+' T at P10'):'driver of downside';
+
+  delta('p50d', p50-pct(sR,.5),'Rp T vs no action',false);
+  delta('fard', far-farR,'Rp T vs no action',true);
+  delta('breachd',(bP-bPR)*100,'pp vs no action',true);
+  setText('topd','');
+
+  setText('convPill', (+N).toLocaleString('en-US')+' paths · '+(regimeMult<1?'calm':regimeMult>1?'stressed':'base'));
+  setText('wfScn', activePreset);
+
+  // mitigation summary bar
+  const mb=document.getElementById('mitbar');
+  if(hasAnyMit()){ mb.classList.add('show');
+    const names=LEVERS.filter(l=>l.on).map(l=>l.label.split('(')[0].trim());
+    mb.innerHTML=`<b>Action package:</b> ${names.join(' · ')} → breach probability `+
+      `<b>${(bPR*100).toFixed(1)}% → ${(bP*100).toFixed(1)}%</b>, FCF-at-Risk `+
+      `<b>Rp ${farR.toFixed(2)} → ${far.toFixed(2)} T</b>, residual P50 ${p50>=pct(sR,.5)?'+':''}${(p50-pct(sR,.5)).toFixed(2)} Rp T.`;
+    document.getElementById('refLeg').style.display='';
+  } else { mb.classList.remove('show'); document.getElementById('refLeg').style.display='none'; }
+
+  // charts
+  drawWaterfall(document.getElementById('waterfall'), holdingFCF(cenSh,cenFin,cenFx,mit));
+  drawHist(document.getElementById('hist'), sA, {p10,p50,p90,floor:floorT,ref:hasAnyMit()?sR:null});
+  drawRunway(document.getElementById('runway'), baseFCF, floorT, mit);
+  drawDivMap(cenSh);
+
+  // subsidiary table
+  const central=holdingFCF(cenSh,cenFin,cenFx,mit);
+  document.querySelector('#subTable tbody').innerHTML = SUBS.map((s,i)=>{
+    const res=central.perSub[i], imp=res-s.base, ic=imp<-0.001?'neg':imp>0.001?'pos':'';
+    return `<tr><td class="sub-name">${s.id}<div class="driver">${s.driver}</div></td>
+      <td>${s.commodity}</td><td class="mono">${s.base.toFixed(2)}</td>
+      <td class="mono ${ic}">${imp>=0?'+':''}${imp.toFixed(2)}</td>
+      <td class="mono" style="font-weight:700">${res.toFixed(2)}</td>
+      <td><span class="tag ${s.conf}">${s.conf}</span></td></tr>`;
+  }).join('') +
+    `<tr style="opacity:.78"><td class="sub-name">${FREEPORT.id}<div class="driver">${FREEPORT.note}</div></td>
+      <td>${FREEPORT.commodity}</td><td class="mono">—</td><td class="mono">—</td><td class="mono">excl.</td>
+      <td><span class="tag jv">JV excluded</span></td></tr>`;
+
+  // levers benefit estimate (marginal P10 lift, computed cheaply on central path set sample)
+  estimateLeverBenefits(cenSh,cenFin,cenFx,floorT);
+
+  lastState={ preset:activePreset, drivers:cen, outputs:{p50:+p50.toFixed(2),p10:+p10.toFixed(2),p90:+p90.toFixed(2),
+    far:+far.toFixed(2),breach:+(bP).toFixed(4),baseFCF:+baseFCF.toFixed(2)}, floor:floorT,
+    topSub, topFactor:attr[0][0], regime:regimeMult<1?'calm':regimeMult>1?'stressed':'base',
+    levers:LEVERS.filter(l=>l.on).map(l=>l.label), paths:N };
+  renderBrief();
+}
+
+function corr(a,b){const n=a.length;let ma=0,mb=0;for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];}ma/=n;mb/=n;
+  let c=0,va=0,vb=0;for(let i=0;i<n;i++){const da=a[i]-ma,db=b[i]-mb;c+=da*db;va+=da*da;vb+=db*db;}
+  return c/Math.sqrt(va*vb||1e-9);}
+const setText=(id,t)=>{const e=document.getElementById(id);if(e)e.textContent=t;};
+function delta(id,v,unit,lowerGood){const el=document.getElementById(id);if(!el)return;
+  if(!hasAnyMit()){el.textContent='';return;}
+  const good=lowerGood?v<0:v>0,arrow=v>0?'▲':v<0?'▼':'·';
+  el.style.color=Math.abs(v)<1e-3?'var(--faint)':good?'var(--green-dark)':'var(--red)';
+  el.textContent=`${arrow} ${v>0?'+':''}${v.toFixed(2)} ${unit}`;}
+
+/* ── lever benefit estimate (deterministic, fast) ───────────────── */
+function estimateLeverBenefits(sh,finSh,fxSh,floorT){
+  // P10 proxy via a moderate downside shift on the macro (−1.28σ-ish) on central
+  const downSh=sh.map((s,k)=>s - FACTORS[k].vol*regimeMult*1.28*Math.abs(FACTORS[k].macro)*Math.sign(FACTORS[k].macro||1));
+  const downFin=finSh - FIN.vol*regimeMult*1.28*FIN.macro;
+  const base=holdingFCF(downSh,downFin,fxSh,mitFromLevers([])).fcf;
+  for(const l of LEVERS){ const m=mitFromLevers([{...l,on:true}]);
+    l._ben=holdingFCF(downSh,downFin,fxSh,m).fcf - base; }
+  renderLevers();
+}
+
+/* ── canvas: waterfall ──────────────────────────────────────────── */
+function dpr(cv){const d=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.height;cv.width=w*d;cv.height=h*d;
+  const x=cv.getContext('2d');x.scale(d,d);x.clearRect(0,0,w,h);return {x,w,h};}
+function drawWaterfall(cv, res){
+  const {x,w,h}=dpr(cv);
+  const o=res.o;
+  const steps=[
+    ['Opening cash', o.openingCash, 'in'], ['Upstreaming', res.up, 'in'], ['Other in', o.otherInflows, 'in'],
+    ['Opex', -o.opex,'out'], ['Interest', -o.interest,'out'], ['Principal', -o.principal,'out'],
+    ['Capex', -o.capex,'out'], ['Equity inj.', -o.equity,'out'], ['Other out', -o.otherOut,'out'],
+  ];
+  const residual=res.fcf;
+  const padL=8,padR=8,padT=14,padB=40,W=w-padL-padR,H=h-padT-padB;
+  let cum=0, maxV=0; let c2=0; const tops=[];
+  for(const s of steps){ const start=c2; c2+=s[1]; tops.push([start,c2]); maxV=Math.max(maxV,start,c2); }
+  maxV=Math.max(maxV,residual)*1.08;
+  const n=steps.length+1, gap=8, bw=(W-gap*(n-1))/n;
+  const y=v=>padT+H-(v/maxV)*H;
+  x.font='9px IBM Plex Mono, monospace'; x.textAlign='center';
+  for(let i=0;i<steps.length;i++){
+    const [a,b]=tops[i], up=steps[i][2]==='in', xx=padL+i*(bw+gap);
+    const y0=y(Math.max(a,b)), y1=y(Math.min(a,b));
+    x.fillStyle=up?'#15a06d':'#dc5a50'; x.globalAlpha=.92;
+    x.fillRect(xx,y0,bw,Math.max(2,y1-y0)); x.globalAlpha=1;
+    x.fillStyle='#64756f';
+    x.fillText(steps[i][0], xx+bw/2, h-24);
+    x.fillStyle=up?'#13986c':'#b13d35';
+    x.fillText((steps[i][1]>=0?'+':'')+steps[i][1].toFixed(1), xx+bw/2, y0-4);
+  }
+  // residual bar
+  const xx=padL+steps.length*(bw+gap), y0=y(Math.max(0,residual)), y1=y(Math.min(0,residual));
+  x.fillStyle='#071811'; x.fillRect(xx,y0,bw,Math.max(2,y1-y0));
+  x.fillStyle='#16211d'; x.font='10px IBM Plex Mono, monospace';
+  x.fillText('Residual', xx+bw/2, h-24); x.fillText('Rp '+residual.toFixed(1)+'T', xx+bw/2, y0-4);
+  // connector line baseline
+  x.strokeStyle='#dbe8df'; x.beginPath(); x.moveTo(padL,y(0)); x.lineTo(w-padR,y(0)); x.stroke();
+}
+
+/* ── canvas: histogram ──────────────────────────────────────────── */
+const maxArr=a=>{let m=0;for(const v of a)if(v>m)m=v;return m;};
+function drawHist(cv, sorted, opt){
+  const {x,w,h}=dpr(cv);
+  const padL=8,padR=8,padT=12,padB=26,W=w-padL-padR,H=h-padT-padB;
+  const all=opt.ref?[sorted[0],opt.ref[0],sorted[sorted.length-1],opt.ref[opt.ref.length-1]]:[sorted[0],sorted[sorted.length-1]];
+  let lo=Math.min(...all,opt.floor), hi=Math.max(...all), span=(hi-lo)||1;
+  const BINS=44;
+  const binOf=a=>{const b=new Array(BINS).fill(0);for(let i=0;i<a.length;i++){let k=Math.floor((a[i]-lo)/span*BINS);if(k>=BINS)k=BINS-1;if(k<0)k=0;b[k]++;}return b;};
+  const bins=binOf(sorted), refBins=opt.ref?binOf(opt.ref):null;
+  const maxB=Math.max(maxArr(bins),refBins?maxArr(refBins):0)||1;
+  const xPos=v=>padL+(v-lo)/span*W, bw=W/BINS;
+  if(opt.floor!=null){x.fillStyle='rgba(220,90,80,0.08)';x.fillRect(padL,padT,Math.max(0,xPos(opt.floor)-padL),H);}
+  for(let i=0;i<BINS;i++){const hh=bins[i]/maxB*H, center=lo+(i+0.5)/BINS*span, below=center<opt.floor;
+    x.fillStyle=below?'rgba(220,90,80,0.6)':'rgba(21,160,109,0.78)';
+    x.fillRect(padL+i*bw+0.5,padT+H-hh,bw-1,hh);}
+  if(refBins){x.strokeStyle='#d9920f';x.lineWidth=1.4;x.setLineDash([4,3]);x.beginPath();
+    for(let i=0;i<BINS;i++){const hh=refBins[i]/maxB*H,px=padL+i*bw+bw/2,py=padT+H-hh;i?x.lineTo(px,py):x.moveTo(px,py);}
+    x.stroke();x.setLineDash([]);}
+  const vline=(v,c,d)=>{if(v==null)return;const px=xPos(v);x.save();x.strokeStyle=c;x.lineWidth=1.5;x.setLineDash(d||[]);
+    x.beginPath();x.moveTo(px,padT-4);x.lineTo(px,padT+H);x.stroke();x.restore();};
+  vline(opt.p10,'#8b9a92',[3,3]);vline(opt.p90,'#8b9a92',[3,3]);vline(opt.p50,'#13986c',[]);vline(opt.floor,'#dc5a50',[5,3]);
+  x.fillStyle='#8b9a92';x.font='10px IBM Plex Mono, monospace';x.textAlign='center';
+  for(let t=0;t<=4;t++){const v=lo+span*t/4;x.fillText(v.toFixed(1),padL+W*t/4,h-9);}
+  if(opt.p50!=null){x.fillStyle='#13986c';x.fillText('P50 '+opt.p50.toFixed(2),clamp(xPos(opt.p50),38,w-38),padT+6);}
+}
+
+/* ── canvas: cash runway / debt wall ────────────────────────────── */
+function drawRunway(cv, annualFCF, floorT, mit){
+  const {x,w,h}=dpr(cv);
+  const padL=30,padR=10,padT=14,padB=28,W=w-padL-padR,H=h-padT-padB;
+  // lumpy principal profile across quarters (sums ~ to scenario principal)
+  const o=holdObligations(0,0,mit);
+  const wallShape=[0.15,0.45,0.18,0.22], wall=wallShape.map(s=>s*o.principal);
+  const qFCF=annualFCF/4;                          // even operating cash generation per quarter
+  let cash=HOLD.openingCash*0.0;                   // start runway from 0 incremental; show net per quarter cushion
+  // After-action cash cushion each quarter = running cumulative net of (qFCF added back the obligations already in annualFCF). Simplify: show quarter-end residual cushion above floor.
+  const startBuf=Math.max(annualFCF,floorT+0.1);
+  const ends=[]; let run=startBuf;
+  for(let q=0;q<4;q++){ run = run + qFCF - (wall[q]-o.principal/4); ends.push(run); }
+  const maxV=Math.max(startBuf, ...ends, ...wall, floorT)*1.15;
+  const y=v=>padT+H-(v/maxV)*H;
+  const gw=W/4;
+  // floor line
+  x.strokeStyle='#dc5a50';x.lineWidth=1.4;x.setLineDash([5,3]);x.beginPath();x.moveTo(padL,y(floorT));x.lineTo(w-padR,y(floorT));x.stroke();x.setLineDash([]);
+  x.fillStyle='#dc5a50';x.font='9px IBM Plex Mono, monospace';x.textAlign='left';x.fillText('floor '+floorT.toFixed(1),padL+2,y(floorT)-3);
+  x.textAlign='center';
+  for(let q=0;q<4;q++){
+    const cx=padL+q*gw;
+    // cash cushion bar
+    const cy=y(Math.max(0,ends[q]));
+    x.fillStyle=ends[q]<floorT?'rgba(220,90,80,.8)':'rgba(21,160,109,.82)';
+    x.fillRect(cx+gw*0.16,cy,gw*0.34,Math.max(2,y(0)-cy));
+    // principal wall bar
+    const py=y(wall[q]); x.fillStyle='rgba(217,146,15,.85)';
+    x.fillRect(cx+gw*0.54,py,gw*0.3,Math.max(2,y(0)-py));
+    x.fillStyle='#64756f';x.font='9.5px IBM Plex Mono, monospace';x.fillText('Q'+(q+1),cx+gw/2,h-9);
+  }
+  x.strokeStyle='#dbe8df';x.beginPath();x.moveTo(padL,y(0));x.lineTo(w-padR,y(0));x.stroke();
+  // y axis ticks
+  x.fillStyle='#8b9a92';x.textAlign='right';
+  for(let t=0;t<=3;t++){const v=maxV*t/3;x.fillText(v.toFixed(0),padL-4,y(v)+3);}
+}
+
+/* ── svg: diversification-break map ─────────────────────────────── */
+function drawDivMap(sh){
+  const svg=document.getElementById('divmap'); if(!svg)return;
+  const W=520,H=260, lx=120, rx=400;
+  const factors=FNAME.map((n,k)=>({n,k,y:24+k*((H-48)/5)}));
+  const assets=[...SUBS.map(s=>({id:s.id,beta:s.beta})), {id:'Freeport',jv:true,beta:[0.5,0.85,0.35,-0.1,-0.05,-0.2]}];
+  const ay=i=>30+i*((H-60)/(assets.length-1));
+  let links='';
+  for(const f of factors){ const sV=sh[f.k];
+    for(let i=0;i<assets.length;i++){ const a=assets[i], strength=Math.abs(a.beta[f.k]*sV);
+      if(strength>0.045){ const adverse=(a.beta[f.k]*sV)<0;
+        const col=a.jv?'#7d6be0':adverse?'#dc5a50':'#15a06d';
+        const wdt=clamp(strength*9,0.6,4);
+        links+=`<path d="M${lx} ${f.y} C ${(lx+rx)/2} ${f.y}, ${(lx+rx)/2} ${ay(i)}, ${rx} ${ay(i)}" `+
+          `stroke="${col}" stroke-width="${wdt.toFixed(1)}" fill="none" opacity="${a.jv?0.5:0.62}" ${a.jv?'stroke-dasharray="5 4"':''}/>`;
+      }
+    }
+  }
+  let nodes='';
+  for(const f of factors){ const active=Math.abs(sh[f.k])>0.04;
+    nodes+=`<circle cx="${lx}" cy="${f.y}" r="5" fill="${active?'#13986c':'#c4d5cb'}"/>`+
+      `<text x="${lx-10}" y="${f.y+3.5}" text-anchor="end" class="maplbl" fill="#64756f" font-family="Inter">${f.n}</text>`;
+  }
+  for(let i=0;i<assets.length;i++){ const a=assets[i];
+    nodes+=`<circle cx="${rx}" cy="${ay(i)}" r="6" fill="${a.jv?'#7d6be0':'#071811'}" ${a.jv?'stroke="#7d6be0" stroke-dasharray="3 2" fill="#fff"':''}/>`+
+      `<text x="${rx+11}" y="${ay(i)+3.5}" class="maplbl" fill="${a.jv?'#6655bf':'#16211d'}" font-weight="700" font-family="Inter">${a.id}${a.jv?' · JV':''}</text>`;
+  }
+  svg.innerHTML=links+nodes;
+}
+
+/* ── levers UI ──────────────────────────────────────────────────── */
+function renderLevers(){
+  const root=document.getElementById('levers');
+  root.innerHTML=LEVERS.map((l,i)=>{
+    const ben=(l._ben!=null?l._ben:0);
+    return `<div class="lever ${l.on?'on':''} ${l._rec?'rec':''}" data-i="${i}">
+      <div class="chk">${l.on?'✓':''}</div>
+      <div><div class="a">${l.label}${l._rec?'<span class="recflag">in package</span>':''}</div>
+        <div class="m">${l.owner} · ${l.time} · cost score ${l.cost}/5</div></div>
+      <div class="ben">+${ben.toFixed(2)}<small>Rp T to P10</small></div></div>`;
+  }).join('');
+  root.querySelectorAll('.lever').forEach(el=>el.addEventListener('click',()=>{
+    const i=+el.dataset.i; LEVERS[i].on=!LEVERS[i].on; schedule();
+  }));
+}
+
+/* ── optimizer (REQ-06): cheapest package that clears the floor at P10 ── */
+function recommendPackage(){
+  const cen=readFactors(), floorT=+document.getElementById('floor').value;
+  const sh=FACTORS.map(f=>f.to(cen[f.id])), finSh=FIN.to(cen.fin), fxSh=sh[2];
+  // downside proxy
+  const dSh=sh.map((s,k)=>s-FACTORS[k].vol*regimeMult*1.28*FACTORS[k].macro*Math.sign(1)), dFin=finSh-FIN.vol*regimeMult*1.28*FIN.macro;
+  const p10Of=set=>holdingFCF(dSh,dFin,fxSh,mitFromLevers(set)).fcf;
+  // greedy by benefit/cost until floor cleared
+  const chosen=[]; const pool=LEVERS.map(l=>({...l,on:true}));
+  let cur=p10Of([]); let safety=0;
+  while(cur<floorT && safety++<LEVERS.length){
+    let best=null,bestScore=-1;
+    for(const l of pool){ if(chosen.find(c=>c.id===l.id))continue;
+      const gain=p10Of([...chosen,l])-cur, score=gain/l.cost;
+      if(gain>0.001&&score>bestScore){bestScore=score;best=l;} }
+    if(!best)break; chosen.push(best); cur=p10Of(chosen);
+  }
+  LEVERS.forEach(l=>{l._rec=chosen.some(c=>c.id===l.id); l.on=l._rec;});
+  schedule();
+  const box=document.getElementById('optbox'); box.classList.add('show');
+  const totalCost=chosen.reduce((a,c)=>a+c.cost,0);
+  const cleared=cur>=floorT;
+  box.innerHTML = chosen.length
+    ? `<b>Recommended package (${chosen.length} lever${chosen.length>1?'s':''}):</b> `+
+      chosen.map(c=>c.label.split('(')[0].trim()).join(' · ')+
+      `. <br>Total cost score <b>${totalCost}</b> · owners: ${[...new Set(chosen.map(c=>c.owner))].join(', ')}. `+
+      `Modelled P10 ${cleared?'clears':'still below'} the Rp ${floorT.toFixed(1)} T floor `+
+      `(P10 ≈ Rp ${cur.toFixed(2)} T). ${cleared?'':'<b>Floor not protected by available levers — escalate funding.</b>'}`
+    : `<b>No action required:</b> modelled P10 already clears the Rp ${floorT.toFixed(1)} T floor.`;
+}
+
+/* ── board brief (REQ-09) ───────────────────────────────────────── */
+function renderBrief(){
+  const st=lastState; if(!st)return;
+  const o=st.outputs, breach=o.breach;
+  const posture=breach>.25?'DEFENSIVE':breach>.1?'BALANCED':'CONSTRUCTIVE';
+  const pcol=posture==='DEFENSIVE'?'#dc5a50':posture==='CONSTRUCTIVE'?'#22c98a':'#e5aa3e';
+  const conf=breach>.3||o.p50<st.floor?'LOW':breach>.12?'MEDIUM':'HIGH';
+  const fmt=n=>`Rp ${(+n).toFixed(2)} T`;
+  const acts=[];
+  if(breach>.1) acts.push(['Pre-commit the recommended action package',`Holds residual Holding FCF above the Rp ${st.floor.toFixed(1)} T board floor before the shock window, led by Group Treasury and the CFO.`]);
+  acts.push(['Anchor the dividend / drawdown plan to the P10, not the P50',`Plan to ${fmt(o.p10)} downside so a correlated ${st.topFactor.toLowerCase()} move does not force an unplanned funding event.`]);
+  acts.push([`Stress-test the ${st.topSub} cash bridge with the subsidiary board`,`${st.topSub} is the largest contributor to the holding downside in this scenario; confirm its FY2025 baseline before relying on the number.`]);
+  if(st.drivers.fin>200) acts.push(['Open early refinancing engagement with lenders','Financing pressure is elevated; extending near-term maturities removes the largest controllable outflow from the wall.']);
+  document.getElementById('briefBody').innerHTML=`
+    <div class="badges">
+      <span class="badge posture" style="background:${pcol}">${posture}</span>
+      <span class="badge">CONFIDENCE: ${conf}</span>
+      <span class="badge">SCENARIO: ${esc(st.preset).toUpperCase()}</span>
+    </div>
+    <div class="bsec"><div class="lbl">What changed</div><p>Under the <b>${esc(st.preset)}</b> scenario (China ${Math.round(st.drivers.china)}, commodity cycle ${st.drivers.cycle>=0?'+':''}${st.drivers.cycle}%, USD/IDR ${(+st.drivers.fx).toLocaleString('en-US')}), residual Holding FCF runs at a median of ${fmt(o.p50)} with an 80% band of ${fmt(o.p10)}–${fmt(o.p90)}. Holding FCF-at-Risk (base − P10) is <b>${fmt(o.far)}</b>, and the probability of breaching the Rp ${st.floor.toFixed(1)} T cash floor is <b>${(breach*100).toFixed(1)}%</b>.</p></div>
+    <div class="bsec"><div class="lbl">Why it matters</div><p>${breach>.2?`Holding cash cover is fragile: a common ${st.topFactor.toLowerCase()} shock pulls several subsidiaries down together and debt principal stays due in full, so diversification does not protect the floor.`:`Cover holds across most paths; residual risk concentrates in ${st.topSub} via ${st.topFactor.toLowerCase()}, with debt principal repayments kept explicit in the headline FCF-at-Risk.`}</p></div>
+    <div class="bsec"><div class="lbl">Decision needed</div><div class="acts">${
+      acts.map((a,i)=>`<div class="bact"><div class="n">${String(i+1).padStart(2,'0')}</div><div><div class="a">${a[0]}</div><div class="r">${a[1]}</div></div></div>`).join('')
+    }</div></div>
+    <div class="caveat"><b style="color:#cfe0d7">Data caveat —</b> all figures are <b>illustrative placeholders</b> (PRD Phase 0) pending FY2025 actuals, MIND ID ownership, dividend receipts and validated holding obligations. <b>Freeport Indonesia</b> is shown as strategic JV exposure only and is excluded from quantified cash upstreaming. Confidence: reported / derived / management / illustrative tags travel with each subsidiary line.</div>`;
+}
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function copyBrief(){
+  const st=lastState; if(!st)return;
+  const txt=document.getElementById('briefBody').innerText;
+  navigator.clipboard?.writeText('MIND ID PORTFOLIO RISK — BOARD BRIEF ('+st.preset+')\n\n'+txt).then(()=>{
+    const b=document.getElementById('copyBrief'); b.textContent='Copied ✓'; setTimeout(()=>b.textContent='Copy brief',1500);
+  }).catch(()=>{});
+}
+
+/* ── wiring ─────────────────────────────────────────────────────── */
+const fmtN=n=>(+n).toLocaleString('en-US');
+function syncLabels(){
+  chinaV.textContent=china.value; cycleV.textContent=(cycle.value>=0?'+':'')+cycle.value+'%';
+  fxV.textContent=fmtN(fx.value); energyV.textContent=(energy.value>=0?'+':'')+energy.value+'%';
+  carbonV.textContent=carbon.value; regV.textContent=(reg.value>=0?'+':'')+reg.value;
+  finV.textContent=(fin.value>=0?'+':'')+fin.value+' bps';
+  floorV.textContent='Rp '+(+floor.value).toFixed(1)+' T'; nV.textContent=fmtN(n.value);
+}
+let raf=null;
+function schedule(){ syncLabels(); if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run); }
+['china','cycle','fx','energy','carbon','reg','fin'].forEach(id=>
+  document.getElementById(id).addEventListener('input',()=>{ markCustom(); schedule(); }));
+['floor','n'].forEach(id=>document.getElementById(id).addEventListener('input',schedule));
+function markCustom(){ activePreset='Custom'; document.querySelectorAll('.preset').forEach(p=>p.classList.remove('on')); }
+
+document.querySelectorAll('#regime button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#regime button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); regimeMult=+b.dataset.r; schedule(); }));
+
+// presets
+const pr=document.getElementById('presets');
+pr.innerHTML=Object.keys(PRESETS).map(k=>`<button class="preset ${k==='FY2025 plan'?'on':''}" data-k="${k}">${k}</button>`).join('');
+pr.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>{
+  const p=PRESETS[b.dataset.k]; activePreset=b.dataset.k;
+  document.querySelectorAll('.preset').forEach(x=>x.classList.toggle('on',x===b));
+  for(const k in p) document.getElementById(k).value=p[k];
+  schedule();
+}));
+
+document.getElementById('reset').addEventListener('click',()=>{
+  const p=PRESETS['FY2025 plan']; for(const k in p) document.getElementById(k).value=p[k];
+  document.getElementById('floor').value=2; document.getElementById('n').value=20000;
+  LEVERS.forEach(l=>{l.on=false;l._rec=false;});
+  document.querySelectorAll('#regime button').forEach(x=>x.classList.toggle('on',x.dataset.r==='1')); regimeMult=1;
+  activePreset='FY2025 plan'; document.querySelectorAll('.preset').forEach(x=>x.classList.toggle('on',x.dataset.k==='FY2025 plan'));
+  document.getElementById('optbox').classList.remove('show'); schedule();
+});
+document.getElementById('optBtn').addEventListener('click',recommendPackage);
+document.getElementById('copyBrief').addEventListener('click',copyBrief);
+window.addEventListener('resize',()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(run);});
+
+renderLevers(); syncLabels(); run();
+
+/* ── guided tour ────────────────────────────────────────────────── */
+const TOUR=[
+  {sel:'[data-tour=presets]',t:'1 · Pick a scenario',b:'Start from a board-ready preset — China hard landing, energy shock, refinancing squeeze, perfect storm — or build your own with the common-factor sliders below.'},
+  {sel:'[data-tour=factors]',t:'2 · Common factors',b:'Seven shared shocks (China demand, commodity cycle, FX, energy, carbon, regulation, financing) drive every subsidiary together. They are sampled around a macro latent, so a downturn hits several assets at once — that is where diversification fails.'},
+  {sel:'[data-tour=kpis]',t:'3 · The board answer',b:'Residual Holding FCF (P50), Holding FCF-at-Risk including debt principal, the probability of breaching the cash floor, and the largest single contributor to the downside.'},
+  {sel:'[data-tour=waterfall]',t:'4 · Where the cash goes',b:'Opening cash and subsidiary upstreaming in green; holding opex, interest, debt principal, capex and equity injections in red. The dark bar is what survives — residual Holding FCF.'},
+  {sel:'[data-tour=subs]',t:'5 · Subsidiary cash bridges',b:'PTBA, Antam, Inalum and Timah quantified, each with a confidence tag. Freeport stays visible as JV exposure but is excluded from quantified cash.'},
+  {sel:'[data-tour=divmap]',t:'6 · Diversification-break map',b:'Links light up where a shared factor hits an asset in this scenario. Red = adverse, green = favourable, dashed violet = Freeport JV. Converging links mean correlated downside.'},
+  {sel:'[data-tour=levers]',t:'7 · Pull the levers',b:'Hedge price or FX, refinance the wall, defer capex, run a cost program. Each lever shows owner, time-to-impact and benefit. Hit “Recommend package” for the cheapest set that protects the floor.'},
+  {sel:'[data-tour=brief]',t:'8 · Publish the board brief',b:'A board-grade narrative — what changed, why it matters, the decision needed — with the data caveat and Freeport exclusion attached. Copy it straight into the board pack.'},
+];
+let tourI=-1,tourEls=null;
+function tourBuild(){const spot=document.createElement('div');spot.className='tour-spot';
+  const tip=document.createElement('div');tip.className='tour-tip';
+  const skip=document.createElement('button');skip.className='tour-skip';skip.textContent='✕ End tour';skip.onclick=tourEnd;
+  document.body.append(spot,tip,skip);tourEls={spot,tip,skip};}
+function tourShow(){if(tourI<0)return;const el=document.querySelector(TOUR[tourI].sel);if(!el){tourNext();return;}
+  el.scrollIntoView({block:'center',behavior:'auto'});tourPlace();}
+function tourPlace(){if(tourI<0||!tourEls)return;const step=TOUR[tourI];const el=document.querySelector(step.sel);if(!el){tourNext();return;}
+  const r=el.getBoundingClientRect(),p=7,vw=innerWidth,vh=innerHeight,{spot,tip}=tourEls;
+  spot.style.left=Math.max(4,r.left-p)+'px';spot.style.top=Math.max(4,r.top-p)+'px';
+  spot.style.width=Math.min(vw-8,r.width+2*p)+'px';spot.style.height=Math.min(vh-8,r.height+2*p)+'px';
+  tip.innerHTML=`<div class="tt">${step.t}</div><div class="tb">${step.b}</div>
+    <div class="tf"><span class="prog">${tourI+1} / ${TOUR.length}</span>
+    ${tourI>0?'<button id="tPrev">Back</button>':''}
+    <button class="primary" id="tNext">${tourI<TOUR.length-1?'Next':'Done'}</button></div>`;
+  tip.querySelector('#tNext').onclick=tourNext;const pv=tip.querySelector('#tPrev');if(pv)pv.onclick=()=>{tourI--;tourShow();};
+  const th=tip.offsetHeight||180,tw=tip.offsetWidth||340;let top=r.bottom+14;if(top+th>vh-10)top=Math.max(10,r.top-th-14);
+  let left=Math.min(Math.max(10,r.left),vw-tw-10);tip.style.top=top+'px';tip.style.left=left+'px';}
+function tourNext(){if(tourI<TOUR.length-1){tourI++;tourShow();}else tourEnd();}
+function tourStart(){if(!tourEls)tourBuild();tourI=0;tourShow();}
+function tourEnd(){tourI=-1;if(tourEls){tourEls.spot.remove();tourEls.tip.remove();tourEls.skip.remove();tourEls=null;}
+  try{localStorage.setItem('preTourSeen','1');}catch(e){}}
+document.getElementById('tourBtn').addEventListener('click',tourStart);
+addEventListener('keydown',e=>{if(tourI<0)return;if(e.key==='Escape')tourEnd();
+  else if(e.key==='ArrowRight'||e.key==='Enter')tourNext();else if(e.key==='ArrowLeft'&&tourI>0){tourI--;tourShow();}});
+addEventListener('resize',()=>{if(tourI>=0)tourPlace();});
+addEventListener('scroll',()=>{if(tourI>=0)tourPlace();},{passive:true});
+try{if(!document.documentElement.classList.contains('embed')&&!localStorage.getItem('preTourSeen'))setTimeout(tourStart,800);}catch(e){}
+</script>
+</body>
+</html>

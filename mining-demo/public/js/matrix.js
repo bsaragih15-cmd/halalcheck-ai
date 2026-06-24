@@ -4,7 +4,7 @@
 import { STAGES, VALUE_DRIVERS, MATRIX_ROWS, USE_CASES } from './usecases.js';
 
 // Cells carrying the solid green LIVE DEMO badge (the deep interactive demos).
-const LIVE = new Set(['cockpit', 'blending', 'haul', 'payload', 'blast', 'marketing', 'shipping', 'dispatch']);
+const LIVE = new Set(['cockpit', 'portfolio-risk-engine', 'blending', 'haul', 'payload', 'blast', 'marketing', 'shipping', 'dispatch']);
 
 function hrefFor(id) {
   const uc = USE_CASES[id];
