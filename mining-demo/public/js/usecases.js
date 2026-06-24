@@ -27,6 +27,7 @@ export const VALUE_DRIVERS = {
 // A cell is either {case} or {stack:[caseA, caseB]} (two half-height cells).
 export const MATRIX_ROWS = [
   { horizon: 'Exec',  cells: [{ case: 'cockpit', span: [1, 10] }] },
+  { horizon: 'PRD',  cells: [{ case: 'portfolio-risk-prd', span: [1, 10] }] },
   { horizon: '24h',  cells: [{ case: 'command-center', span: [1, 10] }] },
   { horizon: '4w', cells: [
     { case: 'orebody',  span: [1, 2] },
@@ -52,6 +53,13 @@ export const USE_CASES = {
     decisions: 'portfolio posture, scenario stress-testing & board-level decisions',
     stage: 'Cross-chain', horizon: 'Exec', drivers: ['margin', 'npv'],
     flagship: true, href: '/cockpit.html',
+  },
+
+  'portfolio-risk-prd': {
+    title: 'MIND ID Portfolio Risk Engine — Product Requirements',
+    decisions: 'product spec: portfolio scenarios → Holding FCF-at-Risk',
+    stage: 'Cross-chain', horizon: 'PRD', drivers: ['margin', 'npv'],
+    doc: true, href: '/portfolio-risk-prd.html',
   },
 
   'control-tower': {

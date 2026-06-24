@@ -96,7 +96,8 @@ button { font-family: inherit; }
 .hm-inner .matrix-cell:not(.row-cell) .vdg { font-size: 13px; }
 .hm-inner .matrix-cell:not(.row-cell) .vdg.vd-npv { font-size: 11px; }
 .hm-inner .matrix-cell:not(.row-cell) .badge-live,
-.hm-inner .matrix-cell:not(.row-cell) .badge-indev { font-size: 10px; padding: 3px 9px; letter-spacing: 0.04em; }
+.hm-inner .matrix-cell:not(.row-cell) .badge-indev,
+.hm-inner .matrix-cell:not(.row-cell) .badge-doc { font-size: 10px; padding: 3px 9px; letter-spacing: 0.04em; }
 .landing .chevron { min-height: 50px; }
 .landing .matrix-cell { min-height: 0; height: 100%; }
 .landing .matrix-cell.row-cell { min-height: 0; }
@@ -114,6 +115,9 @@ button { font-family: inherit; }
 .matrix-cell .d { font-size: 16px; color: var(--muted); line-height: 1.35; }
 .matrix-cell.live { border: 1.5px solid var(--accent); background: #efeee4; }
 .matrix-cell.live .t { color: var(--accent); }
+/* Document (PRD) cell: clickable like a live demo, but dashed to read as a spec. */
+.matrix-cell.doc { border: 1.5px dashed var(--accent); background: #efeee4; }
+.matrix-cell.doc .t { color: var(--accent); }
 
 .cell-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
 .cell-badge { margin-top: auto; padding-top: 4px; }
@@ -127,6 +131,7 @@ button { font-family: inherit; }
 
 .badge-live { display: inline-block; font-family: var(--font-mono); font-size: 14px; font-weight: 700; letter-spacing: 0.08em; background: var(--accent); color: #fff; border-radius: 999px; padding: 5px 15px; white-space: nowrap; }
 .badge-indev { display: inline-block; font-family: var(--font-mono); font-size: 14px; font-weight: 700; letter-spacing: 0.08em; background: transparent; color: var(--muted); border: 1px solid var(--border-hi); border-radius: 999px; padding: 5px 15px; white-space: nowrap; }
+.badge-doc { display: inline-block; font-family: var(--font-mono); font-size: 14px; font-weight: 700; letter-spacing: 0.08em; background: transparent; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 999px; padding: 5px 15px; white-space: nowrap; }
 
 .vd-icons { display: inline-flex; gap: 9px; flex-shrink: 0; }
 .vdg { font-family: var(--font-mono); font-size: 17px; font-weight: 800; color: var(--text); }
@@ -137,6 +142,7 @@ button { font-family: inherit; }
 .matrix-legend .item { display: flex; align-items: center; gap: 8px; font-weight: 600; }
 .leg-dot { width: 10px; height: 10px; border-radius: 50%; border: 1.5px solid var(--border-hi); background: transparent; }
 .leg-dot.live { background: var(--accent); border-color: var(--accent); }
+.leg-dot.doc { background: transparent; border-color: var(--accent); border-style: dashed; }
 
 /* ── Generic sections / cards ────────────────────────────────────── */
 .section { padding: 44px 0; }

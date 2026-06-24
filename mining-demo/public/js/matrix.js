@@ -11,9 +11,12 @@ function hrefFor(id) {
   return uc?.href || `/demo.html?case=${id}`;
 }
 
-const badgeHTML = (id) => LIVE.has(id)
-  ? '<span class="badge-live">▶ LIVE DEMO</span>'
-  : '<span class="badge-indev">IN DEV</span>';
+const badgeHTML = (id) => {
+  if (USE_CASES[id]?.doc) return '<span class="badge-doc">📄 PRD ↗</span>';
+  return LIVE.has(id)
+    ? '<span class="badge-live">▶ LIVE DEMO</span>'
+    : '<span class="badge-indev">IN DEV</span>';
+};
 
 const driversHTML = (uc) => (uc.drivers || [])
   .map((d) => `<span class="vdg ${VALUE_DRIVERS[d].cls}" title="${VALUE_DRIVERS[d].label}">${VALUE_DRIVERS[d].icon}</span>`)
@@ -23,11 +26,13 @@ function cellHTML(id, fullRow) {
   const uc = USE_CASES[id];
   if (!uc) return '';
   const live = LIVE.has(id);
-  // Only live demos are clickable; in-dev cells render as a plain div so the
-  // whole tile is inert (no navigation, no link cursor).
-  const tag = live ? 'a' : 'div';
-  const attr = live ? ` href="${hrefFor(id)}"` : '';
-  const cls = `matrix-cell${fullRow ? ' row-cell' : ''}${live ? ' live' : ' indev'}`;
+  const doc = !!uc.doc;
+  // Live demos and document (PRD) cells are clickable; in-dev cells render as a
+  // plain div so the whole tile is inert (no navigation, no link cursor).
+  const clickable = live || doc;
+  const tag = clickable ? 'a' : 'div';
+  const attr = clickable ? ` href="${hrefFor(id)}"` : '';
+  const cls = `matrix-cell${fullRow ? ' row-cell' : ''}${doc ? ' doc' : live ? ' live' : ' indev'}`;
   if (fullRow) {
     return `
       <${tag} class="${cls}"${attr}>
@@ -68,5 +73,6 @@ export function renderLegend(root) {
     <span class="item mono-label">PRIMARY VALUE DRIVER</span>
     ${Object.values(VALUE_DRIVERS).map((v) => `<span class="item"><span class="vdg ${v.cls}">${v.icon}</span>${v.label}</span>`).join('')}
     <span class="item" style="margin-left:auto;"><span class="leg-dot live"></span>Live demo</span>
+    <span class="item"><span class="leg-dot doc"></span>Document / PRD</span>
     <span class="item"><span class="leg-dot"></span>In development</span>`;
 }
