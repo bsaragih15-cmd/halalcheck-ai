@@ -68,6 +68,47 @@
   [data-theme="terminal"] .kpi .v,[data-theme="terminal"] .sig-l,[data-theme="terminal"] .ctrl label,
   [data-theme="terminal"] th,[data-theme="terminal"] .lever .a{font-family:var(--mono);letter-spacing:-.2px}
   [data-theme="terminal"] .panel h2{letter-spacing:.6px}
+
+  /* ───────── FOREST iterations ───────── */
+  /* Editorial — airy, white, hairline rules, restrained green (institutional) */
+  [data-theme="editorial"]{
+    --app-bg:linear-gradient(180deg,#f3f7f3 0%,#fbfdfb 60%);
+    --paper:#ffffff; --paper2:#ffffff; --inset:#f4f8f4;
+    --ink:#13211c; --muted:#5e6f68; --faint:#93a29b; --line:#e6ece7; --line2:#eef3ef;
+    --green:#1a7d4f; --green-dark:#12683f; --green-soft:rgba(26,125,79,.10);
+    --gold:#b8860b; --red:#cf5a4f; --blue:#3f7fbf;
+    --shadow:0 1px 2px rgba(16,40,30,.05); --r-panel:10px; --r-kpi:10px;
+    --ticker-bg:#0e2018; --ticker-foot-bg:#0a1810;
+    --tile-bg:linear-gradient(135deg,#12683f,#0e7a4a); --tile-ink:#eefaf3; --tile-k:#b7e6cd; --tile-u:#8fcfae;
+    --brief-bg:#0e2018;
+  }
+  [data-theme="editorial"] .panel h2{letter-spacing:1.3px}
+  /* Deep — saturated greens, green-glow dark surfaces, more depth (premium) */
+  [data-theme="deep"]{
+    --app-bg:radial-gradient(circle at 12% 0%,rgba(34,201,138,.16),transparent 30%),linear-gradient(180deg,#e6f0e9,#f1f7f2);
+    --paper:#f8fcf8; --paper2:#ffffff; --inset:#eef5ef;
+    --ink:#0c1c14; --muted:#536b60; --faint:#869a8f; --line:#cdded3; --line2:#dceae0;
+    --green:#0f9c5e; --green-dark:#0b7a47; --green-soft:rgba(15,156,94,.15);
+    --gold:#d9920f; --red:#e0584d; --blue:#3f86cf;
+    --shadow:0 20px 52px rgba(8,30,18,.17); --r-panel:14px; --r-kpi:14px;
+    --ticker-bg:radial-gradient(circle at 90% 0%,rgba(34,201,138,.26),transparent 42%),#06160f;
+    --ticker-foot-bg:#081d12;
+    --tile-bg:radial-gradient(circle at 80% 14%,rgba(34,201,138,.24),transparent 46%),#06160f;
+    --tile-ink:#eafff4; --tile-k:#86c7a5; --tile-u:#6aa888;
+    --brief-bg:radial-gradient(circle at 86% 12%,rgba(34,201,138,.20),transparent 44%),#06160f;
+  }
+  /* Warm — forest green on cream/ivory paper, gold-forward (earthy commodity) */
+  [data-theme="warm"]{
+    --app-bg:linear-gradient(180deg,#f6f3ea 0%,#fbf9f2 60%);
+    --paper:#fffdf8; --paper2:#fffdf8; --inset:#f6f2e8;
+    --ink:#1d2620; --muted:#6e7264; --faint:#9a9a85; --line:#e6ddcd; --line2:#efe8da;
+    --green:#15803d; --green-dark:#13733a; --green-soft:rgba(21,128,61,.12);
+    --gold:#c2740a; --red:#c0564b; --blue:#4d7fb0;
+    --shadow:0 14px 40px rgba(80,60,30,.11); --r-panel:13px; --r-kpi:13px;
+    --ticker-bg:linear-gradient(90deg,#0c2113,#123a17); --ticker-foot-bg:#0a1c0f;
+    --tile-bg:linear-gradient(135deg,#0f3b22,#123a17); --tile-ink:#f0f7ec; --tile-k:#bcd3a8; --tile-u:#9cb588;
+    --brief-bg:linear-gradient(160deg,#0f3b22,#0c2113);
+  }
   *{margin:0;padding:0;box-sizing:border-box}
   body{background:var(--app-bg);
     color:var(--ink);font-family:var(--sans);line-height:1.45;-webkit-font-smoothing:antialiased;
@@ -76,7 +117,7 @@
   .mono{font-family:var(--mono)}
 
   /* top bar */
-  .bar{display:flex;align-items:center;gap:15px;padding:13px 24px;
+  .bar{display:flex;align-items:center;gap:13px;padding:13px 24px;flex-wrap:wrap;
     background:rgba(251,253,249,.86);backdrop-filter:blur(14px);
     border-bottom:1px solid rgba(196,213,203,.82);position:sticky;top:0;z-index:30}
   .logo{width:34px;height:34px;border-radius:9px;background:var(--forest);
@@ -94,8 +135,8 @@
     padding:7px 14px;cursor:pointer;font-weight:700;font-family:var(--sans)}
   .themeseg{display:inline-flex;gap:3px;background:var(--inset);border:1px solid var(--line);
     border-radius:999px;padding:3px;flex:0 0 auto}
-  .themeseg button{border:none;background:transparent;font-size:11px;font-weight:700;color:var(--muted);
-    padding:5px 11px;border-radius:999px;cursor:pointer;font-family:var(--sans)}
+  .themeseg button{border:none;background:transparent;font-size:10.5px;font-weight:700;color:var(--muted);
+    padding:5px 9px;border-radius:999px;cursor:pointer;font-family:var(--sans)}
   .themeseg button.on{background:var(--green-dark);color:#fff}
   .illus{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.5px;
     color:#b13d35;background:rgba(237,103,93,.12);border:1px solid rgba(237,103,93,.3);
@@ -138,8 +179,8 @@
   .ticker-foot .gap{flex:1}
   .ticker-foot .live{color:var(--green)}
 
-  .wrap{max-width:1340px;margin:0 auto;padding:20px 24px;display:grid;
-    grid-template-columns:320px 1fr;gap:18px;align-items:start}
+  .wrap{max-width:none;margin:0 auto;padding:20px 30px;display:grid;
+    grid-template-columns:330px minmax(0,1fr);gap:20px;align-items:start}
   @media(max-width:1000px){.wrap{grid-template-columns:1fr}}
 
   .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-panel);padding:17px;box-shadow:var(--shadow)}
@@ -308,8 +349,11 @@
   </div>
   <div class="spacer"></div>
   <span class="illus" title="All figures are illustrative placeholders until validated against FY2025 actuals">● Illustrative data</span>
-  <div class="themeseg" id="themeSeg" title="Explore light design themes">
+  <div class="themeseg" id="themeSeg" title="Explore design themes — Forest / Editorial / Deep / Warm are forest iterations">
     <button data-t="forest" class="on">Forest</button>
+    <button data-t="editorial">Editorial</button>
+    <button data-t="deep">Deep</button>
+    <button data-t="warm">Warm</button>
     <button data-t="fintech">Fintech</button>
     <button data-t="terminal">Terminal</button>
   </div>
@@ -734,8 +778,10 @@ function drawWaterfall(cv, res, floorT){
   // board floor line
   if(floorT!=null){ const fy=y(floorT); x.strokeStyle='#d9920f'; x.lineWidth=1.3; x.setLineDash([5,4]);
     x.beginPath(); x.moveTo(padL,fy); x.lineTo(w-padR,fy); x.stroke(); x.setLineDash([]);
-    x.fillStyle='#b07d10'; x.font='9.5px IBM Plex Mono, monospace'; x.textAlign='left';
-    x.fillText('Board floor '+(+floorT).toFixed(1), padL+2, fy-4); }
+    const fl='Board floor '+(+floorT).toFixed(1); x.font='9.5px IBM Plex Mono, monospace'; x.textAlign='left';
+    const tw=x.measureText(fl).width;
+    x.fillStyle='rgba(255,255,255,.82)'; x.fillRect(padL,fy-15,tw+8,13);
+    x.fillStyle='#b07d10'; x.fillText(fl, padL+4, fy-5); }
   x.textAlign='center';
   for(let i=0;i<steps.length;i++){
     const s=steps[i], [a,b]=tops[i], up=s.v>=0, xx=padL+i*(bw+gap);
