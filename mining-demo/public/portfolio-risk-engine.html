@@ -17,11 +17,59 @@
     --gold:#d9920f; --red:#dc5a50; --blue:#3f86cf; --violet:#7d6be0;
     --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'Inter',system-ui,sans-serif;
     --shadow:0 14px 44px rgba(8,24,17,.10);
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:
+    /* themeable tokens (overridden by [data-theme=…]) */
+    --r-panel:13px; --r-kpi:13px;
+    --app-bg:
       radial-gradient(circle at 8% 0%, rgba(34,201,138,.10), transparent 28%),
       linear-gradient(180deg,#edf5ee 0%,#f8fbf7 42%,#eef4ef 100%);
+    --ticker-bg:radial-gradient(circle at 92% 0%,rgba(34,201,138,.10),transparent 40%),var(--forest);
+    --ticker-foot-bg:var(--forest2);
+    --tile-bg:radial-gradient(circle at 84% 16%,rgba(34,201,138,.14),transparent 42%),var(--forest);
+    --tile-ink:#f4fbf7; --tile-k:#9fb4aa; --tile-u:#7f968c; --tile-border:transparent;
+    --brief-bg:radial-gradient(circle at 88% 12%,rgba(34,201,138,.10),transparent 40%),var(--forest);
+  }
+
+  /* ───────── THEME: Soft fintech cards ───────── */
+  [data-theme="fintech"]{
+    --app-bg:linear-gradient(180deg,#f4f8f6 0%,#fbfdfc 60%,#f4f8f6 100%);
+    --paper:#ffffff; --paper2:#ffffff; --inset:#f4f7f6;
+    --ink:#0f1f1a; --muted:#5b6b66; --faint:#93a39c; --line:#e8edeb; --line2:#eef2f0;
+    --green:#10b981; --green-dark:#059669; --green-soft:rgba(16,185,129,.12);
+    --gold:#e0930f; --red:#ef5d54; --blue:#3f86cf; --violet:#7d6be0;
+    --shadow:0 16px 40px rgba(16,40,32,.10);
+    --r-panel:18px; --r-kpi:16px;
+    --ticker-bg:linear-gradient(90deg,#0f1c2b,#11212f); --ticker-foot-bg:#0c1822;
+    --tile-bg:linear-gradient(135deg,#059669,#0f766e); --tile-ink:#ecfdf5; --tile-k:#a7f3d0; --tile-u:#6ee7b7;
+    --brief-bg:linear-gradient(160deg,#10202f,#0c1822);
+  }
+  [data-theme="fintech"] .sig,[data-theme="fintech"] .lever{border-radius:14px}
+  [data-theme="fintech"] .kpi{box-shadow:0 16px 40px rgba(16,40,32,.09)}
+
+  /* ───────── THEME: Data terminal (light) ───────── */
+  [data-theme="terminal"]{
+    --app-bg:#edf0ed;
+    --paper:#ffffff; --paper2:#ffffff; --inset:#f3f5f2;
+    --ink:#14201b; --muted:#586259; --faint:#8a948d; --line:#d6dbd6; --line2:#e2e6e1;
+    --green:#16a34a; --green-dark:#15803d; --green-soft:rgba(22,163,74,.12);
+    --gold:#c2740a; --red:#dc2626; --blue:#2563eb; --violet:#7c3aed;
+    --shadow:none; --r-panel:5px; --r-kpi:5px;
+    --ticker-bg:#10201a; --ticker-foot-bg:#0c1812;
+    --tile-bg:#10201a; --tile-ink:#eafff4; --tile-k:#8fb3a3; --tile-u:#6f8d80; --tile-border:#1c2c24;
+    --brief-bg:#10201a;
+  }
+  [data-theme="terminal"] .panel{box-shadow:none;border:1px solid var(--line)}
+  [data-theme="terminal"] .kpi{box-shadow:none}
+  [data-theme="terminal"] .panel,[data-theme="terminal"] .kpi,[data-theme="terminal"] .sig,
+  [data-theme="terminal"] .lever,[data-theme="terminal"] .preset,[data-theme="terminal"] .reset,
+  [data-theme="terminal"] .optbtn,[data-theme="terminal"] .tourbtn,[data-theme="terminal"] .themeseg,
+  [data-theme="terminal"] .seg button,[data-theme="terminal"] .ctrl input[type=range]{border-radius:4px}
+  [data-theme="terminal"] .themeseg button,[data-theme="terminal"] .nav a,[data-theme="terminal"] .bar .links a{border-radius:4px}
+  [data-theme="terminal"] .tag,[data-theme="terminal"] .sig-tag,[data-theme="terminal"] .badge{border-radius:3px}
+  [data-theme="terminal"] .kpi .v,[data-theme="terminal"] .sig-l,[data-theme="terminal"] .ctrl label,
+  [data-theme="terminal"] th,[data-theme="terminal"] .lever .a{font-family:var(--mono);letter-spacing:-.2px}
+  [data-theme="terminal"] .panel h2{letter-spacing:.6px}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--app-bg);
     color:var(--ink);font-family:var(--sans);line-height:1.45;-webkit-font-smoothing:antialiased;
     min-height:100vh;padding-bottom:54px}
   a{color:inherit;text-decoration:none}
@@ -44,12 +92,17 @@
   .bar .links a:hover{background:#edf5ef;border-color:var(--line);color:var(--forest)}
   .tourbtn{font-size:12px;color:#fff;background:var(--green-dark);border:none;border-radius:999px;
     padding:7px 14px;cursor:pointer;font-weight:700;font-family:var(--sans)}
+  .themeseg{display:inline-flex;gap:3px;background:var(--inset);border:1px solid var(--line);
+    border-radius:999px;padding:3px;flex:0 0 auto}
+  .themeseg button{border:none;background:transparent;font-size:11px;font-weight:700;color:var(--muted);
+    padding:5px 11px;border-radius:999px;cursor:pointer;font-family:var(--sans)}
+  .themeseg button.on{background:var(--green-dark);color:#fff}
   .illus{display:inline-flex;align-items:center;gap:6px;font-size:10px;font-weight:800;letter-spacing:.5px;
     color:#b13d35;background:rgba(237,103,93,.12);border:1px solid rgba(237,103,93,.3);
     border-radius:999px;padding:5px 10px;text-transform:uppercase}
 
   /* market-signals ticker */
-  .ticker{background:radial-gradient(circle at 92% 0%,rgba(34,201,138,.10),transparent 40%),var(--forest);
+  .ticker{background:var(--ticker-bg);
     border-bottom:1px solid rgba(34,201,138,.16);padding:9px 14px;overflow-x:auto}
   .ticker::-webkit-scrollbar{height:6px}
   .ticker::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:999px}
@@ -78,7 +131,7 @@
   .sig-chg{font-family:var(--mono);font-size:10px;font-weight:700}
   .sig-chg.up{color:#22c98a}.sig-chg.dn{color:#ed675d}
   .spark{width:42px;height:15px;flex:0 0 auto}
-  .ticker-foot{background:var(--forest2);border-bottom:1px solid rgba(196,213,203,.14);
+  .ticker-foot{background:var(--ticker-foot-bg);border-bottom:1px solid rgba(196,213,203,.14);
     display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:6px 16px;
     font-family:var(--mono);font-size:10px;color:#7f968c;letter-spacing:.3px}
   .ticker-foot b{color:#b8c9c1;font-weight:600}
@@ -89,7 +142,7 @@
     grid-template-columns:320px 1fr;gap:18px;align-items:start}
   @media(max-width:1000px){.wrap{grid-template-columns:1fr}}
 
-  .panel{background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:17px;box-shadow:var(--shadow)}
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-panel);padding:17px;box-shadow:var(--shadow)}
   .panel h2{font-size:10.5px;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);
     margin-bottom:13px;font-weight:800;display:flex;align-items:center;gap:8px}
   .panel h2 .grp{margin-left:auto;font-size:9.5px;color:var(--faint);letter-spacing:.6px;font-weight:700}
@@ -129,16 +182,15 @@
   /* KPIs */
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:13px;margin-bottom:16px}
   @media(max-width:760px){.kpis{grid-template-columns:repeat(2,1fr)}}
-  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:13px;padding:14px 15px;position:relative;
+  .kpi{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-kpi);padding:14px 15px;position:relative;
     overflow:hidden;box-shadow:var(--shadow)}
   .kpi .k{font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:700}
   .kpi .v{font-family:var(--mono);font-size:24px;font-weight:700;margin-top:8px;letter-spacing:-.5px}
   .kpi .u{font-size:10.5px;color:var(--faint);margin-top:3px}
   .kpi .delta{font-family:var(--mono);font-size:10.5px;margin-top:5px;font-weight:700;min-height:14px}
   .kpi .strip{position:absolute;left:0;top:0;bottom:0;width:3px}
-  .kpi.dark{background:radial-gradient(circle at 84% 16%,rgba(34,201,138,.14),transparent 42%),var(--forest);
-    border-color:transparent}
-  .kpi.dark .k{color:#9fb4aa}.kpi.dark .v{color:#f4fbf7}.kpi.dark .u{color:#7f968c}
+  .kpi.dark{background:var(--tile-bg);border-color:var(--tile-border)}
+  .kpi.dark .k{color:var(--tile-k)}.kpi.dark .v{color:var(--tile-ink)}.kpi.dark .u{color:var(--tile-u)}
 
   .mitbar{background:linear-gradient(90deg,rgba(217,146,15,.10),transparent);border:1px solid rgba(217,146,15,.32);
     border-radius:11px;padding:11px 15px;margin-bottom:16px;font-size:12.5px;color:var(--ink);display:none}
@@ -201,7 +253,7 @@
   .optbox b{color:var(--green)}
 
   /* board brief */
-  .brief{background:radial-gradient(circle at 88% 12%,rgba(34,201,138,.10),transparent 40%),var(--forest);
+  .brief{background:var(--brief-bg);
     border-color:transparent;color:#eaf4ee}
   .brief h2{color:#9fb4aa}
   .brief .badges{display:flex;gap:8px;margin:4px 0 12px;flex-wrap:wrap}
@@ -256,6 +308,11 @@
   </div>
   <div class="spacer"></div>
   <span class="illus" title="All figures are illustrative placeholders until validated against FY2025 actuals">● Illustrative data</span>
+  <div class="themeseg" id="themeSeg" title="Explore light design themes">
+    <button data-t="forest" class="on">Forest</button>
+    <button data-t="fintech">Fintech</button>
+    <button data-t="terminal">Terminal</button>
+  </div>
   <div class="links">
     <button class="tourbtn" id="tourBtn">★ Guided tour</button>
     <a href="/portfolio-risk-prd.html">PRD</a>
@@ -980,7 +1037,19 @@ function renderTicker(){
     </div>`;}).join('');
 }
 
-renderTicker(); renderLevers(); syncLabels(); run();
+/* ── light-theme switcher (explore design options) ──────────────── */
+function setTheme(t){
+  if(t==='forest') document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme',t);
+  document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  try{localStorage.setItem('preTheme',t);}catch(e){}
+  if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run);   // redraw canvases to new metrics
+}
+document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.t)));
+let _savedTheme='forest'; try{_savedTheme=localStorage.getItem('preTheme')||'forest';}catch(e){}
+
+renderTicker(); renderLevers(); syncLabels();
+if(_savedTheme!=='forest') setTheme(_savedTheme); else run();
 
 /* ── guided tour ────────────────────────────────────────────────── */
 const TOUR=[
