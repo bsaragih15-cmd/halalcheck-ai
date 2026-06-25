@@ -554,6 +554,56 @@
   .reco-empty{font-size:11.5px;color:var(--muted);padding:9px;border:1px dashed var(--line);border-radius:9px}
   .reco-foot{font-size:10px;font-family:var(--mono);color:var(--faint);margin-top:9px;line-height:1.4}
   .reco-armed{font-size:11px;font-family:var(--mono);color:var(--green-dark);margin-top:8px}
+  /* ── maturity tabs ── */
+  .vtabs{display:flex;gap:6px;margin-bottom:16px}
+  .vtab{display:flex;align-items:center;gap:8px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--muted);font-weight:800;font-size:13px;padding:9px 16px;border-radius:11px;letter-spacing:.2px}
+  .vtab .vt-n{font-family:var(--mono);font-size:10px;font-weight:700;opacity:.6;background:var(--inset);padding:2px 6px;border-radius:6px}
+  .vtab:hover{color:var(--ink)}
+  .vtab.on{background:var(--green-soft);border-color:var(--green);color:var(--green-dark)}
+  .vtab.on .vt-n{background:var(--green);color:#fff;opacity:1}
+  [data-theme="neo"] .vtab.on{box-shadow:0 0 16px rgba(47,224,192,.22)}
+  .monitor-view.lhide{display:none}
+  /* ── monitor snapshot ── */
+  .msnapshot{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:760px){.msnapshot{grid-template-columns:repeat(2,1fr)}}
+  .mkpi{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:14px 15px;box-shadow:var(--shadow)}
+  .mk-l{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+  .mk-v{font-size:25px;font-weight:800;font-family:var(--mono);margin:5px 0 2px;letter-spacing:-.5px}
+  .mk-s{font-size:11px;color:var(--muted)}
+  /* ── scorecard ── */
+  .score-head,.sr-head{display:grid;grid-template-columns:1.4fr .9fr 1fr .9fr 2fr .9fr;gap:10px;align-items:center}
+  .score-head{font-size:9.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--faint);padding:0 10px 8px;border-bottom:1px solid var(--line);margin-top:6px}
+  .scard-row{border:1px solid var(--line);border-radius:11px;background:var(--inset);margin-top:9px;overflow:hidden;transition:border-color .15s}
+  .scard-row.open{border-color:var(--green)}
+  .sr-head{padding:11px 10px;cursor:pointer}
+  .sr-id{display:flex;align-items:center;gap:8px;font-weight:800;font-size:13.5px}
+  .sr-id small{display:block;font-weight:600;font-size:10px;color:var(--muted);margin-top:1px}
+  .sr-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .sr-m{display:flex;flex-direction:column;gap:3px}
+  .sr-mv{font-size:13px;font-weight:800;font-family:var(--mono)}
+  .sr-bar{height:4px;border-radius:3px;background:var(--line);overflow:hidden}
+  .sr-bar span{display:block;height:100%;border-radius:3px}
+  .sr-ops{display:flex;flex-wrap:wrap;gap:5px}
+  .opchip{font-size:10px;font-weight:700;padding:3px 7px;border-radius:6px;border:1px solid var(--line);white-space:nowrap}
+  .sr-stat{justify-self:start;font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:5px 11px;border-radius:999px}
+  .sr-detail{display:none;padding:4px 14px 14px;border-top:1px solid var(--line);background:var(--paper)}
+  .scard-row.open .sr-detail{display:block}
+  .sr-dgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 16px;margin:12px 0}
+  .sr-d{font-size:11px}
+  .sr-d .dl{display:flex;justify-content:space-between;margin-bottom:3px}
+  .sr-d .dl b{font-family:var(--mono)}
+  .sr-d .conf{font-size:8.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:var(--faint)}
+  .sr-note{font-size:11.5px;color:var(--muted);line-height:1.5;margin:4px 0 12px}
+  .sr-acts{display:flex;gap:8px;flex-wrap:wrap}
+  .sr-btn{cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:11px;font-weight:700;padding:7px 12px;border-radius:8px}
+  .sr-btn:hover{border-color:var(--green);color:var(--green-dark)}
+  .sr-btn.flagged{background:var(--gold);border-color:var(--gold);color:#1a1205}
+  /* ── flags rail card ── */
+  .crail-card.flags .flag-row{display:flex;gap:9px;align-items:start;padding:8px 0;border-top:1px solid var(--line)}
+  .crail-card.flags .flag-row:first-of-type{border-top:none}
+  .fl-dot{width:9px;height:9px;border-radius:50%;margin-top:4px;flex:0 0 auto}
+  .fl-id{font-size:12px;font-weight:800}
+  .fl-why{font-size:10.5px;color:var(--muted);line-height:1.4}
   .reco-btn{margin-top:11px;width:100%;cursor:pointer;border:none;background:var(--green);color:#fff;font-weight:800;font-size:12px;padding:9px;border-radius:9px;letter-spacing:.2px}
   .crail-card.reco.warn .reco-btn{background:var(--gold)} .crail-card.reco.bad .reco-btn{background:var(--red)}
   [data-theme="neo"] .reco-btn{box-shadow:0 0 16px rgba(47,224,192,.3)}
@@ -701,6 +751,7 @@
   <!-- ── right rail: scenario controls + driver copilot ───────── -->
   <aside class="crail" id="crail">
     <div class="crail-card reco" id="recoCard"></div>
+    <div class="crail-card flags" id="flagsCard" style="display:none"></div>
     <div class="crail-card cop">
       <div class="crail-h">Driver Copilot <span class="cop-badge">model-aware</span></div>
       <div class="cop-feed" id="copFeed"></div>
@@ -709,10 +760,27 @@
     </div>
   </aside>
 
-  <!-- ── stage: scenario strip + layer sections ──────────────── -->
+  <!-- ── stage: maturity tabs + views ─────────────────────────── -->
   <main class="stage">
 
-    <!-- scenario controls — top of the card -->
+    <!-- maturity-ladder tab switcher -->
+    <div class="vtabs" id="vtabs">
+      <button class="vtab" data-v="monitor"><span class="vt-n">01</span>Monitor</button>
+      <button class="vtab on" data-v="cash"><span class="vt-n">03</span>Cash &amp; Scenarios</button>
+    </div>
+
+    <!-- MONITOR view (Stage 01) -->
+    <div id="monitorView" class="monitor-view lhide">
+      <div class="lhead"><h2 class="lh">Subsidiary scorecard</h2><div class="lhsub">Actuals vs plan across finance and key operations. Status is <b>worst-of</b> — any red metric flags the subsidiary.</div></div>
+      <div class="msnapshot" id="monSnapshot"></div>
+      <div class="panel" style="margin-top:16px">
+        <h2>Subsidiary scorecard <span class="grp">YTD vs plan · illustrative</span></h2>
+        <div class="score-head"><span>Subsidiary</span><span>EBITDA</span><span>Dividend up</span><span>Leverage</span><span>Key operations</span><span>Status</span></div>
+        <div id="monScore"></div>
+      </div>
+    </div>
+
+    <!-- scenario controls — top of the Cash & Scenarios view -->
     <div class="scenbar" id="scenbar">
       <div class="scenbar-head">
         <span class="crail-h" style="margin:0">Scenario <span class="cop-badge" id="scopeChip">CONSOLIDATED</span></span>
@@ -804,6 +872,37 @@ const SUBS = [
     beta:[ 0.55, 1.00, 0.40, -0.10, -0.05, -0.60], driver:'tin price & offshore mining cost' },
 ];
 const FREEPORT = { id:'Freeport', commodity:'Copper · gold (JV)', note:'JV — excluded from quantified cash' };
+
+// ── Monitor (Stage 01): illustrative actuals vs plan, finance + key ops ──
+// ops dir: 'up' = higher is better, 'down' = lower is better.
+const SUBMON = [
+  { id:'PTBA', commodity:'Thermal coal',
+    ebitda:{a:7.4,p:7.7,conf:'illustrative'}, div:{a:1.8,p:1.9,conf:'management'}, lev:{a:1.1,thr:2.5,conf:'reported'},
+    ops:[ {l:'Coal output',a:31.0,p:31.5,u:'Mt',dir:'up',conf:'reported'},
+          {l:'Cash cost',a:74,p:70,u:'$/t',dir:'down',conf:'derived'},
+          {l:'Realized vs ICI',a:98,p:100,u:'%',dir:'up',conf:'derived'},
+          {l:'DMO compliance',a:100,p:100,u:'%',dir:'up',conf:'reported'} ],
+    note:'Cash-cost creep on higher stripping ratio; volumes and DMO on plan.' },
+  { id:'Antam', commodity:'Gold · nickel · bauxite',
+    ebitda:{a:6.5,p:7.1,conf:'illustrative'}, div:{a:1.0,p:1.0,conf:'management'}, lev:{a:0.6,thr:2.5,conf:'reported'},
+    ops:[ {l:'Gold',a:101,p:100,u:'%plan',dir:'up',conf:'reported'},
+          {l:'Ferronickel',a:92,p:100,u:'%plan',dir:'up',conf:'reported'},
+          {l:'Nickel ore',a:99,p:100,u:'%plan',dir:'up',conf:'derived'} ],
+    note:'Ferronickel below plan on furnace downtime; gold cushions earnings, dividend on track.' },
+  { id:'Inalum', commodity:'Aluminium',
+    ebitda:{a:4.0,p:4.5,conf:'illustrative'}, div:{a:0.9,p:1.2,conf:'management'}, lev:{a:1.8,thr:2.5,conf:'reported'},
+    ops:[ {l:'Aluminium output',a:94,p:100,u:'%plan',dir:'up',conf:'reported'},
+          {l:'Smelter utilisation',a:95,p:100,u:'%',dir:'up',conf:'reported'},
+          {l:'Power cost',a:114,p:100,u:'%plan',dir:'down',conf:'derived'} ],
+    note:'Power-cost spike compresses margin and forces dividend below plan — the binding red.' },
+  { id:'Timah', commodity:'Tin',
+    ebitda:{a:1.3,p:1.25,conf:'illustrative'}, div:{a:0.3,p:0.3,conf:'management'}, lev:{a:0.9,thr:2.5,conf:'reported'},
+    ops:[ {l:'Tin metal',a:106,p:100,u:'%plan',dir:'up',conf:'reported'},
+          {l:'Ore grade',a:100,p:100,u:'%plan',dir:'up',conf:'derived'},
+          {l:'Cash cost',a:98,p:100,u:'%plan',dir:'down',conf:'derived'} ],
+    note:'Ahead of plan on firm tin price and volumes.' },
+];
+const FREEMON = { id:'Freeport', commodity:'Copper · gold (JV)', note:'JV — visibility only, excluded from quantified cash.' };
 
 // Holding obligations (Rp T). management = assumption; reported/illustrative tagged in UI.
 const HOLD = {
@@ -1829,8 +1928,104 @@ function renderReco(){
   const b=document.getElementById('recoArm'); if(b) b.addEventListener('click',()=>{ recommendPackage(); });
 }
 
+/* ── Monitor view (Stage 01): subsidiary scorecard + snapshot ─────────── */
+const RAGC=['var(--green-dark)','var(--gold)','var(--red)'], RAGN=['On plan','Watch','Act'], RAGBG=['rgba(34,201,138,.14)','rgba(229,170,62,.16)','rgba(220,90,80,.16)'];
+const _flagged=new Set();
+function ragLevel(a,p,dir){ if(!p)return 0; const r=a/p;
+  if(dir==='down') return r<=1.001?0:r<=1.10?1:2;
+  return r>=0.98?0:r>=0.90?1:2; }
+function ragLev(a,thr){ return a<thr*0.6?0:a<thr?1:2; }      // leverage: lower is better
+function subStatus(s){ let w=Math.max(ragLevel(s.ebitda.a,s.ebitda.p,'up'),ragLevel(s.div.a,s.div.p,'up'),ragLev(s.lev.a,s.lev.thr));
+  s.ops.forEach(o=>{ w=Math.max(w,ragLevel(o.a,o.p,o.dir)); }); return w; }
+function bindingMetric(s){ // the worst metric, for the "why"
+  const items=[['EBITDA',ragLevel(s.ebitda.a,s.ebitda.p,'up')],['Dividend',ragLevel(s.div.a,s.div.p,'up')],['Leverage',ragLev(s.lev.a,s.lev.thr)],
+    ...s.ops.map(o=>[o.l,ragLevel(o.a,o.p,o.dir)])]; items.sort((x,y)=>y[1]-x[1]); return items[0]; }
+const pctOf=(a,p)=>Math.round(a/p*100);
+function metricCell(lbl,val,lvl){ return `<div class="sr-m"><span class="sr-mv" style="color:${RAGC[lvl]}">${val}</span>`+
+  `<span class="sr-bar"><span style="width:${Math.min(100,Math.max(8,lvl===0?100:lvl===1?60:30))}%;background:${RAGC[lvl]}"></span></span></div>`; }
+function renderMonitor(){
+  const snap=document.getElementById('monSnapshot'), host=document.getElementById('monScore'); if(!host)return;
+  const sumA=k=>SUBMON.reduce((x,s)=>x+s[k].a,0), sumP=k=>SUBMON.reduce((x,s)=>x+s[k].p,0);
+  const ebA=sumA('ebitda'),ebP=sumP('ebitda'),dvA=sumA('div'),dvP=sumP('div');
+  const grpLev=SUBMON.reduce((x,s)=>x+s.lev.a*s.ebitda.a,0)/ebA;
+  const stat=SUBMON.map(subStatus), reds=stat.filter(x=>x===2).length, ambers=stat.filter(x=>x===1).length;
+  const ebL=ragLevel(ebA,ebP,'up'), dvL=ragLevel(dvA,dvP,'up'), lvL=ragLev(grpLev,2.5);
+  const kpi=(l,v,s,lvl)=>`<div class="mkpi"><div class="mk-l">${l}</div><div class="mk-v" style="color:${RAGC[lvl]}">${v}</div><div class="mk-s">${s}</div></div>`;
+  if(snap) snap.innerHTML =
+    kpi('Group EBITDA YTD',`${pctOf(ebA,ebP)}%`,`Rp ${ebA.toFixed(1)}T vs ${ebP.toFixed(1)}T plan`,ebL)+
+    kpi('Dividends upstreamed',`${pctOf(dvA,dvP)}%`,`Rp ${dvA.toFixed(1)}T vs ${dvP.toFixed(1)}T plan`,dvL)+
+    kpi('Group leverage',`${grpLev.toFixed(1)}×`,`ND / EBITDA · cap 2.5×`,lvL)+
+    kpi('Flags',`${reds} red · ${ambers} amber`,reds?'subsidiaries need action':'no red subsidiaries',reds?2:ambers?1:0);
+  host.innerHTML=SUBMON.map((s,i)=>{
+    const w=subStatus(s), ebl=ragLevel(s.ebitda.a,s.ebitda.p,'up'), dvl=ragLevel(s.div.a,s.div.p,'up'), lvl=ragLev(s.lev.a,s.lev.thr);
+    const opchips=s.ops.map(o=>{const ol=ragLevel(o.a,o.p,o.dir);
+      return `<span class="opchip" style="color:${RAGC[ol]};border-color:${RAGC[ol]}55">${o.l} ${o.u==='%plan'?pctOf(o.a,o.p)+'%':o.a+(o.u==='%'?'%':' '+o.u)}</span>`;}).join('');
+    const detail=`<div class="sr-dgrid">`+
+      [['EBITDA',`Rp ${s.ebitda.a.toFixed(1)}T / ${s.ebitda.p.toFixed(1)}T`,s.ebitda.conf,ebl],
+       ['Dividend upstreamed',`Rp ${s.div.a.toFixed(1)}T / ${s.div.p.toFixed(1)}T`,s.div.conf,dvl],
+       ['Leverage (ND/EBITDA)',`${s.lev.a.toFixed(1)}× · cap ${s.lev.thr}×`,s.lev.conf,lvl],
+       ...s.ops.map(o=>[o.l,`${o.a}${o.u==='%plan'?' (vs '+o.p+' plan)':' '+o.u} `,o.conf,ragLevel(o.a,o.p,o.dir)])]
+      .map(d=>`<div class="sr-d"><div class="dl"><span>${d[0]}</span><b style="color:${RAGC[d[3]]}">${d[1]}</b></div><div class="conf">${d[2]}</div></div>`).join('')+
+      `</div><div class="sr-note">${s.note}</div>`+
+      `<div class="sr-acts"><button class="sr-btn ${_flagged.has(s.id)?'flagged':''}" data-flag="${s.id}">${_flagged.has(s.id)?'✓ Flagged for board review':'⚑ Request explanation'}</button>`+
+      `<button class="sr-btn" data-ask="${s.id}">Ask Copilot why</button></div>`;
+    return `<div class="scard-row" data-i="${i}">
+      <div class="sr-head">
+        <div class="sr-id"><span class="sr-dot" style="background:${SUBCOL[s.id]}"></span><div>${s.id}<small>${s.commodity}</small></div></div>
+        ${metricCell('EBITDA',pctOf(s.ebitda.a,s.ebitda.p)+'%',ebl)}
+        ${metricCell('Dividend',`${s.div.a.toFixed(1)}/${s.div.p.toFixed(1)}T`,dvl)}
+        ${metricCell('Leverage',s.lev.a.toFixed(1)+'×',lvl)}
+        <div class="sr-ops">${opchips}</div>
+        <div class="sr-stat" style="color:${RAGC[w]};background:${RAGBG[w]}">${RAGN[w]}</div>
+      </div>
+      <div class="sr-detail">${detail}</div></div>`;
+  }).join('')+
+    `<div class="scard-row" style="opacity:.6"><div class="sr-head" style="cursor:default">
+      <div class="sr-id"><span class="sr-dot" style="background:#7d6be0"></span><div>${FREEMON.id}<small>${FREEMON.commodity}</small></div></div>
+      <div class="sr-m" style="grid-column:2/6;font-size:11px;color:var(--muted)">${FREEMON.note}</div>
+      <div class="sr-stat" style="color:var(--faint);background:var(--inset)">JV</div></div></div>`;
+  // interactions
+  host.querySelectorAll('.scard-row[data-i]').forEach(el=>{
+    el.querySelector('.sr-head').addEventListener('click',()=>el.classList.toggle('open'));
+  });
+  host.querySelectorAll('[data-flag]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
+    const id=b.dataset.flag, on=_flagged.has(id);                 // update in place — keep the row open
+    if(on){_flagged.delete(id);b.classList.remove('flagged');b.textContent='⚑ Request explanation';}
+    else {_flagged.add(id);b.classList.add('flagged');b.textContent='✓ Flagged for board review';}
+    renderFlags(); }));
+  host.querySelectorAll('[data-ask]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();
+    const s=SUBMON.find(x=>x.id===b.dataset.ask), bm=bindingMetric(s);
+    if(typeof copPush==='function'){ copPush('me',`Why is ${s.id} ${RAGN[subStatus(s)].toLowerCase()}?`);
+      setTimeout(()=>copPush('ai',`${s.id} is <b>${RAGN[subStatus(s)]}</b> on a worst-of read: the binding metric is <b>${bm[0]}</b> (${RAGN[bm[1]]}). ${s.note} Dividend upstreamed is Rp ${s.div.a.toFixed(1)}T vs ${s.div.p.toFixed(1)}T plan.`),140); } }));
+  renderFlags();
+}
+function renderFlags(){
+  const host=document.getElementById('flagsCard'); if(!host)return;
+  const flagged=SUBMON.map(s=>({s,w:subStatus(s)})).filter(x=>x.w>0).sort((a,b)=>b.w-a.w);
+  const rows=flagged.map(({s,w})=>{const bm=bindingMetric(s);
+    return `<div class="flag-row"><span class="fl-dot" style="background:${RAGC[w]}"></span>`+
+      `<div><div class="fl-id" style="color:${RAGC[w]}">${s.id} · ${RAGN[w]}</div>`+
+      `<div class="fl-why">${bm[0]} ${RAGN[bm[1]].toLowerCase()}${_flagged.has(s.id)?' · ⚑ flagged':''}</div></div></div>`;}).join('');
+  host.innerHTML=`<div class="crail-h">Flags &amp; actions <span class="cop-badge">${flagged.length} open</span></div>`+
+    (rows||`<div class="reco-body">All subsidiaries on plan.</div>`)+
+    `<div class="reco-body" style="margin-top:10px">Worst-of status — open a row in the scorecard to request an explanation or ask the Copilot why.</div>`;
+}
+/* ── view switcher (maturity tabs) ─────────────────────────────────── */
+let activeView='cash';
+function setView(v){
+  activeView=v; const cash=v==='cash';
+  document.querySelectorAll('#vtabs .vtab').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  document.getElementById('scenbar').style.display=cash?'':'none';
+  document.querySelector('.layer[data-layer=ops]').classList.toggle('lhide',!cash);
+  document.getElementById('monitorView').classList.toggle('lhide',cash);
+  document.getElementById('recoCard').style.display=cash?'':'none';
+  const fc=document.getElementById('flagsCard'); if(fc)fc.style.display=cash?'none':'';
+  if(cash){ if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run); } else renderMonitor();
+}
+document.querySelectorAll('#vtabs .vtab').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.v)));
+
 renderTicker(); renderLevers(); renderFilters(); renderPresetCards(); syncLabels();
-renderRail(); setLayer('ops'); initPresetSel(); copInit();
+renderRail(); setLayer('ops'); initPresetSel(); copInit(); renderMonitor(); setView('monitor');
 document.getElementById('moreBtn').addEventListener('click',function(){
   const m=document.getElementById('scenbarMore'), open=m.hasAttribute('hidden');
   if(open) m.removeAttribute('hidden'); else m.setAttribute('hidden','');
