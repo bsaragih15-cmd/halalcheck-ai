@@ -503,10 +503,9 @@
   .embed aside{top:14px}
 
   /* ════ CEO Cockpit shell ════ */
-  .app{display:grid;grid-template-columns:228px minmax(0,1fr) 326px;align-items:start;gap:0;max-width:none}
-  .rail{grid-column:1;grid-row:1} .stage{grid-column:2;grid-row:1} .crail{grid-column:3;grid-row:1}
-  @media(max-width:1180px){.app{grid-template-columns:212px minmax(0,1fr)}.crail{grid-column:1/-1;grid-row:2;height:auto;position:static;border-left:none;border-top:1px solid var(--line)}}
-  @media(max-width:760px){.app{grid-template-columns:1fr}.rail{grid-column:1;position:static;min-height:0}.stage{grid-column:1;grid-row:2}.crail{grid-row:3}}
+  .app{display:grid;grid-template-columns:minmax(0,1fr) 326px;align-items:start;gap:0;max-width:none}
+  .stage{grid-column:1;grid-row:1} .crail{grid-column:2;grid-row:1}
+  @media(max-width:1000px){.app{grid-template-columns:1fr}.stage{grid-column:1;grid-row:1}.crail{grid-column:1;grid-row:2;height:auto;position:static;border-left:none;border-top:1px solid var(--line)}}
   /* right rail: scenario controls + driver copilot */
   .crail{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;border-left:1px solid var(--line);background:var(--paper2);padding:16px 14px 40px;display:flex;flex-direction:column;gap:13px}
   .crail-card{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:14px;box-shadow:var(--shadow)}
@@ -670,21 +669,8 @@
   </div>
   <div class="spacer"></div>
   <span class="illus" title="All figures are illustrative placeholders until validated against FY2025 actuals">● Illustrative data</span>
-  <div class="themeseg" id="themeSeg" title="Explore design themes — Forest / Editorial / Deep / Warm are forest iterations">
-    <button data-t="forest">Forest</button>
-    <button data-t="editorial">Editorial</button>
-    <button data-t="deep">Deep</button>
-    <button data-t="warm">Warm</button>
-    <button data-t="fintech">Fintech</button>
-    <button data-t="terminal">Terminal</button>
-    <button data-t="night">Night</button>
-    <button data-t="neo" class="on">Neo</button>
-  </div>
   <div class="links">
     <button class="tourbtn" id="tourBtn">★ Guided tour</button>
-    <a href="/portfolio-risk-prd.html">PRD</a>
-    <a href="/control-tower.html">Control Tower</a>
-    <a href="/index.html#matrix">Value Chain</a>
   </div>
 </div>
 
@@ -711,22 +697,6 @@
 
 <div class="app">
 
-  <!-- ── left rail: scope + layers ────────────────────────────── -->
-  <nav class="rail">
-    <div class="rail-lbl">SCOPE</div>
-    <div class="scopes" id="scopes">
-      <button class="scope-b on" data-scope="group">Consolidated</button>
-      <button class="scope-b" data-scope="PTBA">PTBA · coal</button>
-      <button class="scope-b" data-scope="Antam">Antam · gold·nickel</button>
-      <button class="scope-b" data-scope="Inalum">Inalum · aluminium</button>
-      <button class="scope-b" data-scope="Timah">Timah · tin</button>
-    </div>
-    <div class="rail-lbl" style="margin-top:18px">LAYERS</div>
-    <div class="lnav" id="lnav"></div>
-    <div class="rail-foot">
-      <div class="flow-note"><b>Narrative</b> · External → Stress chain → Operations → Portfolio → Decision</div>
-    </div>
-  </nav>
 
   <!-- ── right rail: scenario controls + driver copilot ───────── -->
   <aside class="crail" id="crail">
@@ -786,77 +756,9 @@
       </div>
     </div>
 
-    <!-- L1 · CEO MODE ───────────────────────────────────────────── -->
-    <section class="layer on" data-layer="ceo">
-      <div class="lhead"><h2 class="lh">Are we okay?</h2><div class="lhsub">One-screen executive verdict — the answer first, the evidence in the layers below.</div></div>
-    <div class="verdict" id="verdict" data-tour="verdict">
-      <div class="vd-left">
-        <div class="vd-eyebrow"><span class="livedot"></span>LIVE MODEL · <span id="vdScn">FY2025 plan</span> · recomputed <span id="vdAsOf">—</span></div>
-        <div class="vd-status" id="vdStatus">—</div>
-        <div class="vd-sub" id="vdSub"></div>
-        <div class="vd-drivers" id="vdDrivers"></div>
-      </div>
-      <div class="vd-right">
-        <div class="vd-prob-row"><span class="vd-prob-lbl">Cash-floor breach probability</span>
-          <span class="vd-prob-n" id="vdProbN">—</span></div>
-        <div class="outcome" id="outcome">
-          <div class="oc-breach" id="ocBreach"><span id="ocBreachT"></span></div>
-          <div class="oc-hold" id="ocHold"><span id="ocHoldT"></span></div>
-        </div>
-        <div class="vd-foot" id="vdFoot"></div>
-      </div>
-    </div>
-
-    <div class="ceo-action" id="ceoAction"></div>
-
-    <div class="kpis" data-tour="kpis">
-      <div class="kpi dark"><div class="strip" style="background:var(--green)"></div>
-        <div class="k" id="kL0">Residual Holding FCF · P50</div><div class="v" id="p50">—</div>
-        <div class="u" id="kU0">Rp T · after upstreaming &amp; obligations</div><div class="delta" id="p50d"></div></div>
-      <div class="kpi"><div class="strip" style="background:var(--gold)"></div>
-        <div class="k" id="kL1">Holding FCF-at-Risk</div><div class="v" id="far" style="color:var(--gold)">—</div>
-        <div class="u" id="kU1">Rp T · base − P10 downside</div><div class="delta" id="fard"></div></div>
-      <div class="kpi"><div class="strip" id="breachStrip" style="background:var(--red)"></div>
-        <div class="k" id="kL2">Cash-floor breach prob.</div><div class="v" id="breach">—</div>
-        <div class="u" id="kU2">paths below board floor</div><div class="delta" id="breachd"></div></div>
-      <div class="kpi"><div class="strip" style="background:var(--blue)"></div>
-        <div class="k" id="kL3">Largest contributor</div><div class="v" id="topc" style="font-size:17px">—</div>
-        <div class="u" id="topcU">driver of downside</div><div class="delta" id="topd"></div></div>
-    </div>
-
-    <div class="sincebar" id="sinceBar"></div>
-    <div class="mitbar" id="mitbar"></div>
-    </section>
-
-    <!-- L2 · EXTERNAL WORLD ──────────────────────────────────────── -->
-    <section class="layer" data-layer="external">
-      <div class="lhead"><h2 class="lh">What's the weather?</h2><div class="lhsub">The two taps that move every Indonesian export — China demand and the rupiah. FX is a natural hedge (USD revenue services USD debt); demand is the real exposure.</div></div>
-      <div class="panel">
-        <h2>Macro drivers <span class="grp">live model state</span></h2>
-        <div id="macroPanel"></div>
-        <div class="note">Set these in the <b>Scenario</b> panel on the right; the market-signals strip above streams the underlying prices that move them.</div>
-      </div>
-      <div class="panel mtop" data-tour="divmap">
-        <h2>Diversification-break map <span class="grp">shared factors → assets</span></h2>
-        <svg id="divmap" viewBox="0 0 520 260" preserveAspectRatio="xMidYMid meet"></svg>
-        <div class="note">Active stress links connect common factors to the assets they hit in the same scenario
-          window. Freeport shows as a dashed JV exposure. When several links converge, diversification is failing.</div>
-      </div>
-    </section>
-
-    <!-- L3 · THESIS STRESS CHAIN ─────────────────────────────────── -->
-    <section class="layer" data-layer="thesis">
-      <div class="lhead"><h2 class="lh">How does a shock reach the verdict?</h2><div class="lhsub">Watch China demand and the rupiah transmit through the assets, dividends and debt to the board cash floor.</div></div>
-      <div class="panel">
-        <h2>Thesis stress chain <span class="grp" id="scnPill2">—</span></h2>
-        <div class="stresschain" id="stressChain"></div>
-        <div class="note" id="stressNote"></div>
-      </div>
-    </section>
-
-    <!-- L4 · OPERATIONS ──────────────────────────────────────────── -->
+    <!-- CASH & SCENARIOS ──────────────────────────────────────────── -->
     <section class="layer" data-layer="ops">
-      <div class="lhead"><h2 class="lh">How does it convert to cash?</h2><div class="lhsub">From market conditions to upstreamed dividends to the holding's residual free cash flow.</div></div>
+      <div class="lhead"><h2 class="lh">Cash &amp; Scenarios</h2><div class="lhsub">How the active scenario converts into the holding's available cash — drivers up top, dividends and residual free cash flow below.</div></div>
       <div class="panel" data-tour="waterfall" data-grouponly>
         <h2>Holding FCF waterfall · central case <span class="grp" id="wfScn">FY2025 plan</span></h2>
         <canvas id="waterfall" height="320"></canvas>
@@ -878,62 +780,6 @@
           <span><i style="border-color:var(--red);border-style:dashed"></i>Cash floor</span>
         </div>
       </div>
-    </section>
-
-    <!-- L5 · PORTFOLIO & SCENARIOS ───────────────────────────────── -->
-    <section class="layer" data-layer="portfolio">
-      <div class="lhead"><h2 class="lh">Where's the weak link, and what if?</h2><div class="lhsub">Scenario presets, the full distribution of outcomes, and group aggregation.</div></div>
-      <div class="panel">
-        <div class="seclabel" style="margin-top:0">Scenario presets</div>
-        <div class="pfilters" id="presetFilters" data-tour="presets"></div>
-        <div class="scards" id="presetCards"></div>
-      </div>
-      <div class="panel mtop" id="distPanel" data-tour="dist">
-        <h2>FCF distribution
-          <span class="distseg" id="distHi"><button data-p="P10">P10</button><button data-p="P50" class="on">P50</button><button data-p="P90">P90</button></span>
-          <span class="grp" id="convPill">—</span></h2>
-        <canvas id="hist" height="320"></canvas>
-        <div class="legend">
-          <span><i style="border-color:var(--green-dark)"></i>density</span>
-          <span><i style="border-color:var(--red)"></i>cash floor</span>
-          <span><i class="sq" style="background:rgba(220,90,80,.3)"></i>breach region</span>
-          <span id="refLeg" style="display:none"><i style="border-color:var(--gold);border-style:dashed"></i>before action</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- L6 · DECISION ENGINE ─────────────────────────────────────── -->
-    <section class="layer" data-layer="decision">
-      <div class="lhead"><h2 class="lh">What do we do?</h2><div class="lhsub">The recommended management actions, their owners and cost, and the copyable board brief.</div></div>
-
-    <div class="panel mtop" data-tour="levers">
-      <h2>Mitigation levers · management action
-        <span class="grp"><button class="optbtn" id="optBtn">⚡ Recommend package</button></span></h2>
-      <div class="levers" id="levers"></div>
-      <div class="optbox" id="optbox"></div>
-      <div class="note">Each lever shows its owner, time-to-impact and estimated benefit to the P10 downside. Toggle
-        levers to see residual FCF-at-Risk, P10 and breach probability update against the same simulated paths.</div>
-    </div>
-
-    <div class="panel brief mtop" data-tour="brief">
-      <h2>Board scenario brief
-        <button class="copybtn" id="copyBrief">Copy brief</button></h2>
-      <div id="briefBody"></div>
-    </div>
-
-    <div class="panel mtop">
-      <h2>Model &amp; governance notes</h2>
-      <div class="note" style="color:var(--muted)">
-        A single-period, common-factor portfolio twin of MIND ID. Seven shared factors are sampled together around a
-        macro latent (so China, the commodity cycle and FX co-move and diversification can fail across assets at once),
-        mapped to subsidiary upstreaming through calibrated sensitivities, then rolled through holding obligations —
-        <b>including debt principal repayments</b> — to a residual Holding-FCF distribution. PTBA, Antam, Inalum and
-        Timah are quantified; Freeport is visible but excluded from quantified cash. Mitigation re-runs every path under
-        the same random draws (common random numbers) so before/after deltas isolate the management action.
-        <b>All numbers are illustrative placeholders</b> until validated against FY2025 actuals, ownership, dividend
-        receipts and holding obligations — confidence tags travel with every output. Not investment advice.
-      </div>
-    </div>
     </section>
 
   </main>
@@ -1150,7 +996,7 @@ function run(){
   tweenEl(document.getElementById('p50'),V.p50,2); tweenEl(document.getElementById('far'),V.far,2);
   const bEl=document.getElementById('breach'); tweenEl(bEl,V.breach*100,1,'%');
   const col=V.breach>.25?'var(--red)':V.breach>.1?'var(--gold)':'var(--green-dark)';
-  bEl.style.color=col; document.getElementById('breachStrip').style.background=col;
+  if(bEl)bEl.style.color=col; const bStrip=document.getElementById('breachStrip'); if(bStrip)bStrip.style.background=col;
   setText('kL0',V.kL[0]); setText('kL1',V.kL[1]); setText('kL2',V.kL[2]); setText('kL3',V.kL[3]);
   setText('kU0',V.kU[0]); setText('kU1',V.kU[1]); setText('kU2',V.kU[2]);
   updateVerdict(V);
@@ -1165,21 +1011,22 @@ function run(){
   for(let s=0;s<SUBS.length;s++){ const loss=SUBS[s].base - pct(Float64Array.from(subStore[s]).sort(),.1);
     if(loss>worst){worst=loss;topSub=SUBS[s].id;} }
   if(activeScope==='group'){
-    setText('topc',topSub); document.getElementById('topcU').textContent=worst>0?('−Rp '+worst.toFixed(2)+' T at P10'):'driver of downside';
+    setText('topc',topSub); setText('topcU', worst>0?('−Rp '+worst.toFixed(2)+' T at P10'):'driver of downside');
   } else {
     const s=SUBS[assetIdx]; let bi=0; for(let k=0;k<6;k++) if(Math.abs(s.beta[k])>Math.abs(s.beta[bi]))bi=k;
-    setText('topc',FNAME[bi]); document.getElementById('topcU').textContent='β '+s.beta[bi].toFixed(2)+' · largest sensitivity';
+    setText('topc',FNAME[bi]); setText('topcU', 'β '+s.beta[bi].toFixed(2)+' · largest sensitivity');
   }
 
   // live verdict drivers + path count
   const topFactor=attr[0]?attr[0][0]:'—';
-  document.getElementById('vdDrivers').innerHTML =
+  const vdDrivers=document.getElementById('vdDrivers');           // verdict hero removed — guard
+  if(vdDrivers) vdDrivers.innerHTML =
     `<span class="vd-chip"><i>top risk</i>${topFactor}</span>`+
     `<span class="vd-chip"><i>worst sub</i>${topSub}</span>`+
     `<span class="vd-chip"><i>pinch</i>Debt principal</span>`+
     (hasAnyMit()?`<span class="vd-chip"><i>action</i>${LEVERS.filter(l=>l.on).length} lever(s)</span>`:'');
-  document.getElementById('vdFoot').textContent =
-    `${Math.round(bP*N).toLocaleString('en-US')} of ${(+N).toLocaleString('en-US')} simulated paths breach the Rp ${(+floorT).toFixed(1)} T floor`;
+  setText('vdFoot',
+    `${Math.round(bP*N).toLocaleString('en-US')} of ${(+N).toLocaleString('en-US')} simulated paths breach the Rp ${(+floorT).toFixed(1)} T floor`);
 
   delta('p50d', p50-pct(sR,.5),'Rp T vs no action',false);
   delta('fard', far-farR,'Rp T vs no action',true);
@@ -1189,15 +1036,17 @@ function run(){
   setText('convPill', (+N).toLocaleString('en-US')+' paths · '+(regimeMult<1?'calm':regimeMult>1?'stressed':'base'));
   setText('wfScn', activePreset);
 
-  // mitigation summary bar
-  const mb=document.getElementById('mitbar');
-  if(hasAnyMit()){ mb.classList.add('show');
-    const names=LEVERS.filter(l=>l.on).map(l=>l.label.split('(')[0].trim());
-    mb.innerHTML=`<b>Action package:</b> ${names.join(' · ')} → breach probability `+
-      `<b>${(bPR*100).toFixed(1)}% → ${(bP*100).toFixed(1)}%</b>, FCF-at-Risk `+
-      `<b>Rp ${farR.toFixed(2)} → ${far.toFixed(2)} T</b>, residual P50 ${p50>=pct(sR,.5)?'+':''}${(p50-pct(sR,.5)).toFixed(2)} Rp T.`;
-    document.getElementById('refLeg').style.display='';
-  } else { mb.classList.remove('show'); document.getElementById('refLeg').style.display='none'; }
+  // mitigation summary bar (distribution panel removed — guard)
+  const mb=document.getElementById('mitbar'), refLeg=document.getElementById('refLeg');
+  if(mb){
+    if(hasAnyMit()){ mb.classList.add('show');
+      const names=LEVERS.filter(l=>l.on).map(l=>l.label.split('(')[0].trim());
+      mb.innerHTML=`<b>Action package:</b> ${names.join(' · ')} → breach probability `+
+        `<b>${(bPR*100).toFixed(1)}% → ${(bP*100).toFixed(1)}%</b>, FCF-at-Risk `+
+        `<b>Rp ${farR.toFixed(2)} → ${far.toFixed(2)} T</b>, residual P50 ${p50>=pct(sR,.5)?'+':''}${(p50-pct(sR,.5)).toFixed(2)} Rp T.`;
+      if(refLeg)refLeg.style.display='';
+    } else { mb.classList.remove('show'); if(refLeg)refLeg.style.display='none'; }
+  }
 
   // charts
   const wfCv=document.getElementById('waterfall');
@@ -1206,7 +1055,7 @@ function run(){
   if(histCv && histCv.offsetParent!==null) drawHist(histCv, V.arr, {p10:V.p10,p50:V.p50,p90:V.p90,floor:V.floor,hi:distHi,ref:(activeScope==='group'&&hasAnyMit())?sR:null});
   const rwCv=document.getElementById('runway');
   if(rwCv && rwCv.offsetParent!==null) drawRunway(rwCv, baseFCF, floorT, mit);
-  if(document.getElementById('divmap').offsetParent!==null) drawDivMap(cenSh);
+  const dmCv=document.getElementById('divmap'); if(dmCv && dmCv.offsetParent!==null) drawDivMap(cenSh);
 
   // subsidiary cards (active asset highlighted in asset scope)
   const maxBase=Math.max(...SUBS.map(s=>s.base));
@@ -1267,9 +1116,10 @@ function updateVerdict(V){
   try{ setText('vdAsOf', new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'})); }catch(e){}
   tweenEl(document.getElementById('vdProbN'), V.breach*100, 1, '%');
   const breachPct=Math.round(V.breach*100), holdPct=100-breachPct;
-  const ob=document.getElementById('ocBreach'); ob.style.width=Math.max(0,Math.min(100,breachPct))+'%';
-  document.getElementById('ocBreachT').textContent = breachPct>=9 ? breachPct+'% breach' : '';
-  document.getElementById('ocHoldT').textContent = holdPct+'% hold';
+  const ob=document.getElementById('ocBreach');           // verdict hero removed — guard
+  if(ob){ ob.style.width=Math.max(0,Math.min(100,breachPct))+'%';
+    setText('ocBreachT', breachPct>=9 ? breachPct+'% breach' : '');
+    setText('ocHoldT', holdPct+'% hold'); }
 }
 function delta(id,v,unit,lowerGood){const el=document.getElementById(id);if(!el)return;
   if(!hasAnyMit()){el.textContent='';return;}
@@ -1463,7 +1313,7 @@ function drawDivMap(sh){
 
 /* ── levers UI ──────────────────────────────────────────────────── */
 function renderLevers(){
-  const root=document.getElementById('levers');
+  const root=document.getElementById('levers'); if(!root)return;
   root.innerHTML=LEVERS.map((l,i)=>{
     const ben=(l._ben!=null?l._ben:0);
     return `<div class="lever ${l.on?'on':''} ${l._rec?'rec':''}" data-i="${i}">
@@ -1499,7 +1349,8 @@ function recommendPackage(){
   const {chosen, after:cur, floorT, cleared}=computePackage();
   LEVERS.forEach(l=>{l._rec=chosen.some(c=>c.id===l.id); l.on=l._rec;});
   schedule();
-  const box=document.getElementById('optbox'); box.classList.add('show');
+  const box=document.getElementById('optbox'); if(!box)return;   // decision layer removed; reco card carries the package
+  box.classList.add('show');
   const totalCost=chosen.reduce((a,c)=>a+c.cost,0);
   box.innerHTML = chosen.length
     ? `<b>Recommended package (${chosen.length} lever${chosen.length>1?'s':''}):</b> `+
@@ -1523,7 +1374,8 @@ function renderBrief(){
   acts.push(['Anchor the dividend / drawdown plan to the P10, not the P50',`Plan to ${fmt(o.p10)} downside so a correlated ${st.topFactor.toLowerCase()} move does not force an unplanned funding event.`]);
   acts.push([`Stress-test the ${st.topSub} cash bridge with the subsidiary board`,`${st.topSub} is the largest contributor to the holding downside in this scenario; confirm its FY2025 baseline before relying on the number.`]);
   if(st.drivers.fin>200) acts.push(['Open early refinancing engagement with lenders','Financing pressure is elevated; extending near-term maturities removes the largest controllable outflow from the wall.']);
-  document.getElementById('briefBody').innerHTML=`
+  const briefBody=document.getElementById('briefBody'); if(!briefBody)return;   // decision layer removed
+  briefBody.innerHTML=`
     <div class="badges">
       <span class="badge posture" style="background:${pcol}">${posture}</span>
       <span class="badge">CONFIDENCE: ${conf}</span>
@@ -1581,13 +1433,15 @@ function loadPreset(k){ const p=PRESETS[k]; activePreset=k;
   const ps=document.getElementById('presetSel'); if(ps)ps.value=k;
   renderPresetCards(); liveEffects(); schedule(); }
 function renderFilters(){
+  const pf=document.getElementById('presetFilters'); if(!pf)return;   // portfolio layer removed
   const cats=['All',...[...new Set(Object.values(PRESET_CAT))].map(c=>CAT_LABEL[c])];
-  document.getElementById('presetFilters').innerHTML=cats.map(c=>
+  pf.innerHTML=cats.map(c=>
     `<button class="pfilter ${c===presetFilter?'on':''}" data-c="${c}">${c}</button>`).join('');
   document.querySelectorAll('#presetFilters .pfilter').forEach(b=>b.addEventListener('click',()=>{
     presetFilter=b.dataset.c; renderFilters(); renderPresetCards(); }));
 }
 function renderPresetCards(){
+  const cardHost=document.getElementById('presetCards'); if(!cardHost)return;   // portfolio layer removed
   const floorT=+document.getElementById('floor').value;
   const keys=Object.keys(PRESETS).filter(k=>presetFilter==='All'||CAT_LABEL[PRESET_CAT[k]]===presetFilter);
   document.getElementById('presetCards').innerHTML=keys.map(k=>{
@@ -1610,10 +1464,10 @@ document.getElementById('reset').addEventListener('click',()=>{
   LEVERS.forEach(l=>{l.on=false;l._rec=false;});
   document.querySelectorAll('#regime button').forEach(x=>x.classList.toggle('on',x.dataset.r==='1')); regimeMult=1;
   activePreset='FY2025 plan'; presetFilter='All'; renderFilters(); renderPresetCards();
-  document.getElementById('optbox').classList.remove('show'); liveEffects(); schedule();
+  const ob=document.getElementById('optbox'); if(ob)ob.classList.remove('show'); liveEffects(); schedule();
 });
-document.getElementById('optBtn').addEventListener('click',recommendPackage);
-document.getElementById('copyBrief').addEventListener('click',copyBrief);
+document.getElementById('optBtn')?.addEventListener('click',recommendPackage);
+document.getElementById('copyBrief')?.addEventListener('click',copyBrief);
 window.addEventListener('resize',()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(run);});
 
 document.querySelectorAll('#distHi button').forEach(b=>b.addEventListener('click',()=>{
@@ -1743,9 +1597,10 @@ const LAYERS=[
   ['portfolio','◈','Portfolio & Scenarios','Weak link & what-if'],
   ['decision','▤','Decision Engine','Actions & the board brief'],
 ];
-let activeLayer='ceo';
+let activeLayer='ops';
 function renderRail(){
-  document.getElementById('lnav').innerHTML=LAYERS.map((L,i)=>
+  const lnav=document.getElementById('lnav'); if(!lnav)return;   // layer nav removed (single view)
+  lnav.innerHTML=LAYERS.map((L,i)=>
     `<div class="lnav-item${L[0]===activeLayer?' on':''}" data-go="${L[0]}">
       <div class="lnav-n">${i+1}</div>
       <div><div class="lnav-t"><span class="ic">${L[1]}</span>${L[2]}</div><div class="lnav-d">${L[3]}</div></div>
@@ -1975,7 +1830,7 @@ function renderReco(){
 }
 
 renderTicker(); renderLevers(); renderFilters(); renderPresetCards(); syncLabels();
-renderRail(); setLayer('ceo'); initPresetSel(); copInit();
+renderRail(); setLayer('ops'); initPresetSel(); copInit();
 document.getElementById('moreBtn').addEventListener('click',function(){
   const m=document.getElementById('scenbarMore'), open=m.hasAttribute('hidden');
   if(open) m.removeAttribute('hidden'); else m.setAttribute('hidden','');
@@ -1992,15 +1847,12 @@ setHeartbeat(); fetchLiveFx(); setInterval(fetchLiveFx, 60000);           // rea
 
 /* ── guided tour ────────────────────────────────────────────────── */
 const TOUR=[
-  {sel:'[data-tour=verdict]',t:'1 · The board verdict',b:'The headline answer first: does the holding cash floor HOLD, sit AT RISK, or BREACH — with the breach probability shown as an outcome bar (red breach vs green hold), the way a prediction market frames an outcome.'},
-  {sel:'[data-tour=presets]',t:'2 · Pick a scenario',b:'Start from a board-ready preset — China hard landing, energy shock, refinancing squeeze, perfect storm — or build your own with the common-factor sliders below.'},
-  {sel:'[data-tour=factors]',t:'2 · Common factors',b:'Seven shared shocks (China demand, commodity cycle, FX, energy, carbon, regulation, financing) drive every subsidiary together. They are sampled around a macro latent, so a downturn hits several assets at once — that is where diversification fails.'},
-  {sel:'[data-tour=kpis]',t:'3 · The board answer',b:'Residual Holding FCF (P50), Holding FCF-at-Risk including debt principal, the probability of breaching the cash floor, and the largest single contributor to the downside.'},
-  {sel:'[data-tour=waterfall]',t:'4 · Where the cash goes',b:'Opening cash, then upstreaming stacked by subsidiary (PTBA, Antam, Inalum, Timah) so you can see each contribution; then holding opex, interest, debt principal, capex and equity drawn down. Debt principal is highlighted as the pinch, and the dashed line is the board cash floor the residual must clear.'},
-  {sel:'[data-tour=subs]',t:'5 · Subsidiary cash bridges',b:'PTBA, Antam, Inalum and Timah quantified, each with a confidence tag. Freeport stays visible as JV exposure but is excluded from quantified cash.'},
-  {sel:'[data-tour=divmap]',t:'6 · Diversification-break map',b:'Links light up where a shared factor hits an asset in this scenario. Red = adverse, green = favourable, dashed violet = Freeport JV. Converging links mean correlated downside.'},
-  {sel:'[data-tour=levers]',t:'7 · Pull the levers',b:'Hedge price or FX, refinance the wall, defer capex, run a cost program. Each lever shows owner, time-to-impact and benefit. Hit “Recommend package” for the cheapest set that protects the floor.'},
-  {sel:'[data-tour=brief]',t:'8 · Publish the board brief',b:'A board-grade narrative — what changed, why it matters, the decision needed — with the data caveat and Freeport exclusion attached. Copy it straight into the board pack.'},
+  {sel:'[data-tour=factors]',t:'1 · Set the scenario',b:'Dial the key drivers — China demand, USD/IDR, the commodity cycle and the board cash floor. “+ more drivers” reveals energy, carbon, regulation and financing. Every change re-runs the model and the cash view live.'},
+  {sel:'#recoCard',t:'2 · The recommendation',b:'A live read on whether the cash floor holds (Hold / Watch / Act), plus the cheapest package of management actions — FX-debt hedge, refinancing, defer capex — that clears the floor at P10. One click arms it.'},
+  {sel:'[data-tour=waterfall]',t:'3 · Where the cash goes',b:'Opening cash, then upstreaming stacked by subsidiary (PTBA, Antam, Inalum, Timah); then holding opex, interest, debt principal, capex and equity drawn down. Debt principal is the pinch, and the dashed line is the board cash floor the residual must clear.'},
+  {sel:'[data-tour=subs]',t:'4 · Subsidiary cash bridges',b:'Each subsidiary’s upstreaming to MIND ID under the active scenario, with a confidence tag. Freeport stays visible as JV exposure but is excluded from quantified cash.'},
+  {sel:'[data-tour=runway]',t:'5 · Runway & debt wall',b:'The after-action cash cushion against the principal wall over the next four quarters, set against the board cash floor.'},
+  {sel:'.crail-card.cop',t:'6 · Ask the Copilot',b:'The model-aware Driver Copilot answers what’s driving the risk, whether the rupiah matters, and what to do — reading the live model state for the active scenario.'},
 ];
 let tourI=-1,tourEls=null;
 function tourBuild(){const spot=document.createElement('div');spot.className='tour-spot';
