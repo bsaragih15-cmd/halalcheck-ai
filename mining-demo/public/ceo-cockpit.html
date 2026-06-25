@@ -583,6 +583,14 @@
   .sr-mv{font-size:13px;font-weight:800;font-family:var(--mono)}
   .sr-bar{height:4px;border-radius:3px;background:var(--line);overflow:hidden}
   .sr-bar span{display:block;height:100%;border-radius:3px}
+  /* bullet chart: actual bar over qualitative bands, with a plan/cap tick */
+  .sr-bul{position:relative;height:7px;border-radius:3px;overflow:hidden;background:var(--line)}
+  .sr-bul .bl-band{position:absolute;top:0;height:100%}
+  .sr-bul .bl-val{position:absolute;top:1.5px;height:4px;left:0;border-radius:3px;transition:width .3s}
+  .sr-bul .bl-tick{position:absolute;top:0;height:100%;width:2px;margin-left:-1px;background:var(--ink);opacity:.8}
+  /* sparkline: YTD micro-trend, plan baseline dashed */
+  .sr-spk{width:100%;height:15px;display:block;margin-top:2px}
+  .sr-spk .spk-base{stroke:var(--faint);stroke-width:.8;stroke-dasharray:2 2;opacity:.55}
   .sr-ops{display:flex;flex-wrap:wrap;gap:5px}
   .opchip{font-size:10px;font-weight:700;padding:3px 7px;border-radius:6px;border:1px solid var(--line);white-space:nowrap}
   .sr-stat{justify-self:start;font-size:10.5px;font-weight:800;letter-spacing:.3px;text-transform:uppercase;padding:5px 11px;border-radius:999px}
@@ -811,7 +819,7 @@
       <div class="lhead"><h2 class="lh">Subsidiary scorecard</h2><div class="lhsub">Actuals vs plan across finance and key operations. Status is <b>worst-of</b> — any red metric flags the subsidiary.</div></div>
       <div class="msnapshot" id="monSnapshot"></div>
       <div class="panel" style="margin-top:16px">
-        <h2>Subsidiary scorecard <span class="grp">YTD vs plan · illustrative</span></h2>
+        <h2>Subsidiary scorecard <span class="grp">bullet = actual vs plan tick · sparkline = YTD trend · illustrative</span></h2>
         <div class="score-head"><span>Subsidiary</span><span>EBITDA</span><span>Dividend up</span><span>Leverage</span><span>Key operations</span><span>Status</span></div>
         <div id="monScore"></div>
       </div>
@@ -956,26 +964,26 @@ const FREEPORT = { id:'Freeport', commodity:'Copper · gold (JV)', note:'JV — 
 // ops dir: 'up' = higher is better, 'down' = lower is better.
 const SUBMON = [
   { id:'PTBA', commodity:'Thermal coal',
-    ebitda:{a:7.4,p:7.7,conf:'illustrative'}, div:{a:1.8,p:1.9,conf:'management'}, lev:{a:1.1,thr:2.5,conf:'reported'},
+    ebitda:{a:7.4,p:7.7,conf:'illustrative',t:[7.7,7.65,7.6,7.55,7.5,7.45,7.42,7.4]}, div:{a:1.8,p:1.9,conf:'management',t:[1.9,1.88,1.86,1.84,1.83,1.82,1.81,1.8]}, lev:{a:1.1,thr:2.5,conf:'reported',t:[1.0,1.02,1.04,1.06,1.08,1.09,1.1,1.1]},
     ops:[ {l:'Coal output',a:31.0,p:31.5,u:'Mt',dir:'up',conf:'reported'},
           {l:'Cash cost',a:74,p:70,u:'$/t',dir:'down',conf:'derived'},
           {l:'Realized vs ICI',a:98,p:100,u:'%',dir:'up',conf:'derived'},
           {l:'DMO compliance',a:100,p:100,u:'%',dir:'up',conf:'reported'} ],
     note:'Cash-cost creep on higher stripping ratio; volumes and DMO on plan.' },
   { id:'Antam', commodity:'Gold · nickel · bauxite',
-    ebitda:{a:6.5,p:7.1,conf:'illustrative'}, div:{a:1.0,p:1.0,conf:'management'}, lev:{a:0.6,thr:2.5,conf:'reported'},
+    ebitda:{a:6.5,p:7.1,conf:'illustrative',t:[7.1,7.0,6.9,6.7,6.6,6.5,6.5,6.5]}, div:{a:1.0,p:1.0,conf:'management',t:[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0]}, lev:{a:0.6,thr:2.5,conf:'reported',t:[0.5,0.52,0.55,0.57,0.58,0.59,0.6,0.6]},
     ops:[ {l:'Gold',a:101,p:100,u:'%plan',dir:'up',conf:'reported'},
           {l:'Ferronickel',a:92,p:100,u:'%plan',dir:'up',conf:'reported'},
           {l:'Nickel ore',a:99,p:100,u:'%plan',dir:'up',conf:'derived'} ],
     note:'Ferronickel below plan on furnace downtime; gold cushions earnings, dividend on track.' },
   { id:'Inalum', commodity:'Aluminium',
-    ebitda:{a:4.0,p:4.5,conf:'illustrative'}, div:{a:0.9,p:1.2,conf:'management'}, lev:{a:1.8,thr:2.5,conf:'reported'},
+    ebitda:{a:4.0,p:4.5,conf:'illustrative',t:[4.5,4.45,4.4,4.3,4.2,4.1,4.05,4.0]}, div:{a:0.9,p:1.2,conf:'management',t:[1.2,1.15,1.1,1.05,1.0,0.95,0.92,0.9]}, lev:{a:1.8,thr:2.5,conf:'reported',t:[1.5,1.55,1.6,1.65,1.7,1.74,1.78,1.8]},
     ops:[ {l:'Aluminium output',a:94,p:100,u:'%plan',dir:'up',conf:'reported'},
           {l:'Smelter utilisation',a:95,p:100,u:'%',dir:'up',conf:'reported'},
           {l:'Power cost',a:114,p:100,u:'%plan',dir:'down',conf:'derived'} ],
     note:'Power-cost spike compresses margin and forces dividend below plan — the binding red.' },
   { id:'Timah', commodity:'Tin',
-    ebitda:{a:1.3,p:1.25,conf:'illustrative'}, div:{a:0.3,p:0.3,conf:'management'}, lev:{a:0.9,thr:2.5,conf:'reported'},
+    ebitda:{a:1.3,p:1.25,conf:'illustrative',t:[1.2,1.22,1.24,1.26,1.27,1.28,1.29,1.3]}, div:{a:0.3,p:0.3,conf:'management',t:[0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3]}, lev:{a:0.9,thr:2.5,conf:'reported',t:[1.0,0.98,0.96,0.94,0.92,0.91,0.9,0.9]},
     ops:[ {l:'Tin metal',a:106,p:100,u:'%plan',dir:'up',conf:'reported'},
           {l:'Ore grade',a:100,p:100,u:'%plan',dir:'up',conf:'derived'},
           {l:'Cash cost',a:98,p:100,u:'%plan',dir:'down',conf:'derived'} ],
@@ -2061,8 +2069,43 @@ function bindingMetric(s){ // the worst metric, for the "why"
   const items=[['EBITDA',ragLevel(s.ebitda.a,s.ebitda.p,'up')],['Dividend',ragLevel(s.div.a,s.div.p,'up')],['Leverage',ragLev(s.lev.a,s.lev.thr)],
     ...s.ops.map(o=>[o.l,ragLevel(o.a,o.p,o.dir)])]; items.sort((x,y)=>y[1]-x[1]); return items[0]; }
 const pctOf=(a,p)=>Math.round(a/p*100);
-function metricCell(lbl,val,lvl){ return `<div class="sr-m"><span class="sr-mv" style="color:${RAGC[lvl]}">${val}</span>`+
-  `<span class="sr-bar"><span style="width:${Math.min(100,Math.max(8,lvl===0?100:lvl===1?60:30))}%;background:${RAGC[lvl]}"></span></span></div>`; }
+// faint qualitative bands behind the bullet bar
+const RAGBAND=['rgba(34,201,138,.16)','rgba(229,170,62,.20)','rgba(220,90,80,.20)'];
+// bullet chart: value bar over [green,amber,red] bands, plan/cap shown as a tick.
+// stops = right edge (in value units) of [green, amber] bands; red fills the rest to max.
+function bullet(value,plan,max,stops,valCol,dir){
+  const pc=v=>Math.max(0,Math.min(100,v/max*100));
+  const order=dir==='down'?[0,1,2]:[2,1,0];           // green→red left-to-right for 'down', red→green for 'up'
+  let bands='',prev=0;
+  [stops[0],stops[1],max].forEach((edge,i)=>{
+    bands+=`<span class="bl-band" style="left:${pc(prev)}%;width:${pc(edge)-pc(prev)}%;background:${RAGBAND[order[i]]}"></span>`; prev=edge; });
+  return `<div class="sr-bul">${bands}`+
+    `<span class="bl-val" style="width:${pc(value)}%;background:${valCol}"></span>`+
+    `<span class="bl-tick" style="left:${pc(plan)}%"></span></div>`;
+}
+// sparkline: YTD trend coloured by RAG; baseline (plan) drawn dashed when given.
+function spark(series,baseline,lvl){
+  const w=60,h=15,n=series.length;
+  const vals=baseline==null?series:series.concat(baseline);
+  const mn=Math.min(...vals),mx=Math.max(...vals),rng=(mx-mn)||1;
+  const x=i=>2+i/(n-1)*(w-4), y=v=>h-2-((v-mn)/rng)*(h-4);
+  const pts=series.map((v,i)=>`${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const col=RAGC[lvl];
+  const base=baseline==null?'':`<line x1="2" y1="${y(baseline).toFixed(1)}" x2="${w-2}" y2="${y(baseline).toFixed(1)}" class="spk-base"/>`;
+  return `<svg class="sr-spk" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${base}`+
+    `<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>`+
+    `<circle cx="${x(n-1).toFixed(1)}" cy="${y(series[n-1]).toFixed(1)}" r="1.8" fill="${col}"/></svg>`;
+}
+// one scorecard metric: value label + bullet (level vs plan) + sparkline (momentum)
+function metricCell(s,kind){
+  if(kind==='lev'){ const a=s.lev.a,thr=s.lev.thr,lvl=ragLev(a,thr);
+    return `<div class="sr-m"><span class="sr-mv" style="color:${RAGC[lvl]}">${a.toFixed(1)}×</span>`+
+      bullet(a,thr,thr*1.2,[thr*0.6,thr],RAGC[lvl],'down')+spark(s.lev.t,null,lvl)+`</div>`; }
+  const m=s[kind], a=m.a,p=m.p,lvl=ragLevel(a,p,'up');
+  const val=kind==='div'?`${a.toFixed(1)}/${p.toFixed(1)}T`:pctOf(a,p)+'%';
+  return `<div class="sr-m"><span class="sr-mv" style="color:${RAGC[lvl]}">${val}</span>`+
+    bullet(pctOf(a,p),100,120,[90,98],RAGC[lvl],'up')+spark(m.t,p,lvl)+`</div>`;
+}
 function renderMonitor(){
   const snap=document.getElementById('monSnapshot'), host=document.getElementById('monScore'); if(!host)return;
   const sumA=k=>SUBMON.reduce((x,s)=>x+s[k].a,0), sumP=k=>SUBMON.reduce((x,s)=>x+s[k].p,0);
@@ -2092,9 +2135,9 @@ function renderMonitor(){
     return `<div class="scard-row" data-i="${i}">
       <div class="sr-head">
         <div class="sr-id"><span class="sr-dot" style="background:${SUBCOL[s.id]}"></span><div>${s.id}<small>${s.commodity}</small></div></div>
-        ${metricCell('EBITDA',pctOf(s.ebitda.a,s.ebitda.p)+'%',ebl)}
-        ${metricCell('Dividend',`${s.div.a.toFixed(1)}/${s.div.p.toFixed(1)}T`,dvl)}
-        ${metricCell('Leverage',s.lev.a.toFixed(1)+'×',lvl)}
+        ${metricCell(s,'ebitda')}
+        ${metricCell(s,'div')}
+        ${metricCell(s,'lev')}
         <div class="sr-ops">${opchips}</div>
         <div class="sr-stat" style="color:${RAGC[w]};background:${RAGBG[w]}">${RAGN[w]}</div>
       </div>
