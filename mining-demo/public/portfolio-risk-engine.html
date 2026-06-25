@@ -200,6 +200,41 @@
   .ticker-foot .gap{flex:1}
   .ticker-foot .live{color:var(--green)}
 
+  /* ── live engine UI ──────────────────────────────────────────── */
+  .ticker{display:flex;align-items:stretch;gap:9px;overflow:hidden}
+  .ticker-track{display:flex;width:max-content;will-change:transform}
+  .ticker.flow .ticker-track{animation:marquee 70s linear infinite}
+  .ticker:hover .ticker-track{animation-play-state:paused}
+  .ticker-seq{display:flex;gap:8px;align-items:stretch;padding-right:8px;flex:0 0 auto}
+  @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .live-badge{display:inline-flex;align-items:center;gap:5px;margin-top:5px;font-size:8px;font-weight:800;letter-spacing:.6px;color:var(--green)}
+  .live-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:livepulse 2s infinite}
+  .sig-v.flash{animation:vflash .7s ease}
+  @keyframes vflash{0%{color:#fff;text-shadow:0 0 9px rgba(34,201,138,.75)}100%{text-shadow:none}}
+  @media(prefers-reduced-motion:reduce){.ticker{overflow-x:auto}.ticker.flow .ticker-track{animation:none}}
+  .hb{display:inline-flex;align-items:center;gap:6px}
+  .hb .dot{width:7px;height:7px;border-radius:50%;background:#7f968c;transition:background .3s}
+  .hb.on .dot{background:var(--green);animation:livepulse 2s infinite}
+  .hb.sim .dot{background:#e5aa3e;animation:livepulse 2s infinite}
+  .hb.on b{color:var(--green)} .hb.sim b{color:#e5aa3e}
+  .driftbtn{cursor:pointer;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.05);color:#b8c9c1;
+    font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.4px;padding:3px 9px;border-radius:999px}
+  .driftbtn.on{background:rgba(229,170,62,.2);color:#e5aa3e;border-color:rgba(229,170,62,.5)}
+  .sincebar{display:flex;flex-wrap:wrap;gap:7px 16px;align-items:center;font-family:var(--mono);font-size:11px;
+    color:var(--muted);margin:-2px 0 16px;padding:9px 14px;background:var(--paper2);border:1px solid var(--line);border-radius:10px}
+  .sincebar>span:first-child{color:var(--ink);font-weight:700}
+  .sincebar b{color:var(--faint);font-weight:700;letter-spacing:.4px;text-transform:uppercase;font-size:9.5px;margin-right:3px}
+  .sincebar .d.up{color:var(--green-dark)} .sincebar .d.dn{color:var(--red)} .sincebar .d.flat{color:var(--faint)}
+  .simulating{opacity:.5;filter:blur(.5px);transition:opacity .1s}
+  canvas.redrawing{animation:drawin .5s ease}
+  @keyframes drawin{0%{opacity:.3;transform:translateY(4px)}100%{opacity:1;transform:none}}
+  .verdict.flip.hold{animation:vflipG .8s ease} .verdict.flip.risk{animation:vflipA .8s ease} .verdict.flip.breach{animation:vflipR .8s ease}
+  @keyframes vflipG{0%{box-shadow:0 0 0 0 rgba(63,185,80,.55)}40%{box-shadow:0 0 0 6px rgba(63,185,80,.18)}100%{box-shadow:var(--shadow)}}
+  @keyframes vflipA{0%{box-shadow:0 0 0 0 rgba(210,153,34,.6)}40%{box-shadow:0 0 0 6px rgba(210,153,34,.2)}100%{box-shadow:var(--shadow)}}
+  @keyframes vflipR{0%{box-shadow:0 0 0 0 rgba(248,81,73,.6)}40%{box-shadow:0 0 0 6px rgba(248,81,73,.22)}100%{box-shadow:var(--shadow)}}
+  .sc-spark{width:48px;height:14px;flex:0 0 auto;margin-left:auto}
+  .sc-mid .sc-res{margin-left:8px}
+
   .wrap{max-width:none;margin:0 auto;padding:20px 30px;display:grid;
     grid-template-columns:330px minmax(0,1fr);gap:20px;align-items:start}
   @media(max-width:1000px){.wrap{grid-template-columns:1fr}}
@@ -472,15 +507,25 @@
   </div>
 </div>
 
-<div class="ticker" id="ticker"><div class="ticker-row" id="tickerRow"></div></div>
+<div class="ticker" id="ticker">
+  <div class="ticker-lead">
+    <b>MARKET</b><span>SIGNALS</span>
+    <span class="live-badge"><span class="dot"></span><span id="liveBadgeT">SNAPSHOT</span></span>
+  </div>
+  <div class="ticker-track" id="tickerTrack">
+    <div class="ticker-seq" id="tickerSeq"></div>
+    <div class="ticker-seq" id="tickerSeq2" aria-hidden="true"></div>
+  </div>
+</div>
 <div class="ticker-foot">
-  <span><b>As of</b> 25 Jun 2026 · 05:32 WIB</span>
-  <span>FX/USD <b>16,000</b></span>
+  <span class="hb" id="heartbeat"><span class="dot"></span><b id="hbT">SNAPSHOT</b></span>
+  <span id="liveClock"><b>—</b></span>
+  <span>USD/IDR <b id="footFx">16,000</b></span>
   <span>Brent <b>$78</b></span>
   <span>UST 10Y <b>4.28%</b></span>
-  <span class="live">● illustrative snapshot — live market feeds wire in at Phase 1</span>
+  <button class="driftbtn" id="driftBtn" title="Boardroom mode: gently perturb market signals and recompute on a timer">▶ AUTO-DRIFT</button>
   <span class="gap"></span>
-  <span>MIND ID Treasury signal board v0.1</span>
+  <span>MIND ID Treasury signal board v0.2</span>
 </div>
 
 <div class="wrap">
@@ -566,6 +611,7 @@
         <div class="u" id="topcU">driver of downside</div><div class="delta" id="topd"></div></div>
     </div>
 
+    <div class="sincebar" id="sinceBar"></div>
     <div class="mitbar" id="mitbar"></div>
 
     <div class="row2">
@@ -770,8 +816,26 @@ function quickBreach(scn,floorT){
   return { breach:breach/N, p50:pct(s,.5), residual:holdingFCF(cenSh,cenFin,cenSh[2],ref).fcf };
 }
 
+// mini sparkline of a preset's breach% history for the scenario cards
+function cardSpark(arr,col){
+  const W=48,H=14,p=1.5; if(!arr||arr.length<2) return `<svg class="sc-spark" viewBox="0 0 ${W} ${H}"></svg>`;
+  const mn=Math.min(...arr),mx=Math.max(...arr),sp=(mx-mn)||1;
+  const pts=arr.map((y,i)=>`${(p+i/(arr.length-1)*(W-2*p)).toFixed(1)},${(H-p-(y-mn)/sp*(H-2*p)).toFixed(1)}`).join(' ');
+  return `<svg class="sc-spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/></svg>`;
+}
+
 /* ── core run ───────────────────────────────────────────────────── */
-let regimeMult=1, lastState=null, distHi='P50';
+let regimeMult=1, lastState=null, distHi='P50', prevVdState=null, sessionBase=null;
+const presetHist={};   // rolling breach% history per preset → card sparklines
+// "since you opened" delta strip
+function updateSince(p50,far,bP){
+  if(!sessionBase){ sessionBase={p50,far,bP}; }
+  const bar=document.getElementById('sinceBar'); if(!bar)return;
+  const cell=(lbl,d,unit,lowerGood)=>{ const cls=Math.abs(d)<0.005?'flat':((d>0)!==!!lowerGood?'up':'dn');
+    return `<span><b>${lbl}</b><span class="d ${cls}">${d>0?'+':''}${d.toFixed(2)}${unit}</span></span>`; };
+  bar.innerHTML='<span>Since you opened</span>'+cell('P50',p50-sessionBase.p50,' T',false)+
+    cell('Breach',(bP-sessionBase.bP)*100,' pp',true)+cell('FaR',far-sessionBase.far,' T',true);
+}
 function readFactors(){
   const o={}; for(const f of FACTORS) o[f.id]=+document.getElementById(f.id).value;
   o.fin=+document.getElementById('fin').value; return o;
@@ -815,6 +879,7 @@ function run(){
   const col=bP>.25?'var(--red)':bP>.1?'var(--gold)':'var(--green-dark)';
   bEl.style.color=col; document.getElementById('breachStrip').style.background=col;
   updateVerdict(p50,baseFCF,far,bP,floorT);
+  updateSince(p50,far,bP);
 
   // attribution: |corr(factor, fcf)| weighted by exposure → largest contributor
   const attr=[];
@@ -910,6 +975,8 @@ function updateVerdict(p50,baseFCF,far,bP,floorT){
   const v=document.getElementById('verdict'); if(!v)return;
   const state = (baseFCF>=floorT && bP<0.12) ? 'hold' : (baseFCF<floorT || bP>0.35) ? 'breach' : 'risk';
   v.classList.remove('hold','risk','breach'); v.classList.add(state);
+  if(prevVdState && prevVdState!==state){ v.classList.remove('flip'); void v.offsetWidth; v.classList.add('flip'); setTimeout(()=>v.classList.remove('flip'),820); }
+  prevVdState=state;
   setText('vdStatus', state==='hold'?'CASH FLOOR HOLDS':state==='risk'?'CASH FLOOR AT RISK':'CASH FLOOR BREACHED');
   setText('vdSub', `Residual Holding FCF Rp ${p50.toFixed(2)} T (P50) vs Rp ${(+floorT).toFixed(1)} T board floor · FCF-at-Risk Rp ${far.toFixed(2)} T${hasAnyMit()?' · after action':''}`);
   setText('vdScn', activePreset==='Custom'?'custom inputs':activePreset);
@@ -1205,6 +1272,7 @@ let raf=null;
 function schedule(){ syncLabels(); if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run); }
 ['china','cycle','fx','energy','carbon','reg','fin'].forEach(id=>
   document.getElementById(id).addEventListener('input',()=>{ markCustom(); schedule(); }));
+document.getElementById('fx').addEventListener('input',()=>{ fxUserTouched=true; });
 document.getElementById('n').addEventListener('input',schedule);
 document.getElementById('floor').addEventListener('input',schedule);          // live sim while dragging
 document.getElementById('floor').addEventListener('change',renderPresetCards); // refresh cards on release
@@ -1212,13 +1280,13 @@ function markCustom(){ activePreset='Custom'; document.querySelectorAll('.scard'
 
 document.querySelectorAll('#regime button').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('#regime button').forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); regimeMult=+b.dataset.r; renderPresetCards(); schedule(); }));
+  b.classList.add('on'); regimeMult=+b.dataset.r; renderPresetCards(); liveEffects(); schedule(); }));
 
 // scenario preset cards + category filters
 let presetFilter='All';
 function loadPreset(k){ const p=PRESETS[k]; activePreset=k;
   for(const kk in p) document.getElementById(kk).value=p[kk];
-  renderPresetCards(); schedule(); }
+  renderPresetCards(); liveEffects(); schedule(); }
 function renderFilters(){
   const cats=['All',...[...new Set(Object.values(PRESET_CAT))].map(c=>CAT_LABEL[c])];
   document.getElementById('presetFilters').innerHTML=cats.map(c=>
@@ -1232,10 +1300,11 @@ function renderPresetCards(){
   document.getElementById('presetCards').innerHTML=keys.map(k=>{
     const q=quickBreach(PRESETS[k],floorT), pc=q.breach*100;
     const lvl=pc<12?'lo':pc<32?'mid':'hi', barc=pc<12?'var(--green)':pc<32?'var(--gold)':'var(--red)';
+    const h=presetHist[k]||(presetHist[k]=[]); h.push(pc); if(h.length>24)h.shift();
     return `<div class="scard ${k===activePreset?'on':''}" data-k="${k}">
       <div class="sc-top"><span class="sc-name">${k}</span><span class="sc-cat">${CAT_LABEL[PRESET_CAT[k]]}</span></div>
       <div class="sc-mid"><span class="sc-breach ${lvl}">${pc.toFixed(0)}%</span><span class="sc-lbl">breach</span>
-        <span class="sc-res">Rp ${q.residual.toFixed(1)}T</span></div>
+        ${cardSpark(h,barc)}<span class="sc-res">Rp ${q.residual.toFixed(1)}T</span></div>
       <div class="sc-bar"><span style="width:${clamp(pc,2,100)}%;background:${barc}"></span></div>
     </div>`;
   }).join('');
@@ -1248,7 +1317,7 @@ document.getElementById('reset').addEventListener('click',()=>{
   LEVERS.forEach(l=>{l.on=false;l._rec=false;});
   document.querySelectorAll('#regime button').forEach(x=>x.classList.toggle('on',x.dataset.r==='1')); regimeMult=1;
   activePreset='FY2025 plan'; presetFilter='All'; renderFilters(); renderPresetCards();
-  document.getElementById('optbox').classList.remove('show'); schedule();
+  document.getElementById('optbox').classList.remove('show'); liveEffects(); schedule();
 });
 document.getElementById('optBtn').addEventListener('click',recommendPackage);
 document.getElementById('copyBrief').addEventListener('click',copyBrief);
@@ -1293,14 +1362,72 @@ function sparkSVG(seed,up){
     `fill="none" stroke="${up?'#22c98a':'#ed675d'}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
 }
 function renderTicker(){
-  const row=document.getElementById('tickerRow');
-  row.innerHTML='<div class="ticker-lead"><b>MARKET</b><span>SIGNALS</span></div>'+
-    MARKETS.map((m,i)=>{const up=m.chg>=0;return `<div class="sig" title="${esc(m.d)}">
+  const seq=document.getElementById('tickerSeq');
+  seq.innerHTML=MARKETS.map((m,i)=>{const up=m.chg>=0;return `<div class="sig" data-k="${i}" title="${esc(m.d)}">
       <div class="sig-top"><span class="sig-l">${m.l}</span><span class="sig-tag ${m.cls}">${m.tag}</span></div>
       <div class="sig-mid"><span class="sig-v">${m.v}</span><span class="sig-u">${m.u}</span></div>
       <div class="sig-bot"><span class="sig-chg ${up?'up':'dn'}">${up?'▲':'▼'} ${Math.abs(m.chg).toFixed(1)}%</span>${sparkSVG(i*131+17,up)}</div>
     </div>`;}).join('');
+  const seq2=document.getElementById('tickerSeq2'); if(seq2) seq2.innerHTML=seq.innerHTML;
 }
+
+/* ── live market engine: jitter, drift, live feed, heartbeat, clock ── */
+function parseSig(v){ const m=String(v).replace(/,/g,'').match(/-?\d+(\.\d+)?/); return m?parseFloat(m[0]):0; }
+MARKETS.forEach(m=>{ m._num=parseSig(m.v); m._base=m._num; m._dec=(String(m.v).split('.')[1]||'').replace(/[^\d]/g,'').length;
+  m._pre=(String(m.v).match(/^[^\d-]*/)||[''])[0]; m._suf=(String(m.v).match(/[^\d.]*$/)||[''])[0]; });
+function fmtSig(m){ const n=m._num, s=n>=1000?Math.round(n).toLocaleString('en-US'):n.toFixed(m._dec); return m._pre+s+m._suf; }
+function paintSig(i){ const m=MARKETS[i], up=m.chg>=0;
+  document.querySelectorAll('.ticker-seq .sig[data-k="'+i+'"]').forEach(el=>{
+    const v=el.querySelector('.sig-v'); if(v){v.textContent=fmtSig(m); v.classList.remove('flash'); void v.offsetWidth; v.classList.add('flash');}
+    const c=el.querySelector('.sig-chg'); if(c){c.className='sig-chg '+(up?'up':'dn'); c.textContent=(up?'▲':'▼')+' '+Math.abs(m.chg).toFixed(1)+'%';}
+    const sp=el.querySelector('.spark'); if(sp){const tmp=document.createElement('div'); tmp.innerHTML=sparkSVG(i*131+17+Math.floor(m._num*7),up); el.querySelector('.sig-bot').replaceChild(tmp.firstChild,sp);}
+  });
+}
+function microJitter(){ const k=2+Math.floor(Math.random()*3);
+  for(let j=0;j<k;j++){ const i=Math.floor(Math.random()*MARKETS.length), m=MARKETS[i];
+    m._num=Math.max(0,m._num + m._base*(Math.random()-0.5)*0.004);
+    m.chg=clamp(m.chg+(Math.random()-0.5)*0.25,-9,9); paintSig(i); } }
+
+let liveOn=false, driftOn=false, driftTimer=null, fxUserTouched=false;
+function setHeartbeat(){ const hb=document.getElementById('heartbeat'), t=document.getElementById('hbT'), lb=document.getElementById('liveBadgeT');
+  hb.classList.toggle('on', liveOn && !driftOn); hb.classList.toggle('sim', driftOn);
+  const label=driftOn?'AUTO-DRIFT':(liveOn?'LIVE · USD/IDR':'SNAPSHOT'); t.textContent=label;
+  if(lb) lb.textContent=driftOn?'SIM':(liveOn?'LIVE':'SNAPSHOT'); }
+function liveEffects(){
+  ['vdProbN','p50','breach'].forEach(id=>{const e=document.getElementById(id); if(e){e.classList.add('simulating'); setTimeout(()=>e.classList.remove('simulating'),430);}});
+  ['waterfall','hist'].forEach(id=>{const c=document.getElementById(id); if(c){c.classList.remove('redrawing'); void c.offsetWidth; c.classList.add('redrawing');}});
+}
+function discreteRecompute(){ syncLabels(); if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run); }
+function applyFxFromSignal(rate, drive){
+  document.getElementById('footFx').textContent=Math.round(rate).toLocaleString('en-US');
+  if(drive){ const fx=document.getElementById('fx'); fx.value=clamp(Math.round(rate/100)*100,+fx.min,+fx.max);
+    liveEffects(); discreteRecompute(); } }
+function driftStep(){
+  for(let i=0;i<MARKETS.length;i++){ const m=MARKETS[i];
+    m._num=Math.max(0, m._num + m._base*(Math.random()-0.5)*0.012);
+    m.chg=clamp((m._num-m._base)/m._base*100,-12,12); paintSig(i); }
+  const fxi=MARKETS.findIndex(m=>m.tag==='FX'); if(fxi>=0) applyFxFromSignal(MARKETS[fxi]._num,true);
+  renderPresetCards();
+}
+function toggleDrift(){ driftOn=!driftOn; const b=document.getElementById('driftBtn');
+  b.classList.toggle('on',driftOn); b.textContent=driftOn?'■ STOP DRIFT':'▶ AUTO-DRIFT'; setHeartbeat();
+  if(driftOn){ driftStep(); driftTimer=setInterval(driftStep,3000); }
+  else if(driftTimer){ clearInterval(driftTimer); driftTimer=null; } }
+function fetchLiveFx(){
+  fetch('https://open.er-api.com/v6/latest/USD').then(r=>r.json()).then(d=>{
+    const idr=d&&d.rates&&d.rates.IDR; if(!idr)return;
+    const fxi=MARKETS.findIndex(m=>m.tag==='FX');
+    if(fxi>=0){ const m=MARKETS[fxi]; m.chg=clamp((idr-m._base)/m._base*100,-12,12); m._num=idr; paintSig(fxi); }
+    liveOn=true; setHeartbeat();
+    if(!driftOn) applyFxFromSignal(idr, !fxUserTouched);
+    else document.getElementById('footFx').textContent=Math.round(idr).toLocaleString('en-US');
+  }).catch(()=>{ /* offline / blocked → stays SNAPSHOT, honest */ });
+}
+function tickClock(){ const now=new Date(), wib=new Date(now.getTime()+(now.getTimezoneOffset()+420)*60000);
+  const p=n=>String(n).padStart(2,'0'), t=p(wib.getHours())+':'+p(wib.getMinutes())+':'+p(wib.getSeconds());
+  const u=now.getUTCHours()+now.getUTCMinutes()/60;
+  let sess='markets closed'; if(u>=0.5&&u<8)sess='Asia open'; else if(u>=8&&u<16.5)sess='London · LME open'; else if(u>=16.5&&u<21)sess='US open';
+  const el=document.getElementById('liveClock'); if(el) el.innerHTML='<b>'+t+' WIB</b> · '+sess; }
 
 /* ── light-theme switcher (explore design options) ──────────────── */
 function setTheme(t){
@@ -1315,6 +1442,13 @@ let _savedTheme='night'; try{_savedTheme=localStorage.getItem('preTheme')||'nigh
 
 renderTicker(); renderLevers(); renderFilters(); renderPresetCards(); syncLabels();
 if(_savedTheme!=='forest') setTheme(_savedTheme); else run();
+
+/* ── start the live engine ──────────────────────────────────────── */
+document.getElementById('ticker').classList.add('flow');                 // marquee
+document.getElementById('driftBtn').addEventListener('click', toggleDrift);
+tickClock(); setInterval(tickClock, 1000);                                // live clock + session
+setInterval(microJitter, 3000);                                           // ambient signal jitter
+setHeartbeat(); fetchLiveFx(); setInterval(fetchLiveFx, 60000);           // real USD/IDR feed + heartbeat
 
 /* ── guided tour ────────────────────────────────────────────────── */
 const TOUR=[
