@@ -553,6 +553,17 @@
   .scenbar .ctrl .hint{font-size:9px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   @media(max-width:760px){.scenbar{position:static}}
   /* RHS recommendation card */
+  /* driver-sensitivity tornado (rail) */
+  .crail-card.tornado .tn-axis{position:relative;height:11px;margin:3px 0 5px;font-size:8.5px;color:var(--faint);font-family:var(--mono)}
+  .crail-card.tornado .tn-axis span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+  .tn-row{display:flex;align-items:center;gap:7px;margin:3px 0}
+  .tn-name{flex:0 0 76px;font-size:9.5px;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tn-track{position:relative;flex:1;height:11px;background:var(--inset);border-radius:3px;overflow:hidden}
+  .tn-neg,.tn-pos{position:absolute;top:2.5px;height:6px;border-radius:2px}
+  .tn-neg{background:var(--red)} .tn-pos{background:var(--green-dark)}
+  .tn-floor{position:absolute;top:0;height:100%;border-left:1.4px dashed var(--red);opacity:.75}
+  .tn-cen{position:absolute;top:0;height:100%;border-left:1px solid var(--faint);opacity:.6}
+  .tn-cap{font-size:9.5px;color:var(--muted);line-height:1.45;margin-top:8px}
   .crail-card.reco{border-left:4px solid var(--green)}
   .crail-card.reco.warn{border-left-color:var(--gold)} .crail-card.reco.bad{border-left-color:var(--red)}
   .reco-head{font-size:15px;font-weight:800;margin:2px 0 6px;color:var(--green-dark)}
@@ -806,6 +817,7 @@
   <!-- ── right rail: scenario controls + driver copilot ───────── -->
   <aside class="crail" id="crail">
     <div class="crail-card reco" id="recoCard"></div>
+    <div class="crail-card tornado" id="tornadoCard" style="display:none"></div>
     <div class="crail-card flags" id="flagsCard" style="display:none"></div>
     <div class="crail-card flags" id="fundCard" style="display:none"></div>
     <div class="crail-card flags" id="allocCard" style="display:none"></div>
@@ -1321,7 +1333,7 @@ function run(){
     levers:LEVERS.filter(l=>l.on).map(l=>l.label), paths:N };
   renderBrief();
   lastBP=V.breach; lastP50=V.p50; lastFloor=V.floor;
-  renderMacro(); renderStressChain(); renderCeoAction(); renderReco();
+  renderMacro(); renderStressChain(); renderCeoAction(); renderReco(); renderTornado();
 }
 
 function corr(a,b){const n=a.length;let ma=0,mb=0;for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];}ma/=n;mb/=n;
@@ -1710,6 +1722,46 @@ function restorePin(i){
   if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run);
 }
 document.getElementById('pinBtn')?.addEventListener('click',pinScenario);
+
+/* ── driver-sensitivity tornado (deterministic ±1σ sweep) ───────── */
+function renderTornado(){
+  const host=document.getElementById('tornadoCard'); if(!host||host.style.display==='none')return;
+  const cen=readFactors(), floorT=+document.getElementById('floor').value;
+  const mit=mitFromLevers(LEVERS);
+  const cenSh=FACTORS.map(f=>f.to(cen[f.id])), cenFin=FIN.to(cen.fin), cenFx=cenSh[2];
+  const central=holdingFCF(cenSh,cenFin,cenFx,mit).fcf;
+  const rows=[];
+  FACTORS.forEach((f,k)=>{                                  // each factor swung ±1σ, others held central
+    const d=f.vol*regimeMult;
+    const shP=cenSh.slice(); shP[k]=cenSh[k]+d;
+    const shM=cenSh.slice(); shM[k]=cenSh[k]-d;
+    const fP=holdingFCF(shP,cenFin,(k===2?shP[2]:cenFx),mit).fcf;
+    const fM=holdingFCF(shM,cenFin,(k===2?shM[2]:cenFx),mit).fcf;
+    rows.push({name:FNAME[k], low:Math.min(fP,fM), high:Math.max(fP,fM)});
+  });
+  const dF=FIN.vol*regimeMult;                              // financing pressure
+  const ffP=holdingFCF(cenSh,cenFin+dF,cenFx,mit).fcf, ffM=holdingFCF(cenSh,cenFin-dF,cenFx,mit).fcf;
+  rows.push({name:'Financing', low:Math.min(ffP,ffM), high:Math.max(ffP,ffM)});
+  rows.forEach(r=>r.span=r.high-r.low);
+  rows.sort((a,b)=>b.span-a.span);                          // tornado: widest swing on top
+  let dmin=Math.min(central,floorT,...rows.map(r=>r.low)), dmax=Math.max(central,floorT,...rows.map(r=>r.high));
+  const padd=(dmax-dmin)*0.08||0.5; dmin-=padd; dmax+=padd;
+  const pc=v=>(v-dmin)/(dmax-dmin)*100, cX=pc(central), fX=pc(floorT);
+  const bars=rows.map(r=>{
+    const xl=pc(r.low), xh=pc(r.high), xc=Math.max(xl,Math.min(xh,cX));
+    return `<div class="tn-row"><span class="tn-name" title="${r.name}">${r.name}</span>`+
+      `<div class="tn-track">`+
+        `<span class="tn-floor" style="left:${fX}%"></span><span class="tn-cen" style="left:${cX}%"></span>`+
+        `<span class="tn-neg" style="left:${xl}%;width:${Math.max(0,xc-xl)}%"></span>`+
+        `<span class="tn-pos" style="left:${xc}%;width:${Math.max(0,xh-xc)}%"></span>`+
+      `</div></div>`;
+  }).join('');
+  const top=rows[0];
+  host.innerHTML=`<div class="crail-h">Driver sensitivity <span class="cop-badge">±1σ</span></div>`+
+    `<div class="tn-axis"><span style="left:${clamp(fX,8,92)}%">floor ${floorT.toFixed(1)}</span><span style="left:${clamp(cX,8,92)}%">P50 ${central.toFixed(1)}</span></div>`+
+    `<div class="tn-chart">${bars}</div>`+
+    `<div class="tn-cap">Residual FCF (Rp T) if each driver alone moves ±1σ. Bars reaching the dashed floor can breach on their own — <b>${esc(top.name)}</b> is the swing to hedge first.</div>`;
+}
 
 document.getElementById('optBtn')?.addEventListener('click',recommendPackage);
 document.getElementById('copyBrief')?.addEventListener('click',copyBrief);
@@ -2372,6 +2424,7 @@ function setView(v){
   document.getElementById('allocateView').classList.toggle('lhide',v!=='allocate');
   document.getElementById('recoCard').style.display=cash?'':'none';
   const show=(id,on)=>{const e=document.getElementById(id);if(e)e.style.display=on?'':'none';};
+  show('tornadoCard',cash);
   show('flagsCard',v==='monitor'); show('fundCard',v==='forecast'); show('allocCard',v==='allocate');
   if(cash){ if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run); }
   else if(v==='monitor') renderMonitor(); else if(v==='forecast') renderForecast(); else if(v==='allocate') renderAllocate();
