@@ -536,6 +536,20 @@
   .more-btn{margin-top:11px;cursor:pointer;border:1px dashed var(--line);background:transparent;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.3px;padding:7px 13px;border-radius:8px}
   .more-btn:hover{background:var(--inset);color:var(--ink)}
   .scenbar-more{margin-top:12px} .scenbar-more[hidden]{display:none}
+  .scenbar-head .pin-btn{width:auto;margin:0 0 0 auto;padding:7px 13px}
+  .scenbar-head .pin-btn+.reset{margin:0 0 0 8px}
+  /* pinned-scenario comparison strip */
+  .pinstrip{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:11px;padding-top:11px;border-top:1px dashed var(--line)}
+  .pinstrip[hidden]{display:none}
+  .pin-lbl{font-size:9.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--faint)}
+  .pin-chips{display:flex;gap:8px;flex-wrap:wrap}
+  .pchip{display:flex;align-items:center;gap:8px;cursor:pointer;background:var(--inset);border:1px solid var(--line);border-radius:9px;padding:6px 10px;transition:border-color .15s}
+  .pchip:hover{border-color:var(--green)}
+  .pchip .pdot{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+  .pchip b{font-weight:800;font-size:11.5px;white-space:nowrap}
+  .pchip .pst{font-family:var(--mono);color:var(--muted);font-size:10.5px;white-space:nowrap}
+  .pchip .px{margin-left:1px;color:var(--faint);font-weight:800;font-size:12px;line-height:1}
+  .pchip .px:hover{color:var(--red)}
   .scenbar .ctrl .hint{font-size:9px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   @media(max-width:760px){.scenbar{position:static}}
   /* RHS recommendation card */
@@ -875,6 +889,7 @@
         <div class="seg" id="regime" title="Volatility regime">
           <button data-r="0.6">CALM</button><button data-r="1" class="on">BASE</button><button data-r="1.7">STRESSED</button>
         </div>
+        <button class="reset pin-btn" id="pinBtn" title="Pin this scenario to compare">📌 Pin</button>
         <button class="reset" id="reset">Reset</button>
       </div>
       <div class="scenbar-ctrls" data-tour="factors">
@@ -908,6 +923,10 @@
         <div class="ctrl"><div class="row"><label>Simulations</label><span class="val" id="nV">20,000</span></div>
           <input type="range" id="n" min="2000" max="50000" value="20000" step="1000">
           <div class="hint">Monte Carlo paths</div></div>
+      </div>
+      <div class="pinstrip" id="pinStrip" hidden>
+        <span class="pin-lbl">Pinned · click to restore</span>
+        <div class="pin-chips" id="pinChips"></div>
       </div>
     </div>
 
@@ -1644,6 +1663,54 @@ document.getElementById('reset').addEventListener('click',()=>{
   activePreset='FY2025 plan'; presetFilter='All'; renderFilters(); renderPresetCards();
   const ob=document.getElementById('optbox'); if(ob)ob.classList.remove('show'); liveEffects(); schedule();
 });
+/* ── pin & compare scenarios ────────────────────────────────────── */
+const REGIME_MULT={calm:0.6,base:1,stressed:1.7};
+let pinned=[], pinSeq=0;
+const PIN_MAX=4;
+function pinScenario(){
+  if(!lastState)return;
+  const o=lastState.outputs;
+  const label=(lastState.preset==='Custom'?'Custom '+(++pinSeq):lastState.preset)
+    +(lastState.regime!=='base'?' · '+lastState.regime:'');
+  pinned.push({ label, drivers:{...lastState.drivers}, floor:lastState.floor, paths:lastState.paths,
+    regime:lastState.regime, preset:lastState.preset, p50:o.p50, breach:o.breach, far:o.far });
+  if(pinned.length>PIN_MAX) pinned.shift();
+  renderPins();
+}
+function renderPins(){
+  const strip=document.getElementById('pinStrip'), host=document.getElementById('pinChips');
+  if(!strip||!host)return;
+  if(!pinned.length){ strip.setAttribute('hidden',''); host.innerHTML=''; return; }
+  strip.removeAttribute('hidden');
+  host.innerHTML=pinned.map((s,i)=>{
+    const lvl=s.breach>.25?2:s.breach>.1?1:0;
+    return `<div class="pchip" data-pin="${i}" title="Restore this scenario">`+
+      `<span class="pdot" style="background:${RAGC[lvl]}"></span>`+
+      `<b>${esc(s.label)}</b>`+
+      `<span class="pst">FCF ${s.p50.toFixed(1)}T · ${Math.round(s.breach*100)}% breach</span>`+
+      `<span class="px" data-unpin="${i}" title="Remove">✕</span></div>`;
+  }).join('');
+  host.querySelectorAll('[data-pin]').forEach(el=>el.addEventListener('click',e=>{
+    if(e.target.closest('[data-unpin]'))return; restorePin(+el.dataset.pin); }));
+  host.querySelectorAll('[data-unpin]').forEach(el=>el.addEventListener('click',e=>{
+    e.stopPropagation(); pinned.splice(+el.dataset.unpin,1); renderPins(); }));
+}
+function restorePin(i){
+  const s=pinned[i]; if(!s)return;
+  for(const f of FACTORS) document.getElementById(f.id).value=s.drivers[f.id];
+  document.getElementById('fin').value=s.drivers.fin;
+  document.getElementById('floor').value=s.floor;
+  document.getElementById('n').value=s.paths;
+  regimeMult=REGIME_MULT[s.regime]||1;
+  document.querySelectorAll('#regime button').forEach(x=>x.classList.toggle('on',+x.dataset.r===regimeMult));
+  activePreset=s.preset;
+  const ps=document.getElementById('presetSel');
+  if(ps&&[...ps.options].some(o=>o.value===s.preset)) ps.value=s.preset;
+  syncLabels(); renderPresetCards();
+  if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run);
+}
+document.getElementById('pinBtn')?.addEventListener('click',pinScenario);
+
 document.getElementById('optBtn')?.addEventListener('click',recommendPackage);
 document.getElementById('copyBrief')?.addEventListener('click',copyBrief);
 window.addEventListener('resize',()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(run);
