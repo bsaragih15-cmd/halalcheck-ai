@@ -120,7 +120,7 @@
 
   /* Neo — futuristic teal terminal (AIS demo-feed aesthetic) */
   [data-theme="neo"]{
-    --app-bg:radial-gradient(1200px 600px at 50% -10%,#0a1a18 0%,#060d0c 55%,#04090880 100%);
+    --app-bg:radial-gradient(1400px 820px at 50% -12%,#0d2320 0%,#08110f 52%,#060c0b 100%);
     --paper:#0b1614; --paper2:#0e1a18; --inset:#0a1412;
     --ink:#e2f5ef; --muted:#82a79e; --faint:#557067; --line:rgba(45,224,196,.15); --line2:rgba(45,224,196,.08);
     --green:#2fe0c0; --green-dark:#15b89e; --green-soft:rgba(47,224,192,.16);
@@ -155,7 +155,10 @@
     --brief-bg:linear-gradient(160deg,#0f3b22,#0c2113);
   }
   *{margin:0;padding:0;box-sizing:border-box}
-  body{background:var(--app-bg);
+  html{background:#fbfbf9}
+  html[data-theme="night"]{background:#0d1117} html[data-theme="neo"]{background:#060c0b}
+  html[data-theme="deep"]{background:#0a140d} html[data-theme="terminal"]{background:#eef0f2} html[data-theme="fintech"]{background:#f4f6fa}
+  body{background:var(--app-bg);background-attachment:fixed;
     color:var(--ink);font-family:var(--sans);line-height:1.45;-webkit-font-smoothing:antialiased;
     min-height:100vh;padding-bottom:54px}
   a{color:inherit;text-decoration:none}
@@ -846,7 +849,7 @@
     <section class="layer" data-layer="ops">
       <div class="lhead"><h2 class="lh">How does it convert to cash?</h2><div class="lhsub">From market conditions to upstreamed dividends to the holding's residual free cash flow.</div></div>
       <div class="panel" data-tour="waterfall" data-grouponly>
-        <h2>Holding FCF waterfall · base case <span class="grp" id="wfScn">FY2025 plan</span></h2>
+        <h2>Holding FCF waterfall · central case <span class="grp" id="wfScn">FY2025 plan</span></h2>
         <canvas id="waterfall" height="320"></canvas>
         <div class="legend" id="wfLegend"></div>
       </div>
@@ -1548,6 +1551,11 @@ document.getElementById('fx').addEventListener('input',()=>{ fxUserTouched=true;
 document.getElementById('n').addEventListener('input',schedule);
 document.getElementById('floor').addEventListener('input',schedule);          // live sim while dragging
 document.getElementById('floor').addEventListener('change',renderPresetCards); // refresh cards on release
+// redraw pulse when a driver settles, so the chart visibly recomputes
+['china','cycle','fx','energy','carbon','reg','fin','floor'].forEach(id=>{
+  const el=document.getElementById(id);
+  if(el) el.addEventListener('change',()=>{ if(typeof liveEffects==='function') liveEffects(); });
+});
 function markCustom(){ activePreset='Custom'; document.querySelectorAll('.scard').forEach(p=>p.classList.remove('on'));
   const ps=document.getElementById('presetSel'); if(ps)ps.value='Custom'; }
 
