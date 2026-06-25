@@ -578,60 +578,10 @@
 
   <!-- ── results ──────────────────────────────────────────────── -->
   <main>
-    <div class="verdict" id="verdict" data-tour="verdict">
-      <div class="vd-left">
-        <div class="vd-eyebrow"><span class="livedot"></span>LIVE MODEL · <span id="vdScn">FY2025 plan</span> · recomputed <span id="vdAsOf">—</span></div>
-        <div class="vd-status" id="vdStatus">—</div>
-        <div class="vd-sub" id="vdSub"></div>
-        <div class="vd-drivers" id="vdDrivers"></div>
-      </div>
-      <div class="vd-right">
-        <div class="vd-prob-row"><span class="vd-prob-lbl">Cash-floor breach probability</span>
-          <span class="vd-prob-n" id="vdProbN">—</span></div>
-        <div class="outcome" id="outcome">
-          <div class="oc-breach" id="ocBreach"><span id="ocBreachT"></span></div>
-          <div class="oc-hold" id="ocHold"><span id="ocHoldT"></span></div>
-        </div>
-        <div class="vd-foot" id="vdFoot"></div>
-      </div>
-    </div>
-
-    <div class="kpis" data-tour="kpis">
-      <div class="kpi dark"><div class="strip" style="background:var(--green)"></div>
-        <div class="k">Residual Holding FCF · P50</div><div class="v" id="p50">—</div>
-        <div class="u">Rp T · after upstreaming &amp; obligations</div><div class="delta" id="p50d"></div></div>
-      <div class="kpi"><div class="strip" style="background:var(--gold)"></div>
-        <div class="k">Holding FCF-at-Risk</div><div class="v" id="far" style="color:var(--gold)">—</div>
-        <div class="u">Rp T · base − P10 downside</div><div class="delta" id="fard"></div></div>
-      <div class="kpi"><div class="strip" id="breachStrip" style="background:var(--red)"></div>
-        <div class="k">Cash-floor breach prob.</div><div class="v" id="breach">—</div>
-        <div class="u">paths below board floor</div><div class="delta" id="breachd"></div></div>
-      <div class="kpi"><div class="strip" style="background:var(--blue)"></div>
-        <div class="k">Largest contributor</div><div class="v" id="topc" style="font-size:17px">—</div>
-        <div class="u" id="topcU">driver of downside</div><div class="delta" id="topd"></div></div>
-    </div>
-
-    <div class="sincebar" id="sinceBar"></div>
-    <div class="mitbar" id="mitbar"></div>
-
-    <div class="row2">
-      <div class="panel" data-tour="waterfall">
-        <h2>Holding FCF waterfall · base case <span class="grp" id="wfScn">FY2025 plan</span></h2>
-        <canvas id="waterfall" height="320"></canvas>
-        <div class="legend" id="wfLegend"></div>
-      </div>
-      <div class="panel" id="distPanel" data-tour="dist">
-        <h2>FCF distribution
-          <span class="distseg" id="distHi"><button data-p="P10">P10</button><button data-p="P50" class="on">P50</button><button data-p="P90">P90</button></span>
-          <span class="grp" id="convPill">—</span></h2>
-        <canvas id="hist" height="320"></canvas>
-        <div class="legend">
-          <span><i style="border-color:var(--green-dark)"></i>density</span>
-          <span><i style="border-color:var(--red)"></i>cash floor</span>
-          <span><i class="sq" style="background:rgba(220,90,80,.3)"></i>breach region</span>
-          <span id="refLeg" style="display:none"><i style="border-color:var(--gold);border-style:dashed"></i>before action</span>
-        </div>
-      </div>
+    <div class="panel" data-tour="waterfall">
+      <h2>Holding FCF waterfall · base case <span class="grp" id="wfScn">FY2025 plan</span></h2>
+      <canvas id="waterfall" height="320"></canvas>
+      <div class="legend" id="wfLegend"></div>
     </div>
 
     <div class="panel mtop" data-tour="subs">
@@ -640,33 +590,6 @@
       <div class="note"><b>Freeport Indonesia</b> is kept visible as strategic JV exposure in the scenario narrative and
         diversification map, but excluded from quantified cash upstreaming until validated JV data is approved.
         Baseline / impact / residual in Rp&nbsp;trillion.</div>
-    </div>
-
-    <div class="row2 mtop">
-      <div class="panel" data-tour="runway">
-        <h2>Cash runway &amp; debt wall · next 4 quarters</h2>
-        <canvas id="runway" height="280"></canvas>
-        <div class="legend">
-          <span><i class="sq" style="background:var(--green)"></i>After-action cash cushion</span>
-          <span><i class="sq" style="background:var(--gold)"></i>Principal wall</span>
-          <span><i style="border-color:var(--red);border-style:dashed"></i>Cash floor</span>
-        </div>
-      </div>
-      <div class="panel" data-tour="divmap">
-        <h2>Diversification-break map <span class="grp">shared factors → assets</span></h2>
-        <svg id="divmap" viewBox="0 0 520 260" preserveAspectRatio="xMidYMid meet"></svg>
-        <div class="note">Active stress links connect common factors to the assets they hit in the same scenario
-          window. Freeport shows as a dashed JV exposure. When several links converge, diversification is failing.</div>
-      </div>
-    </div>
-
-    <div class="panel mtop" data-tour="levers">
-      <h2>Mitigation levers · management action
-        <span class="grp"><button class="optbtn" id="optBtn">⚡ Recommend package</button></span></h2>
-      <div class="levers" id="levers"></div>
-      <div class="optbox" id="optbox"></div>
-      <div class="note">Each lever shows its owner, time-to-impact and estimated benefit to the P10 downside. Toggle
-        levers to see residual FCF-at-Risk, P10 and breach probability update against the same simulated paths.</div>
     </div>
 
     <div class="panel brief mtop" data-tour="brief">
@@ -877,7 +800,7 @@ function run(){
   tweenEl(document.getElementById('p50'),p50,2); tweenEl(document.getElementById('far'),far,2);
   const bEl=document.getElementById('breach'); tweenEl(bEl,bP*100,1,'%');
   const col=bP>.25?'var(--red)':bP>.1?'var(--gold)':'var(--green-dark)';
-  bEl.style.color=col; document.getElementById('breachStrip').style.background=col;
+  if(bEl)bEl.style.color=col; const bStrip=document.getElementById('breachStrip'); if(bStrip)bStrip.style.background=col;
   updateVerdict(p50,baseFCF,far,bP,floorT);
   updateSince(p50,far,bP);
 
@@ -889,16 +812,16 @@ function run(){
   let topSub='—',worst=0;
   for(let s=0;s<SUBS.length;s++){ const loss=SUBS[s].base - pct(Float64Array.from(subStore[s]).sort(),.1);
     if(loss>worst){worst=loss;topSub=SUBS[s].id;} }
-  setText('topc',topSub); document.getElementById('topcU').textContent=worst>0?('−Rp '+worst.toFixed(2)+' T at P10'):'driver of downside';
+  setText('topc',topSub); const topcU=document.getElementById('topcU'); if(topcU)topcU.textContent=worst>0?('−Rp '+worst.toFixed(2)+' T at P10'):'driver of downside';
 
   // live verdict drivers + path count
   const topFactor=attr[0]?attr[0][0]:'—';
-  document.getElementById('vdDrivers').innerHTML =
+  const vdDrivers=document.getElementById('vdDrivers'); if(vdDrivers)vdDrivers.innerHTML =
     `<span class="vd-chip"><i>top risk</i>${topFactor}</span>`+
     `<span class="vd-chip"><i>worst sub</i>${topSub}</span>`+
     `<span class="vd-chip"><i>pinch</i>Debt principal</span>`+
     (hasAnyMit()?`<span class="vd-chip"><i>action</i>${LEVERS.filter(l=>l.on).length} lever(s)</span>`:'');
-  document.getElementById('vdFoot').textContent =
+  const vdFoot=document.getElementById('vdFoot'); if(vdFoot)vdFoot.textContent =
     `${Math.round(bP*N).toLocaleString('en-US')} of ${(+N).toLocaleString('en-US')} simulated paths breach the Rp ${(+floorT).toFixed(1)} T floor`;
 
   delta('p50d', p50-pct(sR,.5),'Rp T vs no action',false);
@@ -911,19 +834,20 @@ function run(){
 
   // mitigation summary bar
   const mb=document.getElementById('mitbar');
-  if(hasAnyMit()){ mb.classList.add('show');
-    const names=LEVERS.filter(l=>l.on).map(l=>l.label.split('(')[0].trim());
-    mb.innerHTML=`<b>Action package:</b> ${names.join(' · ')} → breach probability `+
-      `<b>${(bPR*100).toFixed(1)}% → ${(bP*100).toFixed(1)}%</b>, FCF-at-Risk `+
-      `<b>Rp ${farR.toFixed(2)} → ${far.toFixed(2)} T</b>, residual P50 ${p50>=pct(sR,.5)?'+':''}${(p50-pct(sR,.5)).toFixed(2)} Rp T.`;
-    document.getElementById('refLeg').style.display='';
-  } else { mb.classList.remove('show'); document.getElementById('refLeg').style.display='none'; }
+  if(mb){ if(hasAnyMit()){ mb.classList.add('show');
+      const names=LEVERS.filter(l=>l.on).map(l=>l.label.split('(')[0].trim());
+      mb.innerHTML=`<b>Action package:</b> ${names.join(' · ')} → breach probability `+
+        `<b>${(bPR*100).toFixed(1)}% → ${(bP*100).toFixed(1)}%</b>, FCF-at-Risk `+
+        `<b>Rp ${farR.toFixed(2)} → ${far.toFixed(2)} T</b>, residual P50 ${p50>=pct(sR,.5)?'+':''}${(p50-pct(sR,.5)).toFixed(2)} Rp T.`;
+    } else { mb.classList.remove('show'); } }
+  const refLeg=document.getElementById('refLeg'); if(refLeg)refLeg.style.display=hasAnyMit()?'':'none';
 
   // charts
   drawWaterfall(document.getElementById('waterfall'), holdingFCF(cenSh,cenFin,cenFx,mit), floorT);
   const histCv=document.getElementById('hist');           // Monte Carlo histogram hidden for now
   if(histCv && histCv.offsetParent!==null) drawHist(histCv, sA, {p10,p50,p90,floor:floorT,hi:distHi,ref:hasAnyMit()?sR:null});
-  drawRunway(document.getElementById('runway'), baseFCF, floorT, mit);
+  const rwCv=document.getElementById('runway');
+  if(rwCv && rwCv.offsetParent!==null) drawRunway(rwCv, baseFCF, floorT, mit);
   drawDivMap(cenSh);
 
   // subsidiary cards
@@ -1179,7 +1103,7 @@ function drawDivMap(sh){
 
 /* ── levers UI ──────────────────────────────────────────────────── */
 function renderLevers(){
-  const root=document.getElementById('levers');
+  const root=document.getElementById('levers'); if(!root)return;
   root.innerHTML=LEVERS.map((l,i)=>{
     const ben=(l._ben!=null?l._ben:0);
     return `<div class="lever ${l.on?'on':''} ${l._rec?'rec':''}" data-i="${i}">
@@ -1317,10 +1241,10 @@ document.getElementById('reset').addEventListener('click',()=>{
   LEVERS.forEach(l=>{l.on=false;l._rec=false;});
   document.querySelectorAll('#regime button').forEach(x=>x.classList.toggle('on',x.dataset.r==='1')); regimeMult=1;
   activePreset='FY2025 plan'; presetFilter='All'; renderFilters(); renderPresetCards();
-  document.getElementById('optbox').classList.remove('show'); liveEffects(); schedule();
+  document.getElementById('optbox')?.classList.remove('show'); liveEffects(); schedule();
 });
-document.getElementById('optBtn').addEventListener('click',recommendPackage);
-document.getElementById('copyBrief').addEventListener('click',copyBrief);
+document.getElementById('optBtn')?.addEventListener('click',recommendPackage);
+document.getElementById('copyBrief')?.addEventListener('click',copyBrief);
 window.addEventListener('resize',()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(run);});
 
 document.querySelectorAll('#distHi button').forEach(b=>b.addEventListener('click',()=>{
@@ -1452,15 +1376,11 @@ setHeartbeat(); fetchLiveFx(); setInterval(fetchLiveFx, 60000);           // rea
 
 /* ── guided tour ────────────────────────────────────────────────── */
 const TOUR=[
-  {sel:'[data-tour=verdict]',t:'1 · The board verdict',b:'The headline answer first: does the holding cash floor HOLD, sit AT RISK, or BREACH — with the breach probability shown as an outcome bar (red breach vs green hold), the way a prediction market frames an outcome.'},
-  {sel:'[data-tour=presets]',t:'2 · Pick a scenario',b:'Start from a board-ready preset — China hard landing, energy shock, refinancing squeeze, perfect storm — or build your own with the common-factor sliders below.'},
+  {sel:'[data-tour=presets]',t:'1 · Pick a scenario',b:'Start from a board-ready preset — China hard landing, energy shock, refinancing squeeze, perfect storm — or build your own with the common-factor sliders below.'},
   {sel:'[data-tour=factors]',t:'2 · Common factors',b:'Seven shared shocks (China demand, commodity cycle, FX, energy, carbon, regulation, financing) drive every subsidiary together. They are sampled around a macro latent, so a downturn hits several assets at once — that is where diversification fails.'},
-  {sel:'[data-tour=kpis]',t:'3 · The board answer',b:'Residual Holding FCF (P50), Holding FCF-at-Risk including debt principal, the probability of breaching the cash floor, and the largest single contributor to the downside.'},
-  {sel:'[data-tour=waterfall]',t:'4 · Where the cash goes',b:'Opening cash, then upstreaming stacked by subsidiary (PTBA, Antam, Inalum, Timah) so you can see each contribution; then holding opex, interest, debt principal, capex and equity drawn down. Debt principal is highlighted as the pinch, and the dashed line is the board cash floor the residual must clear.'},
-  {sel:'[data-tour=subs]',t:'5 · Subsidiary cash bridges',b:'PTBA, Antam, Inalum and Timah quantified, each with a confidence tag. Freeport stays visible as JV exposure but is excluded from quantified cash.'},
-  {sel:'[data-tour=divmap]',t:'6 · Diversification-break map',b:'Links light up where a shared factor hits an asset in this scenario. Red = adverse, green = favourable, dashed violet = Freeport JV. Converging links mean correlated downside.'},
-  {sel:'[data-tour=levers]',t:'7 · Pull the levers',b:'Hedge price or FX, refinance the wall, defer capex, run a cost program. Each lever shows owner, time-to-impact and benefit. Hit “Recommend package” for the cheapest set that protects the floor.'},
-  {sel:'[data-tour=brief]',t:'8 · Publish the board brief',b:'A board-grade narrative — what changed, why it matters, the decision needed — with the data caveat and Freeport exclusion attached. Copy it straight into the board pack.'},
+  {sel:'[data-tour=waterfall]',t:'3 · Where the cash goes',b:'Opening cash, then upstreaming stacked by subsidiary (PTBA, Antam, Inalum, Timah) so you can see each contribution; then holding opex, interest, debt principal, capex and equity drawn down. Debt principal is highlighted as the pinch, and the dashed line is the board cash floor the residual must clear.'},
+  {sel:'[data-tour=subs]',t:'4 · Subsidiary cash bridges',b:'PTBA, Antam, Inalum and Timah quantified, each with a confidence tag. Freeport stays visible as JV exposure but is excluded from quantified cash.'},
+  {sel:'[data-tour=brief]',t:'5 · Publish the board brief',b:'A board-grade narrative — what changed, why it matters, the decision needed — with the data caveat and Freeport exclusion attached. Copy it straight into the board pack.'},
 ];
 let tourI=-1,tourEls=null;
 function tourBuild(){const spot=document.createElement('div');spot.className='tour-spot';
