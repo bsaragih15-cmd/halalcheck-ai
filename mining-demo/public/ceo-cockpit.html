@@ -604,6 +604,15 @@
   .fl-dot{width:9px;height:9px;border-radius:50%;margin-top:4px;flex:0 0 auto}
   .fl-id{font-size:12px;font-weight:800}
   .fl-why{font-size:10.5px;color:var(--muted);line-height:1.4}
+  /* ── forecast ── */
+  .fc-callout{margin-top:13px;font-size:12.5px;line-height:1.6;color:var(--ink);background:var(--inset);border:1px solid var(--line);border-left:3px solid var(--green);border-radius:10px;padding:12px 15px}
+  .fc-callout b{color:var(--green-dark)}
+  #fcRunway{width:100%;height:236px;display:block}
+  #fcFlows{width:100%;height:152px;display:block}
+  .fc-legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:9px;font-size:10.5px;color:var(--muted)}
+  .fc-legend .sq{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+  .fc-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+  .fc-acts .sr-btn:disabled{opacity:.45;cursor:not-allowed}
   .reco-btn{margin-top:11px;width:100%;cursor:pointer;border:none;background:var(--green);color:#fff;font-weight:800;font-size:12px;padding:9px;border-radius:9px;letter-spacing:.2px}
   .crail-card.reco.warn .reco-btn{background:var(--gold)} .crail-card.reco.bad .reco-btn{background:var(--red)}
   [data-theme="neo"] .reco-btn{box-shadow:0 0 16px rgba(47,224,192,.3)}
@@ -752,6 +761,7 @@
   <aside class="crail" id="crail">
     <div class="crail-card reco" id="recoCard"></div>
     <div class="crail-card flags" id="flagsCard" style="display:none"></div>
+    <div class="crail-card flags" id="fundCard" style="display:none"></div>
     <div class="crail-card cop">
       <div class="crail-h">Driver Copilot <span class="cop-badge">model-aware</span></div>
       <div class="cop-feed" id="copFeed"></div>
@@ -766,6 +776,7 @@
     <!-- maturity-ladder tab switcher -->
     <div class="vtabs" id="vtabs">
       <button class="vtab" data-v="monitor"><span class="vt-n">01</span>Monitor</button>
+      <button class="vtab" data-v="forecast"><span class="vt-n">02</span>Forecast</button>
       <button class="vtab on" data-v="cash"><span class="vt-n">03</span>Cash &amp; Scenarios</button>
     </div>
 
@@ -777,6 +788,27 @@
         <h2>Subsidiary scorecard <span class="grp">YTD vs plan · illustrative</span></h2>
         <div class="score-head"><span>Subsidiary</span><span>EBITDA</span><span>Dividend up</span><span>Leverage</span><span>Key operations</span><span>Status</span></div>
         <div id="monScore"></div>
+      </div>
+    </div>
+
+    <!-- FORECAST view (Stage 02) -->
+    <div id="forecastView" class="monitor-view lhide">
+      <div class="lhead"><h2 class="lh">Forecast — dividend capacity vs the funding calendar</h2><div class="lhsub">Rolling 8-quarter cash runway. Projected dividend upstreaming against the holding's obligations, with a P10/P50/P90 confidence cone.</div></div>
+      <div class="msnapshot" id="fcSnapshot"></div>
+      <div class="fc-callout" id="fcCallout"></div>
+      <div class="panel" style="margin-top:14px">
+        <h2>Cash runway <span class="grp">Rp T · P50 line, P10–P90 cone · illustrative</span></h2>
+        <canvas id="fcRunway"></canvas>
+        <div class="fc-legend"><span><i class="sq" style="background:#15a06d"></i>P50 runway</span><span><i class="sq" style="background:rgba(21,160,109,.25)"></i>P10–P90 cone</span><span><i class="sq" style="background:#dc5a50"></i>board floor / breach</span></div>
+      </div>
+      <div class="panel" style="margin-top:14px">
+        <h2>Quarterly flows <span class="grp">dividends in vs obligations out</span></h2>
+        <canvas id="fcFlows"></canvas>
+        <div class="fc-legend" id="fcFlowLegend"></div>
+        <div class="fc-acts">
+          <button class="sr-btn" id="fcToStress">↗ Send to Stress-test</button>
+          <button class="sr-btn" id="fcToAlloc" disabled title="Allocate — Stage 04, next">↗ Send surplus to Allocate</button>
+        </div>
       </div>
     </div>
 
@@ -903,6 +935,25 @@ const SUBMON = [
     note:'Ahead of plan on firm tin price and volumes.' },
 ];
 const FREEMON = { id:'Freeport', commodity:'Copper · gold (JV)', note:'JV — visibility only, excluded from quantified cash.' };
+
+// ── Forecast (Stage 02): 8-quarter dividend capacity vs funding calendar ──
+const FCAST = {
+  labels:['Q3 26','Q4 26','Q1 27','Q2 27','Q3 27','Q4 27','Q1 28','Q2 28'],
+  open:12.0, floor:2.0,
+  div:{ // quarterly dividend upstreaming by subsidiary (Rp T) — lumpy, post-FY
+    PTBA:  [0.90,0.10,0.50,0.10,0.90,0.10,0.50,0.10],
+    Antam: [0.50,0.05,0.30,0.05,0.55,0.05,0.30,0.05],
+    Inalum:[0.40,0.05,0.20,0.05,0.45,0.05,0.25,0.05],
+    Timah: [0.15,0.00,0.08,0.00,0.18,0.00,0.10,0.00] },
+  obl:{ // quarterly obligations (Rp T, outflow)
+    Interest:        [0.6,0.6,0.6,0.6,0.6,0.6,0.6,0.6],
+    Principal:       [0.0,0.0,0.5,0.0,1.5,0.0,0.0,0.0],
+    'Capex equity':  [0.5,0.5,0.4,0.4,0.4,0.4,0.3,0.3],
+    'State dividend':[0.0,1.0,0.0,0.0,0.0,1.0,0.0,0.0],
+    Opex:            [0.3,0.3,0.3,0.3,0.3,0.3,0.3,0.3] },
+};
+const OBLNOTE={Interest:'group debt service', Principal:'bond maturity', 'Capex equity':'smelter / downstream injections', 'State dividend':'payout to government shareholder', Opex:'holdco operating cost'};
+const OBLCOL={Interest:'#8b9a92', Principal:'#dc5a50', 'Capex equity':'#3f86cf', 'State dividend':'#b07d10', Opex:'#9a8f86'};
 
 // Holding obligations (Rp T). management = assumption; reported/illustrative tagged in UI.
 const HOLD = {
@@ -1567,7 +1618,8 @@ document.getElementById('reset').addEventListener('click',()=>{
 });
 document.getElementById('optBtn')?.addEventListener('click',recommendPackage);
 document.getElementById('copyBrief')?.addEventListener('click',copyBrief);
-window.addEventListener('resize',()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(run);});
+window.addEventListener('resize',()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(run);
+  if(typeof activeView!=='undefined'&&activeView==='forecast')renderForecast();});
 
 document.querySelectorAll('#distHi button').forEach(b=>b.addEventListener('click',()=>{
   distHi=b.dataset.p; document.querySelectorAll('#distHi button').forEach(x=>x.classList.toggle('on',x===b));
@@ -1682,6 +1734,7 @@ function setTheme(t){
   document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
   try{localStorage.setItem('cockpitTheme',t);}catch(e){}
   if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run);   // redraw canvases to new metrics
+  if(typeof activeView!=='undefined'&&activeView==='forecast')renderForecast();
 }
 document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.t)));
 let _savedTheme='neo'; try{_savedTheme=localStorage.getItem('cockpitTheme')||'neo';}catch(e){}
@@ -2010,19 +2063,108 @@ function renderFlags(){
     (rows||`<div class="reco-body">All subsidiaries on plan.</div>`)+
     `<div class="reco-body" style="margin-top:10px">Worst-of status — open a row in the scorecard to request an explanation or ask the Copilot why.</div>`;
 }
+/* ── Forecast view (Stage 02): cash runway vs funding calendar ─────────── */
+function fcastSeries(){
+  const n=FCAST.labels.length, subs=Object.keys(FCAST.div), perSub=subs.map(k=>FCAST.div[k]);
+  const capTot=Array.from({length:n},(_,i)=>subs.reduce((a,k)=>a+FCAST.div[k][i],0));
+  const oblKeys=Object.keys(FCAST.obl);
+  const oblTot=Array.from({length:n},(_,i)=>oblKeys.reduce((a,k)=>a+FCAST.obl[k][i],0));
+  const p50=[]; let run=FCAST.open; for(let i=0;i<n;i++){ run+=capTot[i]-oblTot[i]; p50.push(run); }
+  const band=Array.from({length:n},(_,i)=>Math.sqrt(i+1));        // widening cone
+  const p10=p50.map((v,i)=>v-band[i]), p90=p50.map((v,i)=>v+band[i]);
+  const events=[]; oblKeys.forEach(k=>FCAST.obl[k].forEach((v,i)=>{ if(v>=1.0) events.push({q:FCAST.labels[i],i,k,v}); }));
+  events.sort((a,b)=>a.i-b.i);
+  const breach=p10.findIndex(v=>v<FCAST.floor);
+  return {n,subs,perSub,capTot,oblKeys,oblTot,p50,p10,p90,floor:FCAST.floor,open:FCAST.open,events,breach,labels:FCAST.labels};
+}
+function drawFcRunway(cv,S){
+  const {x,w,h}=dpr(cv); const P=pal();
+  const padL=30,padR=12,padT=14,padB=24,W=w-padL-padR,H=h-padT-padB;
+  const lo=Math.min(0,Math.min(...S.p10)), hi=Math.max(...S.p90,S.open)*1.06;
+  const y=v=>padT+H-((v-lo)/(hi-lo))*H, gx=i=>padL+(S.n<2?W/2:i*(W/(S.n-1)));
+  // P10–P90 cone
+  x.beginPath(); for(let i=0;i<S.n;i++){const X=gx(i);i?x.lineTo(X,y(S.p90[i])):x.moveTo(X,y(S.p90[i]));}
+  for(let i=S.n-1;i>=0;i--)x.lineTo(gx(i),y(S.p10[i])); x.closePath(); x.fillStyle='rgba(21,160,109,.13)'; x.fill();
+  // floor
+  x.strokeStyle='#dc5a50';x.lineWidth=1.3;x.setLineDash([5,4]);x.beginPath();x.moveTo(padL,y(S.floor));x.lineTo(w-padR,y(S.floor));x.stroke();x.setLineDash([]);
+  x.fillStyle='#dc5a50';x.font='9px IBM Plex Mono, monospace';x.textAlign='left';x.fillText('floor '+S.floor.toFixed(1),padL+2,y(S.floor)-3);
+  // P10 thin
+  x.strokeStyle='rgba(176,125,16,.85)';x.lineWidth=1.2;x.beginPath();for(let i=0;i<S.n;i++){const X=gx(i);i?x.lineTo(X,y(S.p10[i])):x.moveTo(X,y(S.p10[i]));}x.stroke();
+  // P50 thick
+  x.strokeStyle=P.green;x.lineWidth=2.4;x.beginPath();for(let i=0;i<S.n;i++){const X=gx(i);i?x.lineTo(X,y(S.p50[i])):x.moveTo(X,y(S.p50[i]));}x.stroke();
+  for(let i=0;i<S.n;i++){const X=gx(i);x.fillStyle=P.green;x.beginPath();x.arc(X,y(S.p50[i]),2.6,0,7);x.fill();
+    if(S.breach===i){x.strokeStyle='#dc5a50';x.lineWidth=2;x.beginPath();x.arc(X,y(S.p10[i]),4.5,0,7);x.stroke();}}
+  x.fillStyle=P.faint;x.font='9px Inter, sans-serif';x.textAlign='center';
+  for(let i=0;i<S.n;i++)x.fillText(S.labels[i],gx(i),h-7);
+  x.textAlign='right';for(let t=0;t<=3;t++){const v=lo+(hi-lo)*t/3;x.fillText(v.toFixed(0),padL-4,y(v)+3);}
+  x.strokeStyle=P.grid;x.lineWidth=1;x.beginPath();x.moveTo(padL,y(0));x.lineTo(w-padR,y(0));x.stroke();
+}
+function drawFcFlows(cv,S){
+  const {x,w,h}=dpr(cv); const P=pal();
+  const padL=30,padR=12,padT=12,padB=22,W=w-padL-padR,H=h-padT-padB;
+  const hi=Math.max(Math.max(...S.capTot),Math.max(...S.oblTot))*1.18;
+  const y=v=>padT+H/2-(v/hi)*(H/2);
+  const gw=W/S.n, bw=Math.min(34,gw*0.5);
+  for(let i=0;i<S.n;i++){
+    const cx=padL+i*gw+gw/2;
+    let cum=0; S.perSub.forEach((vec,si)=>{const v=vec[i]; if(v<=0)return; const y0=y(cum+v),y1=y(cum);
+      x.fillStyle=SUBCOL[S.subs[si]];x.globalAlpha=.92;x.fillRect(cx-bw/2,y0,bw,Math.max(1,y1-y0));x.globalAlpha=1;cum+=v;});
+    const oy=y(0),oy2=y(-S.oblTot[i]); x.fillStyle='rgba(194,97,90,.82)';x.fillRect(cx-bw/2,oy,bw,Math.max(1,oy2-oy));
+    x.fillStyle=P.faint;x.font='9px Inter, sans-serif';x.textAlign='center';x.fillText(S.labels[i],cx,h-6);
+  }
+  x.strokeStyle=P.grid;x.lineWidth=1;x.beginPath();x.moveTo(padL,y(0));x.lineTo(w-padR,y(0));x.stroke();
+  x.fillStyle=P.faint;x.font='8px Inter, sans-serif';x.textAlign='left';
+  x.fillText('▲ dividends in',padL,padT+2); x.fillText('▼ obligations out',padL,h-padB+12);
+}
+function renderForecast(){
+  const S=fcastSeries(); if(!document.getElementById('fcSnapshot'))return;
+  const end50=S.p50[S.n-1], end10=S.p10[S.n-1];
+  const capSum=S.capTot.reduce((a,b)=>a+b,0), oblSum=S.oblTot.reduce((a,b)=>a+b,0);
+  const k=(l,v,s,lvl)=>`<div class="mkpi"><div class="mk-l">${l}</div><div class="mk-v" style="color:${RAGC[lvl]}">${v}</div><div class="mk-s">${s}</div></div>`;
+  document.getElementById('fcSnapshot').innerHTML=
+    k('Opening cash','Rp '+S.open.toFixed(1)+'T','start of '+S.labels[0],0)+
+    k('P50 runway · 8q','Rp '+end50.toFixed(1)+'T',end50>=S.floor?'holds above floor':'below floor',end50>=S.floor?0:2)+
+    k('P10 downside','Rp '+end10.toFixed(1)+'T','adverse end-state',end10>=S.floor?1:2)+
+    k('Floor breach',S.breach>=0?S.labels[S.breach]:'None at P50',S.breach>=0?'P10 dips below '+S.floor.toFixed(1):'P50 holds 8q',S.breach>=0?2:0);
+  const nextEv=S.events[0];
+  document.getElementById('fcCallout').innerHTML=
+    `<b>Forward read.</b> Dividend capacity upstreams Rp ${capSum.toFixed(1)}T over 8 quarters against Rp ${oblSum.toFixed(1)}T of obligations — the P50 cash runway tightens from Rp ${S.open.toFixed(1)}T to Rp ${end50.toFixed(1)}T. `+
+    (S.breach>=0?`The P10 downside breaches the Rp ${S.floor.toFixed(1)}T board floor in <b>${S.labels[S.breach]}</b> — pre-fund or send to Stress-test.`:`The P10 downside holds above the floor.`)+
+    (nextEv?` Next major obligation: <b>${nextEv.q}</b> — Rp ${nextEv.v.toFixed(1)}T ${nextEv.k.toLowerCase()} (${OBLNOTE[nextEv.k]||''}).`:'');
+  document.getElementById('fcFlowLegend').innerHTML=
+    S.subs.map(id=>`<span><i class="sq" style="background:${SUBCOL[id]}"></i>${id}</span>`).join('')+
+    `<span><i class="sq" style="background:rgba(194,97,90,.82)"></i>obligations out</span>`;
+  drawFcRunway(document.getElementById('fcRunway'),S);
+  drawFcFlows(document.getElementById('fcFlows'),S);
+  renderFund(S);
+}
+function renderFund(S){
+  const host=document.getElementById('fundCard'); if(!host)return; S=S||fcastSeries();
+  const rows=S.events.slice(0,6).map(e=>`<div class="flag-row"><span class="fl-dot" style="background:${OBLCOL[e.k]||'#3f86cf'}"></span>`+
+    `<div><div class="fl-id">${e.q} · Rp ${e.v.toFixed(1)}T</div><div class="fl-why">${e.k} — ${OBLNOTE[e.k]||''}</div></div></div>`).join('');
+  host.innerHTML=`<div class="crail-h">Funding calendar <span class="cop-badge">${S.events.length} events</span></div>`+
+    (rows||`<div class="reco-body">No major obligations.</div>`)+
+    `<div class="reco-body" style="margin-top:10px">Dividend inflows are lumpy (post-FY); obligations are spread. The squeeze is the quarter before each dividend lands.</div>`;
+}
+
 /* ── view switcher (maturity tabs) ─────────────────────────────────── */
 let activeView='cash';
 function setView(v){
-  activeView=v; const cash=v==='cash';
+  activeView=v;
   document.querySelectorAll('#vtabs .vtab').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  const cash=v==='cash', mon=v==='monitor', fc=v==='forecast';
   document.getElementById('scenbar').style.display=cash?'':'none';
   document.querySelector('.layer[data-layer=ops]').classList.toggle('lhide',!cash);
-  document.getElementById('monitorView').classList.toggle('lhide',cash);
+  document.getElementById('monitorView').classList.toggle('lhide',!mon);
+  document.getElementById('forecastView').classList.toggle('lhide',!fc);
   document.getElementById('recoCard').style.display=cash?'':'none';
-  const fc=document.getElementById('flagsCard'); if(fc)fc.style.display=cash?'none':'';
-  if(cash){ if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run); } else renderMonitor();
+  const flagsC=document.getElementById('flagsCard'); if(flagsC)flagsC.style.display=mon?'':'none';
+  const fundC=document.getElementById('fundCard'); if(fundC)fundC.style.display=fc?'':'none';
+  if(cash){ if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run); }
+  else if(mon) renderMonitor(); else if(fc) renderForecast();
 }
 document.querySelectorAll('#vtabs .vtab').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.v)));
+{ const a=document.getElementById('fcToStress'); if(a)a.addEventListener('click',()=>setView('cash')); }
 
 renderTicker(); renderLevers(); renderFilters(); renderPresetCards(); syncLabels();
 renderRail(); setLayer('ops'); initPresetSel(); copInit(); renderMonitor(); setView('monitor');
