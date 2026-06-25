@@ -545,6 +545,15 @@
   .reco-head{font-size:15px;font-weight:800;margin:2px 0 6px;color:var(--green-dark)}
   .crail-card.reco.warn .reco-head{color:var(--gold)} .crail-card.reco.bad .reco-head{color:var(--red)}
   .reco-body{font-size:12px;color:var(--muted);line-height:1.5}
+  .reco-list{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+  .reco-lever{display:grid;grid-template-columns:18px 1fr;gap:8px;align-items:start;padding:7px 9px;border:1px solid var(--line);border-radius:9px;background:var(--inset)}
+  .reco-lever.on{border-color:var(--green);background:var(--green-soft)}
+  .rl-dot{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--faint);font-size:10px;font-weight:800;color:#fff;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .reco-lever.on .rl-dot{background:var(--green);border-color:var(--green)}
+  .rl-name{font-size:11.5px;font-weight:700;color:var(--ink);line-height:1.3}
+  .rl-meta{font-size:9.5px;color:var(--muted);margin-top:2px;font-family:var(--mono)}
+  .reco-empty{font-size:11.5px;color:var(--muted);padding:9px;border:1px dashed var(--line);border-radius:9px}
+  .reco-foot{font-size:10px;font-family:var(--mono);color:var(--faint);margin-top:9px;line-height:1.4}
   .reco-armed{font-size:11px;font-family:var(--mono);color:var(--green-dark);margin-top:8px}
   .reco-btn{margin-top:11px;width:100%;cursor:pointer;border:none;background:var(--green);color:#fff;font-weight:800;font-size:12px;padding:9px;border-radius:9px;letter-spacing:.2px}
   .crail-card.reco.warn .reco-btn{background:var(--gold)} .crail-card.reco.bad .reco-btn{background:var(--red)}
@@ -1469,15 +1478,14 @@ function renderLevers(){
 }
 
 /* ── optimizer (REQ-06): cheapest package that clears the floor at P10 ── */
-function recommendPackage(){
+// pure: compute the recommended package without mutating state (for the always-on RHS list)
+function computePackage(){
   const cen=readFactors(), floorT=+document.getElementById('floor').value;
   const sh=FACTORS.map(f=>f.to(cen[f.id])), finSh=FIN.to(cen.fin), fxSh=sh[2];
-  // downside proxy
-  const dSh=sh.map((s,k)=>s-FACTORS[k].vol*regimeMult*1.28*FACTORS[k].macro*Math.sign(1)), dFin=finSh-FIN.vol*regimeMult*1.28*FIN.macro;
+  const dSh=sh.map((s,k)=>s-FACTORS[k].vol*regimeMult*1.28*FACTORS[k].macro), dFin=finSh-FIN.vol*regimeMult*1.28*FIN.macro;
   const p10Of=set=>holdingFCF(dSh,dFin,fxSh,mitFromLevers(set)).fcf;
-  // greedy by benefit/cost until floor cleared
   const chosen=[]; const pool=LEVERS.map(l=>({...l,on:true}));
-  let cur=p10Of([]); let safety=0;
+  const base=p10Of([]); let cur=base, safety=0;
   while(cur<floorT && safety++<LEVERS.length){
     let best=null,bestScore=-1;
     for(const l of pool){ if(chosen.find(c=>c.id===l.id))continue;
@@ -1485,11 +1493,14 @@ function recommendPackage(){
       if(gain>0.001&&score>bestScore){bestScore=score;best=l;} }
     if(!best)break; chosen.push(best); cur=p10Of(chosen);
   }
+  return { chosen, base, after:cur, floorT, cleared:cur>=floorT };
+}
+function recommendPackage(){
+  const {chosen, after:cur, floorT, cleared}=computePackage();
   LEVERS.forEach(l=>{l._rec=chosen.some(c=>c.id===l.id); l.on=l._rec;});
   schedule();
   const box=document.getElementById('optbox'); box.classList.add('show');
   const totalCost=chosen.reduce((a,c)=>a+c.cost,0);
-  const cleared=cur>=floorT;
   box.innerHTML = chosen.length
     ? `<b>Recommended package (${chosen.length} lever${chosen.length>1?'s':''}):</b> `+
       chosen.map(c=>c.label.split('(')[0].trim()).join(' · ')+
@@ -1938,19 +1949,29 @@ function renderCeoAction(){
 /* RHS recommendation card (mirrors the action + arms the cheapest package) */
 function renderReco(){
   const host=document.getElementById('recoCard'); if(!host)return;
-  const bp=(lastBP*100).toFixed(0), cushion=(lastP50-lastFloor).toFixed(1), armed=LEVERS.filter(l=>l.on).length;
+  const bp=(lastBP*100).toFixed(0), cushion=(lastP50-lastFloor).toFixed(1);
   const word=activeScope==='group'?'breach':'shortfall';
-  let cls,head,body,btn='';
-  if(lastBP<0.1){ cls=''; head='No action required';
-    body=`Buffer is healthy — about Rp ${cushion}T above the floor. Keep the FX-debt hedge and refinancing levers on standby.`; }
-  else { cls=lastBP<0.25?'warn':'bad'; head=lastBP<0.25?'Watch · pre-position':'Act now';
-    body=`${bp}% ${word} probability. Arm the cheapest package that clears the floor at P10 — the FX-debt hedge and refinancing move it fastest.`;
-    btn=`<button class="reco-btn" id="recoArm">⚡ Arm recommended package</button>`; }
+  const pkg=computePackage();
+  let cls,head;
+  if(lastBP<0.1){ cls=''; head='No action required'; }
+  else { cls=lastBP<0.25?'warn':'bad'; head=lastBP<0.25?'Watch · pre-position':'Act now'; }
+  const intro = lastBP<0.1
+    ? `Buffer is healthy (~Rp ${cushion}T above floor). Standby package if conditions worsen:`
+    : `${bp}% ${word} probability. Cheapest package that clears the floor at P10:`;
+  const list = pkg.chosen.length
+    ? pkg.chosen.map(l=>{ const on=LEVERS.find(x=>x.id===l.id).on;
+        return `<div class="reco-lever${on?' on':''}"><span class="rl-dot">${on?'✓':''}</span>`+
+          `<div><div class="rl-name">${l.label.replace(/\s*\(.*?\)/,'')}</div>`+
+          `<div class="rl-meta">${l.owner} · ${l.time} · cost ${l.cost}/5</div></div></div>`; }).join('')
+    : `<div class="reco-empty">No levers needed — the buffer clears the floor on its own.</div>`;
+  const armed=LEVERS.filter(l=>l.on).length;
   host.className='crail-card reco '+cls;
-  host.innerHTML=`<div class="crail-h">Recommendation</div><div class="reco-head">${head}</div>`+
-    `<div class="reco-body">${body}</div>`+
-    (armed?`<div class="reco-armed">${armed} lever(s) armed · ${word} now ${bp}%</div>`:'')+btn;
-  const b=document.getElementById('recoArm'); if(b) b.addEventListener('click',()=>{ recommendPackage(); setLayer('decision'); });
+  host.innerHTML=`<div class="crail-h">Recommendation <span class="cop-badge">${head}</span></div>`+
+    `<div class="reco-body">${intro}</div>`+
+    `<div class="reco-list">${list}</div>`+
+    (pkg.chosen.length?`<div class="reco-foot">P10 Rp ${pkg.base.toFixed(1)} → <b>${pkg.after.toFixed(1)}T</b> vs floor ${pkg.floorT.toFixed(1)} · cost ${pkg.chosen.reduce((a,c)=>a+c.cost,0)}/5${pkg.cleared?'':' · floor not fully protected'}</div>`:'')+
+    (pkg.chosen.length?`<button class="reco-btn" id="recoArm">${armed?'✓ Armed — re-arm package':'⚡ Arm recommended package'}</button>`:'');
+  const b=document.getElementById('recoArm'); if(b) b.addEventListener('click',()=>{ recommendPackage(); });
 }
 
 renderTicker(); renderLevers(); renderFilters(); renderPresetCards(); syncLabels();
