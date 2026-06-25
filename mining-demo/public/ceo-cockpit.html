@@ -522,7 +522,21 @@
   .cop-form{display:flex;gap:6px}
   .cop-form input{flex:1;min-width:0;padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:var(--inset);color:var(--ink);font-size:12px}
   .cop-form button{cursor:pointer;border:none;background:var(--green);color:#fff;font-weight:800;padding:0 14px;border-radius:9px;font-size:15px}
-  .cop-badge{font-size:8.5px;font-weight:800;letter-spacing:.4px;color:var(--green-dark);background:rgba(63,185,80,.15);padding:2px 7px;border-radius:999px}
+  .cop-badge{font-size:8.5px;font-weight:800;letter-spacing:.4px;color:var(--green-dark);background:var(--green-soft);padding:2px 7px;border-radius:999px}
+  /* asset scope: hide holding-only panels, highlight the active asset */
+  .stage.asset-scope [data-grouponly]{display:none}
+  .subcard.active{outline:2px solid var(--green);outline-offset:-1px;box-shadow:0 0 0 3px var(--green-soft)}
+  /* Neo polish */
+  [data-theme="neo"] .panel{border-color:rgba(45,224,196,.13)}
+  [data-theme="neo"] .panel h2{color:#8fd8c9}
+  [data-theme="neo"] .kpi{border-color:rgba(45,224,196,.14)}
+  [data-theme="neo"] .kpi .v{text-shadow:0 0 14px rgba(47,224,192,.18)}
+  [data-theme="neo"] .crail-card{border-color:rgba(45,224,196,.14)}
+  [data-theme="neo"] .ticker{border-bottom-color:rgba(45,224,196,.24)}
+  [data-theme="neo"] .bar{border-bottom:1px solid rgba(45,224,196,.16)}
+  [data-theme="neo"] .cop-msg.me{box-shadow:0 0 14px rgba(47,224,192,.22)}
+  [data-theme="neo"] .sc-node.head{box-shadow:0 0 14px rgba(54,197,214,.18)}
+  [data-theme="neo"] ::selection{background:rgba(47,224,192,.3);color:#04100e}
   .rail{position:sticky;top:0;align-self:start;padding:18px 14px 22px;border-right:1px solid var(--line);background:var(--paper2);min-height:100vh}
   .rail-lbl{font-size:9.5px;font-weight:800;letter-spacing:1.3px;color:var(--faint);text-transform:uppercase;margin:0 4px 8px}
   .scopes{display:flex;flex-direction:column;gap:3px}
@@ -789,7 +803,7 @@
     <!-- L4 · OPERATIONS ──────────────────────────────────────────── -->
     <section class="layer" data-layer="ops">
       <div class="lhead"><h2 class="lh">How does it convert to cash?</h2><div class="lhsub">From market conditions to upstreamed dividends to the holding's residual free cash flow.</div></div>
-      <div class="panel" data-tour="waterfall">
+      <div class="panel" data-tour="waterfall" data-grouponly>
         <h2>Holding FCF waterfall · base case <span class="grp" id="wfScn">FY2025 plan</span></h2>
         <canvas id="waterfall" height="320"></canvas>
         <div class="legend" id="wfLegend"></div>
@@ -801,7 +815,7 @@
           diversification map, but excluded from quantified cash upstreaming until validated JV data is approved.
           Baseline / impact / residual in Rp&nbsp;trillion.</div>
       </div>
-      <div class="panel mtop" data-tour="runway">
+      <div class="panel mtop" data-tour="runway" data-grouponly>
         <h2>Cash runway &amp; debt wall · next 4 quarters</h2>
         <canvas id="runway" height="280"></canvas>
         <div class="legend">
@@ -1048,18 +1062,45 @@ function run(){
   }
   const sA=Float64Array.from(fcfA).sort(), sR=Float64Array.from(fcfR).sort();
   const p10=pct(sA,.1),p50=pct(sA,.5),p90=pct(sA,.9);
-  const baseFCF=holdingFCF(cenSh,cenFin,cenFx,mit).fcf;       // central (no sampling) with mitigation
+  const central=holdingFCF(cenSh,cenFin,cenFx,mit), baseFCF=central.fcf;   // central (no sampling) with mitigation
   const baseFCF_R=holdingFCF(cenSh,cenFin,cenFx,ref).fcf;
   const far=Math.max(0,baseFCF-p10), farR=Math.max(0,baseFCF_R-pct(sR,.1));
   const bP=breach/N, bPR=breachR/N;
 
-  // KPIs
-  tweenEl(document.getElementById('p50'),p50,2); tweenEl(document.getElementById('far'),far,2);
-  const bEl=document.getElementById('breach'); tweenEl(bEl,bP*100,1,'%');
-  const col=bP>.25?'var(--red)':bP>.1?'var(--gold)':'var(--green-dark)';
+  // ── scope view: group (holding) vs a single asset ──
+  let V, assetIdx=-1;
+  if(activeScope==='group'){
+    V={ p50, p10, p90, far, breach:bP, base:baseFCF, floor:floorT, arr:sA,
+        words:['CASH FLOOR HOLDS','CASH FLOOR AT RISK','CASH FLOOR BREACHED'],
+        sub:`Residual Holding FCF Rp ${p50.toFixed(2)} T (P50) vs Rp ${(+floorT).toFixed(1)} T board floor · FCF-at-Risk Rp ${far.toFixed(2)} T`,
+        probLbl:'Cash-floor breach probability',
+        kL:['Residual Holding FCF · P50','Holding FCF-at-Risk','Cash-floor breach prob.','Largest contributor'],
+        kU:['Rp T · after upstreaming & obligations','Rp T · base − P10 downside','paths below board floor'] };
+  } else {
+    assetIdx=SUBS.findIndex(s=>s.id===activeScope); const s=SUBS[assetIdx];
+    const aArr=Float64Array.from(subStore[assetIdx]).sort();
+    const aP10=pct(aArr,.1), aP50=pct(aArr,.5), aP90=pct(aArr,.9);
+    const aBase=central.perSub[assetIdx], aFloor=+(s.base*0.6).toFixed(1);
+    let aBr=0; for(let i=0;i<aArr.length;i++) if(aArr[i]<aFloor) aBr++; aBr/=aArr.length;
+    const aFar=Math.max(0,aBase-aP10);
+    V={ p50:aP50, p10:aP10, p90:aP90, far:aFar, breach:aBr, base:aBase, floor:aFloor, arr:aArr,
+        words:['DIVIDEND ON TRACK','UPSTREAMING AT RISK','UPSTREAMING SHORTFALL'],
+        sub:`${s.id} upstreaming Rp ${aP50.toFixed(2)} T (P50) vs Rp ${aFloor.toFixed(1)} T board minimum (60% of plan) · at-risk Rp ${aFar.toFixed(2)} T`,
+        probLbl:`${s.id} shortfall probability`,
+        kL:[`${s.id} upstreaming · P50`,`${s.id} dividend-at-risk`,'Shortfall probability','Key sensitivity'],
+        kU:[`Rp T · ${s.commodity}`,'Rp T · base − P10 downside','paths below board minimum'] };
+  }
+  lastView=V;
+
+  // KPIs (scope-aware)
+  tweenEl(document.getElementById('p50'),V.p50,2); tweenEl(document.getElementById('far'),V.far,2);
+  const bEl=document.getElementById('breach'); tweenEl(bEl,V.breach*100,1,'%');
+  const col=V.breach>.25?'var(--red)':V.breach>.1?'var(--gold)':'var(--green-dark)';
   bEl.style.color=col; document.getElementById('breachStrip').style.background=col;
-  updateVerdict(p50,baseFCF,far,bP,floorT);
-  updateSince(p50,far,bP);
+  setText('kL0',V.kL[0]); setText('kL1',V.kL[1]); setText('kL2',V.kL[2]); setText('kL3',V.kL[3]);
+  setText('kU0',V.kU[0]); setText('kU1',V.kU[1]); setText('kU2',V.kU[2]);
+  updateVerdict(V);
+  updateSince(V.p50,V.far,V.breach);
 
   // attribution: |corr(factor, fcf)| weighted by exposure → largest contributor
   const attr=[];
@@ -1069,7 +1110,12 @@ function run(){
   let topSub='—',worst=0;
   for(let s=0;s<SUBS.length;s++){ const loss=SUBS[s].base - pct(Float64Array.from(subStore[s]).sort(),.1);
     if(loss>worst){worst=loss;topSub=SUBS[s].id;} }
-  setText('topc',topSub); document.getElementById('topcU').textContent=worst>0?('−Rp '+worst.toFixed(2)+' T at P10'):'driver of downside';
+  if(activeScope==='group'){
+    setText('topc',topSub); document.getElementById('topcU').textContent=worst>0?('−Rp '+worst.toFixed(2)+' T at P10'):'driver of downside';
+  } else {
+    const s=SUBS[assetIdx]; let bi=0; for(let k=0;k<6;k++) if(Math.abs(s.beta[k])>Math.abs(s.beta[bi]))bi=k;
+    setText('topc',FNAME[bi]); document.getElementById('topcU').textContent='β '+s.beta[bi].toFixed(2)+' · largest sensitivity';
+  }
 
   // live verdict drivers + path count
   const topFactor=attr[0]?attr[0][0]:'—';
@@ -1103,18 +1149,17 @@ function run(){
   const wfCv=document.getElementById('waterfall');
   if(wfCv && wfCv.offsetParent!==null) drawWaterfall(wfCv, holdingFCF(cenSh,cenFin,cenFx,mit), floorT);
   const histCv=document.getElementById('hist');
-  if(histCv && histCv.offsetParent!==null) drawHist(histCv, sA, {p10,p50,p90,floor:floorT,hi:distHi,ref:hasAnyMit()?sR:null});
+  if(histCv && histCv.offsetParent!==null) drawHist(histCv, V.arr, {p10:V.p10,p50:V.p50,p90:V.p90,floor:V.floor,hi:distHi,ref:(activeScope==='group'&&hasAnyMit())?sR:null});
   const rwCv=document.getElementById('runway');
   if(rwCv && rwCv.offsetParent!==null) drawRunway(rwCv, baseFCF, floorT, mit);
   if(document.getElementById('divmap').offsetParent!==null) drawDivMap(cenSh);
 
-  // subsidiary cards
-  const central=holdingFCF(cenSh,cenFin,cenFx,mit);
+  // subsidiary cards (active asset highlighted in asset scope)
   const maxBase=Math.max(...SUBS.map(s=>s.base));
   document.getElementById('subCards').innerHTML = SUBS.map((s,i)=>{
     const res=central.perSub[i], imp=res-s.base, ic=imp<-0.001?'neg':imp>0.001?'pos':'';
     const bw=clamp(res/maxBase*100,2,100);
-    return `<div class="subcard">
+    return `<div class="subcard${s.id===activeScope?' active':''}">
       <div class="su-top"><span class="su-id">${s.id}</span><span class="tag ${s.conf}">${s.conf}</span></div>
       <div class="su-comm">${s.commodity}</div>
       <div class="su-bar"><span style="width:${bw}%;background:${SUBCOL[s.id]}"></span></div>
@@ -1139,7 +1184,7 @@ function run(){
     topSub, topFactor:attr[0][0], regime:regimeMult<1?'calm':regimeMult>1?'stressed':'base',
     levers:LEVERS.filter(l=>l.on).map(l=>l.label), paths:N };
   renderBrief();
-  lastBP=bP; lastP50=p50; lastFloor=floorT;
+  lastBP=V.breach; lastP50=V.p50; lastFloor=V.floor;
   renderMacro(); renderStressChain(); renderCeoAction();
 }
 
@@ -1155,18 +1200,19 @@ function tweenEl(el,to,dec,suffix){ if(!el)return; suffix=suffix||'';
   (function f(t){const k=Math.min(1,(t-t0)/420);const v=from+(to-from)*(1-Math.pow(1-k,3));
     el.textContent=v.toFixed(dec)+suffix; if(k<1)requestAnimationFrame(f);})(performance.now());}
 // probability-forward verdict hero
-function updateVerdict(p50,baseFCF,far,bP,floorT){
+function updateVerdict(V){
   const v=document.getElementById('verdict'); if(!v)return;
-  const state = (baseFCF>=floorT && bP<0.12) ? 'hold' : (baseFCF<floorT || bP>0.35) ? 'breach' : 'risk';
+  const state = (V.base>=V.floor && V.breach<0.12) ? 'hold' : (V.base<V.floor || V.breach>0.35) ? 'breach' : 'risk';
   v.classList.remove('hold','risk','breach'); v.classList.add(state);
   if(prevVdState && prevVdState!==state){ v.classList.remove('flip'); void v.offsetWidth; v.classList.add('flip'); setTimeout(()=>v.classList.remove('flip'),820); }
   prevVdState=state;
-  setText('vdStatus', state==='hold'?'CASH FLOOR HOLDS':state==='risk'?'CASH FLOOR AT RISK':'CASH FLOOR BREACHED');
-  setText('vdSub', `Residual Holding FCF Rp ${p50.toFixed(2)} T (P50) vs Rp ${(+floorT).toFixed(1)} T board floor · FCF-at-Risk Rp ${far.toFixed(2)} T${hasAnyMit()?' · after action':''}`);
+  setText('vdStatus', V.words[state==='hold'?0:state==='risk'?1:2]);
+  setText('vdSub', V.sub + (hasAnyMit()?' · after action':''));
   setText('vdScn', activePreset==='Custom'?'custom inputs':activePreset);
+  const pl=document.querySelector('.vd-prob-lbl'); if(pl) pl.textContent=V.probLbl;
   try{ setText('vdAsOf', new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'})); }catch(e){}
-  tweenEl(document.getElementById('vdProbN'), bP*100, 1, '%');
-  const breachPct=Math.round(bP*100), holdPct=100-breachPct;
+  tweenEl(document.getElementById('vdProbN'), V.breach*100, 1, '%');
+  const breachPct=Math.round(V.breach*100), holdPct=100-breachPct;
   const ob=document.getElementById('ocBreach'); ob.style.width=Math.max(0,Math.min(100,breachPct))+'%';
   document.getElementById('ocBreachT').textContent = breachPct>=9 ? breachPct+'% breach' : '';
   document.getElementById('ocHoldT').textContent = holdPct+'% hold';
@@ -1627,7 +1673,7 @@ document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('cli
 let _savedTheme='neo'; try{_savedTheme=localStorage.getItem('cockpitTheme')||'neo';}catch(e){}
 
 /* ════════ CEO Cockpit: layers · scope · drawer · macro · stress chain ════════ */
-let lastBP=0, lastP50=0, lastFloor=2;
+let lastBP=0, lastP50=0, lastFloor=2, lastView=null;
 const LAYERS=[
   ['ceo','◎','CEO Mode','Are we okay? — one-screen verdict'],
   ['external','◉','External World','China demand & the rupiah'],
@@ -1658,9 +1704,11 @@ const SCOPE_NAME={group:'CONSOLIDATED',PTBA:'PTBA · COAL',Antam:'ANTAM · GOLD�
 function setScope(s){
   activeScope=s;
   document.querySelectorAll('#scopes .scope-b').forEach(b=>b.classList.toggle('on',b.dataset.scope===s));
-  document.getElementById('scopeName').textContent=SCOPE_NAME[s]+(s==='group'?'':' (group model)');
+  document.getElementById('scopeName').textContent=SCOPE_NAME[s];
   const sc=document.getElementById('scopeChip'); if(sc)sc.textContent=s==='group'?'CONSOLIDATED':s.toUpperCase();
-  if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run);
+  document.querySelector('.stage').classList.toggle('asset-scope', s!=='group');
+  sessionBase=null;                                  // reset "since you opened" (units change by scope)
+  liveEffects(); if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run);
 }
 document.querySelectorAll('#scopes .scope-b').forEach(b=>b.addEventListener('click',()=>setScope(b.dataset.scope)));
 /* scenario preset selector (right rail) */
@@ -1680,19 +1728,34 @@ function copAnswer(q){
   const s=q.toLowerCase(), d=centralDecomp();
   const bp=(lastBP*100).toFixed(0), cushion=(lastP50-lastFloor).toFixed(1);
   const tf=lastState?lastState.topFactor:'—', ts=lastState?lastState.topSub:'—', fxNet=d.exportFx-d.debtFx;
+  const subj=activeScope==='group'?'Holding FCF':activeScope+' upstreaming';
+  const breachWord=activeScope==='group'?'breach':'shortfall';
+  // named-asset question → that asset's drivers + current dividend (works in any scope)
+  const named=SUBS.find(a=>s.includes(a.id.toLowerCase()));
+  if(named){ const i=SUBS.indexOf(named); let bi=0; for(let k=0;k<6;k++) if(Math.abs(named.beta[k])>Math.abs(named.beta[bi]))bi=k;
+    return `<b>${named.id}</b> (${named.commodity}) upstreams about <b>${sgn(d.perDelta[i]+named.base).replace('+','')}</b> in this scenario (baseline Rp ${named.base.toFixed(2)}T, Δ ${sgn(d.perDelta[i])}). Its biggest sensitivity is <b>${FNAME[bi]}</b> (β ${named.beta[bi].toFixed(2)}). Switch scope to ${named.id} on the left for its full view.`; }
+  if(/compare|versus|\bvs\b|differ|consolidat|portfolio|whole/.test(s))
+    return `At the group level, residual Holding FCF Δ vs plan is <b>${sgn(d.fcfDelta)}</b> with <b>${bp}%</b> breach probability. Per asset (dividend Δ): ${SUBS.map((a,i)=>`${a.id} ${sgn(d.perDelta[i])}`).join(' · ')}. Use the scope buttons to drill into any one.`;
+  if(/weak|worst|strong|best|which asset|rank/.test(s)){
+    const ranked=SUBS.map((a,i)=>[a.id,d.perDelta[i]]).sort((x,y)=>x[1]-y[1]);
+    return `Ranked by dividend Δ in this scenario: weakest <b>${ranked[0][0]}</b> (${sgn(ranked[0][1])}), strongest <b>${ranked[ranked.length-1][0]}</b> (${sgn(ranked[ranked.length-1][1])}). ${ts!=='—'?`<b>${ts}</b> drives the most downside at P10.`:''}`; }
   if(/hedge|rupiah|\bfx\b|forex|idr|dollar|currency/.test(s))
-    return `The rupiah is a <b>natural hedge</b>, not a primary risk: a weaker IDR lifts export cash about <b>${sgn(d.exportFx)}</b> while raising USD debt service <b>${sgn(d.debtFx)}</b> — net <b>${sgn(fxNet)}</b>. That's why the verdict barely moves on FX. The real exposure is China demand.`;
+    return activeScope==='group'
+      ? `The rupiah is a <b>natural hedge</b>: a weaker IDR lifts export cash ~<b>${sgn(d.exportFx)}</b> while raising USD debt service <b>${sgn(d.debtFx)}</b> — net <b>${sgn(fxNet)}</b>. The verdict barely moves on FX; the real exposure is China demand.`
+      : `At the <b>${activeScope}</b> level the rupiah is <b>purely positive</b> — export revenue is USD, so a weaker IDR lifts dividends. The offsetting USD-debt drag sits at the holding, not the asset. That's why FX nets out for the group but helps each asset.`;
   if(/china|demand/.test(s))
     return `China demand is the <b>master tap</b> — it moves coal, nickel, aluminium and tin together, so diversification can fail across all four assets at once. It currently leads the downside attribution (<b>${tf}</b>).`;
   if(/driver|contributor|biggest|largest|sensitiv|expos/.test(s))
-    return `Lead factor by correlation with the downside: <b>${tf}</b>. The asset contributing most to the downside is <b>${ts}</b>. The Thesis Stress Chain layer shows the full transmission.`;
+    return activeScope==='group'
+      ? `Lead factor by correlation with the downside: <b>${tf}</b>. Asset contributing most to the downside: <b>${ts}</b>. The Thesis Stress Chain shows the full transmission.`
+      : `In the ${activeScope} view, its key sensitivity is shown in the KPI strip; China demand and the commodity cycle dominate, with the rupiah a positive tailwind.`;
   if(/do|action|mitigat|recommend|fix|lever|protect/.test(s))
-    return lastBP<0.1?`No action needed — Holding FCF sits ~Rp ${cushion}T above the floor. Keep the FX-debt hedge and refinancing levers on standby.`:`At <b>${bp}%</b> breach probability, arm the package in the Decision Engine — the <b>FX-debt hedge</b> and <b>refinancing</b> levers move the floor fastest, then defer non-critical capex.`;
-  if(/floor|cushion|breach|\brisk\b|okay|safe|verdict/.test(s))
-    return `Breach probability is <b>${bp}%</b>; residual Holding FCF (P50) is ~Rp ${cushion}T ${(lastP50-lastFloor)>=0?'above':'below'} the board floor. ${lastBP<0.1?'The floor holds comfortably.':lastBP<0.25?'It holds on the central case but the tail is exposed.':'The floor is breached across a material share of paths.'}`;
+    return lastBP<0.1?`No action needed — ${subj} sits ~Rp ${cushion}T above the floor. Keep the FX-debt hedge and refinancing levers on standby.`:`At <b>${bp}%</b> ${breachWord} probability, arm the package in the Decision Engine — the <b>FX-debt hedge</b> and <b>refinancing</b> levers move the floor fastest, then defer non-critical capex.`;
+  if(/floor|cushion|breach|shortfall|\brisk\b|okay|safe|verdict/.test(s))
+    return `${breachWord[0].toUpperCase()+breachWord.slice(1)} probability is <b>${bp}%</b>; ${subj} (P50) is ~Rp ${cushion}T ${(lastP50-lastFloor)>=0?'above':'below'} the floor. ${lastBP<0.1?'It holds comfortably.':lastBP<0.25?'It holds on the central case but the tail is exposed.':'The floor is breached across a material share of paths.'}`;
   if(/what if|scenario|drop|fall|crash|stress/.test(s))
-    return `Use the <b>Scenario</b> sliders above — drag <b>China demand</b> down and watch the waterfall, verdict and breach probability recompute live. Each point of China demand flows through all four assets at once.`;
-  return `Now: breach probability <b>${bp}%</b>, residual FCF ~Rp ${cushion}T vs floor, lead driver <b>${tf}</b>, weakest asset <b>${ts}</b>. Ask about China demand, the rupiah, the biggest driver, or what to do.`;
+    return `Use the <b>Scenario</b> sliders above — drag <b>China demand</b> down and watch the verdict and ${breachWord} probability recompute live. Each point of China demand flows through all four assets at once.`;
+  return `Now (${activeScope==='group'?'consolidated':activeScope}): ${breachWord} probability <b>${bp}%</b>, ${subj} ~Rp ${cushion}T vs floor, lead driver <b>${tf}</b>, weakest asset <b>${ts}</b>. Ask about China demand, the rupiah, a specific asset (PTBA/Antam/Inalum/Timah), or what to do.`;
 }
 function copAsk(q){ copPush('me',q); setTimeout(()=>copPush('ai',copAnswer(q)),140); }
 function copInit(){
@@ -1734,13 +1797,17 @@ function renderStressChain(){
   const sign=v=>(v>=0?'+':'−')+'Rp '+Math.abs(v).toFixed(2)+'T', cls=v=>v>=0.005?'pos':v<=-0.005?'neg':'';
   const v=document.getElementById('verdict');
   const state=v.classList.contains('breach')?'breach':v.classList.contains('risk')?'risk':'hold';
-  const stateTxt={hold:'CASH FLOOR HOLDS',risk:'CASH FLOOR AT RISK',breach:'CASH FLOOR BREACHED'}[state];
-  const assetNodes=SUBS.map((s,i)=>`<div class="sc-node ${cls(d.perDelta[i])}" style="animation-delay:${(.15+i*.07).toFixed(2)}s"><div class="n-l">${s.id}</div><div class="n-v">${sign(d.perDelta[i])}</div></div>`).join('');
-  host.innerHTML=`<div class="sc-stage">
-    <div class="sc-col"><div class="sc-coltitle">Shock</div>
+  const words=lastView?lastView.words:['CASH FLOOR HOLDS','CASH FLOOR AT RISK','CASH FLOOR BREACHED'];
+  const stateTxt=words[state==='hold'?0:state==='risk'?1:2];
+  const shockCol=`<div class="sc-col"><div class="sc-coltitle">Shock</div>
       <div class="sc-node head"><div class="n-l">China demand</div><div class="n-v">${china} idx</div></div>
-      <div class="sc-node head" style="animation-delay:.05s"><div class="n-l">USD / IDR</div><div class="n-v">${fx.toLocaleString('en-US')}</div></div></div>
-    <div class="sc-arrow">→</div>
+      <div class="sc-node head" style="animation-delay:.05s"><div class="n-l">USD / IDR</div><div class="n-v">${fx.toLocaleString('en-US')}</div></div></div>`;
+  const verdictCol=`<div class="sc-col" style="flex:0 0 150px"><div class="sc-coltitle">Verdict</div>
+      <div class="sc-verdict ${state}" style="animation-delay:.74s">${stateTxt}</div></div>`;
+  let mid;
+  if(activeScope==='group'){
+    const assetNodes=SUBS.map((s,i)=>`<div class="sc-node ${cls(d.perDelta[i])}" style="animation-delay:${(.15+i*.07).toFixed(2)}s"><div class="n-l">${s.id}</div><div class="n-v">${sign(d.perDelta[i])}</div></div>`).join('');
+    mid=`<div class="sc-arrow">→</div>
     <div class="sc-col"><div class="sc-coltitle">Asset dividend Δ</div>${assetNodes}</div>
     <div class="sc-arrow">→</div>
     <div class="sc-col"><div class="sc-coltitle">FX channel · hedge</div>
@@ -1751,12 +1818,27 @@ function renderStressChain(){
     <div class="sc-col"><div class="sc-coltitle">Holding floor</div>
       <div class="sc-node ${cls(d.fcfDelta)}" style="animation-delay:.6s"><div class="n-l">Residual FCF Δ</div><div class="n-v">${sign(d.fcfDelta)}</div></div>
       <div class="sc-node ${lastBP>0.25?'neg':lastBP<0.1?'pos':''}" style="animation-delay:.66s"><div class="n-l">Breach prob.</div><div class="n-v">${(lastBP*100).toFixed(0)}%</div></div></div>
+    <div class="sc-arrow">→</div>`;
+  } else {
+    const idx=SUBS.findIndex(x=>x.id===activeScope), s=SUBS[idx], expFx=s.base*s.beta[2]*((fx-16000)/16000);
+    mid=`<div class="sc-arrow">→</div>
+    <div class="sc-col"><div class="sc-coltitle">${s.id} dividend Δ</div>
+      <div class="sc-node ${cls(d.perDelta[idx])}" style="animation-delay:.2s"><div class="n-l">${s.commodity}</div><div class="n-v">${sign(d.perDelta[idx])}</div></div></div>
     <div class="sc-arrow">→</div>
-    <div class="sc-col" style="flex:0 0 150px"><div class="sc-coltitle">Verdict</div>
-      <div class="sc-verdict ${state}" style="animation-delay:.74s">${stateTxt}</div></div>
-  </div>`;
-  document.getElementById('scnPill2').textContent=activePreset;
-  document.getElementById('stressNote').innerHTML=`Central (no-noise) transmission of the <b>${activePreset}</b> scenario. The FX channel is a <b>natural hedge</b> — export cash ${sign(d.exportFx)} and debt service ${sign(-d.debtFx)} largely offset — so the <b>China-demand channel</b> dominates the move in residual cash. Breach probability comes from the full ${(+document.getElementById('n').value).toLocaleString('en-US')}-path simulation.`;
+    <div class="sc-col"><div class="sc-coltitle">FX · export only</div>
+      <div class="sc-node ${cls(expFx)}" style="animation-delay:.4s"><div class="n-l">Export cash</div><div class="n-v">${sign(expFx)}</div></div>
+      <div class="sc-node" style="animation-delay:.46s"><div class="n-l">USD debt</div><div class="n-v">holding-level</div></div></div>
+    <div class="sc-arrow">→</div>
+    <div class="sc-col"><div class="sc-coltitle">vs board minimum</div>
+      <div class="sc-node ${lastBP>0.25?'neg':lastBP<0.1?'pos':''}" style="animation-delay:.6s"><div class="n-l">Shortfall prob.</div><div class="n-v">${(lastBP*100).toFixed(0)}%</div></div></div>
+    <div class="sc-arrow">→</div>`;
+  }
+  host.innerHTML=`<div class="sc-stage">${shockCol}${mid}${verdictCol}</div>`;
+  document.getElementById('scnPill2').textContent=activePreset+(activeScope==='group'?'':' · '+activeScope);
+  if(activeScope==='group')
+    document.getElementById('stressNote').innerHTML=`Central (no-noise) transmission of the <b>${activePreset}</b> scenario. The FX channel is a <b>natural hedge</b> — export cash ${sign(d.exportFx)} and debt service ${sign(-d.debtFx)} largely offset — so the <b>China-demand channel</b> dominates. Breach probability comes from the full ${(+document.getElementById('n').value).toLocaleString('en-US')}-path simulation.`;
+  else { const s=SUBS.find(x=>x.id===activeScope);
+    document.getElementById('stressNote').innerHTML=`Single-asset transmission for <b>${activeScope}</b> (${s.commodity}). At asset level the rupiah is <b>purely positive</b> — the USD-debt drag sits at the holding, not here. Shortfall = paths where upstreaming falls below the board minimum (60% of plan).`; }
 }
 
 /* CEO one-line action */
