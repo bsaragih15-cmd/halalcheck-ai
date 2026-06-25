@@ -613,6 +613,30 @@
   .fc-legend .sq{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
   .fc-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
   .fc-acts .sr-btn:disabled{opacity:.45;cursor:not-allowed}
+  /* ── allocate ── */
+  .al-poolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:14px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:13px 16px;box-shadow:var(--shadow)}
+  .al-pool .mk-v{font-size:26px;font-weight:800;font-family:var(--mono);color:var(--green-dark);margin:2px 0}
+  .al-presets{display:flex;align-items:center;gap:10px}
+  .al-pl{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--muted)}
+  #alPreset button{font-size:12px;font-weight:700;padding:7px 13px}
+  .al-guards{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px}
+  .al-guard{font-size:11px;font-weight:700;padding:6px 12px;border-radius:999px;border:1px solid var(--line);display:flex;align-items:center;gap:6px}
+  .al-grid{display:grid;grid-template-columns:1.25fr .85fr;gap:14px}
+  @media(max-width:880px){.al-grid{grid-template-columns:1fr}}
+  #alFrontier{width:100%;height:240px;display:block}
+  .au-row{display:grid;grid-template-columns:1.5fr .8fr auto;gap:11px;align-items:center;padding:10px 2px;border-top:1px solid var(--line)}
+  .au-row:first-child{border-top:none}
+  .au-id{font-size:12.5px;font-weight:800;display:flex;align-items:center;gap:8px}
+  .au-id small{display:block;font-weight:600;font-size:10px;color:var(--muted);margin-top:1px}
+  .au-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .au-bar{height:8px;border-radius:5px;background:var(--inset);overflow:hidden;position:relative}
+  .au-bar span{display:block;height:100%;border-radius:5px}
+  .au-meta{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:4px}
+  .au-amt{font-size:13px;font-weight:800;font-family:var(--mono);min-width:48px;text-align:right}
+  .au-step{display:flex;gap:4px}
+  .au-step button{width:24px;height:24px;border-radius:7px;border:1px solid var(--line);background:var(--paper);cursor:pointer;font-weight:800;font-size:14px;line-height:1;color:var(--ink)}
+  .au-step button:hover{border-color:var(--green);color:var(--green-dark)}
+  .au-step button:disabled{opacity:.35;cursor:not-allowed}
   .reco-btn{margin-top:11px;width:100%;cursor:pointer;border:none;background:var(--green);color:#fff;font-weight:800;font-size:12px;padding:9px;border-radius:9px;letter-spacing:.2px}
   .crail-card.reco.warn .reco-btn{background:var(--gold)} .crail-card.reco.bad .reco-btn{background:var(--red)}
   [data-theme="neo"] .reco-btn{box-shadow:0 0 16px rgba(47,224,192,.3)}
@@ -762,6 +786,7 @@
     <div class="crail-card reco" id="recoCard"></div>
     <div class="crail-card flags" id="flagsCard" style="display:none"></div>
     <div class="crail-card flags" id="fundCard" style="display:none"></div>
+    <div class="crail-card flags" id="allocCard" style="display:none"></div>
     <div class="crail-card cop">
       <div class="crail-h">Driver Copilot <span class="cop-badge">model-aware</span></div>
       <div class="cop-feed" id="copFeed"></div>
@@ -778,6 +803,7 @@
       <button class="vtab" data-v="monitor"><span class="vt-n">01</span>Monitor</button>
       <button class="vtab" data-v="forecast"><span class="vt-n">02</span>Forecast</button>
       <button class="vtab on" data-v="cash"><span class="vt-n">03</span>Cash &amp; Scenarios</button>
+      <button class="vtab" data-v="allocate"><span class="vt-n">04</span>Allocate</button>
     </div>
 
     <!-- MONITOR view (Stage 01) -->
@@ -807,8 +833,29 @@
         <div class="fc-legend" id="fcFlowLegend"></div>
         <div class="fc-acts">
           <button class="sr-btn" id="fcToStress">↗ Send to Stress-test</button>
-          <button class="sr-btn" id="fcToAlloc" disabled title="Allocate — Stage 04, next">↗ Send surplus to Allocate</button>
+          <button class="sr-btn" id="fcToAlloc" title="Deploy the surplus in Allocate">↗ Send surplus to Allocate</button>
         </div>
+      </div>
+    </div>
+
+    <!-- ALLOCATE view (Stage 04) -->
+    <div id="allocateView" class="monitor-view lhide">
+      <div class="lhead"><h2 class="lh">Allocate — deploy the discretionary pool</h2><div class="lhsub">Optimise the holding's free capital across competing uses. Pick an objective; guardrails enforce the board floor, leverage cap and resilience buffer.</div></div>
+      <div class="al-poolbar">
+        <div class="al-pool"><div class="mk-l">Discretionary capital</div><div class="mk-v" id="alPool">Rp 8.0T</div><div class="mk-s">from Forecast surplus + debt headroom</div></div>
+        <div class="al-presets">
+          <span class="al-pl">Optimise for</span>
+          <div class="seg" id="alPreset">
+            <button data-p="value" class="on">Max value</button><button data-p="balanced">Balanced</button><button data-p="resilience">Max resilience</button>
+          </div>
+        </div>
+      </div>
+      <div class="msnapshot" id="alSnapshot"></div>
+      <div class="al-guards" id="alGuards"></div>
+      <div class="al-grid">
+        <div class="panel"><h2>Allocation <span class="grp">drag ± to hand-tune · balances against buffer</span></h2><div id="alUses"></div></div>
+        <div class="panel"><h2>Value vs resilience <span class="grp">efficient frontier</span></h2><canvas id="alFrontier"></canvas>
+          <div class="fc-legend"><span><i class="sq" style="background:#15a06d"></i>chosen objective</span><span><i class="sq" style="background:#b9c6bf"></i>alternatives</span></div></div>
       </div>
     </div>
 
@@ -954,6 +1001,26 @@ const FCAST = {
 };
 const OBLNOTE={Interest:'group debt service', Principal:'bond maturity', 'Capex equity':'smelter / downstream injections', 'State dividend':'payout to government shareholder', Opex:'holdco operating cost'};
 const OBLCOL={Interest:'#8b9a92', Principal:'#dc5a50', 'Capex equity':'#3f86cf', 'State dividend':'#b07d10', Opex:'#9a8f86'};
+
+// ── Allocate (Stage 04): deploy discretionary capital across competing uses ──
+const ALLOC = {
+  pool:8.0,            // Rp T discretionary capital (Forecast surplus + debt headroom)
+  curLev:1.2, levCap:2.5, ebitda:19.2,   // group leverage now, cap, EBITDA (netDebt = lev×EBITDA)
+  hurdle:10, stressBuffer:2.5,            // NPV hurdle rate %, resilience buffer required by Stress-test
+  uses:[
+    {id:'nickel', name:'Nickel / battery downstream', sub:'Antam',         type:'capex',  irr:16, strat:95, max:2.5, col:'#15a06d', note:'EV value chain · hilirisasi mandate'},
+    {id:'sgar',   name:'SGAR alumina refinery',        sub:'Inalum · Antam',type:'capex',  irr:14, strat:90, max:3.0, col:'#3f86cf', note:'cuts alumina import dependence'},
+    {id:'tin',    name:'Ausmelt furnace upgrade',      sub:'Timah',         type:'capex',  irr:12, strat:50, max:1.0, col:'#dc5a50', note:'tin recovery & unit cost'},
+    {id:'dme',    name:'Coal gasification (DME)',       sub:'PTBA',          type:'capex',  irr:9,  strat:60, max:2.0, col:'#d9920f', note:'energy security · below hurdle'},
+    {id:'delev',  name:'Deleverage (debt paydown)',     sub:'Holding',       type:'delev',  irr:7,  strat:30, max:4.0, col:'#7d6be0', note:'avoided interest · cuts leverage'},
+    {id:'buffer', name:'Resilience buffer',             sub:'Holding',       type:'buffer', irr:0,  strat:20, max:4.0, col:'#8b9a92', note:'cash held vs a stress breach'},
+  ],
+};
+const APRESETS = {
+  value:      {label:'Max value',      alloc:{buffer:2.5, nickel:2.5, sgar:3.0}},
+  balanced:   {label:'Balanced',       alloc:{buffer:2.5, nickel:2.5, sgar:1.5, delev:1.5}},
+  resilience: {label:'Max resilience', alloc:{buffer:3.5, delev:4.0, tin:0.5}},
+};
 
 // Holding obligations (Rp T). management = assumption; reported/illustrative tagged in UI.
 const HOLD = {
@@ -1619,7 +1686,7 @@ document.getElementById('reset').addEventListener('click',()=>{
 document.getElementById('optBtn')?.addEventListener('click',recommendPackage);
 document.getElementById('copyBrief')?.addEventListener('click',copyBrief);
 window.addEventListener('resize',()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(run);
-  if(typeof activeView!=='undefined'&&activeView==='forecast')renderForecast();});
+  if(typeof activeView!=='undefined'){if(activeView==='forecast')renderForecast();else if(activeView==='allocate')renderAllocate();}});
 
 document.querySelectorAll('#distHi button').forEach(b=>b.addEventListener('click',()=>{
   distHi=b.dataset.p; document.querySelectorAll('#distHi button').forEach(x=>x.classList.toggle('on',x===b));
@@ -1734,7 +1801,7 @@ function setTheme(t){
   document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
   try{localStorage.setItem('cockpitTheme',t);}catch(e){}
   if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run);   // redraw canvases to new metrics
-  if(typeof activeView!=='undefined'&&activeView==='forecast')renderForecast();
+  if(typeof activeView!=='undefined'){if(activeView==='forecast')renderForecast();else if(activeView==='allocate')renderAllocate();}
 }
 document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.t)));
 let _savedTheme='neo'; try{_savedTheme=localStorage.getItem('cockpitTheme')||'neo';}catch(e){}
@@ -2147,24 +2214,109 @@ function renderFund(S){
     `<div class="reco-body" style="margin-top:10px">Dividend inflows are lumpy (post-FY); obligations are spread. The squeeze is the quarter before each dividend lands.</div>`;
 }
 
+/* ── Allocate view (Stage 04): optimizer + presets ─────────────────────── */
+let aState={...APRESETS.value.alloc}, aPreset='value';
+const CAPEX_IDS=['nickel','sgar','tin','dme'];
+function allocMetrics(alloc){
+  let npv=0,capexTot=0,stratNum=0,stratDen=0; const delev=alloc.delev||0, buffer=alloc.buffer||0;
+  ALLOC.uses.forEach(u=>{const a=alloc[u.id]||0; if(a<=0)return;
+    if(CAPEX_IDS.includes(u.id)){ npv+=a*Math.max(0,u.irr-ALLOC.hurdle)/100*5; capexTot+=a; stratNum+=a*u.strat; stratDen+=a; }});
+  const newLev=(ALLOC.curLev*ALLOC.ebitda + 0.4*capexTot - delev)/ALLOC.ebitda;
+  const tot=Object.values(alloc).reduce((a,b)=>a+b,0);
+  return {npv,capexTot,delev,buffer,newLev,tot,resil:buffer+0.5*delev,
+    strat:stratDen?stratNum/stratDen:0, bufferMet:buffer>=ALLOC.stressBuffer-1e-9,
+    levOk:newLev<=ALLOC.levCap+1e-9, poolOk:tot<=ALLOC.pool+1e-9};
+}
+function renderAllocate(){
+  if(!document.getElementById('alSnapshot'))return;
+  const m=allocMetrics(aState);
+  const k=(l,v,s,lvl)=>`<div class="mkpi"><div class="mk-l">${l}</div><div class="mk-v" style="color:${RAGC[lvl]}">${v}</div><div class="mk-s">${s}</div></div>`;
+  document.getElementById('alSnapshot').innerHTML=
+    k('NPV created','Rp '+m.npv.toFixed(2)+'T','value above '+ALLOC.hurdle+'% hurdle',m.npv>0.8?0:m.npv>0.3?1:2)+
+    k('Group leverage',m.newLev.toFixed(2)+'×','was '+ALLOC.curLev.toFixed(1)+'× · cap '+ALLOC.levCap+'×',m.levOk?(m.newLev<=ALLOC.curLev+1e-9?0:1):2)+
+    k('Resilience buffer','Rp '+m.buffer.toFixed(1)+'T','stress needs '+ALLOC.stressBuffer.toFixed(1)+'T',m.bufferMet?0:2)+
+    k('Strategic tilt',Math.round(m.strat)+'/100','capex-weighted mandate',m.strat>=80?0:m.strat>=60?1:2);
+  const g=(ok,lbl)=>`<div class="al-guard" style="border-color:${ok?'var(--green)':'var(--red)'};color:${ok?'var(--green-dark)':'var(--red)'}">${ok?'✓':'✕'} ${lbl}</div>`;
+  document.getElementById('alGuards').innerHTML=
+    g(m.bufferMet,'Resilience buffer ≥ '+ALLOC.stressBuffer.toFixed(1)+'T')+g(m.levOk,'Leverage ≤ '+ALLOC.levCap+'×')+g(m.poolOk,'Within pool Rp '+ALLOC.pool.toFixed(1)+'T');
+  const host=document.getElementById('alUses');
+  host.innerHTML=ALLOC.uses.map(u=>{const a=aState[u.id]||0, isBuf=u.id==='buffer';
+    const sub=u.type==='capex'?'IRR '+u.irr+'% · strat '+u.strat:u.type==='delev'?'cuts leverage · avoided interest':'risk buffer';
+    const step=isBuf?`<div class="au-step"><small style="font-size:9px;color:var(--faint)">auto-balances</small></div>`:
+      `<div class="au-step"><button data-dec="${u.id}" ${a<=0?'disabled':''}>−</button><button data-inc="${u.id}" ${(a>=u.max||(aState.buffer||0)<0.5)?'disabled':''}>+</button></div>`;
+    return `<div class="au-row">
+      <div><div class="au-id"><span class="au-dot" style="background:${u.col}"></span><div>${u.name}<small>${u.sub} · ${sub}</small></div></div>
+        <div class="au-bar" style="margin-top:7px"><span style="width:${Math.min(100,a/ALLOC.pool*100)}%;background:${u.col}"></span></div>
+        <div class="au-meta">${u.note}${u.type==='capex'&&u.irr<ALLOC.hurdle?' · below hurdle, no NPV':''}</div></div>
+      <div class="au-amt" style="color:${a>0?'var(--ink)':'var(--faint)'}">Rp ${a.toFixed(1)}T</div>${step}</div>`;}).join('');
+  host.querySelectorAll('[data-inc]').forEach(b=>b.addEventListener('click',()=>adjustUse(b.dataset.inc,+0.5)));
+  host.querySelectorAll('[data-dec]').forEach(b=>b.addEventListener('click',()=>adjustUse(b.dataset.dec,-0.5)));
+  drawFrontier(document.getElementById('alFrontier'));
+  renderAllocCard(m);
+}
+function adjustUse(id,delta){
+  if(id==='buffer')return;
+  const u=ALLOC.uses.find(x=>x.id===id), cur=aState[id]||0, buf=aState.buffer||0;
+  let next=Math.max(0,Math.min(u.max,cur+delta)), applied=next-cur;
+  if(applied>buf){ applied=buf; next=cur+buf; }     // limited by available buffer
+  if(Math.abs(applied)<1e-9)return;
+  aState[id]=next; aState.buffer=buf-applied; aPreset=null;
+  document.querySelectorAll('#alPreset button').forEach(b=>b.classList.remove('on'));
+  renderAllocate();
+}
+function setPreset(name){ aState={...APRESETS[name].alloc}; aPreset=name;
+  document.querySelectorAll('#alPreset button').forEach(b=>b.classList.toggle('on',b.dataset.p===name)); renderAllocate(); }
+function drawFrontier(cv){
+  if(!cv)return; const {x,w,h}=dpr(cv); const P=pal();
+  const padL=34,padR=16,padT=18,padB=28,W=w-padL-padR,H=h-padT-padB;
+  const pts=Object.keys(APRESETS).map(key=>{const m=allocMetrics(APRESETS[key].alloc);return {key,npv:m.npv,resil:m.resil};});
+  const cur=allocMetrics(aState);
+  const maxNpv=Math.max(...pts.map(p=>p.npv),cur.npv)*1.2+.1, maxR=Math.max(...pts.map(p=>p.resil),cur.resil)*1.2;
+  const X=v=>padL+(v/maxNpv)*W, Y=v=>padT+H-(v/maxR)*H;
+  x.strokeStyle=P.grid;x.lineWidth=1;x.beginPath();x.moveTo(padL,padT);x.lineTo(padL,padT+H);x.lineTo(padL+W,padT+H);x.stroke();
+  x.fillStyle=P.faint;x.font='9px Inter, sans-serif';x.textAlign='center';x.fillText('NPV created (Rp T) →',padL+W/2,h-7);
+  x.save();x.translate(10,padT+H/2);x.rotate(-Math.PI/2);x.fillText('resilience →',0,0);x.restore();
+  const sorted=[...pts].sort((a,b)=>a.npv-b.npv);
+  x.strokeStyle='rgba(140,154,146,.55)';x.lineWidth=1.4;x.setLineDash([4,3]);x.beginPath();
+  sorted.forEach((p,i)=>{i?x.lineTo(X(p.npv),Y(p.resil)):x.moveTo(X(p.npv),Y(p.resil));});x.stroke();x.setLineDash([]);
+  pts.forEach(p=>{const sel=aPreset===p.key; x.fillStyle=sel?'#15a06d':'#b9c6bf';
+    x.beginPath();x.arc(X(p.npv),Y(p.resil),sel?6:4.5,0,7);x.fill();
+    x.fillStyle=sel?P.green:P.faint;x.font=(sel?'700 ':'')+'9px Inter, sans-serif';x.textAlign='center';
+    x.fillText(APRESETS[p.key].label,X(p.npv),Y(p.resil)-9);});
+  if(!aPreset){x.strokeStyle='#15a06d';x.lineWidth=2;x.beginPath();x.arc(X(cur.npv),Y(cur.resil),6,0,7);x.stroke();
+    x.fillStyle=P.green;x.font='700 9px Inter, sans-serif';x.textAlign='center';x.fillText('your mix',X(cur.npv),Y(cur.resil)-9);}
+}
+function renderAllocCard(m){
+  const host=document.getElementById('allocCard'); if(!host)return; m=m||allocMetrics(aState);
+  const capex=ALLOC.uses.filter(u=>u.type==='capex').map(u=>({u,a:aState[u.id]||0})).filter(x=>x.a>0);
+  const rows=capex.map(({u,a})=>`<div class="flag-row"><span class="fl-dot" style="background:${u.col}"></span><div><div class="fl-id">${u.name.split(' ')[0]} · Rp ${a.toFixed(1)}T</div><div class="fl-why">${u.sub} · IRR ${u.irr}%</div></div></div>`).join('');
+  host.innerHTML=`<div class="crail-h">Allocation summary <span class="cop-badge">${aPreset?APRESETS[aPreset].label:'hand-tuned'}</span></div>`+
+    `<div class="reco-body" style="margin-bottom:8px">Capex Rp ${m.capexTot.toFixed(1)}T · deleverage Rp ${m.delev.toFixed(1)}T · buffer Rp ${m.buffer.toFixed(1)}T</div>`+
+    (rows||'<div class="reco-body">No capex selected.</div>')+
+    `<div class="reco-foot" style="margin-top:9px">NPV Rp ${m.npv.toFixed(2)}T · leverage ${m.newLev.toFixed(2)}× · ${m.bufferMet&&m.levOk?'✓ guardrails clear':'⚠ guardrail breach'}</div>`;
+}
+
 /* ── view switcher (maturity tabs) ─────────────────────────────────── */
 let activeView='cash';
 function setView(v){
   activeView=v;
   document.querySelectorAll('#vtabs .vtab').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
-  const cash=v==='cash', mon=v==='monitor', fc=v==='forecast';
+  const cash=v==='cash';
   document.getElementById('scenbar').style.display=cash?'':'none';
   document.querySelector('.layer[data-layer=ops]').classList.toggle('lhide',!cash);
-  document.getElementById('monitorView').classList.toggle('lhide',!mon);
-  document.getElementById('forecastView').classList.toggle('lhide',!fc);
+  document.getElementById('monitorView').classList.toggle('lhide',v!=='monitor');
+  document.getElementById('forecastView').classList.toggle('lhide',v!=='forecast');
+  document.getElementById('allocateView').classList.toggle('lhide',v!=='allocate');
   document.getElementById('recoCard').style.display=cash?'':'none';
-  const flagsC=document.getElementById('flagsCard'); if(flagsC)flagsC.style.display=mon?'':'none';
-  const fundC=document.getElementById('fundCard'); if(fundC)fundC.style.display=fc?'':'none';
+  const show=(id,on)=>{const e=document.getElementById(id);if(e)e.style.display=on?'':'none';};
+  show('flagsCard',v==='monitor'); show('fundCard',v==='forecast'); show('allocCard',v==='allocate');
   if(cash){ if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run); }
-  else if(mon) renderMonitor(); else if(fc) renderForecast();
+  else if(v==='monitor') renderMonitor(); else if(v==='forecast') renderForecast(); else if(v==='allocate') renderAllocate();
 }
 document.querySelectorAll('#vtabs .vtab').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.v)));
-{ const a=document.getElementById('fcToStress'); if(a)a.addEventListener('click',()=>setView('cash')); }
+document.querySelectorAll('#alPreset button').forEach(b=>b.addEventListener('click',()=>setPreset(b.dataset.p)));
+{ const a=document.getElementById('fcToStress'); if(a)a.addEventListener('click',()=>setView('cash'));
+  const b=document.getElementById('fcToAlloc'); if(b){ b.disabled=false; b.addEventListener('click',()=>setView('allocate')); } }
 
 renderTicker(); renderLevers(); renderFilters(); renderPresetCards(); syncLabels();
 renderRail(); setLayer('ops'); initPresetSel(); copInit(); renderMonitor(); setView('monitor');
