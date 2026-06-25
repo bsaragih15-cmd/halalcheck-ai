@@ -259,23 +259,38 @@
   .mitbar.show{display:block}
   .mitbar b{color:var(--gold)}
 
-  /* verdict hero (probability-forward) */
-  .verdict{display:grid;grid-template-columns:1fr 1.1fr;gap:18px;align-items:center;
-    background:var(--paper);border:1px solid var(--line);border-radius:var(--r-panel);
-    box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px;border-left:5px solid var(--green)}
+  /* verdict hero (probability-forward, dominant centerpiece) */
+  .verdict{position:relative;display:grid;grid-template-columns:1.05fr 1fr;gap:26px;align-items:center;
+    border:1px solid var(--line);border-radius:calc(var(--r-panel) + 4px);box-shadow:var(--shadow);
+    padding:24px 28px;margin-bottom:18px;border-left:6px solid var(--green);overflow:hidden}
+  .verdict::before{content:'';position:absolute;inset:0;z-index:0;
+    background:linear-gradient(110deg,var(--paper) 58%,var(--paper2))}
   .verdict.hold{border-left-color:var(--green)} .verdict.risk{border-left-color:var(--gold)} .verdict.breach{border-left-color:var(--red)}
-  @media(max-width:760px){.verdict{grid-template-columns:1fr}}
-  .vd-status{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.05}
+  .verdict.hold::before{background:linear-gradient(110deg,var(--paper) 52%,rgba(63,185,80,.11))}
+  .verdict.risk::before{background:linear-gradient(110deg,var(--paper) 52%,rgba(210,153,34,.13))}
+  .verdict.breach::before{background:linear-gradient(110deg,var(--paper) 52%,rgba(248,81,73,.13))}
+  .vd-left,.vd-right{position:relative;z-index:1}
+  @media(max-width:820px){.verdict{grid-template-columns:1fr;gap:16px}}
+  .vd-eyebrow{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:800;letter-spacing:.7px;
+    text-transform:uppercase;color:var(--muted);margin-bottom:11px}
+  .livedot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:livepulse 2s infinite}
+  @keyframes livepulse{0%{box-shadow:0 0 0 0 rgba(63,185,80,.55)}70%{box-shadow:0 0 0 7px rgba(63,185,80,0)}100%{box-shadow:0 0 0 0 rgba(63,185,80,0)}}
+  .vd-status{font-size:40px;font-weight:800;letter-spacing:-.025em;line-height:1.02}
   .verdict.hold .vd-status{color:var(--green-dark)} .verdict.risk .vd-status{color:var(--gold)} .verdict.breach .vd-status{color:var(--red)}
-  .vd-sub{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.5}
-  .vd-prob-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:8px}
+  .vd-sub{font-size:13.5px;color:var(--muted);margin-top:9px;line-height:1.55;max-width:48ch}
+  .vd-drivers{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+  .vd-chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:600;color:var(--ink);
+    background:var(--inset);border:1px solid var(--line);border-radius:999px;padding:4px 10px}
+  .vd-chip i{font-style:normal;color:var(--muted);font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:.4px}
+  .vd-prob-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:9px}
   .vd-prob-lbl{font-size:10px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
-  .vd-prob-n{font-family:var(--mono);font-size:22px;font-weight:700}
-  .outcome{display:flex;height:34px;border-radius:9px;overflow:hidden;border:1px solid var(--line);background:var(--inset)}
-  .oc-breach{background:var(--red);color:#fff;display:flex;align-items:center;padding:0 11px;font-size:12px;font-weight:800;
-    font-family:var(--mono);transition:width .5s cubic-bezier(.4,0,.2,1);white-space:nowrap;overflow:hidden}
+  .vd-prob-n{font-family:var(--mono);font-size:30px;font-weight:700;line-height:1}
+  .outcome{display:flex;height:42px;border-radius:11px;overflow:hidden;border:1px solid var(--line);background:var(--inset)}
+  .oc-breach{background:var(--red);color:#fff;display:flex;align-items:center;padding:0 13px;font-size:12.5px;font-weight:800;
+    font-family:var(--mono);transition:width .55s cubic-bezier(.4,0,.2,1);white-space:nowrap;overflow:hidden}
   .oc-hold{flex:1;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:flex-end;
-    padding:0 11px;font-size:12px;font-weight:800;font-family:var(--mono);white-space:nowrap}
+    padding:0 13px;font-size:12.5px;font-weight:800;font-family:var(--mono);white-space:nowrap}
+  .vd-foot{font-size:11px;color:var(--faint);margin-top:10px;font-family:var(--mono)}
 
   /* distribution percentile chips */
   .distseg{display:inline-flex;gap:3px;margin-left:8px;vertical-align:middle}
@@ -427,7 +442,7 @@
 </style>
 <script>(function(){var d=document.documentElement;
   if(new URLSearchParams(location.search).has('embed'))d.classList.add('embed');
-  var t='deep';try{t=localStorage.getItem('preTheme')||'deep';}catch(e){}
+  var t='night';try{t=localStorage.getItem('preTheme')||'night';}catch(e){}
   if(t!=='forest')d.setAttribute('data-theme',t);})();</script>
 </head>
 <body>
@@ -443,11 +458,11 @@
   <div class="themeseg" id="themeSeg" title="Explore design themes — Forest / Editorial / Deep / Warm are forest iterations">
     <button data-t="forest">Forest</button>
     <button data-t="editorial">Editorial</button>
-    <button data-t="deep" class="on">Deep</button>
+    <button data-t="deep">Deep</button>
     <button data-t="warm">Warm</button>
     <button data-t="fintech">Fintech</button>
     <button data-t="terminal">Terminal</button>
-    <button data-t="night">Night</button>
+    <button data-t="night" class="on">Night</button>
   </div>
   <div class="links">
     <button class="tourbtn" id="tourBtn">★ Guided tour</button>
@@ -520,16 +535,19 @@
   <main>
     <div class="verdict" id="verdict" data-tour="verdict">
       <div class="vd-left">
+        <div class="vd-eyebrow"><span class="livedot"></span>LIVE MODEL · <span id="vdScn">FY2025 plan</span> · recomputed <span id="vdAsOf">—</span></div>
         <div class="vd-status" id="vdStatus">—</div>
         <div class="vd-sub" id="vdSub"></div>
+        <div class="vd-drivers" id="vdDrivers"></div>
       </div>
       <div class="vd-right">
-        <div class="vd-prob-row"><span class="vd-prob-lbl">Cash-floor breach probability · P10 outcome</span>
+        <div class="vd-prob-row"><span class="vd-prob-lbl">Cash-floor breach probability</span>
           <span class="vd-prob-n" id="vdProbN">—</span></div>
         <div class="outcome" id="outcome">
           <div class="oc-breach" id="ocBreach"><span id="ocBreachT"></span></div>
           <div class="oc-hold" id="ocHold"><span id="ocHoldT"></span></div>
         </div>
+        <div class="vd-foot" id="vdFoot"></div>
       </div>
     </div>
 
@@ -808,6 +826,16 @@ function run(){
     if(loss>worst){worst=loss;topSub=SUBS[s].id;} }
   setText('topc',topSub); document.getElementById('topcU').textContent=worst>0?('−Rp '+worst.toFixed(2)+' T at P10'):'driver of downside';
 
+  // live verdict drivers + path count
+  const topFactor=attr[0]?attr[0][0]:'—';
+  document.getElementById('vdDrivers').innerHTML =
+    `<span class="vd-chip"><i>top risk</i>${topFactor}</span>`+
+    `<span class="vd-chip"><i>worst sub</i>${topSub}</span>`+
+    `<span class="vd-chip"><i>pinch</i>Debt principal</span>`+
+    (hasAnyMit()?`<span class="vd-chip"><i>action</i>${LEVERS.filter(l=>l.on).length} lever(s)</span>`:'');
+  document.getElementById('vdFoot').textContent =
+    `${Math.round(bP*N).toLocaleString('en-US')} of ${(+N).toLocaleString('en-US')} simulated paths breach the Rp ${(+floorT).toFixed(1)} T floor`;
+
   delta('p50d', p50-pct(sR,.5),'Rp T vs no action',false);
   delta('fard', far-farR,'Rp T vs no action',true);
   delta('breachd',(bP-bPR)*100,'pp vs no action',true);
@@ -884,6 +912,8 @@ function updateVerdict(p50,baseFCF,far,bP,floorT){
   v.classList.remove('hold','risk','breach'); v.classList.add(state);
   setText('vdStatus', state==='hold'?'CASH FLOOR HOLDS':state==='risk'?'CASH FLOOR AT RISK':'CASH FLOOR BREACHED');
   setText('vdSub', `Residual Holding FCF Rp ${p50.toFixed(2)} T (P50) vs Rp ${(+floorT).toFixed(1)} T board floor · FCF-at-Risk Rp ${far.toFixed(2)} T${hasAnyMit()?' · after action':''}`);
+  setText('vdScn', activePreset==='Custom'?'custom inputs':activePreset);
+  try{ setText('vdAsOf', new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'})); }catch(e){}
   tweenEl(document.getElementById('vdProbN'), bP*100, 1, '%');
   const breachPct=Math.round(bP*100), holdPct=100-breachPct;
   const ob=document.getElementById('ocBreach'); ob.style.width=Math.max(0,Math.min(100,breachPct))+'%';
@@ -1281,7 +1311,7 @@ function setTheme(t){
   if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run);   // redraw canvases to new metrics
 }
 document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.t)));
-let _savedTheme='deep'; try{_savedTheme=localStorage.getItem('preTheme')||'deep';}catch(e){}
+let _savedTheme='night'; try{_savedTheme=localStorage.getItem('preTheme')||'night';}catch(e){}
 
 renderTicker(); renderLevers(); renderFilters(); renderPresetCards(); syncLabels();
 if(_savedTheme!=='forest') setTheme(_savedTheme); else run();
