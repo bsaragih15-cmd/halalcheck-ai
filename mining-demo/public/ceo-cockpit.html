@@ -523,6 +523,26 @@
   .cop-form input{flex:1;min-width:0;padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:var(--inset);color:var(--ink);font-size:12px}
   .cop-form button{cursor:pointer;border:none;background:var(--green);color:#fff;font-weight:800;padding:0 14px;border-radius:9px;font-size:15px}
   .cop-badge{font-size:8.5px;font-weight:800;letter-spacing:.4px;color:var(--green-dark);background:var(--green-soft);padding:2px 7px;border-radius:999px}
+  /* scenario strip (top of stage) */
+  .scenbar{position:sticky;top:0;z-index:20;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:13px 16px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .scenbar-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .scenbar-head .preset-sel{width:auto;min-width:180px}
+  .scenbar-head .reset{width:auto;margin:0 0 0 auto;padding:7px 13px}
+  .scenbar-head .seg{flex:0 0 auto}
+  .scenbar-ctrls{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:9px 18px}
+  .scenbar .ctrl{margin:0}
+  .scenbar .ctrl .hint{font-size:9px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  @media(max-width:760px){.scenbar{position:static}}
+  /* RHS recommendation card */
+  .crail-card.reco{border-left:4px solid var(--green)}
+  .crail-card.reco.warn{border-left-color:var(--gold)} .crail-card.reco.bad{border-left-color:var(--red)}
+  .reco-head{font-size:15px;font-weight:800;margin:2px 0 6px;color:var(--green-dark)}
+  .crail-card.reco.warn .reco-head{color:var(--gold)} .crail-card.reco.bad .reco-head{color:var(--red)}
+  .reco-body{font-size:12px;color:var(--muted);line-height:1.5}
+  .reco-armed{font-size:11px;font-family:var(--mono);color:var(--green-dark);margin-top:8px}
+  .reco-btn{margin-top:11px;width:100%;cursor:pointer;border:none;background:var(--green);color:#fff;font-weight:800;font-size:12px;padding:9px;border-radius:9px;letter-spacing:.2px}
+  .crail-card.reco.warn .reco-btn{background:var(--gold)} .crail-card.reco.bad .reco-btn{background:var(--red)}
+  [data-theme="neo"] .reco-btn{box-shadow:0 0 16px rgba(47,224,192,.3)}
   /* asset scope: hide holding-only panels, highlight the active asset */
   .stage.asset-scope [data-grouponly]{display:none}
   .subcard.active{outline:2px solid var(--green);outline-offset:-1px;box-shadow:0 0 0 3px var(--green-soft)}
@@ -695,51 +715,7 @@
 
   <!-- ── right rail: scenario controls + driver copilot ───────── -->
   <aside class="crail" id="crail">
-    <div class="crail-card">
-      <div class="crail-h">Scenario <span class="cop-badge" id="scopeChip">CONSOLIDATED</span></div>
-      <select id="presetSel" class="preset-sel"></select>
-      <div class="crail-sub">Drag any driver below — the verdict, Holding FCF and the waterfall recompute instantly.</div>
-    </div>
-    <div class="crail-card">
-    <div class="seclabel" style="margin-top:0">Common factors · portfolio shocks</div>
-    <div data-tour="factors">
-      <div class="ctrl"><div class="row"><label>China demand index</label><span class="val" id="chinaV">100</span></div>
-        <input type="range" id="china" min="78" max="122" value="100" step="1">
-        <div class="hint">100 = plan · drives coal, nickel, aluminium & tin offtake</div></div>
-      <div class="ctrl"><div class="row"><label>Commodity price cycle</label><span class="val" id="cycleV">0%</span></div>
-        <input type="range" id="cycle" min="-40" max="40" value="0" step="1">
-        <div class="hint">Broad commodity basket vs plan</div></div>
-      <div class="ctrl"><div class="row"><label>USD / IDR</label><span class="val" id="fxV">16,000</span></div>
-        <input type="range" id="fx" min="14500" max="18000" value="16000" step="50">
-        <div class="hint">Weaker IDR lifts export cash but raises USD debt service</div></div>
-      <div class="ctrl"><div class="row"><label>Energy &amp; power cost</label><span class="val" id="energyV">0%</span></div>
-        <input type="range" id="energy" min="-30" max="60" value="0" step="1">
-        <div class="hint">Smelter power — hits Inalum hardest</div></div>
-      <div class="ctrl"><div class="row"><label>Carbon policy stringency</label><span class="val" id="carbonV">20</span></div>
-        <input type="range" id="carbon" min="0" max="100" value="20" step="1">
-        <div class="hint">Higher = tighter · weighs on thermal coal (PTBA)</div></div>
-      <div class="ctrl"><div class="row"><label>Indonesia regulation (royalty / DMO)</label><span class="val" id="regV">0</span></div>
-        <input type="range" id="reg" min="-20" max="40" value="0" step="1">
-        <div class="hint">Higher = tighter royalty / domestic obligation</div></div>
-      <div class="ctrl"><div class="row"><label>Financing pressure</label><span class="val" id="finV">+100 bps</span></div>
-        <input type="range" id="fin" min="-50" max="450" value="100" step="10">
-        <div class="hint">Credit-spread move on holding interest &amp; refinancing</div></div>
-    </div>
-
-    <div class="divider"></div>
-    <div data-tour="floor">
-      <div class="ctrl"><div class="row"><label>Board cash floor</label><span class="val" id="floorV">Rp 2.0 T</span></div>
-        <input type="range" id="floor" min="0" max="6" value="2" step="0.1">
-        <div class="hint">Breach = residual Holding FCF below this</div></div>
-      <div class="ctrl"><label style="display:block;margin-bottom:6px">Volatility regime</label>
-        <div class="seg" id="regime">
-          <button data-r="0.6">CALM</button><button data-r="1" class="on">BASE</button><button data-r="1.7">STRESSED</button>
-        </div></div>
-      <div class="ctrl"><div class="row"><label>Simulations</label><span class="val" id="nV">20,000</span></div>
-        <input type="range" id="n" min="2000" max="50000" value="20000" step="1000"></div>
-    </div>
-    <button class="reset" id="reset">Reset to FY2025 plan</button>
-    </div>
+    <div class="crail-card reco" id="recoCard"></div>
     <div class="crail-card cop">
       <div class="crail-h">Driver Copilot <span class="cop-badge">model-aware</span></div>
       <div class="cop-feed" id="copFeed"></div>
@@ -748,8 +724,49 @@
     </div>
   </aside>
 
-  <!-- ── stage: layer sections ────────────────────────────────── -->
+  <!-- ── stage: scenario strip + layer sections ──────────────── -->
   <main class="stage">
+
+    <!-- scenario controls — top of the card -->
+    <div class="scenbar" id="scenbar">
+      <div class="scenbar-head">
+        <span class="crail-h" style="margin:0">Scenario <span class="cop-badge" id="scopeChip">CONSOLIDATED</span></span>
+        <select id="presetSel" class="preset-sel"></select>
+        <div class="seg" id="regime" title="Volatility regime">
+          <button data-r="0.6">CALM</button><button data-r="1" class="on">BASE</button><button data-r="1.7">STRESSED</button>
+        </div>
+        <button class="reset" id="reset">Reset</button>
+      </div>
+      <div class="scenbar-ctrls" data-tour="factors">
+        <div class="ctrl"><div class="row"><label>China demand index</label><span class="val" id="chinaV">100</span></div>
+          <input type="range" id="china" min="78" max="122" value="100" step="1">
+          <div class="hint">drives coal, nickel, aluminium &amp; tin offtake</div></div>
+        <div class="ctrl"><div class="row"><label>Commodity price cycle</label><span class="val" id="cycleV">0%</span></div>
+          <input type="range" id="cycle" min="-40" max="40" value="0" step="1">
+          <div class="hint">broad commodity basket vs plan</div></div>
+        <div class="ctrl"><div class="row"><label>USD / IDR</label><span class="val" id="fxV">16,000</span></div>
+          <input type="range" id="fx" min="14500" max="18000" value="16000" step="50">
+          <div class="hint">natural hedge: export cash vs USD debt</div></div>
+        <div class="ctrl"><div class="row"><label>Energy &amp; power cost</label><span class="val" id="energyV">0%</span></div>
+          <input type="range" id="energy" min="-30" max="60" value="0" step="1">
+          <div class="hint">smelter power — hits Inalum hardest</div></div>
+        <div class="ctrl"><div class="row"><label>Carbon policy</label><span class="val" id="carbonV">20</span></div>
+          <input type="range" id="carbon" min="0" max="100" value="20" step="1">
+          <div class="hint">higher = tighter · weighs on thermal coal</div></div>
+        <div class="ctrl"><div class="row"><label>Regulation (royalty / DMO)</label><span class="val" id="regV">0</span></div>
+          <input type="range" id="reg" min="-20" max="40" value="0" step="1">
+          <div class="hint">higher = tighter royalty / domestic obligation</div></div>
+        <div class="ctrl"><div class="row"><label>Financing pressure</label><span class="val" id="finV">+100 bps</span></div>
+          <input type="range" id="fin" min="-50" max="450" value="100" step="10">
+          <div class="hint">credit-spread move on holding interest</div></div>
+        <div class="ctrl"><div class="row"><label>Board cash floor</label><span class="val" id="floorV">Rp 2.0 T</span></div>
+          <input type="range" id="floor" min="0" max="6" value="2" step="0.1">
+          <div class="hint">breach = residual Holding FCF below this</div></div>
+        <div class="ctrl"><div class="row"><label>Simulations</label><span class="val" id="nV">20,000</span></div>
+          <input type="range" id="n" min="2000" max="50000" value="20000" step="1000">
+          <div class="hint">Monte Carlo paths</div></div>
+      </div>
+    </div>
 
     <!-- L1 · CEO MODE ───────────────────────────────────────────── -->
     <section class="layer on" data-layer="ceo">
@@ -1204,7 +1221,7 @@ function run(){
     levers:LEVERS.filter(l=>l.on).map(l=>l.label), paths:N };
   renderBrief();
   lastBP=V.breach; lastP50=V.p50; lastFloor=V.floor;
-  renderMacro(); renderStressChain(); renderCeoAction();
+  renderMacro(); renderStressChain(); renderCeoAction(); renderReco();
 }
 
 function corr(a,b){const n=a.length;let ma=0,mb=0;for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];}ma/=n;mb/=n;
@@ -1902,6 +1919,24 @@ function renderCeoAction(){
   else if(lastBP<0.25){ c='warn'; t=`<b>Watch.</b> ${(lastBP*100).toFixed(0)}% of paths breach the floor — pre-position Treasury hedges and confirm refinancing headroom before committing discretionary cash.`; }
   else { c='bad'; t=`<b>Act now.</b> ${(lastBP*100).toFixed(0)}% breach probability — open the Decision Engine and arm the recommended package; the FX hedge and refinancing levers move the floor fastest.`; }
   host.className='ceo-action '+c; host.innerHTML=t;
+}
+
+/* RHS recommendation card (mirrors the action + arms the cheapest package) */
+function renderReco(){
+  const host=document.getElementById('recoCard'); if(!host)return;
+  const bp=(lastBP*100).toFixed(0), cushion=(lastP50-lastFloor).toFixed(1), armed=LEVERS.filter(l=>l.on).length;
+  const word=activeScope==='group'?'breach':'shortfall';
+  let cls,head,body,btn='';
+  if(lastBP<0.1){ cls=''; head='No action required';
+    body=`Buffer is healthy — about Rp ${cushion}T above the floor. Keep the FX-debt hedge and refinancing levers on standby.`; }
+  else { cls=lastBP<0.25?'warn':'bad'; head=lastBP<0.25?'Watch · pre-position':'Act now';
+    body=`${bp}% ${word} probability. Arm the cheapest package that clears the floor at P10 — the FX-debt hedge and refinancing move it fastest.`;
+    btn=`<button class="reco-btn" id="recoArm">⚡ Arm recommended package</button>`; }
+  host.className='crail-card reco '+cls;
+  host.innerHTML=`<div class="crail-h">Recommendation</div><div class="reco-head">${head}</div>`+
+    `<div class="reco-body">${body}</div>`+
+    (armed?`<div class="reco-armed">${armed} lever(s) armed · ${word} now ${bp}%</div>`:'')+btn;
+  const b=document.getElementById('recoArm'); if(b) b.addEventListener('click',()=>{ recommendPackage(); setLayer('decision'); });
 }
 
 renderTicker(); renderLevers(); renderFilters(); renderPresetCards(); syncLabels();
