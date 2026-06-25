@@ -118,6 +118,30 @@
   [data-theme="night"] .illus{background:rgba(248,81,73,.14);border-color:rgba(248,81,73,.35);color:#ff8079}
   [data-theme="night"] .lever .chk{background:var(--inset)}
 
+  /* Neo — futuristic teal terminal (AIS demo-feed aesthetic) */
+  [data-theme="neo"]{
+    --app-bg:radial-gradient(1200px 600px at 50% -10%,#0a1a18 0%,#060d0c 55%,#04090880 100%);
+    --paper:#0b1614; --paper2:#0e1a18; --inset:#0a1412;
+    --ink:#e2f5ef; --muted:#82a79e; --faint:#557067; --line:rgba(45,224,196,.15); --line2:rgba(45,224,196,.08);
+    --green:#2fe0c0; --green-dark:#15b89e; --green-soft:rgba(47,224,192,.16);
+    --gold:#f0a830; --red:#ff5d6c; --blue:#36c5d6; --violet:#8f9dff;
+    --shadow:0 18px 46px rgba(0,0,0,.6); --r-panel:12px; --r-kpi:12px;
+    --bar-bg:rgba(5,11,10,.84); --bar-line:rgba(45,224,196,.2);
+    --ticker-bg:#04100e; --ticker-foot-bg:#04100e;
+    --tile-bg:linear-gradient(135deg,#0c3a34,#0a2622); --tile-ink:#e2f5ef; --tile-k:#8fd8c9; --tile-u:#6fbcae; --tile-border:rgba(45,224,196,.22);
+    --brief-bg:#06140f;
+    --cv-ink:#e2f5ef; --cv-faint:#6f9a90; --cv-grid:rgba(45,224,196,.14); --cv-labelbg:11,22,20;
+    --cv-green:#2fe0c0; --cv-red:#ff5d6c; --cv-gold:#f0a830; --cv-blue:#36c5d6;
+  }
+  [data-theme="neo"] .illus{background:rgba(255,93,108,.14);border-color:rgba(255,93,108,.35);color:#ff8a95}
+  [data-theme="neo"] .lever .chk{background:var(--inset)}
+  [data-theme="neo"] .lh{text-shadow:0 0 22px rgba(47,224,192,.22)}
+  [data-theme="neo"] .scope-b.on,[data-theme="neo"] .lnav-item.on{box-shadow:0 0 0 1px rgba(47,224,192,.28),0 8px 24px rgba(0,0,0,.5)}
+  [data-theme="neo"] .livedot,[data-theme="neo"] .live-badge .dot,[data-theme="neo"] .hb.on .dot{box-shadow:0 0 9px var(--green)}
+  [data-theme="neo"] .cop-form button,[data-theme="neo"] .reset{box-shadow:0 0 18px rgba(47,224,192,.32)}
+  [data-theme="neo"] .vd-status,[data-theme="neo"] .lnav-item.on .lnav-n{text-shadow:0 0 16px currentColor}
+  [data-theme="neo"] .preset-sel:focus,[data-theme="neo"] .cop-form input:focus{outline:1px solid var(--green);box-shadow:0 0 0 3px var(--green-soft)}
+
   /* Warm — forest green on cream/ivory paper, gold-forward (earthy commodity) */
   [data-theme="warm"]{
     --app-bg:linear-gradient(180deg,#f6f3ea 0%,#fbf9f2 60%);
@@ -476,8 +500,29 @@
   .embed aside{top:14px}
 
   /* ════ CEO Cockpit shell ════ */
-  .app{display:grid;grid-template-columns:238px minmax(0,1fr);align-items:start;gap:0;max-width:none}
-  @media(max-width:860px){.app{grid-template-columns:1fr}.rail{position:static;min-height:0}}
+  .app{display:grid;grid-template-columns:228px minmax(0,1fr) 326px;align-items:start;gap:0;max-width:none}
+  .rail{grid-column:1;grid-row:1} .stage{grid-column:2;grid-row:1} .crail{grid-column:3;grid-row:1}
+  @media(max-width:1180px){.app{grid-template-columns:212px minmax(0,1fr)}.crail{grid-column:1/-1;grid-row:2;height:auto;position:static;border-left:none;border-top:1px solid var(--line)}}
+  @media(max-width:760px){.app{grid-template-columns:1fr}.rail{grid-column:1;position:static;min-height:0}.stage{grid-column:1;grid-row:2}.crail{grid-row:3}}
+  /* right rail: scenario controls + driver copilot */
+  .crail{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;border-left:1px solid var(--line);background:var(--paper2);padding:16px 14px 40px;display:flex;flex-direction:column;gap:13px}
+  .crail-card{border:1px solid var(--line);border-radius:12px;background:var(--paper);padding:14px;box-shadow:var(--shadow)}
+  .crail-h{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--ink);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+  .crail-sub{font-size:11px;color:var(--muted);line-height:1.45;margin-top:9px}
+  .preset-sel{width:100%;padding:9px 10px;border-radius:9px;border:1px solid var(--line);background:var(--inset);color:var(--ink);font-size:12.5px;font-weight:600}
+  .crail-card.cop{flex:1;min-height:300px;display:flex;flex-direction:column}
+  .cop-feed{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:10px;min-height:150px;max-height:40vh}
+  .cop-msg{font-size:12px;line-height:1.5;padding:8px 11px;border-radius:11px;max-width:93%}
+  .cop-msg.ai{background:var(--inset);color:var(--ink);border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:3px}
+  .cop-msg.me{background:var(--green);color:#fff;align-self:flex-end;border-bottom-right-radius:3px;font-weight:500}
+  .cop-msg b{color:var(--green-dark)} .cop-msg.me b{color:#fff;text-decoration:underline}
+  .cop-sugs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+  .cop-sug{cursor:pointer;border:1px solid var(--line);background:var(--paper2);color:var(--muted);font-size:10.5px;font-weight:600;padding:5px 9px;border-radius:999px}
+  .cop-sug:hover{background:var(--inset);color:var(--ink)}
+  .cop-form{display:flex;gap:6px}
+  .cop-form input{flex:1;min-width:0;padding:9px 11px;border-radius:9px;border:1px solid var(--line);background:var(--inset);color:var(--ink);font-size:12px}
+  .cop-form button{cursor:pointer;border:none;background:var(--green);color:#fff;font-weight:800;padding:0 14px;border-radius:9px;font-size:15px}
+  .cop-badge{font-size:8.5px;font-weight:800;letter-spacing:.4px;color:var(--green-dark);background:rgba(63,185,80,.15);padding:2px 7px;border-radius:999px}
   .rail{position:sticky;top:0;align-self:start;padding:18px 14px 22px;border-right:1px solid var(--line);background:var(--paper2);min-height:100vh}
   .rail-lbl{font-size:9.5px;font-weight:800;letter-spacing:1.3px;color:var(--faint);text-transform:uppercase;margin:0 4px 8px}
   .scopes{display:flex;flex-direction:column;gap:3px}
@@ -544,7 +589,7 @@
 </style>
 <script>(function(){var d=document.documentElement;
   if(new URLSearchParams(location.search).has('embed'))d.classList.add('embed');
-  var t='night';try{t=localStorage.getItem('preTheme')||'night';}catch(e){}
+  var t='neo';try{t=localStorage.getItem('cockpitTheme')||'neo';}catch(e){}
   if(t!=='forest')d.setAttribute('data-theme',t);})();</script>
 </head>
 <body>
@@ -564,7 +609,8 @@
     <button data-t="warm">Warm</button>
     <button data-t="fintech">Fintech</button>
     <button data-t="terminal">Terminal</button>
-    <button data-t="night" class="on">Night</button>
+    <button data-t="night">Night</button>
+    <button data-t="neo" class="on">Neo</button>
   </div>
   <div class="links">
     <button class="tourbtn" id="tourBtn">★ Guided tour</button>
@@ -610,15 +656,19 @@
     <div class="rail-lbl" style="margin-top:18px">LAYERS</div>
     <div class="lnav" id="lnav"></div>
     <div class="rail-foot">
-      <button class="inputs-btn" id="inputsBtn">⚙ Scenario inputs</button>
       <div class="flow-note"><b>Narrative</b> · External → Stress chain → Operations → Portfolio → Decision</div>
     </div>
   </nav>
 
-  <!-- ── inputs drawer (slide-in) ─────────────────────────────── -->
-  <aside class="drawer" id="drawer">
-    <div class="drawer-head"><b>Scenario inputs</b><button class="dclose" id="drawerClose">✕</button></div>
-    <div class="seclabel">Common factors · portfolio shocks</div>
+  <!-- ── right rail: scenario controls + driver copilot ───────── -->
+  <aside class="crail" id="crail">
+    <div class="crail-card">
+      <div class="crail-h">Scenario <span class="cop-badge" id="scopeChip">CONSOLIDATED</span></div>
+      <select id="presetSel" class="preset-sel"></select>
+      <div class="crail-sub">Drag any driver below — the verdict, Holding FCF and the waterfall recompute instantly.</div>
+    </div>
+    <div class="crail-card">
+    <div class="seclabel" style="margin-top:0">Common factors · portfolio shocks</div>
     <div data-tour="factors">
       <div class="ctrl"><div class="row"><label>China demand index</label><span class="val" id="chinaV">100</span></div>
         <input type="range" id="china" min="78" max="122" value="100" step="1">
@@ -656,8 +706,14 @@
         <input type="range" id="n" min="2000" max="50000" value="20000" step="1000"></div>
     </div>
     <button class="reset" id="reset">Reset to FY2025 plan</button>
+    </div>
+    <div class="crail-card cop">
+      <div class="crail-h">Driver Copilot <span class="cop-badge">model-aware</span></div>
+      <div class="cop-feed" id="copFeed"></div>
+      <div class="cop-sugs" id="copSugs"></div>
+      <form class="cop-form" id="copForm"><input id="copInput" autocomplete="off" placeholder="Ask about the drivers…"><button type="submit">→</button></form>
+    </div>
   </aside>
-  <div class="drawer-scrim" id="drawerScrim"></div>
 
   <!-- ── stage: layer sections ────────────────────────────────── -->
   <main class="stage">
@@ -687,16 +743,16 @@
 
     <div class="kpis" data-tour="kpis">
       <div class="kpi dark"><div class="strip" style="background:var(--green)"></div>
-        <div class="k">Residual Holding FCF · P50</div><div class="v" id="p50">—</div>
-        <div class="u">Rp T · after upstreaming &amp; obligations</div><div class="delta" id="p50d"></div></div>
+        <div class="k" id="kL0">Residual Holding FCF · P50</div><div class="v" id="p50">—</div>
+        <div class="u" id="kU0">Rp T · after upstreaming &amp; obligations</div><div class="delta" id="p50d"></div></div>
       <div class="kpi"><div class="strip" style="background:var(--gold)"></div>
-        <div class="k">Holding FCF-at-Risk</div><div class="v" id="far" style="color:var(--gold)">—</div>
-        <div class="u">Rp T · base − P10 downside</div><div class="delta" id="fard"></div></div>
+        <div class="k" id="kL1">Holding FCF-at-Risk</div><div class="v" id="far" style="color:var(--gold)">—</div>
+        <div class="u" id="kU1">Rp T · base − P10 downside</div><div class="delta" id="fard"></div></div>
       <div class="kpi"><div class="strip" id="breachStrip" style="background:var(--red)"></div>
-        <div class="k">Cash-floor breach prob.</div><div class="v" id="breach">—</div>
-        <div class="u">paths below board floor</div><div class="delta" id="breachd"></div></div>
+        <div class="k" id="kL2">Cash-floor breach prob.</div><div class="v" id="breach">—</div>
+        <div class="u" id="kU2">paths below board floor</div><div class="delta" id="breachd"></div></div>
       <div class="kpi"><div class="strip" style="background:var(--blue)"></div>
-        <div class="k">Largest contributor</div><div class="v" id="topc" style="font-size:17px">—</div>
+        <div class="k" id="kL3">Largest contributor</div><div class="v" id="topc" style="font-size:17px">—</div>
         <div class="u" id="topcU">driver of downside</div><div class="delta" id="topd"></div></div>
     </div>
 
@@ -710,7 +766,7 @@
       <div class="panel">
         <h2>Macro drivers <span class="grp">live model state</span></h2>
         <div id="macroPanel"></div>
-        <div class="note">Set these in <a href="#" id="macroToInputs">⚙ Scenario inputs</a>; the market-signals strip above streams the underlying prices that move them.</div>
+        <div class="note">Set these in the <b>Scenario</b> panel on the right; the market-signals strip above streams the underlying prices that move them.</div>
       </div>
       <div class="panel mtop" data-tour="divmap">
         <h2>Diversification-break map <span class="grp">shared factors → assets</span></h2>
@@ -1404,7 +1460,8 @@ document.getElementById('fx').addEventListener('input',()=>{ fxUserTouched=true;
 document.getElementById('n').addEventListener('input',schedule);
 document.getElementById('floor').addEventListener('input',schedule);          // live sim while dragging
 document.getElementById('floor').addEventListener('change',renderPresetCards); // refresh cards on release
-function markCustom(){ activePreset='Custom'; document.querySelectorAll('.scard').forEach(p=>p.classList.remove('on')); }
+function markCustom(){ activePreset='Custom'; document.querySelectorAll('.scard').forEach(p=>p.classList.remove('on'));
+  const ps=document.getElementById('presetSel'); if(ps)ps.value='Custom'; }
 
 document.querySelectorAll('#regime button').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('#regime button').forEach(x=>x.classList.remove('on'));
@@ -1414,6 +1471,7 @@ document.querySelectorAll('#regime button').forEach(b=>b.addEventListener('click
 let presetFilter='All';
 function loadPreset(k){ const p=PRESETS[k]; activePreset=k;
   for(const kk in p) document.getElementById(kk).value=p[kk];
+  const ps=document.getElementById('presetSel'); if(ps)ps.value=k;
   renderPresetCards(); liveEffects(); schedule(); }
 function renderFilters(){
   const cats=['All',...[...new Set(Object.values(PRESET_CAT))].map(c=>CAT_LABEL[c])];
@@ -1562,11 +1620,11 @@ function setTheme(t){
   if(t==='forest') document.documentElement.removeAttribute('data-theme');
   else document.documentElement.setAttribute('data-theme',t);
   document.querySelectorAll('#themeSeg button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
-  try{localStorage.setItem('preTheme',t);}catch(e){}
+  try{localStorage.setItem('cockpitTheme',t);}catch(e){}
   if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run);   // redraw canvases to new metrics
 }
 document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.t)));
-let _savedTheme='night'; try{_savedTheme=localStorage.getItem('preTheme')||'night';}catch(e){}
+let _savedTheme='neo'; try{_savedTheme=localStorage.getItem('cockpitTheme')||'neo';}catch(e){}
 
 /* ════════ CEO Cockpit: layers · scope · drawer · macro · stress chain ════════ */
 let lastBP=0, lastP50=0, lastFloor=2;
@@ -1601,15 +1659,48 @@ function setScope(s){
   activeScope=s;
   document.querySelectorAll('#scopes .scope-b').forEach(b=>b.classList.toggle('on',b.dataset.scope===s));
   document.getElementById('scopeName').textContent=SCOPE_NAME[s]+(s==='group'?'':' (group model)');
+  const sc=document.getElementById('scopeChip'); if(sc)sc.textContent=s==='group'?'CONSOLIDATED':s.toUpperCase();
   if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run);
 }
 document.querySelectorAll('#scopes .scope-b').forEach(b=>b.addEventListener('click',()=>setScope(b.dataset.scope)));
-/* inputs drawer */
-function openDrawer(o){ document.getElementById('drawer').classList.toggle('open',o); document.getElementById('drawerScrim').classList.toggle('on',o); }
-document.getElementById('inputsBtn').addEventListener('click',()=>openDrawer(true));
-document.getElementById('drawerClose').addEventListener('click',()=>openDrawer(false));
-document.getElementById('drawerScrim').addEventListener('click',()=>openDrawer(false));
-document.getElementById('macroToInputs').addEventListener('click',e=>{e.preventDefault();openDrawer(true);});
+/* scenario preset selector (right rail) */
+function initPresetSel(){
+  const ps=document.getElementById('presetSel');
+  ps.innerHTML=Object.keys(PRESETS).map(k=>`<option>${k}</option>`).join('')+'<option>Custom</option>';
+  ps.value=activePreset;
+  ps.addEventListener('change',()=>{ if(ps.value!=='Custom') loadPreset(ps.value); });
+}
+
+/* ── Driver Copilot (model-aware, deterministic) ── */
+const COP_SUGS=["What's driving the risk?","Biggest contributor?","Is the rupiah a risk?","What should we do?"];
+function sgn(v){ return (v>=0?'+':'−')+'Rp '+Math.abs(v).toFixed(2)+'T'; }
+function copPush(role,html){ const f=document.getElementById('copFeed'); const b=document.createElement('div');
+  b.className='cop-msg '+role; b.innerHTML=html; f.appendChild(b); f.scrollTop=f.scrollHeight; }
+function copAnswer(q){
+  const s=q.toLowerCase(), d=centralDecomp();
+  const bp=(lastBP*100).toFixed(0), cushion=(lastP50-lastFloor).toFixed(1);
+  const tf=lastState?lastState.topFactor:'—', ts=lastState?lastState.topSub:'—', fxNet=d.exportFx-d.debtFx;
+  if(/hedge|rupiah|\bfx\b|forex|idr|dollar|currency/.test(s))
+    return `The rupiah is a <b>natural hedge</b>, not a primary risk: a weaker IDR lifts export cash about <b>${sgn(d.exportFx)}</b> while raising USD debt service <b>${sgn(d.debtFx)}</b> — net <b>${sgn(fxNet)}</b>. That's why the verdict barely moves on FX. The real exposure is China demand.`;
+  if(/china|demand/.test(s))
+    return `China demand is the <b>master tap</b> — it moves coal, nickel, aluminium and tin together, so diversification can fail across all four assets at once. It currently leads the downside attribution (<b>${tf}</b>).`;
+  if(/driver|contributor|biggest|largest|sensitiv|expos/.test(s))
+    return `Lead factor by correlation with the downside: <b>${tf}</b>. The asset contributing most to the downside is <b>${ts}</b>. The Thesis Stress Chain layer shows the full transmission.`;
+  if(/do|action|mitigat|recommend|fix|lever|protect/.test(s))
+    return lastBP<0.1?`No action needed — Holding FCF sits ~Rp ${cushion}T above the floor. Keep the FX-debt hedge and refinancing levers on standby.`:`At <b>${bp}%</b> breach probability, arm the package in the Decision Engine — the <b>FX-debt hedge</b> and <b>refinancing</b> levers move the floor fastest, then defer non-critical capex.`;
+  if(/floor|cushion|breach|\brisk\b|okay|safe|verdict/.test(s))
+    return `Breach probability is <b>${bp}%</b>; residual Holding FCF (P50) is ~Rp ${cushion}T ${(lastP50-lastFloor)>=0?'above':'below'} the board floor. ${lastBP<0.1?'The floor holds comfortably.':lastBP<0.25?'It holds on the central case but the tail is exposed.':'The floor is breached across a material share of paths.'}`;
+  if(/what if|scenario|drop|fall|crash|stress/.test(s))
+    return `Use the <b>Scenario</b> sliders above — drag <b>China demand</b> down and watch the waterfall, verdict and breach probability recompute live. Each point of China demand flows through all four assets at once.`;
+  return `Now: breach probability <b>${bp}%</b>, residual FCF ~Rp ${cushion}T vs floor, lead driver <b>${tf}</b>, weakest asset <b>${ts}</b>. Ask about China demand, the rupiah, the biggest driver, or what to do.`;
+}
+function copAsk(q){ copPush('me',q); setTimeout(()=>copPush('ai',copAnswer(q)),140); }
+function copInit(){
+  document.getElementById('copSugs').innerHTML=COP_SUGS.map(q=>`<button type="button" class="cop-sug">${q}</button>`).join('');
+  document.querySelectorAll('#copSugs .cop-sug').forEach(b=>b.addEventListener('click',()=>copAsk(b.textContent)));
+  document.getElementById('copForm').addEventListener('submit',e=>{e.preventDefault();const i=document.getElementById('copInput');if(i.value.trim()){copAsk(i.value.trim());i.value='';}});
+  copPush('ai','I read the live model. Ask me what’s driving the risk, whether the rupiah matters, or what to do.');
+}
 
 /* macro panel (External World layer) */
 function renderMacro(){
@@ -1679,7 +1770,7 @@ function renderCeoAction(){
 }
 
 renderTicker(); renderLevers(); renderFilters(); renderPresetCards(); syncLabels();
-renderRail(); setLayer('ceo');
+renderRail(); setLayer('ceo'); initPresetSel(); copInit();
 if(_savedTheme!=='forest') setTheme(_savedTheme); else run();
 
 /* ── start the live engine ──────────────────────────────────────── */
@@ -1728,7 +1819,7 @@ addEventListener('keydown',e=>{if(tourI<0)return;if(e.key==='Escape')tourEnd();
   else if(e.key==='ArrowRight'||e.key==='Enter')tourNext();else if(e.key==='ArrowLeft'&&tourI>0){tourI--;tourShow();}});
 addEventListener('resize',()=>{if(tourI>=0)tourPlace();});
 addEventListener('scroll',()=>{if(tourI>=0)tourPlace();},{passive:true});
-try{if(!document.documentElement.classList.contains('embed')&&!localStorage.getItem('preTourSeen'))setTimeout(tourStart,800);}catch(e){}
+/* cockpit: guided tour stays available via the ★ button, but does not auto-start (the layer rail + Copilot lead instead) */
 </script>
 </body>
 </html>
