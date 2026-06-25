@@ -409,7 +409,7 @@
   .stack{display:flex;flex-direction:column;gap:16px}
   .mtop{margin-top:16px}
   canvas{width:100%;display:block}
-  #waterfall{height:248px} #hist{height:250px} #runway{height:216px}
+  #waterfall{height:248px} #hist{height:250px}
   .legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:11px;font-size:10.5px;color:var(--muted)}
   .legend i{display:inline-block;width:16px;height:0;border-top:3px solid;vertical-align:middle;margin-right:5px;border-radius:2px}
   .legend i.sq{height:10px;border-top:0;border-radius:2px}
@@ -926,15 +926,6 @@
           diversification map, but excluded from quantified cash upstreaming until validated JV data is approved.
           Baseline / impact / residual in Rp&nbsp;trillion.</div>
       </div>
-      <div class="panel mtop" data-tour="runway" data-grouponly>
-        <h2>Cash runway &amp; debt wall · next 4 quarters</h2>
-        <canvas id="runway" height="280"></canvas>
-        <div class="legend">
-          <span><i class="sq" style="background:var(--green)"></i>After-action cash cushion</span>
-          <span><i class="sq" style="background:var(--gold)"></i>Principal wall</span>
-          <span><i style="border-color:var(--red);border-style:dashed"></i>Cash floor</span>
-        </div>
-      </div>
     </section>
 
   </main>
@@ -1278,8 +1269,6 @@ function run(){
   if(wfCv && wfCv.offsetParent!==null) drawWaterfall(wfCv, holdingFCF(cenSh,cenFin,cenFx,mit), floorT);
   const histCv=document.getElementById('hist');
   if(histCv && histCv.offsetParent!==null) drawHist(histCv, V.arr, {p10:V.p10,p50:V.p50,p90:V.p90,floor:V.floor,hi:distHi,ref:(activeScope==='group'&&hasAnyMit())?sR:null});
-  const rwCv=document.getElementById('runway');
-  if(rwCv && rwCv.offsetParent!==null) drawRunway(rwCv, baseFCF, floorT, mit);
   const dmCv=document.getElementById('divmap'); if(dmCv && dmCv.offsetParent!==null) drawDivMap(cenSh);
 
   // subsidiary cards (active asset highlighted in asset scope)
@@ -1469,42 +1458,6 @@ function drawHist(cv, sorted, opt){
   x.fillStyle='#dc5a50';x.fillText('floor',clamp(fx,18,w-18),base+16);
 }
 
-/* ── canvas: cash runway / debt wall ────────────────────────────── */
-function drawRunway(cv, annualFCF, floorT, mit){
-  const {x,w,h}=dpr(cv); const P=pal();
-  const padL=30,padR=10,padT=14,padB=28,W=w-padL-padR,H=h-padT-padB;
-  // lumpy principal profile across quarters (sums ~ to scenario principal)
-  const o=holdObligations(0,0,mit);
-  const wallShape=[0.15,0.45,0.18,0.22], wall=wallShape.map(s=>s*o.principal);
-  const qFCF=annualFCF/4;                          // even operating cash generation per quarter
-  let cash=HOLD.openingCash*0.0;                   // start runway from 0 incremental; show net per quarter cushion
-  // After-action cash cushion each quarter = running cumulative net of (qFCF added back the obligations already in annualFCF). Simplify: show quarter-end residual cushion above floor.
-  const startBuf=Math.max(annualFCF,floorT+0.1);
-  const ends=[]; let run=startBuf;
-  for(let q=0;q<4;q++){ run = run + qFCF - (wall[q]-o.principal/4); ends.push(run); }
-  const maxV=Math.max(startBuf, ...ends, ...wall, floorT)*1.15;
-  const y=v=>padT+H-(v/maxV)*H;
-  const gw=W/4;
-  // floor line
-  x.strokeStyle='#dc5a50';x.lineWidth=1.4;x.setLineDash([5,3]);x.beginPath();x.moveTo(padL,y(floorT));x.lineTo(w-padR,y(floorT));x.stroke();x.setLineDash([]);
-  x.fillStyle='#dc5a50';x.font='9px IBM Plex Mono, monospace';x.textAlign='left';x.fillText('floor '+floorT.toFixed(1),padL+2,y(floorT)-3);
-  x.textAlign='center';
-  for(let q=0;q<4;q++){
-    const cx=padL+q*gw;
-    // cash cushion bar
-    const cy=y(Math.max(0,ends[q]));
-    x.fillStyle=ends[q]<floorT?'rgba(220,90,80,.8)':'rgba(21,160,109,.82)';
-    x.fillRect(cx+gw*0.16,cy,gw*0.34,Math.max(2,y(0)-cy));
-    // principal wall bar
-    const py=y(wall[q]); x.fillStyle='rgba(217,146,15,.85)';
-    x.fillRect(cx+gw*0.54,py,gw*0.3,Math.max(2,y(0)-py));
-    x.fillStyle=P.faint;x.font='9.5px IBM Plex Mono, monospace';x.fillText('Q'+(q+1),cx+gw/2,h-9);
-  }
-  x.strokeStyle=P.grid;x.beginPath();x.moveTo(padL,y(0));x.lineTo(w-padR,y(0));x.stroke();
-  // y axis ticks
-  x.fillStyle=P.faint;x.textAlign='right';
-  for(let t=0;t<=3;t++){const v=maxV*t/3;x.fillText(v.toFixed(0),padL-4,y(v)+3);}
-}
 
 /* ── svg: diversification-break map ─────────────────────────────── */
 function drawDivMap(sh){
@@ -2383,8 +2336,7 @@ const TOUR=[
   {sel:'#recoCard',t:'2 · The recommendation',b:'A live read on whether the cash floor holds (Hold / Watch / Act), plus the cheapest package of management actions — FX-debt hedge, refinancing, defer capex — that clears the floor at P10. One click arms it.'},
   {sel:'[data-tour=waterfall]',t:'3 · Where the cash goes',b:'Opening cash, then upstreaming stacked by subsidiary (PTBA, Antam, Inalum, Timah); then holding opex, interest, debt principal, capex and equity drawn down. Debt principal is the pinch, and the dashed line is the board cash floor the residual must clear.'},
   {sel:'[data-tour=subs]',t:'4 · Subsidiary cash bridges',b:'Each subsidiary’s upstreaming to MIND ID under the active scenario, with a confidence tag. Freeport stays visible as JV exposure but is excluded from quantified cash.'},
-  {sel:'[data-tour=runway]',t:'5 · Runway & debt wall',b:'The after-action cash cushion against the principal wall over the next four quarters, set against the board cash floor.'},
-  {sel:'.crail-card.cop',t:'6 · Ask the Copilot',b:'The model-aware Driver Copilot answers what’s driving the risk, whether the rupiah matters, and what to do — reading the live model state for the active scenario.'},
+  {sel:'.crail-card.cop',t:'5 · Ask the Copilot',b:'The model-aware Driver Copilot answers what’s driving the risk, whether the rupiah matters, and what to do — reading the live model state for the active scenario.'},
 ];
 let tourI=-1,tourEls=null;
 function tourBuild(){const spot=document.createElement('div');spot.className='tour-spot';
