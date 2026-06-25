@@ -531,6 +531,9 @@
   .scenbar-head .seg{flex:0 0 auto}
   .scenbar-ctrls{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:9px 18px}
   .scenbar .ctrl{margin:0}
+  .more-btn{margin-top:11px;cursor:pointer;border:1px dashed var(--line);background:transparent;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.3px;padding:7px 13px;border-radius:8px}
+  .more-btn:hover{background:var(--inset);color:var(--ink)}
+  .scenbar-more{margin-top:12px} .scenbar-more[hidden]{display:none}
   .scenbar .ctrl .hint{font-size:9px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   @media(max-width:760px){.scenbar{position:static}}
   /* RHS recommendation card */
@@ -741,12 +744,18 @@
         <div class="ctrl"><div class="row"><label>China demand index</label><span class="val" id="chinaV">100</span></div>
           <input type="range" id="china" min="78" max="122" value="100" step="1">
           <div class="hint">drives coal, nickel, aluminium &amp; tin offtake</div></div>
-        <div class="ctrl"><div class="row"><label>Commodity price cycle</label><span class="val" id="cycleV">0%</span></div>
-          <input type="range" id="cycle" min="-40" max="40" value="0" step="1">
-          <div class="hint">broad commodity basket vs plan</div></div>
         <div class="ctrl"><div class="row"><label>USD / IDR</label><span class="val" id="fxV">16,000</span></div>
           <input type="range" id="fx" min="14500" max="18000" value="16000" step="50">
           <div class="hint">natural hedge: export cash vs USD debt</div></div>
+        <div class="ctrl"><div class="row"><label>Commodity price cycle</label><span class="val" id="cycleV">0%</span></div>
+          <input type="range" id="cycle" min="-40" max="40" value="0" step="1">
+          <div class="hint">broad commodity basket vs plan</div></div>
+        <div class="ctrl"><div class="row"><label>Board cash floor</label><span class="val" id="floorV">Rp 2.0 T</span></div>
+          <input type="range" id="floor" min="0" max="6" value="2" step="0.1">
+          <div class="hint">breach = residual Holding FCF below this</div></div>
+      </div>
+      <button class="more-btn" id="moreBtn">+ more drivers</button>
+      <div class="scenbar-ctrls scenbar-more" id="scenbarMore" hidden>
         <div class="ctrl"><div class="row"><label>Energy &amp; power cost</label><span class="val" id="energyV">0%</span></div>
           <input type="range" id="energy" min="-30" max="60" value="0" step="1">
           <div class="hint">smelter power — hits Inalum hardest</div></div>
@@ -759,9 +768,6 @@
         <div class="ctrl"><div class="row"><label>Financing pressure</label><span class="val" id="finV">+100 bps</span></div>
           <input type="range" id="fin" min="-50" max="450" value="100" step="10">
           <div class="hint">credit-spread move on holding interest</div></div>
-        <div class="ctrl"><div class="row"><label>Board cash floor</label><span class="val" id="floorV">Rp 2.0 T</span></div>
-          <input type="range" id="floor" min="0" max="6" value="2" step="0.1">
-          <div class="hint">breach = residual Holding FCF below this</div></div>
         <div class="ctrl"><div class="row"><label>Simulations</label><span class="val" id="nV">20,000</span></div>
           <input type="range" id="n" min="2000" max="50000" value="20000" step="1000">
           <div class="hint">Monte Carlo paths</div></div>
@@ -1941,6 +1947,11 @@ function renderReco(){
 
 renderTicker(); renderLevers(); renderFilters(); renderPresetCards(); syncLabels();
 renderRail(); setLayer('ceo'); initPresetSel(); copInit();
+document.getElementById('moreBtn').addEventListener('click',function(){
+  const m=document.getElementById('scenbarMore'), open=m.hasAttribute('hidden');
+  if(open) m.removeAttribute('hidden'); else m.setAttribute('hidden','');
+  this.textContent=open?'– fewer drivers':'+ more drivers';
+});
 if(_savedTheme!=='forest') setTheme(_savedTheme); else run();
 
 /* ── start the live engine ──────────────────────────────────────── */
