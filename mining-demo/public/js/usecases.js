@@ -53,7 +53,7 @@ export const USE_CASES = {
     title: 'MIND ID CEO Cockpit: Executive strategic monitor',
     decisions: 'portfolio posture, scenario stress-testing & board-level decisions',
     stage: 'Cross-chain', horizon: 'Exec', drivers: ['margin', 'npv'],
-    flagship: true, href: '/cockpit.html',
+    flagship: true, href: '/ceo-cockpit.html',
   },
 
   'portfolio-risk-engine': {

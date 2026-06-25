@@ -600,6 +600,25 @@
   .sc-verdict.risk{background:rgba(210,153,34,.15);color:var(--gold)}
   .sc-verdict.breach{background:rgba(248,81,73,.15);color:var(--red)}
   @keyframes scIn{to{opacity:1;transform:none}}
+  /* animated Sankey stress chain */
+  .stresschain svg.sankey{width:100%;min-width:860px;height:auto;display:block}
+  .sk-title{fill:var(--faint);font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase}
+  .sk-node rect,.sk-verdict rect{fill:var(--paper2);stroke:var(--line);stroke-width:1}
+  .sk-node.pos rect{stroke:rgba(63,185,80,.5)} .sk-node.neg rect{stroke:rgba(248,81,73,.5)}
+  .sk-l{fill:var(--muted);font-size:10.5px;font-weight:600}
+  .sk-v{fill:var(--ink);font-family:var(--mono);font-size:13px;font-weight:700}
+  .sk-node.pos .sk-v{fill:var(--green-dark)} .sk-node.neg .sk-v{fill:var(--red)}
+  .sk-node,.sk-verdict{opacity:0;animation:skIn .45s ease forwards;animation-delay:var(--d,0s)}
+  @keyframes skIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+  .sk-verdict rect{stroke-width:1.5}
+  .sk-verdict .sk-l{fill:var(--faint)} .sk-verdict .sk-v{font-size:11px}
+  .sk-verdict.hold rect{fill:rgba(63,185,80,.16);stroke:var(--green)} .sk-verdict.hold .sk-v{fill:var(--green-dark)}
+  .sk-verdict.risk rect{fill:rgba(210,153,34,.18);stroke:var(--gold)} .sk-verdict.risk .sk-v{fill:var(--gold)}
+  .sk-verdict.breach rect{fill:rgba(248,81,73,.18);stroke:var(--red)} .sk-verdict.breach .sk-v{fill:var(--red)}
+  .sk-link{stroke-dasharray:7 9;opacity:.55;animation:skFlow 1s linear infinite}
+  @keyframes skFlow{to{stroke-dashoffset:-16}}
+  @media(prefers-reduced-motion:reduce){.sk-link{animation:none;stroke-dasharray:none}.sk-node,.sk-verdict{animation:none;opacity:1}}
+  [data-theme="neo"] .sk-link{opacity:.7}
 </style>
 <script>(function(){var d=document.documentElement;
   if(new URLSearchParams(location.search).has('embed'))d.classList.add('embed');
@@ -1791,52 +1810,86 @@ function centralDecomp(){
   const debtFx=(now.o.interest+now.o.principal)-(oNoFx.interest+oNoFx.principal);
   return { perDelta, exportFx, debtFx, fcfDelta:now.fcf-plan.fcf };
 }
+// build an animated SVG Sankey from columns of nodes + weighted links
+function skSankey(cols, links){
+  const W=1120, nodeW=158, nodeH=50, vGap=15, padY=18;
+  const nCols=cols.length, colStep=(W-nodeW)/(nCols-1);
+  let maxH=0; cols.forEach(c=>{const n=c.nodes.length; maxH=Math.max(maxH,n*nodeH+(n-1)*vGap);});
+  const H=maxH+padY*2, pos={};
+  cols.forEach((c,ci)=>{ const n=c.nodes.length, total=n*nodeH+(n-1)*vGap, startY=(H-total)/2, x=ci*colStep;
+    c.nodes.forEach((nd,ni)=>{ const y=startY+ni*(nodeH+vGap); nd._x=x; nd._y=y;
+      pos[nd.id]={rx:x+nodeW, ry:y+nodeH/2, lx:x, ly:y+nodeH/2}; }); });
+  const maxMag=Math.max(0.01,...links.map(l=>Math.abs(l.mag)));
+  const linkSvg=links.map((l,i)=>{ const a=pos[l.from], b=pos[l.to]; if(!a||!b)return'';
+    const sw=clamp(Math.abs(l.mag)/maxMag*15,2.5,15), mx=(a.rx+b.lx)/2;
+    const col=l.sign>0?'var(--green)':l.sign<0?'var(--red)':'var(--faint)';
+    return `<path class="sk-link" d="M${a.rx},${a.ry} C${mx},${a.ry} ${mx},${b.ly} ${b.lx},${b.ly}" stroke="${col}" stroke-width="${sw.toFixed(1)}" fill="none" style="animation-delay:${(i*0.07).toFixed(2)}s"/>`;
+  }).join('');
+  const nodeSvg=cols.map(c=>c.nodes.map(nd=>{
+    const cls=nd.kind==='verdict'?('sk-verdict '+nd.state):('sk-node'+(nd.sign>0?' pos':nd.sign<0?' neg':''));
+    return `<g class="${cls}" style="--d:${nd.delay||'0s'}">
+      <rect x="${nd._x}" y="${nd._y}" width="${nodeW}" height="${nodeH}" rx="10"/>
+      <text class="sk-l" x="${nd._x+13}" y="${nd._y+20}">${nd.label}</text>
+      <text class="sk-v" x="${nd._x+13}" y="${nd._y+38}">${nd.val}</text></g>`;
+  }).join('')).join('');
+  const titles=cols.map((c,ci)=>`<text class="sk-title" x="${ci*colStep+2}" y="12">${c.title}</text>`).join('');
+  return `<svg viewBox="0 0 ${W} ${H+16}" class="sankey" preserveAspectRatio="xMinYMid meet">${titles}<g transform="translate(0,16)">${linkSvg}${nodeSvg}</g></svg>`;
+}
 function renderStressChain(){
   const host=document.getElementById('stressChain'); if(!host)return;
   const d=centralDecomp(), china=+document.getElementById('china').value, fx=+document.getElementById('fx').value;
-  const sign=v=>(v>=0?'+':'−')+'Rp '+Math.abs(v).toFixed(2)+'T', cls=v=>v>=0.005?'pos':v<=-0.005?'neg':'';
-  const v=document.getElementById('verdict');
-  const state=v.classList.contains('breach')?'breach':v.classList.contains('risk')?'risk':'hold';
+  const sgnv=v=>(v>=0?'+':'−')+'Rp '+Math.abs(v).toFixed(2)+'T', si=v=>v>=0.005?1:v<=-0.005?-1:0;
+  const ve=document.getElementById('verdict');
+  const state=ve.classList.contains('breach')?'breach':ve.classList.contains('risk')?'risk':'hold';
   const words=lastView?lastView.words:['CASH FLOOR HOLDS','CASH FLOOR AT RISK','CASH FLOOR BREACHED'];
   const stateTxt=words[state==='hold'?0:state==='risk'?1:2];
-  const shockCol=`<div class="sc-col"><div class="sc-coltitle">Shock</div>
-      <div class="sc-node head"><div class="n-l">China demand</div><div class="n-v">${china} idx</div></div>
-      <div class="sc-node head" style="animation-delay:.05s"><div class="n-l">USD / IDR</div><div class="n-v">${fx.toLocaleString('en-US')}</div></div></div>`;
-  const verdictCol=`<div class="sc-col" style="flex:0 0 150px"><div class="sc-coltitle">Verdict</div>
-      <div class="sc-verdict ${state}" style="animation-delay:.74s">${stateTxt}</div></div>`;
-  let mid;
+  const bpSign=lastBP>0.25?-1:lastBP<0.1?1:0;
+  let cols, links;
   if(activeScope==='group'){
-    const assetNodes=SUBS.map((s,i)=>`<div class="sc-node ${cls(d.perDelta[i])}" style="animation-delay:${(.15+i*.07).toFixed(2)}s"><div class="n-l">${s.id}</div><div class="n-v">${sign(d.perDelta[i])}</div></div>`).join('');
-    mid=`<div class="sc-arrow">→</div>
-    <div class="sc-col"><div class="sc-coltitle">Asset dividend Δ</div>${assetNodes}</div>
-    <div class="sc-arrow">→</div>
-    <div class="sc-col"><div class="sc-coltitle">FX channel · hedge</div>
-      <div class="sc-node pos" style="animation-delay:.4s"><div class="n-l">Export cash</div><div class="n-v">${sign(d.exportFx)}</div></div>
-      <div class="sc-node neg" style="animation-delay:.46s"><div class="n-l">USD debt service</div><div class="n-v">${sign(-d.debtFx)}</div></div>
-      <div class="sc-node ${cls(d.exportFx-d.debtFx)}" style="animation-delay:.52s"><div class="n-l">Net FX</div><div class="n-v">${sign(d.exportFx-d.debtFx)}</div></div></div>
-    <div class="sc-arrow">→</div>
-    <div class="sc-col"><div class="sc-coltitle">Holding floor</div>
-      <div class="sc-node ${cls(d.fcfDelta)}" style="animation-delay:.6s"><div class="n-l">Residual FCF Δ</div><div class="n-v">${sign(d.fcfDelta)}</div></div>
-      <div class="sc-node ${lastBP>0.25?'neg':lastBP<0.1?'pos':''}" style="animation-delay:.66s"><div class="n-l">Breach prob.</div><div class="n-v">${(lastBP*100).toFixed(0)}%</div></div></div>
-    <div class="sc-arrow">→</div>`;
+    const divD=d.perDelta.reduce((a,b)=>a+b,0), fxNet=d.exportFx-d.debtFx;
+    cols=[
+      {title:'Shock',nodes:[
+        {id:'china',label:'China demand',val:china+' idx',sign:china<100?-1:0,delay:'0s'},
+        {id:'fx',label:'USD / IDR',val:(+fx).toLocaleString('en-US'),sign:0,delay:'.05s'}]},
+      {title:'Assets · dividend Δ',nodes:SUBS.map((s,i)=>({id:'a'+i,label:s.id,val:sgnv(d.perDelta[i]),sign:si(d.perDelta[i]),delay:(.18+i*.06).toFixed(2)+'s'}))},
+      {title:'Channels',nodes:[
+        {id:'div',label:'Dividends Δ',val:sgnv(divD),sign:si(divD),delay:'.5s'},
+        {id:'fxn',label:'Net FX · hedge',val:sgnv(fxNet),sign:si(fxNet),delay:'.55s'}]},
+      {title:'Holding floor',nodes:[
+        {id:'res',label:'Residual FCF Δ',val:sgnv(d.fcfDelta),sign:si(d.fcfDelta),delay:'.66s'},
+        {id:'bp',label:'Breach prob.',val:(lastBP*100).toFixed(0)+'%',sign:bpSign,delay:'.72s'}]},
+      {title:'Verdict',nodes:[{id:'v',label:'Outcome',val:stateTxt,kind:'verdict',state,delay:'.82s'}]}];
+    links=[
+      ...SUBS.map((s,i)=>({from:'china',to:'a'+i,mag:Math.abs(d.perDelta[i])+0.05,sign:si(d.perDelta[i])})),
+      {from:'fx',to:'fxn',mag:Math.abs(d.exportFx)+Math.abs(d.debtFx)+0.05,sign:si(fxNet)},
+      ...SUBS.map((s,i)=>({from:'a'+i,to:'div',mag:Math.abs(d.perDelta[i])+0.05,sign:si(d.perDelta[i])})),
+      {from:'div',to:'res',mag:Math.abs(divD)+0.1,sign:si(divD)},
+      {from:'fxn',to:'res',mag:Math.abs(fxNet)+0.1,sign:si(fxNet)},
+      {from:'res',to:'v',mag:Math.abs(d.fcfDelta)+0.25,sign:si(d.fcfDelta)},
+      {from:'bp',to:'v',mag:0.3,sign:bpSign}];
   } else {
     const idx=SUBS.findIndex(x=>x.id===activeScope), s=SUBS[idx], expFx=s.base*s.beta[2]*((fx-16000)/16000);
-    mid=`<div class="sc-arrow">→</div>
-    <div class="sc-col"><div class="sc-coltitle">${s.id} dividend Δ</div>
-      <div class="sc-node ${cls(d.perDelta[idx])}" style="animation-delay:.2s"><div class="n-l">${s.commodity}</div><div class="n-v">${sign(d.perDelta[idx])}</div></div></div>
-    <div class="sc-arrow">→</div>
-    <div class="sc-col"><div class="sc-coltitle">FX · export only</div>
-      <div class="sc-node ${cls(expFx)}" style="animation-delay:.4s"><div class="n-l">Export cash</div><div class="n-v">${sign(expFx)}</div></div>
-      <div class="sc-node" style="animation-delay:.46s"><div class="n-l">USD debt</div><div class="n-v">holding-level</div></div></div>
-    <div class="sc-arrow">→</div>
-    <div class="sc-col"><div class="sc-coltitle">vs board minimum</div>
-      <div class="sc-node ${lastBP>0.25?'neg':lastBP<0.1?'pos':''}" style="animation-delay:.6s"><div class="n-l">Shortfall prob.</div><div class="n-v">${(lastBP*100).toFixed(0)}%</div></div></div>
-    <div class="sc-arrow">→</div>`;
+    cols=[
+      {title:'Shock',nodes:[
+        {id:'china',label:'China demand',val:china+' idx',sign:china<100?-1:0,delay:'0s'},
+        {id:'fx',label:'USD / IDR',val:(+fx).toLocaleString('en-US'),sign:0,delay:'.05s'}]},
+      {title:s.id+' · '+s.commodity,nodes:[
+        {id:'as',label:s.id+' dividend Δ',val:sgnv(d.perDelta[idx]),sign:si(d.perDelta[idx]),delay:'.2s'},
+        {id:'fxe',label:'FX export (+)',val:sgnv(expFx),sign:si(expFx),delay:'.26s'}]},
+      {title:'vs board minimum',nodes:[
+        {id:'sf',label:'Shortfall prob.',val:(lastBP*100).toFixed(0)+'%',sign:bpSign,delay:'.5s'}]},
+      {title:'Verdict',nodes:[{id:'v',label:'Outcome',val:stateTxt,kind:'verdict',state,delay:'.6s'}]}];
+    links=[
+      {from:'china',to:'as',mag:Math.abs(d.perDelta[idx])+0.05,sign:si(d.perDelta[idx])},
+      {from:'fx',to:'fxe',mag:Math.abs(expFx)+0.05,sign:1},
+      {from:'as',to:'sf',mag:Math.abs(d.perDelta[idx])+0.1,sign:si(d.perDelta[idx])},
+      {from:'fxe',to:'sf',mag:Math.abs(expFx)+0.05,sign:1},
+      {from:'sf',to:'v',mag:0.4,sign:bpSign}];
   }
-  host.innerHTML=`<div class="sc-stage">${shockCol}${mid}${verdictCol}</div>`;
+  host.innerHTML=skSankey(cols,links);
   document.getElementById('scnPill2').textContent=activePreset+(activeScope==='group'?'':' · '+activeScope);
   if(activeScope==='group')
-    document.getElementById('stressNote').innerHTML=`Central (no-noise) transmission of the <b>${activePreset}</b> scenario. The FX channel is a <b>natural hedge</b> — export cash ${sign(d.exportFx)} and debt service ${sign(-d.debtFx)} largely offset — so the <b>China-demand channel</b> dominates. Breach probability comes from the full ${(+document.getElementById('n').value).toLocaleString('en-US')}-path simulation.`;
+    document.getElementById('stressNote').innerHTML=`Central (no-noise) transmission of the <b>${activePreset}</b> scenario — link width ∝ cash impact, colour = direction. The FX channel is a <b>natural hedge</b> (export cash ${sgnv(d.exportFx)} vs debt service ${sgnv(-d.debtFx)} largely offset), so the <b>China-demand channel</b> dominates. Breach probability comes from the full ${(+document.getElementById('n').value).toLocaleString('en-US')}-path simulation.`;
   else { const s=SUBS.find(x=>x.id===activeScope);
     document.getElementById('stressNote').innerHTML=`Single-asset transmission for <b>${activeScope}</b> (${s.commodity}). At asset level the rupiah is <b>purely positive</b> — the USD-debt drag sits at the holding, not here. Shortfall = paths where upstreaming falls below the board minimum (60% of plan).`; }
 }
