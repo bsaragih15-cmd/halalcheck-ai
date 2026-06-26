@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>MIND ID CEO Cockpit — Strategic Asset Monitor</title>
+<title>CEO Cockpit — Strategic Asset Monitor</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -805,7 +805,7 @@
 <div class="bar">
   <div class="logo">OS</div>
   <div>
-    <h1><b>MIND ID</b> CEO Cockpit</h1>
+    <h1>CEO Cockpit</h1>
     <div class="sub mono"><span id="scopeName">CONSOLIDATED</span> · STRATEGIC ASSET MONITOR</div>
   </div>
   <div class="spacer"></div>
@@ -833,7 +833,7 @@
   <span>UST 10Y <b>4.28%</b></span>
   <button class="driftbtn" id="driftBtn" title="Boardroom mode: gently perturb market signals and recompute on a timer">▶ AUTO-DRIFT</button>
   <span class="gap"></span>
-  <span>MIND ID Treasury signal board v0.2</span>
+  <span>Treasury signal board v0.2</span>
 </div>
 
 <div class="app">
@@ -975,11 +975,11 @@
 
 <script>
 /* ════════════════════════════════════════════════════════════════
-   MIND ID common-factor portfolio model + Monte Carlo
+   Common-factor portfolio model + Monte Carlo
    Cash in Rp trillion. Illustrative placeholders (PRD Phase 0).
    ════════════════════════════════════════════════════════════════ */
 
-// Quantified subsidiaries: baseline upstreaming to MIND ID (Rp T) + factor betas.
+// Quantified subsidiaries: baseline upstreaming to the holding (Rp T) + factor betas.
 // Factor order: [china, cycle, fx, energy, carbon, reg]  (financing handled at holding level)
 const SUBS = [
   { id:'PTBA',   commodity:'Thermal coal',            base:3.5, conf:'illustrative',
@@ -1607,13 +1607,13 @@ function renderBrief(){
     <div class="bsec"><div class="lbl">Decision needed</div><div class="acts">${
       acts.map((a,i)=>`<div class="bact"><div class="n">${String(i+1).padStart(2,'0')}</div><div><div class="a">${a[0]}</div><div class="r">${a[1]}</div></div></div>`).join('')
     }</div></div>
-    <div class="caveat"><b style="color:#cfe0d7">Data caveat —</b> all figures are <b>illustrative placeholders</b> (PRD Phase 0) pending FY2025 actuals, MIND ID ownership, dividend receipts and validated holding obligations. <b>Freeport Indonesia</b> is shown as strategic JV exposure only and is excluded from quantified cash upstreaming. Confidence: reported / derived / management / illustrative tags travel with each subsidiary line.</div>`;
+    <div class="caveat"><b style="color:#cfe0d7">Data caveat —</b> all figures are <b>illustrative placeholders</b> (PRD Phase 0) pending FY2025 actuals, group ownership, dividend receipts and validated holding obligations. <b>Freeport Indonesia</b> is shown as strategic JV exposure only and is excluded from quantified cash upstreaming. Confidence: reported / derived / management / illustrative tags travel with each subsidiary line.</div>`;
 }
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function copyBrief(){
   const st=lastState; if(!st)return;
   const txt=document.getElementById('briefBody').innerText;
-  navigator.clipboard?.writeText('MIND ID PORTFOLIO RISK — BOARD BRIEF ('+st.preset+')\n\n'+txt).then(()=>{
+  navigator.clipboard?.writeText('PORTFOLIO RISK — BOARD BRIEF ('+st.preset+')\n\n'+txt).then(()=>{
     const b=document.getElementById('copyBrief'); b.textContent='Copied ✓'; setTimeout(()=>b.textContent='Copy brief',1500);
   }).catch(()=>{});
 }
@@ -1789,16 +1789,16 @@ document.querySelectorAll('#distHi button').forEach(b=>b.addEventListener('click
 // Each signal maps to the portfolio factor / subsidiary it drives, so the
 // board can see the upstream market move before it reaches Holding FCF.
 const MARKETS=[
-  { l:'Coal · HBA',        v:'$118',    u:'/t',     chg:-1.1, tag:'PTBA',  cls:'t-ptba',   d:'Thermal coal benchmark — PTBA netback' },
-  { l:'Coal · Newcastle',  v:'$124',    u:'/t',     chg:-0.9, tag:'PTBA',  cls:'t-ptba',   d:'Seaborne thermal reference' },
-  { l:'Gold',              v:'$2,340',  u:'/oz',    chg: 0.6, tag:'ANTAM', cls:'t-antam',  d:'Gold — Antam earnings cushion' },
-  { l:'Nickel · LME',      v:'$16,480', u:'/t',     chg:-1.2, tag:'ANTAM', cls:'t-antam',  d:'LME nickel — Antam ferronickel' },
-  { l:'Nickel ore 1.8%',   v:'$52',     u:'/wmt',   chg:-0.4, tag:'ANTAM', cls:'t-antam',  d:'Indonesian laterite ore (CIF China)' },
-  { l:'Aluminium · LME',   v:'$2,460',  u:'/t',     chg: 0.4, tag:'INALUM',cls:'t-inalum', d:'LME aluminium — Inalum revenue' },
-  { l:'Alumina',           v:'$385',    u:'/t',     chg: 1.8, tag:'INALUM',cls:'t-inalum', d:'Alumina input cost — Inalum margin' },
-  { l:'Tin · LME',         v:'$31,200', u:'/t',     chg:-0.7, tag:'TIMAH', cls:'t-timah',  d:'LME tin — Timah netback' },
+  { l:'Coal · HBA',        v:'$118',    u:'/t',     chg:-1.1, tag:'Subsidiary 1',  cls:'t-ptba',   d:'Thermal coal benchmark — PTBA netback' },
+  { l:'Coal · Newcastle',  v:'$124',    u:'/t',     chg:-0.9, tag:'Subsidiary 1',  cls:'t-ptba',   d:'Seaborne thermal reference' },
+  { l:'Gold',              v:'$2,340',  u:'/oz',    chg: 0.6, tag:'Subsidiary 2', cls:'t-antam',  d:'Gold — Antam earnings cushion' },
+  { l:'Nickel · LME',      v:'$16,480', u:'/t',     chg:-1.2, tag:'Subsidiary 2', cls:'t-antam',  d:'LME nickel — Antam ferronickel' },
+  { l:'Nickel ore 1.8%',   v:'$52',     u:'/wmt',   chg:-0.4, tag:'Subsidiary 2', cls:'t-antam',  d:'Indonesian laterite ore (CIF China)' },
+  { l:'Aluminium · LME',   v:'$2,460',  u:'/t',     chg: 0.4, tag:'Subsidiary 3',cls:'t-inalum', d:'LME aluminium — Inalum revenue' },
+  { l:'Alumina',           v:'$385',    u:'/t',     chg: 1.8, tag:'Subsidiary 3',cls:'t-inalum', d:'Alumina input cost — Inalum margin' },
+  { l:'Tin · LME',         v:'$31,200', u:'/t',     chg:-0.7, tag:'Subsidiary 4', cls:'t-timah',  d:'LME tin — Timah netback' },
   { l:'Copper · LME',      v:'$9,540',  u:'/t',     chg: 0.3, tag:'JV',    cls:'t-jv',     d:'LME copper — Freeport JV (excluded from cash)' },
-  { l:'Bauxite',           v:'$58',     u:'/t',     chg: 0.2, tag:'ANTAM', cls:'t-antam',  d:'Bauxite CIF — Antam upstream' },
+  { l:'Bauxite',           v:'$58',     u:'/t',     chg: 0.2, tag:'Subsidiary 2', cls:'t-antam',  d:'Bauxite CIF — Antam upstream' },
   { l:'USD / IDR',         v:'16,000',  u:'',       chg: 0.3, tag:'FX',    cls:'t-macro',  d:'Rupiah — export cash vs USD debt service' },
   { l:'Brent crude',       v:'$78',     u:'/bbl',   chg:-0.8, tag:'ENERGY',cls:'t-energy', d:'Energy complex — power & fuel cost' },
   { l:'Gas · JKM',         v:'$11.4',   u:'/MMBtu', chg:-1.4, tag:'ENERGY',cls:'t-energy', d:'LNG — smelter power cost proxy' },
@@ -2472,7 +2472,7 @@ const TOUR=[
   {sel:'[data-tour=factors]',t:'1 · Set the scenario',b:'Dial the key drivers — China demand, USD/IDR, the commodity cycle and the board cash floor. “+ more drivers” reveals energy, carbon, regulation and financing. Every change re-runs the model and the cash view live.'},
   {sel:'#recoCard',t:'2 · The recommendation',b:'A live read on whether the cash floor holds (Hold / Watch / Act), plus the cheapest package of management actions — FX-debt hedge, refinancing, defer capex — that clears the floor at P10. One click arms it.'},
   {sel:'[data-tour=waterfall]',t:'3 · Where the cash goes',b:'Opening cash, then upstreaming stacked by subsidiary (PTBA, Antam, Inalum, Timah); then holding opex, interest, debt principal, capex and equity drawn down. Debt principal is the pinch, and the dashed line is the board cash floor the residual must clear.'},
-  {sel:'[data-tour=subs]',t:'4 · Subsidiary cash bridges',b:'Each subsidiary’s upstreaming to MIND ID under the active scenario, with a confidence tag. Freeport stays visible as JV exposure but is excluded from quantified cash.'},
+  {sel:'[data-tour=subs]',t:'4 · Subsidiary cash bridges',b:'Each subsidiary’s upstreaming to the holding under the active scenario, with a confidence tag. Freeport stays visible as JV exposure but is excluded from quantified cash.'},
   {sel:'.crail-card.cop',t:'5 · Ask the Copilot',b:'The model-aware Driver Copilot answers what’s driving the risk, whether the rupiah matters, and what to do — reading the live model state for the active scenario.'},
 ];
 let tourI=-1,tourEls=null;
@@ -2514,10 +2514,10 @@ addEventListener('scroll',()=>{if(tourI>=0)tourPlace();},{passive:true});
 const M = {
   REGIME:{CALM:0.6,BASE:1.0,STRESSED:1.7}, VOL_CAL:1.16,
   SUBS:[
-    {id:'ptba',name:'PTBA',base:3.5,betas:[0.60,0.95,0.40,-0.10,-0.70,-0.55],color:'--ptba',note:'coal · DMO · carbon'},
-    {id:'antam',name:'Antam',base:1.8,betas:[0.45,0.65,0.35,-0.15,-0.10,-0.30],color:'--antam',note:'gold cushions nickel'},
-    {id:'inalum',name:'Inalum',base:2.2,betas:[0.50,0.80,0.30,-1.05,-0.30,-0.25],color:'--inalum',note:'power & alumina'},
-    {id:'timah',name:'Timah',base:0.3,betas:[0.55,1.00,0.40,-0.10,-0.05,-0.60],color:'--timah',note:'tin & offshore cost'},
+    {id:'ptba',name:'Subsidiary 1',base:3.5,betas:[0.60,0.95,0.40,-0.10,-0.70,-0.55],color:'--ptba',note:'coal · DMO · carbon'},
+    {id:'antam',name:'Subsidiary 2',base:1.8,betas:[0.45,0.65,0.35,-0.15,-0.10,-0.30],color:'--antam',note:'gold cushions nickel'},
+    {id:'inalum',name:'Subsidiary 3',base:2.2,betas:[0.50,0.80,0.30,-1.05,-0.30,-0.25],color:'--inalum',note:'power & alumina'},
+    {id:'timah',name:'Subsidiary 4',base:0.3,betas:[0.55,1.00,0.40,-0.10,-0.05,-0.60],color:'--timah',note:'tin & offshore cost'},
   ],
   DRIVERS:[
     {id:'china',label:'China demand',group:'Market',min:78,max:122,base:100,step:1,sig:8,accent:'--green'},
@@ -2530,16 +2530,16 @@ const M = {
     {id:'floor',label:'Cash floor',group:'Threshold',min:0,max:6,base:2.0,step:0.1,accent:'--gold'},
   ],
   INSTR:[
-    {id:'coalhba',name:'Coal HBA',tag:'PTBA',tagVar:'--ptba',price:117,unit:'/t',curr:'$',d:-1.4},
-    {id:'coalnc',name:'Coal Newc.',tag:'PTBA',tagVar:'--ptba',price:124,unit:'/t',curr:'$',d:-0.8},
-    {id:'gold',name:'Gold',tag:'ANTAM',tagVar:'--antam',price:2335,unit:'/oz',curr:'$',d:1.0},
-    {id:'nickel',name:'Nickel LME',tag:'ANTAM',tagVar:'--antam',price:16578,unit:'/t',curr:'$',d:-0.5},
-    {id:'nickelore',name:'Nickel ore',tag:'ANTAM',tagVar:'--antam',price:52,unit:'/wmt',curr:'$',d:-0.6},
-    {id:'alu',name:'Alum. LME',tag:'INALUM',tagVar:'--inalum',price:2426,unit:'/t',curr:'$',d:0.6},
-    {id:'alumina',name:'Alumina',tag:'INALUM',tagVar:'--inalum',price:382,unit:'/t',curr:'$',d:1.6},
-    {id:'tin',name:'Tin LME',tag:'TIMAH',tagVar:'--timah',price:31189,unit:'/t',curr:'$',d:-0.5},
+    {id:'coalhba',name:'Coal HBA',tag:'Subsidiary 1',tagVar:'--ptba',price:117,unit:'/t',curr:'$',d:-1.4},
+    {id:'coalnc',name:'Coal Newc.',tag:'Subsidiary 1',tagVar:'--ptba',price:124,unit:'/t',curr:'$',d:-0.8},
+    {id:'gold',name:'Gold',tag:'Subsidiary 2',tagVar:'--antam',price:2335,unit:'/oz',curr:'$',d:1.0},
+    {id:'nickel',name:'Nickel LME',tag:'Subsidiary 2',tagVar:'--antam',price:16578,unit:'/t',curr:'$',d:-0.5},
+    {id:'nickelore',name:'Nickel ore',tag:'Subsidiary 2',tagVar:'--antam',price:52,unit:'/wmt',curr:'$',d:-0.6},
+    {id:'alu',name:'Alum. LME',tag:'Subsidiary 3',tagVar:'--inalum',price:2426,unit:'/t',curr:'$',d:0.6},
+    {id:'alumina',name:'Alumina',tag:'Subsidiary 3',tagVar:'--inalum',price:382,unit:'/t',curr:'$',d:1.6},
+    {id:'tin',name:'Tin LME',tag:'Subsidiary 4',tagVar:'--timah',price:31189,unit:'/t',curr:'$',d:-0.5},
     {id:'copper',name:'Copper LME',tag:'JV',tagVar:'--freeport',price:9675,unit:'/t',curr:'$',d:-0.4},
-    {id:'bauxite',name:'Bauxite',tag:'ANTAM',tagVar:'--antam',price:57,unit:'/t',curr:'$',d:0.5},
+    {id:'bauxite',name:'Bauxite',tag:'Subsidiary 2',tagVar:'--antam',price:57,unit:'/t',curr:'$',d:0.5},
     {id:'fx',name:'USD / IDR',tag:'FX',tagVar:'--blue',price:16000,unit:'',curr:'',d:0,fx:true},
     {id:'brent',name:'Brent crude',tag:'OIL',tagVar:'--muted',price:78,unit:'/bbl',curr:'$',d:-1.1},
   ],
@@ -2549,7 +2549,7 @@ const M = {
     {id:'china',label:'China hard landing',regime:'STRESSED',values:{china:84,cycle:-22,fx:17200,energy:10,financing:180,carbon:30,reg:10,floor:2.0}},
     {id:'super',label:'Commodity supercycle',regime:'BASE',values:{china:116,cycle:30,fx:15200,energy:20,financing:40,carbon:25,reg:5,floor:2.0}},
     {id:'rates',label:'Rate shock · weak IDR',regime:'STRESSED',values:{china:98,cycle:-5,fx:17600,energy:5,financing:380,carbon:20,reg:0,floor:2.0}},
-    {id:'energy',label:'Energy crunch · Inalum',regime:'STRESSED',values:{china:100,cycle:5,fx:16400,energy:50,financing:120,carbon:35,reg:5,floor:2.0}},
+    {id:'energy',label:'Energy crunch · Subsidiary 3',regime:'STRESSED',values:{china:100,cycle:5,fx:16400,energy:50,financing:120,carbon:35,reg:5,floor:2.0}},
     {id:'carbon',label:'Carbon tightening',regime:'STRESSED',values:{china:96,cycle:-8,fx:16200,energy:15,financing:130,carbon:75,reg:20,floor:2.0}},
   ],
   detectPreset(v,regime){for(const p of this.PRESETS){let ok=p.regime===regime;if(ok)for(const k in p.values)if(Math.abs(p.values[k]-v[k])>1e-6){ok=false;break;}if(ok)return p.id;}return null;},
@@ -2714,7 +2714,7 @@ function derive(){
     {id:'fx',label:'FX-debt hedge',target:'interest',eff:0.6,cost:1,costLabel:'≈ 15 bps carry',color:'--blue',why:'Caps the IDR rate on USD debt — cheapest lever, the natural first hedge for the holding.'},
     {id:'refi',label:'Refinance 2027 maturity',target:'principal',eff:2.2,cost:3,costLabel:'fees + 40 bps coupon',color:'--violet',why:'Pushes the 2027 principal wall out, freeing this period’s cash.'},
     {id:'capex',label:'Defer growth capex',target:'capex',eff:1.2,cost:2,costLabel:'6-month project slip',color:'--gold',why:'Slips growth capex two quarters — low cash cost, strategic delay.'},
-    {id:'div',label:'Antam special dividend',target:'upstream',eff:1.0,cost:3,costLabel:'draws Antam buffer',color:'--antam',why:'Pulls forward an Antam special dividend, drawing its cash buffer.'},
+    {id:'div',label:'Subsidiary 2 special dividend',target:'upstream',eff:1.0,cost:3,costLabel:'draws Subsidiary 2 buffer',color:'--antam',why:'Pulls forward a Subsidiary 2 special dividend, drawing its cash buffer.'},
   ];
   const maxCost=levers.reduce((a,b)=>a+b.cost,0);
   const zt=1.2816,targetMean=v.floor+zt*mc.std,gap=Math.max(0,targetMean-mc.mean);
