@@ -504,7 +504,17 @@
 
   /* ════ CEO Cockpit shell ════ */
   .app{display:grid;grid-template-columns:minmax(0,1fr) 326px;align-items:start;gap:0;max-width:none}
+  .app.solo{grid-template-columns:1fr}
   .stage{grid-column:1;grid-row:1} .crail{grid-column:2;grid-row:1}
+  /* ── Stress Test module (Cash & Scenarios redesign) ── */
+  @keyframes ompulse{0%,100%{opacity:1}50%{opacity:.4}}
+  @keyframes omscan{0%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
+  #stressView{width:100%}
+  #stressView input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:14px;background:transparent;cursor:pointer;margin:0}
+  #stressView input[type=range]::-webkit-slider-runnable-track{height:3px;border-radius:3px;background:var(--track)}
+  #stressView input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:11px;height:11px;border-radius:50%;background:var(--accent,#2fe0c0);margin-top:-4px;box-shadow:0 0 0 2px var(--panel),0 1px 3px rgba(0,0,0,.4)}
+  #stressView input[type=range]::-moz-range-track{height:3px;border-radius:3px;background:var(--track)}
+  #stressView input[type=range]::-moz-range-thumb{width:11px;height:11px;border:none;border-radius:50%;background:var(--accent,#2fe0c0);box-shadow:0 0 0 2px var(--panel)}
   @media(max-width:1000px){.app{grid-template-columns:1fr}.stage{grid-column:1;grid-row:1}.crail{grid-column:1;grid-row:2;height:auto;position:static;border-left:none;border-top:1px solid var(--line)}}
   /* right rail: scenario controls + driver copilot */
   .crail{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;border-left:1px solid var(--line);background:var(--paper2);padding:16px 14px 40px;display:flex;flex-direction:column;gap:13px}
@@ -840,6 +850,9 @@
       <button class="vtab" data-v="allocate"><span class="vt-n">04</span>Allocate</button>
     </div>
 
+    <!-- STRESS TEST view (Stage 03 · Cash & Scenarios) — redesigned cockpit -->
+    <div id="stressView" class="lhide"></div>
+
     <!-- MONITOR view (Stage 01) -->
     <div id="monitorView" class="monitor-view lhide">
       <div class="lhead"><h2 class="lh">Subsidiary scorecard</h2><div class="lhsub">Actuals vs plan across finance and key operations. Status is <b>worst-of</b> — any red metric flags the subsidiary.</div></div>
@@ -941,23 +954,6 @@
         <div class="pin-chips" id="pinChips"></div>
       </div>
     </div>
-
-    <!-- CASH & SCENARIOS ──────────────────────────────────────────── -->
-    <section class="layer" data-layer="ops">
-      <div class="lhead"><h2 class="lh">Cash &amp; Scenarios</h2><div class="lhsub">How the active scenario converts into the holding's available cash — drivers up top, dividends and residual free cash flow below.</div></div>
-      <div class="panel" data-tour="waterfall" data-grouponly>
-        <h2>Holding FCF waterfall · central case <span class="grp" id="wfScn">FY2025 plan</span></h2>
-        <canvas id="waterfall" height="320"></canvas>
-        <div class="legend" id="wfLegend"></div>
-      </div>
-      <div class="panel mtop" data-tour="subs">
-        <h2>Subsidiary cash bridges · upstreaming to MIND ID <span class="grp">FY2025 baseline</span></h2>
-        <div class="subcards" id="subCards"></div>
-        <div class="note"><b>Freeport Indonesia</b> is kept visible as strategic JV exposure in the scenario narrative and
-          diversification map, but excluded from quantified cash upstreaming until validated JV data is approved.
-          Baseline / impact / residual in Rp&nbsp;trillion.</div>
-      </div>
-    </section>
 
   </main>
 </div>
@@ -1182,6 +1178,7 @@ function readFactors(){
   o.fin=+document.getElementById('fin').value; return o;
 }
 function run(){
+  if(!document.getElementById('waterfall'))return;   // old Cash view retired — replaced by Stress Test module
   const cen=readFactors();
   const N=+document.getElementById('n').value, floorT=+document.getElementById('floor').value;
   const mit=mitFromLevers(LEVERS), ref=mitFromLevers([]);
@@ -2417,16 +2414,19 @@ function setView(v){
   activeView=v;
   document.querySelectorAll('#vtabs .vtab').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   const cash=v==='cash';
-  document.getElementById('scenbar').style.display=cash?'':'none';
-  document.querySelector('.layer[data-layer=ops]').classList.toggle('lhide',!cash);
+  document.getElementById('scenbar').style.display='none';   // old scenario bar retired (replaced by Stress Test)
+  document.getElementById('stressView').classList.toggle('lhide',!cash);
   document.getElementById('monitorView').classList.toggle('lhide',v!=='monitor');
   document.getElementById('forecastView').classList.toggle('lhide',v!=='forecast');
   document.getElementById('allocateView').classList.toggle('lhide',v!=='allocate');
-  document.getElementById('recoCard').style.display=cash?'':'none';
+  // Stress Test runs full-bleed: hide the rail + global ticker so the module owns the screen
+  const app=document.querySelector('.app'); if(app)app.classList.toggle('solo',cash);
+  const crail=document.getElementById('crail'); if(crail)crail.style.display=cash?'none':'';
+  document.querySelectorAll('.ticker,.ticker-foot').forEach(e=>{e.style.display=cash?'none':'';});
   const show=(id,on)=>{const e=document.getElementById(id);if(e)e.style.display=on?'':'none';};
-  show('tornadoCard',cash);
+  show('recoCard',false); show('tornadoCard',false);          // retired cash rail cards
   show('flagsCard',v==='monitor'); show('fundCard',v==='forecast'); show('allocCard',v==='allocate');
-  if(cash){ if(raf)cancelAnimationFrame(raf); raf=requestAnimationFrame(run); }
+  if(cash){ if(window.StressTest) StressTest.show(); }
   else if(v==='monitor') renderMonitor(); else if(v==='forecast') renderForecast(); else if(v==='allocate') renderAllocate();
 }
 document.querySelectorAll('#vtabs .vtab').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.v)));
@@ -2486,6 +2486,447 @@ addEventListener('keydown',e=>{if(tourI<0)return;if(e.key==='Escape')tourEnd();
 addEventListener('resize',()=>{if(tourI>=0)tourPlace();});
 addEventListener('scroll',()=>{if(tourI>=0)tourPlace();},{passive:true});
 /* cockpit: guided tour stays available via the ★ button, but does not auto-start (the layer rail + Copilot lead instead) */
+</script>
+
+<!-- ════ Stress Test (Cash & Scenarios) — redesigned cockpit module ════
+     Faithful vanilla port of the design handoff. Self-contained IIFE;
+     exposes window.StressTest.show() / .fit(), invoked by setView('cash'). -->
+<script>
+(function(){
+"use strict";
+const M = {
+  REGIME:{CALM:0.6,BASE:1.0,STRESSED:1.7}, VOL_CAL:1.16,
+  SUBS:[
+    {id:'ptba',name:'PTBA',base:3.5,betas:[0.60,0.95,0.40,-0.10,-0.70,-0.55],color:'--ptba',note:'coal · DMO · carbon'},
+    {id:'antam',name:'Antam',base:1.8,betas:[0.45,0.65,0.35,-0.15,-0.10,-0.30],color:'--antam',note:'gold cushions nickel'},
+    {id:'inalum',name:'Inalum',base:2.2,betas:[0.50,0.80,0.30,-1.05,-0.30,-0.25],color:'--inalum',note:'power & alumina'},
+    {id:'timah',name:'Timah',base:0.3,betas:[0.55,1.00,0.40,-0.10,-0.05,-0.60],color:'--timah',note:'tin & offshore cost'},
+  ],
+  DRIVERS:[
+    {id:'china',label:'China demand',group:'Market',min:78,max:122,base:100,step:1,sig:8,accent:'--green'},
+    {id:'cycle',label:'Commodity cycle',group:'Market',min:-40,max:40,base:0,step:1,sig:14,accent:'--green'},
+    {id:'fx',label:'USD / IDR',group:'Market',min:14500,max:18000,base:16000,step:50,sig:800,accent:'--green'},
+    {id:'energy',label:'Energy & power',group:'Market',min:-30,max:60,base:0,step:1,sig:12,accent:'--green'},
+    {id:'financing',label:'Financing',group:'Policy',min:-50,max:450,base:100,step:5,notch:100,accent:'--blue'},
+    {id:'carbon',label:'Carbon policy',group:'Policy',min:0,max:100,base:20,step:1,notch:20,accent:'--blue'},
+    {id:'reg',label:'Royalty / DMO',group:'Policy',min:-20,max:40,base:0,step:1,notch:15,accent:'--blue'},
+    {id:'floor',label:'Cash floor',group:'Threshold',min:0,max:6,base:2.0,step:0.1,accent:'--gold'},
+  ],
+  INSTR:[
+    {id:'coalhba',name:'Coal HBA',tag:'PTBA',tagVar:'--ptba',price:117,unit:'/t',curr:'$',d:-1.4},
+    {id:'coalnc',name:'Coal Newc.',tag:'PTBA',tagVar:'--ptba',price:124,unit:'/t',curr:'$',d:-0.8},
+    {id:'gold',name:'Gold',tag:'ANTAM',tagVar:'--antam',price:2335,unit:'/oz',curr:'$',d:1.0},
+    {id:'nickel',name:'Nickel LME',tag:'ANTAM',tagVar:'--antam',price:16578,unit:'/t',curr:'$',d:-0.5},
+    {id:'nickelore',name:'Nickel ore',tag:'ANTAM',tagVar:'--antam',price:52,unit:'/wmt',curr:'$',d:-0.6},
+    {id:'alu',name:'Alum. LME',tag:'INALUM',tagVar:'--inalum',price:2426,unit:'/t',curr:'$',d:0.6},
+    {id:'alumina',name:'Alumina',tag:'INALUM',tagVar:'--inalum',price:382,unit:'/t',curr:'$',d:1.6},
+    {id:'tin',name:'Tin LME',tag:'TIMAH',tagVar:'--timah',price:31189,unit:'/t',curr:'$',d:-0.5},
+    {id:'copper',name:'Copper LME',tag:'JV',tagVar:'--freeport',price:9675,unit:'/t',curr:'$',d:-0.4},
+    {id:'bauxite',name:'Bauxite',tag:'ANTAM',tagVar:'--antam',price:57,unit:'/t',curr:'$',d:0.5},
+    {id:'fx',name:'USD / IDR',tag:'FX',tagVar:'--blue',price:16000,unit:'',curr:'',d:0,fx:true},
+    {id:'brent',name:'Brent crude',tag:'OIL',tagVar:'--muted',price:78,unit:'/bbl',curr:'$',d:-1.1},
+  ],
+  PLAN:{china:100,cycle:0,fx:16000,energy:0,financing:100,carbon:20,reg:0,floor:2.0},
+  THEMES:{
+    dark:{bg:'#060c0b',panel:'#0b1614',inset:'#0a1412',ink:'#e2f5ef',muted:'#82a79e',faint:'#557067',border:'rgba(45,224,196,.15)',green:'#2fe0c0',gold:'#f0a830',red:'#ff5d6c',blue:'#36c5d6',violet:'#8f9dff',ptba:'#d9920f',antam:'#15a06d',inalum:'#3f86cf',timah:'#dc5a50',freeport:'#7d6be0',track:'rgba(130,167,158,.25)'},
+    light:{bg:'#eef4ef',panel:'#fbfdf9',inset:'#f2f7f2',ink:'#16211d',muted:'#64756f',faint:'#8b9a92',border:'#c4d5cb',green:'#15a06d',gold:'#d9920f',red:'#dc5a50',blue:'#3f86cf',violet:'#7d6be0',ptba:'#d9920f',antam:'#15a06d',inalum:'#3f86cf',timah:'#dc5a50',freeport:'#7d6be0',track:'rgba(100,117,111,.30)'},
+  },
+  _memo:{}, _noise:null,
+  paths(){return 2500;},
+  mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};},
+  ensureNoise(){if(this._noise&&this._noise.N===this.paths())return;const N=this.paths();const rng=this.mulberry32(20260625);
+    const rn=()=>{let u=0,v=0;while(u===0)u=rng();while(v===0)v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);};
+    const z=new Float64Array(N),ic=new Float64Array(N),iy=new Float64Array(N),ix=new Float64Array(N),ie=new Float64Array(N);
+    for(let i=0;i<N;i++){z[i]=rn();ic[i]=rn();iy[i]=rn();ix[i]=rn();ie[i]=rn();}
+    this._noise={N,z,ic,iy,ix,ie};},
+  factors(v){return{china:(v.china-100)/100,cycle:v.cycle/100,fx:(v.fx-16000)/16000,energy:v.energy/100,carbon:(v.carbon-20)/100,reg:v.reg/100};},
+  subUp(s,f){const b=s.betas;let m=1+b[0]*f.china+b[1]*f.cycle+b[2]*f.fx+b[3]*f.energy+b[4]*f.carbon+b[5]*f.reg;if(m<0)m=0;return s.base*m;},
+  residualDet(v){const f=this.factors(v);const ups=this.SUBS.map(s=>this.subUp(s,f));const upstream=ups.reduce((a,b)=>a+b,0);
+    const opening=4.0,opex=1.5,principal=3.5,capex=2.0,equity=0.5;const interest=2.0+(v.financing-100)/100*0.25+f.fx*4.0;
+    const residual=opening+upstream-opex-interest-principal-capex+equity;
+    return{residual,opening,upstreamBySub:ups,upstream,opex,interest,principal,capex,equity};},
+  runMC(v,regime){this.ensureNoise();const key='mc|'+regime+'|'+v.china+v.cycle+v.fx+v.energy+v.financing+v.carbon+v.reg+v.floor+'|'+this._noise.N;
+    if(this._memo[key])return this._memo[key];
+    const N=this._noise.N,z=this._noise.z,ic=this._noise.ic,iy=this._noise.iy,ix=this._noise.ix,ie=this._noise.ie;
+    const f=this.factors(v),mult=this.REGIME[regime]*this.VOL_CAL,SUBS=this.SUBS;
+    const intBase=2.0+(v.financing-100)/100*0.25;
+    const sCy=Math.sqrt(1-0.7225),sFx=Math.sqrt(1-0.3025),sEn=Math.sqrt(1-0.04);
+    const res=new Float64Array(N);
+    for(let i=0;i<N;i++){const zi=z[i];
+      const nch=f.china+0.08*mult*(0.80*zi+0.6*ic[i]);
+      const ncy=f.cycle+0.14*mult*(0.85*zi+sCy*iy[i]);
+      const nfx=f.fx+0.05*mult*(-0.55*zi+sFx*ix[i]);
+      const nen=f.energy+0.12*mult*(0.20*zi+sEn*ie[i]);
+      let up=0;for(let k=0;k<SUBS.length;k++){const b=SUBS[k].betas;let m=1+b[0]*nch+b[1]*ncy+b[2]*nfx+b[3]*nen+b[4]*f.carbon+b[5]*f.reg;if(m<0)m=0;up+=SUBS[k].base*m;}
+      res[i]=4.0+up-1.5-(intBase+nfx*4.0)-3.5-2.0+0.5;}
+    const arr=Array.from(res).sort((a,b)=>a-b);
+    const P=q=>arr[Math.min(N-1,Math.max(0,Math.floor(q*N)))];
+    let mean=0;for(let i=0;i<N;i++)mean+=res[i];mean/=N;
+    let vr=0;for(let i=0;i<N;i++){const d=res[i]-mean;vr+=d*d;}const std=Math.sqrt(vr/N);
+    let br=0;for(let i=0;i<N;i++)if(res[i]<v.floor)br++;
+    const out={p10:P(0.10),p50:P(0.50),p90:P(0.90),mean,std,breach:br/N,far:P(0.50)-P(0.10),lo:arr[0],hi:arr[N-1],floor:v.floor};
+    this._memo[key]=out;return out;},
+  erf(x){const t=1/(1+0.3275911*Math.abs(x));const y=1-(((((1.061405429*t-1.453152027)*t)+1.421413741)*t-0.284496736)*t+0.254829592)*t*Math.exp(-x*x);return x>=0?y:-y;},
+  ncdf(x){return 0.5*(1+this.erf(x/Math.SQRT2));},
+  breakPoint(id,v,floor){const d=this.DRIVERS.find(x=>x.id===id);const STEPS=140,vals=[],resd=[];
+    for(let i=0;i<=STEPS;i++){const xv=d.min+(d.max-d.min)*i/STEPS;vals.push(xv);resd.push(this.residualDet(Object.assign({},v,{[id]:xv})).residual);}
+    let bestV=null,bestDist=1e9;const cur=v[id];
+    for(let i=0;i<STEPS;i++){const a=resd[i]-floor,b=resd[i+1]-floor;if((a>=0)!==(b>=0)){const t=a/(a-b);const xv=vals[i]+(vals[i+1]-vals[i])*t;const dist=Math.abs(xv-cur);if(dist<bestDist){bestDist=dist;bestV=xv;}}}
+    if(bestV==null)return{holds:true,minR:Math.min.apply(null,resd)};
+    return{holds:false,breakV:bestV,headroom:Math.abs(cur-bestV),text:this.fmtDriver(id,bestV)};},
+  sparkFor(idx,move){const n=8,rng=this.mulberry32(7+idx*131);const a=[];let y=10;for(let i=0;i<n;i++){y+=(rng()-0.5)*4.5;a.push(y);}
+    for(let i=0;i<n;i++){a[i]+=(i/(n-1))*move*45;}const mn=Math.min.apply(null,a),mx=Math.max.apply(null,a),rg=(mx-mn)||1;
+    let s='';for(let i=0;i<n;i++){const x=(i/(n-1))*36;const yy=18-((a[i]-mn)/rg)*16;s+=(i?' ':'')+x.toFixed(1)+','+yy.toFixed(1);}return s;},
+  cv(n){return'var('+n+')';},
+  rpT(x){return'Rp '+(x<0?'−':'')+Math.abs(x).toFixed(1)+'T';},
+  sgnT(x){return(x>=0?'+':'−')+Math.abs(x).toFixed(1);},
+  brPct(x){return(x*100).toFixed(x*100<10?1:0)+'%';},
+  fmtDriver(id,val){switch(id){
+    case'china':return String(Math.round(val));
+    case'cycle':return(val>=0?'+':'−')+Math.abs(Math.round(val))+'%';
+    case'fx':return Math.round(val).toLocaleString('en-US');
+    case'energy':return(val>=0?'+':'−')+Math.abs(Math.round(val))+'%';
+    case'financing':return(val>=0?'+':'−')+Math.abs(Math.round(val))+' bps';
+    case'carbon':return String(Math.round(val));
+    case'reg':return(val>=0?'+':'−')+Math.abs(Math.round(val));
+    case'floor':return'Rp '+val.toFixed(1)+'T';}return String(val);},
+  sigText(d){if(d.id==='floor')return'threshold';if(d.sig!=null){const u=d.id==='cycle'||d.id==='energy'?'%':'';return'σ ±'+d.sig+u;}return'±'+d.notch+(d.id==='financing'?'bps':'')+' notch';},
+  breachColor(b){return b<0.10?'--green':b<=0.25?'--gold':'--red';},
+};
+
+const S={theme:'dark',regime:'BASE',tornadoMetric:'fcf',attMetric:'risk',pinned:[],values:Object.assign({},M.PLAN)};
+const VISIBLE=['cycle','reg','china','fx'];
+let _pinSeq=0, mounted=false;
+const _d=new Date(),_mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][_d.getMonth()];
+const ASOF=_d.getDate()+' '+_mo+' · '+String(_d.getHours()).padStart(2,'0')+':'+String(_d.getMinutes()).padStart(2,'0');
+const DARK_THEMES={neo:1,night:1,deep:1};
+
+function css(o){let s='';for(const k in o){const kk=k.replace(/[A-Z]/g,m=>'-'+m.toLowerCase());s+=kk+':'+o[k]+';';}return s;}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const seg=a=>css({fontSize:'9.5px',fontFamily:"'IBM Plex Mono',monospace",padding:'3px 8px',borderRadius:'5px',cursor:'pointer',whiteSpace:'nowrap',color:a?'var(--bg)':'var(--muted)',background:a?'var(--green)':'transparent',fontWeight:a?600:400});
+
+function derive(){
+  M.ensureNoise();
+  const v=S.values,regime=S.regime;
+  const det=M.residualDet(v),mc=M.runMC(v,regime),f=M.factors(v);
+  const recT=mc.breach<0.10?{t:'HOLD',c:'--green'}:mc.breach<=0.25?{t:'WATCH',c:'--gold'}:{t:'ACT',c:'--red'};
+  const planMC=M.runMC(M.PLAN,'BASE');const vsPlan=mc.p50-planMC.p50;
+  const kpi={p50Text:M.rpT(mc.p50),p10Text:M.rpT(mc.p10),p90Text:M.rpT(mc.p90),farText:M.rpT(mc.far),
+    breachText:M.brPct(mc.breach),floorText:M.rpT(v.floor),regimeText:regime,
+    breachColor:M.cv(M.breachColor(mc.breach)),p50Color:M.cv(mc.p10<v.floor?'--gold':'--green'),recText:recT.t,recColor:M.cv(recT.c),
+    vsPlanText:Math.abs(vsPlan)<0.05?'on plan':((vsPlan>=0?'+':'−')+Math.abs(vsPlan).toFixed(1)+'T vs plan'),vsPlanColor:M.cv(Math.abs(vsPlan)<0.05?'--muted':(vsPlan>=0?'--green':'--red'))};
+
+  const E={coalhba:.95*f.cycle+.45*f.china-.55*f.carbon,coalnc:.95*f.cycle+.40*f.china-.50*f.carbon,gold:.18*f.fx-.12*f.china+.08*f.cycle,
+    nickel:.90*f.cycle+.55*f.china,nickelore:.85*f.cycle+.50*f.china,alu:.75*f.cycle+.35*f.china+.10*f.energy,alumina:.60*f.cycle+.30*f.china+.20*f.energy,
+    tin:1.00*f.cycle+.50*f.china,copper:.90*f.cycle+.60*f.china,bauxite:.45*f.cycle+.30*f.china,brent:.60*f.cycle+.20*f.energy};
+  const market=M.INSTR.map((it,idx)=>{let price,chg;if(it.fx){price=v.fx;chg=f.fx;}else{const e=E[it.id]||0;price=it.price*(1+e);chg=it.d/100+e;}
+    const up=chg>=0,col=up?'--green':'--red';
+    return{name:it.name,tag:it.tag,tip:it.name+' · '+it.tag+' '+(up?'+':'−')+Math.abs(chg*100).toFixed(1)+'% vs plan',
+      tagStyle:css({color:M.cv(it.tagVar),background:'var(--inset)',border:'1px solid var(--border)',fontSize:'7.5px',fontWeight:600,letterSpacing:'.03em',padding:'1px 4px',borderRadius:'4px',whiteSpace:'nowrap'}),
+      priceText:(it.curr||'')+Math.round(price).toLocaleString('en-US'),unit:it.unit,
+      changeText:(up?'▲':'▼')+Math.abs(chg*100).toFixed(1)+'%',changeColor:M.cv(col),spark:M.sparkFor(idx,chg),sparkColor:M.cv(col)};});
+
+  const metric=S.tornadoMetric;
+  const rows=VISIBLE.map(id=>{const d=M.DRIVERS.find(x=>x.id===id),step=d.sig!=null?d.sig:d.notch;
+    const loV=Math.max(d.min,v[id]-step),hiV=Math.min(d.max,v[id]+step);let dl,dh;
+    if(metric==='fcf'){const R0=det.residual;dl=M.residualDet(Object.assign({},v,{[id]:loV})).residual-R0;dh=M.residualDet(Object.assign({},v,{[id]:hiV})).residual-R0;}
+    else{const B0=mc.breach;dl=(M.runMC(Object.assign({},v,{[id]:loV}),regime).breach-B0)*100;dh=(M.runMC(Object.assign({},v,{[id]:hiV}),regime).breach-B0)*100;}
+    const lo=Math.min(dl,dh),hi=Math.max(dl,dh);return{d,lo,hi,span:hi-lo,policy:d.group==='Policy'};});
+  rows.sort((a,b)=>b.span-a.span);
+  const tBars=[],tLab=[];{const maxAbs=Math.max.apply(null,rows.map(r=>Math.max(Math.abs(r.lo),Math.abs(r.hi))))||1;
+    const N=rows.length,band=84/N,plotL=30,plotR=99,c0=64.5,half=34.5,x=val=>c0+(val/maxAbs)*half,cen=i=>(i+0.5)*band;
+    const unit=metric==='fcf'?'Rp T':'pp';
+    tBars.push({style:css({position:'absolute',left:c0+'%',top:'0%',height:(N*band)+'%',width:'0',borderLeft:'1px solid var(--border)'})});
+    const gb=pos=>metric==='fcf'?(pos?'--green':'--red'):(pos?'--red':'--green');
+    const ft=x2=>metric==='fcf'?M.sgnT(x2):((x2>=0?'+':'−')+Math.abs(x2).toFixed(0));
+    rows.forEach((r,i)=>{const cy=cen(i);const tip=r.d.label+'  −1σ '+ft(r.lo)+unit+'  /  +1σ '+ft(r.hi)+unit;
+      if(r.lo<0)tBars.push({tip,style:css({position:'absolute',left:x(r.lo)+'%',width:(c0-x(r.lo))+'%',top:'calc('+cy+'% - 5px)',height:'10px',background:M.cv(gb(false)),opacity:.85,borderRadius:'2px 0 0 2px'})});
+      if(r.hi>0)tBars.push({tip,style:css({position:'absolute',left:c0+'%',width:(x(r.hi)-c0)+'%',top:'calc('+cy+'% - 5px)',height:'10px',background:M.cv(gb(true)),opacity:.85,borderRadius:'0 2px 2px 0'})});
+      tLab.push({style:css({position:'absolute',left:'0',width:(plotL-1)+'%',top:'calc('+cy+'% - 7px)',fontSize:'10px',color:r.policy?'var(--muted)':'var(--ink)',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}),text:r.d.label});});
+    const axisTop='calc('+(N*band)+'% + 6px)';
+    tLab.push({style:css({position:'absolute',left:plotL+'%',top:axisTop,fontSize:'8px',color:'var(--faint)',fontFamily:"'IBM Plex Mono',monospace"}),text:'← worse'});
+    tLab.push({style:css({position:'absolute',left:'0',right:'0',top:axisTop,textAlign:'center',fontSize:'8px',color:'var(--faint)',fontFamily:"'IBM Plex Mono',monospace"}),text:metric==='fcf'?'Δ FCF per ±1σ':'Δ breach per ±1σ'});
+    tLab.push({style:css({position:'absolute',right:(100-plotR)+'%',top:axisTop,fontSize:'8px',color:'var(--faint)',fontFamily:"'IBM Plex Mono',monospace",textAlign:'right'}),text:'better →'});}
+
+  const attMetric=S.attMetric;
+  const multA=M.REGIME[regime]*M.VOL_CAL;
+  const dChi=0.08*multA*0.80,dCy=0.14*multA*0.85,dFx=0.05*multA*(-0.55),dEn=0.12*multA*0.20;
+  const subData=M.SUBS.map((s,i)=>{const up=det.upstreamBySub[i],b=s.betas;const swing=Math.abs(s.base*(b[0]*dChi+b[1]*dCy+b[2]*dFx+b[3]*dEn));return{s:s,up:up,dPlan:up-s.base,swing:swing};});
+  const totUp=subData.reduce((a,r)=>a+r.up,0)||1,totSw=subData.reduce((a,r)=>a+r.swing,0)||1;
+  const maxSh=Math.max.apply(null,subData.map(r=>attMetric==='cash'?r.up/totUp:r.swing/totSw))||1;
+  const subsidiary=subData.map(r=>{const share=attMetric==='cash'?r.up/totUp:r.swing/totSw;return{name:r.s.name,color:M.cv(r.s.color),upText:M.rpT(r.up),
+    dPlanText:Math.abs(r.dPlan)<0.05?'on plan':((r.dPlan>=0?'+':'−')+Math.abs(r.dPlan).toFixed(1)+'T vs plan'),dPlanColor:M.cv(Math.abs(r.dPlan)<0.05?'--muted':(r.dPlan>=0?'--green':'--red')),
+    shareText:(share*100).toFixed(0)+'%',barStyle:css({width:Math.max(3,share/maxSh*100).toFixed(1)+'%',height:'5px',background:M.cv(r.s.color),borderRadius:'3px',opacity:.9})};});
+
+  const levers=[
+    {id:'fx',label:'FX-debt hedge',target:'interest',eff:0.6,cost:1,costLabel:'≈ 15 bps carry',color:'--blue',why:'Caps the IDR rate on USD debt — cheapest lever, the natural first hedge for the holding.'},
+    {id:'refi',label:'Refinance 2027 maturity',target:'principal',eff:2.2,cost:3,costLabel:'fees + 40 bps coupon',color:'--violet',why:'Pushes the 2027 principal wall out, freeing this period’s cash.'},
+    {id:'capex',label:'Defer growth capex',target:'capex',eff:1.2,cost:2,costLabel:'6-month project slip',color:'--gold',why:'Slips growth capex two quarters — low cash cost, strategic delay.'},
+    {id:'div',label:'Antam special dividend',target:'upstream',eff:1.0,cost:3,costLabel:'draws Antam buffer',color:'--antam',why:'Pulls forward an Antam special dividend, drawing its cash buffer.'},
+  ];
+  const maxCost=levers.reduce((a,b)=>a+b.cost,0);
+  const zt=1.2816,targetMean=v.floor+zt*mc.std,gap=Math.max(0,targetMean-mc.mean);
+  let best={mask:0,eff:0,cost:0,cnt:0,over:0,arr:[]};
+  if(gap>1e-6){best=null;for(let mask=1;mask<(1<<levers.length);mask++){let eff=0,cost=0,cnt=0,arr=[];
+    for(let k=0;k<levers.length;k++)if(mask&(1<<k)){eff+=levers[k].eff;cost+=levers[k].cost;cnt++;arr.push(levers[k]);}
+    if(eff+1e-9>=gap){const over=eff-gap;if(!best||cost<best.cost||(cost===best.cost&&(over<best.over-1e-9||(Math.abs(over-best.over)<1e-9&&cnt<best.cnt))))best={mask,eff,cost,cnt,over,arr};}}
+    if(!best)best={eff:levers.reduce((a,b)=>a+b.eff,0),cost:8,cnt:4,arr:levers.slice()};}
+  const afterMean=mc.mean+best.eff,afterBreach=M.ncdf((v.floor-afterMean)/(mc.std||1));
+  const mitigation={levers:best.arr.map(m=>({label:m.label,effectText:'+'+m.eff.toFixed(1)+'T',costLabel:m.costLabel,color:M.cv(m.color)})),
+    empty:best.arr.length===0,headline:best.arr.length===0?'Recommendation · HOLD — no action':'Cheapest package to trim breach to ≤ 10%',
+    beforeText:M.brPct(mc.breach),afterText:M.brPct(afterBreach),beforeColor:M.cv(M.breachColor(mc.breach)),afterColor:M.cv(M.breachColor(afterBreach)),costText:(best.cost||0)+' / '+maxCost};
+
+  const wfBars=[],wfLab=[],wfH=200;
+  {const colW=100/8,barW=colW*0.5,scaleMax=Math.max((det.opening+det.upstream)*1.10,det.residual*1.3,v.floor*1.5,6),y=val=>wfH*(1-val/scaleMax);
+    const ghostByTarget={};best.arr.forEach(m=>{ghostByTarget[m.target]=(ghostByTarget[m.target]||0)+m.eff;});
+    wfBars.push({style:css({position:'absolute',left:'0',width:'100%',top:y(v.floor)+'px',height:'0',borderTop:'1px dashed var(--gold)',opacity:.85})});
+    wfLab.push({style:css({position:'absolute',left:'0',top:(y(v.floor)-12)+'px',fontSize:'8.5px',fontFamily:"'IBM Plex Mono',monospace",color:'var(--gold)',letterSpacing:'.03em'}),text:'BOARD FLOOR '+M.rpT(v.floor)});
+    const steps=[{key:'open',label:'Opening',mode:'total',val:det.opening,color:'--muted'},{key:'up',label:'Upstreaming',mode:'stack'},
+      {key:'opex',label:'Opex',mode:'down',delta:det.opex},{key:'interest',label:'Interest',mode:'down',delta:det.interest},
+      {key:'principal',label:'Principal',mode:'down',delta:det.principal},{key:'capex',label:'Capex',mode:'down',delta:det.capex},
+      {key:'equity',label:'Equity',mode:'up',delta:det.equity},{key:'res',label:'Residual',mode:'total',val:det.residual,color:mc.p10<v.floor?'--gold':'--green'}];
+    let cum=0;const conns=[];
+    steps.forEach((c,i)=>{const cx=(i+0.5)*colW,left=cx-barW/2;
+      if(c.mode==='stack'){let base=cum;det.upstreamBySub.forEach((uv,si)=>{const t=y(base+uv),h=y(base)-y(base+uv);
+          wfBars.push({tip:M.SUBS[si].name+' upstream '+M.rpT(uv)+' · '+M.SUBS[si].note,style:css({position:'absolute',left:left+'%',width:barW+'%',top:t+'px',height:Math.max(0.5,h)+'px',background:M.cv(M.SUBS[si].color),opacity:.92,borderTop:si===M.SUBS.length-1?'0':'1px solid var(--panel)'})});base+=uv;});
+        if(ghostByTarget.upstream){const g=ghostByTarget.upstream,t=y(base+g),h=y(base)-y(base+g);
+          wfBars.push({tip:'Special dividend +'+g.toFixed(1)+'T',style:css({position:'absolute',left:left+'%',width:barW+'%',top:t+'px',height:Math.max(0.5,h)+'px',background:'transparent',border:'1px dashed var(--antam)'})});}
+        wfLab.push({style:css({position:'absolute',left:(cx-colW/2)+'%',width:colW+'%',top:(y(cum+det.upstream)-12)+'px',textAlign:'center',fontSize:'9px',fontFamily:"'IBM Plex Mono',monospace",color:'var(--ink)'}),text:'+'+det.upstream.toFixed(1)});
+        cum+=det.upstream;conns.push({x:cx+barW/2,nx:(i+1.5)*colW-barW/2,y:y(cum)});}
+      else if(c.mode==='total'){const t=y(c.val),h=y(0)-y(c.val);
+        wfBars.push({tip:c.label+' '+M.rpT(c.val),style:css({position:'absolute',left:left+'%',width:barW+'%',top:t+'px',height:Math.max(0.5,h)+'px',background:M.cv(c.color),opacity:c.key==='res'?.95:.45,borderRadius:'2px'})});
+        wfLab.push({style:css({position:'absolute',left:(cx-colW/2)+'%',width:colW+'%',top:(t-12)+'px',textAlign:'center',fontSize:c.key==='res'?'10px':'9px',fontWeight:c.key==='res'?600:400,fontFamily:"'IBM Plex Mono',monospace",color:M.cv(c.key==='res'?c.color:'--muted')}),text:c.val.toFixed(1)});
+        if(c.key==='open'){cum=c.val;conns.push({x:cx+barW/2,nx:(i+1.5)*colW-barW/2,y:y(cum)});}
+        if(c.key==='res'){const wy1=y(Math.max(mc.p10,0)),wy0=y(mc.p50);
+          wfBars.push({tip:'P10 '+M.rpT(mc.p10)+' · P50 '+M.rpT(mc.p50),style:css({position:'absolute',left:cx+'%',top:Math.min(wy0,wy1)+'px',height:Math.abs(wy1-wy0)+'px',width:'0',borderLeft:'1.5px solid '+M.cv(mc.p10<v.floor?'--red':'--green'),marginLeft:'-0.5px'})});
+          wfBars.push({style:css({position:'absolute',left:(cx-1.4)+'%',width:'2.8%',top:y(mc.p10)+'px',height:'0',borderTop:'1.5px solid '+M.cv(mc.p10<v.floor?'--red':'--green')})});
+          if(best.eff>0){const af=det.residual+best.eff,t2=y(af),h2=y(det.residual)-y(af);
+            wfBars.push({tip:'After package '+M.rpT(af),style:css({position:'absolute',left:left+'%',width:barW+'%',top:t2+'px',height:Math.max(0.5,h2)+'px',background:'transparent',border:'1px dashed var(--green)',borderRadius:'2px'})});
+            wfLab.push({style:css({position:'absolute',left:(cx-colW/2)+'%',width:colW+'%',top:(t2-12)+'px',textAlign:'center',fontSize:'8.5px',fontFamily:"'IBM Plex Mono',monospace",color:'var(--green)'}),text:'▲'+af.toFixed(1)});}}}
+      else if(c.mode==='down'){const t=y(cum),h=y(cum-c.delta)-y(cum);
+        wfBars.push({tip:c.label+' −'+c.delta.toFixed(1)+'T',style:css({position:'absolute',left:left+'%',width:barW+'%',top:t+'px',height:Math.max(0.5,h)+'px',background:'var(--faint)',opacity:.55,borderRadius:'2px'})});
+        if(ghostByTarget[c.key]){const g=Math.min(ghostByTarget[c.key],c.delta),gt=y(cum-c.delta+g),gh=y(cum-c.delta)-gt,lc=c.key==='interest'?'--blue':c.key==='principal'?'--violet':'--gold';
+          wfBars.push({tip:'Mitigated −'+g.toFixed(1)+'T',style:css({position:'absolute',left:left+'%',width:barW+'%',top:gt+'px',height:Math.max(0.5,gh)+'px',background:'transparent',border:'1px dashed '+M.cv(lc),borderRadius:'2px'})});}
+        wfLab.push({style:css({position:'absolute',left:(cx-colW/2)+'%',width:colW+'%',top:(y(cum-c.delta)+3)+'px',textAlign:'center',fontSize:'9px',fontFamily:"'IBM Plex Mono',monospace",color:'var(--faint)'}),text:'−'+c.delta.toFixed(1)});
+        cum-=c.delta;conns.push({x:cx+barW/2,nx:(i+1.5)*colW-barW/2,y:y(cum)});}
+      else if(c.mode==='up'){const t=y(cum+c.delta),h=y(cum)-y(cum+c.delta);
+        wfBars.push({tip:c.label+' +'+c.delta.toFixed(1)+'T',style:css({position:'absolute',left:left+'%',width:barW+'%',top:t+'px',height:Math.max(0.5,h)+'px',background:'var(--muted)',opacity:.45,borderRadius:'2px'})});
+        wfLab.push({style:css({position:'absolute',left:(cx-colW/2)+'%',width:colW+'%',top:(t-12)+'px',textAlign:'center',fontSize:'9px',fontFamily:"'IBM Plex Mono',monospace",color:'var(--muted)'}),text:'+'+c.delta.toFixed(1)});
+        cum+=c.delta;conns.push({x:cx+barW/2,nx:(i+1.5)*colW-barW/2,y:y(cum)});}
+      wfLab.push({style:css({position:'absolute',left:(cx-colW/2)+'%',width:colW+'%',top:(wfH+3)+'px',textAlign:'center',fontSize:'8.5px',color:'var(--muted)'}),text:c.label});});
+    conns.forEach(cn=>{if(cn.nx>cn.x)wfBars.push({style:css({position:'absolute',left:cn.x+'%',width:(cn.nx-cn.x)+'%',top:cn.y+'px',height:'0',borderTop:'1px dotted var(--border)',opacity:.7})});});}
+
+  const status=recT.t,topRow=rows[0],sw=Math.max(Math.abs(topRow.lo),Math.abs(topRow.hi)),bp=M.breakPoint(topRow.d.id,v,v.floor);
+  const p50=M.rpT(mc.p50),p10=M.rpT(mc.p10),fl=M.rpT(v.floor),brs=M.brPct(mc.breach);
+  let assessment;
+  if(status==='ACT')assessment='Residual FCF median '+p50+', but P10 collapses to '+p10+' — '+brs+' of paths breach the '+fl+' floor. De-risk now; '+topRow.d.label.toLowerCase()+' is the dominant swing.';
+  else if(status==='WATCH')assessment='Median residual '+p50+' clears the floor, yet the 1-in-10 downside ('+p10+') breaches it on '+brs+' of paths. '+topRow.d.label+' drives most of that gap.';
+  else assessment='Residual FCF median '+p50+', P10 '+p10+' — comfortably above the '+fl+' floor ('+brs+' breach). Hedges adequate; hold and monitor '+topRow.d.label.toLowerCase()+'.';
+  const bpTxt=bp.holds?'; floor holds across its range.':'; floor breaks at '+bp.text+'.';
+  let recs=[];
+  if(best.arr.length){best.arr.forEach(m=>recs.push({title:m.label,detail:m.why,effect:'breach '+M.brPct(mc.breach)+'→'+M.brPct(afterBreach),color:m.color,hasEffect:true}));
+    recs.push({title:'Watch '+topRow.d.label.toLowerCase(),detail:'Largest swing at ±'+sw.toFixed(1)+'T per 1σ'+bpTxt,color:'--gold',hasEffect:false});}
+  else{recs.push({title:'Hold — no action required',detail:'P10 clears the floor; every lever adds cost for no breach reduction.',color:'--green',hasEffect:false});
+    recs.push({title:'Watch '+topRow.d.label.toLowerCase(),detail:'Dominant swing (±'+sw.toFixed(1)+'T / 1σ)'+bpTxt,color:'--gold',hasEffect:false});
+    recs.push({title:'Re-stress on shift to STRESSED',detail:'Breach roughly doubles under stressed vol — re-run before quarter close.',color:'--blue',hasEffect:false});}
+  recs=recs.slice(0,3).map((r,i)=>({rank:'0'+(i+1),title:r.title,detail:r.detail,effect:r.effect||'',hasEffect:!!r.hasEffect,colorVar:M.cv(r.color)}));
+  const ai={status,statusColor:M.cv(recT.c),assessment,recs,pathsText:'synthesised · '+M._noise.N+' paths'};
+
+  const sliders=VISIBLE.map(id=>M.DRIVERS.find(d=>d.id===id)).map(d=>({id:d.id,label:d.label,min:d.min,max:d.max,step:d.step,value:v[d.id],
+    valueText:M.fmtDriver(d.id,v[d.id]),sigmaText:M.sigText(d),accent:M.cv(d.accent)}));
+  const pinned=S.pinned.map((p,i)=>({i,label:p.label}));
+  return{kpi,market,tBars,tLab,subsidiary,mitigation,wfBars,wfLab,ai,sliders,pinned,metric,attMetric,regime};
+}
+
+function skeleton(){
+  const vm=derive();
+  const sliderCell=s=>`<div style="border-left:2px solid ${s.accent};padding-left:8px;">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;margin-bottom:2px;">
+        <span style="font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.label}</span>
+        <span id="stval-${s.id}" style="font-size:11.5px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--ink);white-space:nowrap;">${s.valueText}</span>
+      </div>
+      <input type="range" data-driver="${s.id}" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.value}" style="--accent:${s.accent};">
+      <div style="font-size:8.5px;font-family:'IBM Plex Mono',monospace;color:var(--faint);margin-top:1px;">${s.sigmaText}</div>
+    </div>`;
+  return `
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:11px;border-bottom:1px solid var(--border);">
+    <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;">
+      <span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--green);">03</span>
+      <span style="font-size:13.5px;font-weight:600;">Stress Test — scenario → cash</span>
+      <span style="font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);">common-factor Monte Carlo · illustrative</span>
+    </div>
+    <div id="stRegime" style="display:flex;align-items:center;gap:0;background:var(--inset);border:1px solid var(--border);border-radius:9px;padding:2px;"></div>
+  </div>
+  <div style="margin-top:11px;">
+    <div style="display:flex;align-items:center;gap:9px;margin-bottom:6px;">
+      <div style="width:6px;height:6px;border-radius:50%;background:var(--green);animation:ompulse 2.4s ease-in-out infinite;"></div>
+      <span style="font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);">Market signal</span>
+      <span style="font-size:9px;color:var(--faint);font-family:'IBM Plex Mono',monospace;">prices &amp; Δ move with the scenario · vs plan</span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:5px;font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--faint);white-space:nowrap;"><span style="width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);"></span>MARKS AS OF ${ASOF} WIB</span>
+    </div>
+    <div id="stTicker" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:3px;"></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 420px;grid-template-rows:auto auto;gap:14px;margin-top:12px;align-items:stretch;">
+    <div style="grid-column:1;grid-row:1;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:11px 14px 11px;display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;">
+        <div style="font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);">Scenario drivers — dial to recompute</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div data-act="reset" title="Reset all drivers to Plan · Base case" style="font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:3px 8px;cursor:pointer;">↺ Reset</div>
+          <div data-act="pin" title="Pin this scenario to compare" style="font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--green);border:1px solid var(--border);border-radius:7px;padding:3px 8px;cursor:pointer;">+ Pin</div>
+          <div id="stPinned" style="display:flex;gap:8px;"></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:18px 18px;flex:1;align-content:center;">${vm.sliders.map(sliderCell).join('')}</div>
+    </div>
+    <div style="grid-column:2;grid-row:1 / span 2;align-self:start;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:11px 14px 11px;display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:9.5px;font-family:'IBM Plex Mono',monospace;color:var(--green);">01</span><span style="font-size:12.5px;font-weight:600;">Driver sensitivity</span></div>
+        <div style="display:flex;align-items:center;gap:0;background:var(--inset);border:1px solid var(--border);border-radius:7px;padding:2px;">
+          <div data-act="tfcf" style="${seg(vm.metric==='fcf')}">Δ FCF</div><div data-act="tbreach" style="${seg(vm.metric==='breach')}">Δ breach</div>
+        </div>
+      </div>
+      <div style="font-size:9.5px;color:var(--muted);margin-top:3px;"><span style="font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);">Good for</span> what moves residual FCF most · ±1σ market · ±1 notch policy</div>
+      <div id="stTornado" style="position:relative;flex:none;height:136px;margin-top:9px;"></div>
+      <div style="font-size:9px;color:var(--faint);margin-top:7px;padding-top:7px;border-top:1px solid var(--border);"><span style="font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">Blind spot</span> local ±1σ — misses non-linear moves &amp; cross-driver correlation</div>
+    </div>
+    <div style="grid-column:1;grid-row:2;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:8px 14px 9px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+          <span style="font-size:9.5px;font-family:'IBM Plex Mono',monospace;color:var(--green);">02</span><span style="font-size:12.5px;font-weight:600;">Subsidiary attribution</span>
+          <span style="font-size:9.5px;color:var(--muted);margin-left:4px;"><span style="font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);">Good for</span> where the cash &amp; the risk actually sit · per entity</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:0;background:var(--inset);border:1px solid var(--border);border-radius:7px;padding:2px;">
+          <div data-act="arisk" style="${seg(vm.attMetric==='risk')}">Risk swing</div><div data-act="acash" style="${seg(vm.attMetric==='cash')}">Cash</div>
+        </div>
+      </div>
+      <div id="stAtt" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px;"></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 420px;gap:14px;margin-top:14px;align-items:stretch;">
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:13px 15px 14px;display:flex;flex-direction:column;">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+        <div style="display:flex;align-items:baseline;gap:9px;"><span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--green);">03</span><span style="font-size:13.5px;font-weight:600;">Holding FCF waterfall · mitigation overlay</span></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:8.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--violet);border:1px solid var(--border);border-radius:6px;padding:3px 7px;font-family:'IBM Plex Mono',monospace;white-space:nowrap;">overlay · 0 new</span>
+          <div id="stRecPill" style="display:flex;align-items:center;gap:6px;font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:600;letter-spacing:.06em;border:1px solid var(--border);border-radius:7px;padding:3px 8px;"></div>
+        </div>
+      </div>
+      <div id="stKpi" style="display:flex;align-items:flex-end;gap:20px;margin-top:9px;flex-wrap:wrap;"></div>
+      <div id="stWf" style="position:relative;height:200px;margin-top:18px;"></div>
+      <div style="height:16px;"></div>
+      <div id="stMit" style="display:flex;align-items:stretch;gap:12px;margin-top:auto;padding-top:11px;border-top:1px solid var(--border);"></div>
+      <div style="font-size:9px;color:var(--faint);margin-top:8px;"><span style="font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">Blind spot</span> shows the chosen package, not the full trade-off space</div>
+    </div>
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:13px 15px 12px;display:flex;flex-direction:column;position:relative;overflow:hidden;">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--green),transparent);width:34%;animation:omscan 3.6s linear infinite;opacity:.45;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div style="display:flex;align-items:center;gap:9px;">
+          <div style="width:9px;height:9px;background:var(--green);transform:rotate(45deg);box-shadow:0 0 9px var(--green);"></div>
+          <span style="font-size:13px;font-weight:600;letter-spacing:.01em;">Driver Copilot</span>
+          <span style="font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);padding-top:1px;">model-aware</span>
+        </div>
+        <div id="stAiStatus" style="display:flex;align-items:center;gap:6px;font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:600;letter-spacing:.06em;border:1px solid var(--border);border-radius:7px;padding:3px 8px;"></div>
+      </div>
+      <div id="stAiAssess" style="background:var(--inset);border:1px solid var(--border);border-radius:9px;padding:9px 11px;margin-top:11px;font-size:11.5px;line-height:1.5;color:var(--ink);"></div>
+      <div style="font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-top:13px;margin-bottom:2px;">Recommended actions</div>
+      <div id="stAiRecs" style="display:flex;flex-direction:column;gap:10px;margin-top:7px;flex:1;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:11px;padding-top:9px;border-top:1px solid var(--border);">
+        <span style="display:flex;align-items:center;gap:6px;font-size:9.5px;color:var(--faint);"><span style="width:5px;height:5px;border-radius:50%;background:var(--green);animation:ompulse 2.4s ease-in-out infinite;"></span>Re-synthesised on every dial</span>
+        <span id="stAiPaths" style="font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--faint);"></span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function updateOutputs(){
+  const vm=derive(), $=id=>document.getElementById(id);
+  $('stRegime').innerHTML=['CALM','BASE','STRESSED'].map(n=>`<div data-regime="${n}" title="${n} regime · vol ×${M.REGIME[n].toFixed(1)}" style="font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;padding:4px 9px;border-radius:7px;cursor:pointer;white-space:nowrap;color:${vm.regime===n?'var(--bg)':'var(--muted)'};background:${vm.regime===n?'var(--green)':'transparent'};font-weight:${vm.regime===n?600:400};">${n}</div>`).join('');
+  $('stTicker').innerHTML=vm.market.map(m=>`<div title="${esc(m.tip)}" style="flex:0 0 auto;min-width:103px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:6px 8px 7px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:5px;"><span style="font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${m.name}</span><span style="${m.tagStyle}">${m.tag}</span></div>
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:4px;margin-top:4px;">
+        <div><div style="display:flex;align-items:baseline;gap:2px;"><span style="font-size:13px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--ink);">${m.priceText}</span><span style="font-size:8px;color:var(--faint);">${m.unit}</span></div>
+        <div style="font-size:9px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:${m.changeColor};margin-top:1px;">${m.changeText}</div></div>
+        <svg width="36" height="20" viewBox="0 0 36 20" style="flex-shrink:0;"><polyline points="${m.spark}" fill="none" stroke="${m.sparkColor}" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"></polyline></svg>
+      </div></div>`).join('');
+  $('stPinned').innerHTML=vm.pinned.map(c=>`<div data-pin-restore="${c.i}" title="Restore pinned scenario" style="font-size:9.5px;font-family:'IBM Plex Mono',monospace;color:var(--muted);background:var(--inset);border:1px solid var(--border);border-radius:7px;padding:3px 7px;cursor:pointer;">${c.label}</div>`).join('');
+  $('stTornado').innerHTML=vm.tBars.map(b=>`<div style="${b.style}"${b.tip?` title="${esc(b.tip)}"`:''}></div>`).join('')+vm.tLab.map(l=>`<div style="${l.style}">${esc(l.text)}</div>`).join('');
+  $('stAtt').innerHTML=vm.subsidiary.map(s=>`<div style="background:var(--inset);border:1px solid var(--border);border-radius:9px;padding:6px 10px 6px;">
+      <div style="display:flex;align-items:center;gap:7px;"><div style="width:8px;height:8px;border-radius:2px;background:${s.color};flex-shrink:0;"></div><span style="font-size:11px;font-weight:600;color:var(--ink);">${s.name}</span><span style="font-size:13px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--ink);margin-left:auto;">${s.shareText}</span></div>
+      <div style="height:5px;border-radius:3px;background:var(--track);margin-top:5px;overflow:hidden;"><div style="${s.barStyle}"></div></div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;margin-top:5px;"><span style="font-size:12px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--ink);">${s.upText}</span><span style="font-size:9px;font-family:'IBM Plex Mono',monospace;color:${s.dPlanColor};white-space:nowrap;">${s.dPlanText}</span></div>
+    </div>`).join('');
+  $('stRecPill').style.color=vm.kpi.recColor;
+  $('stRecPill').innerHTML=`<div style="width:7px;height:7px;border-radius:50%;background:${vm.kpi.recColor};animation:ompulse 2.4s ease-in-out infinite;"></div>${vm.kpi.recText}`;
+  const k=vm.kpi;
+  $('stKpi').innerHTML=`<div style="display:flex;align-items:baseline;gap:7px;">
+      <span style="font-size:25px;font-weight:600;font-family:'IBM Plex Mono',monospace;line-height:1;color:${k.p50Color};">${k.p50Text}</span>
+      <span style="font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);">Residual P50 · ${k.regimeText}</span>
+      <span style="font-size:9.5px;font-family:'IBM Plex Mono',monospace;color:${k.vsPlanColor};align-self:center;white-space:nowrap;margin-left:1px;">${k.vsPlanText}</span></div>
+    <div style="display:flex;align-items:flex-end;gap:15px;">
+      <div style="display:flex;flex-direction:column;gap:1px;"><span style="font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);">P10 / P90</span><span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--muted);">${k.p10Text} · ${k.p90Text}</span></div>
+      <div style="display:flex;flex-direction:column;gap:1px;"><span style="font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);">FCF-at-Risk</span><span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--gold);">${k.farText}</span></div>
+      <div style="display:flex;flex-direction:column;gap:1px;"><span style="font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);">Floor breach</span><span style="font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:${k.breachColor};">${k.breachText}</span></div>
+      <div style="display:flex;flex-direction:column;gap:1px;"><span style="font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);">Board floor</span><span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--gold);">${k.floorText}</span></div></div>`;
+  $('stWf').innerHTML=vm.wfBars.map(b=>`<div style="${b.style}"${b.tip?` title="${esc(b.tip)}"`:''}></div>`).join('')+vm.wfLab.map(l=>`<div style="${l.style}">${esc(l.text)}</div>`).join('');
+  const mi=vm.mitigation;
+  $('stMit').innerHTML=`<div style="flex:1;">
+      <div style="font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin-bottom:5px;">${esc(mi.headline)}</div>
+      <div style="display:flex;flex-direction:column;gap:4px;">${mi.empty?`<div style="font-size:11px;color:var(--green);">P10 already clears the floor — no action required.</div>`:mi.levers.map(m=>`<div style="display:flex;align-items:center;gap:8px;"><div style="width:9px;height:9px;border-radius:2px;border:1px dashed ${m.color};flex-shrink:0;"></div><span style="font-size:11px;color:var(--ink);font-weight:500;">${m.label}</span><span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--green);">${m.effectText}</span><span style="font-size:9.5px;color:var(--faint);margin-left:auto;">${m.costLabel}</span></div>`).join('')}</div>
+    </div>
+    <div style="width:1px;background:var(--border);"></div>
+    <div style="display:flex;flex-direction:column;justify-content:center;gap:5px;min-width:118px;">
+      <div style="display:flex;justify-content:space-between;gap:10px;"><span style="font-size:9.5px;color:var(--faint);">Breach now</span><span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:${mi.beforeColor};">${mi.beforeText}</span></div>
+      <div style="display:flex;justify-content:space-between;gap:10px;"><span style="font-size:9.5px;color:var(--faint);">After package</span><span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:${mi.afterColor};">${mi.afterText}</span></div>
+      <div style="display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--border);padding-top:5px;"><span style="font-size:9.5px;color:var(--faint);">Cost score</span><span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--muted);">${mi.costText}</span></div>
+    </div>`;
+  $('stAiStatus').style.color=vm.ai.statusColor; $('stAiStatus').textContent=vm.ai.status;
+  $('stAiAssess').style.borderLeft='2px solid '+vm.ai.statusColor; $('stAiAssess').textContent=vm.ai.assessment;
+  $('stAiRecs').innerHTML=vm.ai.recs.map(r=>`<div style="display:flex;gap:10px;align-items:flex-start;">
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:${r.colorVar};border:1px solid var(--border);border-radius:6px;padding:2px 5px;flex-shrink:0;line-height:1.2;">${r.rank}</div>
+      <div style="flex:1;"><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;"><span style="font-size:11.5px;font-weight:600;color:var(--ink);">${esc(r.title)}</span>${r.hasEffect?`<span style="font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--green);background:var(--inset);border:1px solid var(--border);border-radius:5px;padding:1px 6px;">${esc(r.effect)}</span>`:''}</div>
+      <div style="font-size:10.5px;color:var(--muted);margin-top:2px;line-height:1.45;">${esc(r.detail)}</div></div></div>`).join('');
+  $('stAiPaths').textContent=vm.ai.pathsText;
+  const setSeg=(act,on)=>{const el=document.querySelector('[data-act="'+act+'"]'); if(el)el.setAttribute('style',seg(on));};
+  setSeg('tfcf',vm.metric==='fcf'); setSeg('tbreach',vm.metric==='breach'); setSeg('arisk',vm.attMetric==='risk'); setSeg('acash',vm.attMetric==='cash');
+}
+function syncSliders(){VISIBLE.forEach(id=>{const inp=document.querySelector('input[data-driver="'+id+'"]'),lab=document.getElementById('stval-'+id);
+  if(inp)inp.value=S.values[id]; if(lab)lab.textContent=M.fmtDriver(id,S.values[id]);});}
+function ckTheme(){const t=document.documentElement.getAttribute('data-theme')||'forest';return DARK_THEMES[t]?'dark':'light';}
+function applyTheme(){S.theme=ckTheme();const t=M.THEMES[S.theme],root=document.getElementById('stRoot');if(!root)return;for(const k in t)root.style.setProperty('--'+k,t[k]);}
+function fit(){const host=document.getElementById('stressView'),scale=document.getElementById('stScale');if(!host||!scale)return;
+  if(host.classList.contains('lhide'))return;
+  const w=host.clientWidth||1360,s=Math.min(1,w/1360);scale.style.transform='scale('+s+')';scale.style.transformOrigin='top left';
+  host.style.height=(scale.offsetHeight*s)+'px';}
+function mount(host){
+  const dark=M.THEMES.dark;
+  let vars='';for(const k in dark)vars+='--'+k+':'+dark[k]+';';
+  host.innerHTML='<div id="stRoot" style="'+vars+'width:100%;position:relative;color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:13px;line-height:1.35;">'
+    +'<div id="stScale" style="width:1360px;transform-origin:top left;padding:13px 16px 18px;">'+skeleton()+'</div></div>';
+  const scale=document.getElementById('stScale');
+  scale.addEventListener('input',e=>{const inp=e.target.closest('input[data-driver]');if(!inp)return;
+    S.values[inp.dataset.driver]=Number(inp.value);
+    const lab=document.getElementById('stval-'+inp.dataset.driver);if(lab)lab.textContent=M.fmtDriver(inp.dataset.driver,S.values[inp.dataset.driver]);
+    updateOutputs();fit();});
+  scale.addEventListener('click',e=>{
+    const reg=e.target.closest('[data-regime]'); if(reg){S.regime=reg.dataset.regime;updateOutputs();fit();return;}
+    const pr=e.target.closest('[data-pin-restore]'); if(pr){const p=S.pinned[+pr.dataset.pinRestore];if(p){S.values=Object.assign({},p.values);S.regime=p.regime;syncSliders();updateOutputs();fit();}return;}
+    const a=e.target.closest('[data-act]'); if(!a)return; const act=a.dataset.act;
+    if(act==='reset'){S.values=Object.assign({},M.PLAN);S.regime='BASE';syncSliders();updateOutputs();}
+    else if(act==='pin'){const mc=M.runMC(S.values,S.regime);const lbl=mc.p50.toFixed(1)+'·'+M.brPct(mc.breach);
+      S.pinned=[{id:++_pinSeq,label:lbl,values:Object.assign({},S.values),regime:S.regime}].concat(S.pinned).slice(0,4);updateOutputs();}
+    else if(act==='tfcf'){S.tornadoMetric='fcf';updateOutputs();}
+    else if(act==='tbreach'){S.tornadoMetric='breach';updateOutputs();}
+    else if(act==='arisk'){S.attMetric='risk';updateOutputs();}
+    else if(act==='acash'){S.attMetric='cash';updateOutputs();}
+    fit();
+  });
+}
+function show(){const host=document.getElementById('stressView');if(!host)return;
+  if(!mounted){mount(host);mounted=true;}
+  applyTheme();updateOutputs();fit();requestAnimationFrame(fit);}
+window.addEventListener('resize',()=>{requestAnimationFrame(fit);});
+window.StressTest={show,fit,applyTheme};
+})();
 </script>
 </body>
 </html>
