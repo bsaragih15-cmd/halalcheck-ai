@@ -506,6 +506,13 @@
   .app{display:grid;grid-template-columns:minmax(0,1fr) 326px;align-items:start;gap:0;max-width:none}
   .app.solo{grid-template-columns:1fr}
   .stage{grid-column:1;grid-row:1} .crail{grid-column:2;grid-row:1}
+  /* Stress-Test-only, full-screen lock: hide global chrome + the other tabs */
+  body.stress-solo{padding-bottom:0;overflow:hidden}
+  body.stress-solo .bar,body.stress-solo .ticker,body.stress-solo .ticker-foot{display:none}
+  body.stress-solo .stage{padding:6px 8px 0;min-width:0}
+  body.stress-solo #stressView{overflow:hidden}
+  body.stress-solo #vtabs{display:none}
+  #vtabs .vtab[data-v="monitor"],#vtabs .vtab[data-v="forecast"],#vtabs .vtab[data-v="allocate"]{display:none}
   /* ── Stress Test module (Cash & Scenarios redesign) ── */
   @keyframes ompulse{0%,100%{opacity:1}50%{opacity:.4}}
   @keyframes omscan{0%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
@@ -2435,7 +2442,9 @@ document.querySelectorAll('#alPreset button').forEach(b=>b.addEventListener('cli
   const b=document.getElementById('fcToAlloc'); if(b){ b.disabled=false; b.addEventListener('click',()=>setView('allocate')); } }
 
 renderTicker(); renderLevers(); renderFilters(); renderPresetCards(); syncLabels();
-renderRail(); setLayer('ops'); initPresetSel(); copInit(); renderMonitor(); setView('monitor');
+renderRail(); setLayer('ops'); initPresetSel(); copInit(); renderMonitor();
+document.body.classList.add('stress-solo');   // lock to the Stress Test tab, full screen
+setView('cash');
 document.getElementById('moreBtn').addEventListener('click',function(){
   const m=document.getElementById('scenbarMore'), open=m.hasAttribute('hidden');
   if(open) m.removeAttribute('hidden'); else m.setAttribute('hidden','');
@@ -2895,8 +2904,13 @@ function ckTheme(){const t=document.documentElement.getAttribute('data-theme')||
 function applyTheme(){S.theme=ckTheme();const t=M.THEMES[S.theme],root=document.getElementById('stRoot');if(!root)return;for(const k in t)root.style.setProperty('--'+k,t[k]);}
 function fit(){const host=document.getElementById('stressView'),scale=document.getElementById('stScale');if(!host||!scale)return;
   if(host.classList.contains('lhide'))return;
-  const w=host.clientWidth||1360,s=Math.min(1,w/1360);scale.style.transform='scale('+s+')';scale.style.transformOrigin='top left';
-  host.style.height=(scale.offsetHeight*s)+'px';}
+  const cw=1360, ch=scale.offsetHeight||1, top=host.getBoundingClientRect().top;
+  const availW=host.clientWidth||window.innerWidth, availH=Math.max(240,(window.innerHeight||900)-top-6);
+  const s=Math.min(availW/cw, availH/ch);                  // contain-fit: fill the viewport, show everything
+  scale.style.transformOrigin='top left';
+  scale.style.transform='scale('+s+')';
+  scale.style.marginLeft=Math.max(0,(availW-cw*s)/2)+'px'; // centre horizontally
+  host.style.height=(ch*s)+'px';}
 function mount(host){
   const dark=M.THEMES.dark;
   let vars='';for(const k in dark)vars+='--'+k+':'+dark[k]+';';
@@ -2926,6 +2940,10 @@ function show(){const host=document.getElementById('stressView');if(!host)return
   applyTheme();updateOutputs();fit();requestAnimationFrame(fit);}
 window.addEventListener('resize',()=>{requestAnimationFrame(fit);});
 window.StressTest={show,fit,applyTheme};
+// default tab is the Stress Test: setView('cash') ran before this script defined StressTest,
+// so mount now if the view is already active.
+const _h=document.getElementById('stressView');
+if(_h&&!_h.classList.contains('lhide')) show();
 })();
 </script>
 </body>
