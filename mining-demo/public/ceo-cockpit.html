@@ -523,6 +523,13 @@
   #stressView input[type=range]::-moz-range-track{height:3px;border-radius:3px;background:var(--track)}
   #stressView input[type=range]::-moz-range-thumb{width:11px;height:11px;border:none;border-radius:50%;background:var(--accent,#2fe0c0);box-shadow:0 0 0 2px var(--panel)}
   #stressView .st-tk.glow{border-color:var(--green)!important;box-shadow:0 0 0 1px var(--green),0 0 14px -3px var(--green)}
+  #stressView .st-chip:hover,#stressView .st-btn:hover{border-color:var(--green);color:var(--green)}
+  #stressView .st-offdot{width:5px;height:5px;border-radius:50%;background:var(--gold);flex:0 0 auto;box-shadow:0 0 5px var(--gold)}
+  #stressView .st-bubble{position:absolute;bottom:13px;transform:translateX(-50%);pointer-events:none;background:var(--ink);color:var(--bg);font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;padding:1px 5px;border-radius:5px;white-space:nowrap;opacity:0;transition:opacity .15s ease;z-index:5}
+  #stressView .st-bubble:after{content:'';position:absolute;left:50%;bottom:-3px;transform:translateX(-50%);border:3px solid transparent;border-top-color:var(--ink);border-bottom:0}
+  #stressView .st-slider:hover .st-bubble,#stressView input[type=range]:focus-visible+.st-bubble{opacity:1}
+  #stressView input[type=range]:focus-visible,#stressView .st-chip:focus-visible,#stressView .st-btn:focus-visible,#stressView [data-act]:focus-visible,#stressView [data-regime]:focus-visible,#stressView [data-preset]:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:4px}
+  @media (prefers-reduced-motion:reduce){#stressView *,#stressView *::before,#stressView *::after{transition:none!important;animation:none!important}}
   @media(max-width:1000px){.app{grid-template-columns:1fr}.stage{grid-column:1;grid-row:1}.crail{grid-column:1;grid-row:2;height:auto;position:static;border-left:none;border-top:1px solid var(--line)}}
   /* right rail: scenario controls + driver copilot */
   .crail{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;border-left:1px solid var(--line);background:var(--paper2);padding:16px 14px 40px;display:flex;flex-direction:column;gap:13px}
@@ -2537,6 +2544,15 @@ const M = {
     {id:'brent',name:'Brent crude',tag:'OIL',tagVar:'--muted',price:78,unit:'/bbl',curr:'$',d:-1.1},
   ],
   PLAN:{china:100,cycle:0,fx:16000,energy:0,financing:100,carbon:20,reg:0,floor:2.0},
+  PRESETS:[
+    {id:'plan',label:'Plan',regime:'BASE',values:{china:100,cycle:0,fx:16000,energy:0,financing:100,carbon:20,reg:0,floor:2.0}},
+    {id:'china',label:'China hard landing',regime:'STRESSED',values:{china:84,cycle:-22,fx:17200,energy:10,financing:180,carbon:30,reg:10,floor:2.0}},
+    {id:'super',label:'Commodity supercycle',regime:'BASE',values:{china:116,cycle:30,fx:15200,energy:20,financing:40,carbon:25,reg:5,floor:2.0}},
+    {id:'rates',label:'Rate shock · weak IDR',regime:'STRESSED',values:{china:98,cycle:-5,fx:17600,energy:5,financing:380,carbon:20,reg:0,floor:2.0}},
+    {id:'energy',label:'Energy crunch · Inalum',regime:'STRESSED',values:{china:100,cycle:5,fx:16400,energy:50,financing:120,carbon:35,reg:5,floor:2.0}},
+    {id:'carbon',label:'Carbon tightening',regime:'STRESSED',values:{china:96,cycle:-8,fx:16200,energy:15,financing:130,carbon:75,reg:20,floor:2.0}},
+  ],
+  detectPreset(v,regime){for(const p of this.PRESETS){let ok=p.regime===regime;if(ok)for(const k in p.values)if(Math.abs(p.values[k]-v[k])>1e-6){ok=false;break;}if(ok)return p.id;}return null;},
   THEMES:{
     dark:{bg:'#060c0b',panel:'#0b1614',inset:'#0a1412',ink:'#e2f5ef',muted:'#82a79e',faint:'#557067',border:'rgba(45,224,196,.15)',green:'#2fe0c0',gold:'#f0a830',red:'#ff5d6c',blue:'#36c5d6',violet:'#8f9dff',ptba:'#d9920f',antam:'#15a06d',inalum:'#3f86cf',timah:'#dc5a50',freeport:'#7d6be0',track:'rgba(130,167,158,.25)'},
     light:{bg:'#eef4ef',panel:'#fbfdf9',inset:'#f2f7f2',ink:'#16211d',muted:'#64756f',faint:'#8b9a92',border:'#c4d5cb',green:'#15a06d',gold:'#d9920f',red:'#dc5a50',blue:'#3f86cf',violet:'#7d6be0',ptba:'#d9920f',antam:'#15a06d',inalum:'#3f86cf',timah:'#dc5a50',freeport:'#7d6be0',track:'rgba(100,117,111,.30)'},
@@ -2628,8 +2644,9 @@ function reconcile(host,items){
   for(const k in host._n){if(!seen[k])host._n[k].style.display='none';}
 }
 /* count-up tween on a number span */
+const REDUCED=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 function tweenN(el,to,dec,prefix,suffix){if(!el)return;suffix=suffix||'';prefix=prefix||'';
-  const cur=el._v!=null?el._v:to;el._v=to;
+  const cur=(REDUCED||el._v==null)?to:el._v;el._v=to;
   if(Math.abs(to-cur)<0.005){el.textContent=prefix+(to<0?'−':'')+Math.abs(to).toFixed(dec)+suffix;return;}
   const t0=performance.now(),dur=380;cancelAnimationFrame(el._raf||0);
   el._raf=requestAnimationFrame(function f(t){const k=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-k,3),val=cur+(to-cur)*e;
@@ -2768,19 +2785,27 @@ function derive(){
   const ai={status,statusColor:M.cv(recT.c),assessment,recs,pathsText:'synthesised · '+M._noise.N+' paths'};
 
   const sliders=VISIBLE.map(id=>M.DRIVERS.find(d=>d.id===id)).map(d=>({id:d.id,label:d.label,min:d.min,max:d.max,step:d.step,value:v[d.id],
-    valueText:M.fmtDriver(d.id,v[d.id]),sigmaText:M.sigText(d),accent:M.cv(d.accent)}));
+    valueText:M.fmtDriver(d.id,v[d.id]),sigmaText:M.sigText(d),accent:M.cv(d.accent),offPlan:Math.abs(v[d.id]-d.base)>1e-9}));
   const pinned=S.pinned.map((p,i)=>({i,label:p.label}));
-  return{kpi,market,tBars,tLab,subsidiary,mitigation,wfBars,wfLab,ai,sliders,pinned,metric,attMetric,regime};
+  const presetId=M.detectPreset(v,regime);
+  const presetLabel=(M.PRESETS.find(p=>p.id===presetId)||{label:'Custom scenario'}).label;
+  const noteTitle=presetLabel+' · '+regime+' regime';
+  const noteText='Scenario: '+presetLabel+' ('+regime+' regime). Holding residual FCF is projected at '+kpi.p50Text+' (P10 '+kpi.p10Text+' / P90 '+kpi.p90Text+'), against the '+kpi.floorText+' board cash floor. Floor-breach probability is '+kpi.breachText+' across '+M._noise.N.toLocaleString('en-US')+' simulated paths. '+assessment+(best.arr.length?(' Recommended package: '+best.arr.map(m=>m.label).join(', ')+' — trims breach to '+M.brPct(afterBreach)+' at cost score '+best.cost+'/'+maxCost+'.'):' No mitigation required; the 1-in-10 downside already clears the floor.');
+  return{kpi,market,tBars,tLab,subsidiary,mitigation,wfBars,wfLab,ai,sliders,pinned,metric,attMetric,regime,presetId,noteTitle,noteText};
 }
 
 function skeleton(){
   const vm=derive();
+  const pct=s=>((s.value-s.min)/(s.max-s.min)*100).toFixed(1);
   const sliderCell=s=>`<div style="border-left:2px solid ${s.accent};padding-left:8px;">
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px;margin-bottom:2px;">
-        <span style="font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.label}</span>
+        <span style="font-size:10.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px;">${s.label}<i id="stdot-${s.id}" class="st-offdot" title="changed from plan" style="${s.offPlan?'':'display:none'}"></i></span>
         <span id="stval-${s.id}" style="font-size:11.5px;font-weight:600;font-family:'IBM Plex Mono',monospace;color:var(--ink);white-space:nowrap;">${s.valueText}</span>
       </div>
-      <input type="range" data-driver="${s.id}" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.value}" style="--accent:${s.accent};">
+      <div class="st-slider" style="position:relative;">
+        <input type="range" aria-label="${s.label} driver" data-driver="${s.id}" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.value}" style="--accent:${s.accent};">
+        <div id="stbub-${s.id}" class="st-bubble" style="left:${pct(s)}%;">${s.valueText}</div>
+      </div>
       <div style="font-size:8.5px;font-family:'IBM Plex Mono',monospace;color:var(--faint);margin-top:1px;">${s.sigmaText}</div>
     </div>`;
   const tkCard=m=>`<div id="tk-${m.id}" class="st-tk" style="flex:0 0 auto;min-width:103px;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:6px 8px 7px;transition:box-shadow .25s ease,border-color .25s ease;">
@@ -2814,6 +2839,11 @@ function skeleton(){
       <span style="margin-left:auto;display:flex;align-items:center;gap:5px;font-size:9px;font-family:'IBM Plex Mono',monospace;color:var(--faint);white-space:nowrap;"><span style="width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);"></span>MARKS AS OF ${ASOF} WIB</span>
     </div>
     <div id="stTicker" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:3px;">${vm.market.map(tkCard).join('')}</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;margin-top:11px;flex-wrap:wrap;">
+    <span style="font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);">Board scenarios</span>
+    <div id="stPresets" style="display:flex;gap:6px;flex-wrap:wrap;">${M.PRESETS.map(p=>`<button class="st-chip" data-preset="${p.id}" style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--muted);background:var(--inset);border:1px solid var(--border);border-radius:7px;padding:4px 9px;cursor:pointer;white-space:nowrap;transition:color .2s,background .2s,border-color .2s;">${p.label}</button>`).join('')}</div>
+    <button class="st-btn" data-act="note" title="Generate a board-ready note from this scenario" style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--green);background:var(--inset);border:1px solid var(--border);border-radius:7px;padding:4px 11px;cursor:pointer;white-space:nowrap;">⧉ Copy board note</button>
   </div>
   <div style="display:grid;grid-template-columns:1fr 420px;grid-template-rows:auto auto;gap:14px;margin-top:12px;align-items:stretch;">
     <div style="grid-column:1;grid-row:1;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:11px 14px 11px;display:flex;flex-direction:column;">
@@ -2942,6 +2972,10 @@ function updateOutputs(){
   $('stRecPill').innerHTML=`<div style="width:7px;height:7px;border-radius:50%;background:${k.recColor};animation:ompulse 2.4s ease-in-out infinite;"></div>${k.recText}`;
   drawGauge($('stGauge'),k.breachN,k.recColor);
   const wc=$('stWfCard');if(wc){wc.style.borderColor=k.recColor;wc.style.boxShadow='0 0 0 1px '+k.recColor+',0 0 26px -8px '+k.recColor;}
+  /* active preset chip + live board-note */
+  document.querySelectorAll('#stPresets .st-chip').forEach(c=>{const on=c.dataset.preset===vm.presetId;
+    c.style.color=on?'var(--bg)':'var(--muted)';c.style.background=on?'var(--green)':'var(--inset)';c.style.borderColor=on?'var(--green)':'var(--border)';});
+  const nm=$('stNoteModal');if(nm&&nm.style.display==='flex'){$('stNoteTitle').textContent=vm.noteTitle;$('stNoteText').textContent=vm.noteText;}
   const mi=vm.mitigation;
   $('stMit').innerHTML=`<div style="flex:1;">
       <div style="font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);margin-bottom:5px;">${esc(mi.headline)}</div>
@@ -2964,7 +2998,7 @@ function updateOutputs(){
   setSeg('tfcf',vm.metric==='fcf'); setSeg('tbreach',vm.metric==='breach'); setSeg('arisk',vm.attMetric==='risk'); setSeg('acash',vm.attMetric==='cash');
 }
 function syncSliders(){VISIBLE.forEach(id=>{const inp=document.querySelector('input[data-driver="'+id+'"]'),lab=document.getElementById('stval-'+id);
-  if(inp)inp.value=S.values[id]; if(lab)lab.textContent=M.fmtDriver(id,S.values[id]);});}
+  if(inp)inp.value=S.values[id]; if(lab)lab.textContent=M.fmtDriver(id,S.values[id]); setBubble(id);});}
 function ckTheme(){const t=document.documentElement.getAttribute('data-theme')||'forest';return DARK_THEMES[t]?'dark':'light';}
 function applyTheme(){S.theme=ckTheme();const t=M.THEMES[S.theme],root=document.getElementById('stRoot');if(!root)return;for(const k in t)root.style.setProperty('--'+k,t[k]);}
 function fit(){const host=document.getElementById('stressView'),scale=document.getElementById('stScale');if(!host||!scale)return;
@@ -2976,30 +3010,47 @@ function fit(){const host=document.getElementById('stressView'),scale=document.g
   scale.style.transform='scale('+s+')';
   scale.style.marginLeft=Math.max(0,(availW-cw*s)/2)+'px'; // centre horizontally
   host.style.height=(ch*s)+'px';}
+const NOTE_MODAL='<div id="stNoteModal" style="display:none;position:fixed;inset:0;background:rgba(2,8,7,.7);backdrop-filter:blur(4px);z-index:80;align-items:center;justify-content:center;padding:28px;">'
+  +'<div data-modalcard style="width:580px;max-width:100%;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 20px 16px;box-shadow:0 24px 70px rgba(0,0,0,.55);">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);padding-bottom:11px;"><div style="display:flex;align-items:center;gap:9px;"><div style="width:9px;height:9px;background:var(--green);transform:rotate(45deg);box-shadow:0 0 9px var(--green);"></div><span style="font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);">Board note · draft</span></div><div data-act="noteclose" title="Close" style="font-size:16px;line-height:1;color:var(--muted);cursor:pointer;padding:2px 6px;">×</div></div>'
+    +'<div id="stNoteTitle" style="font-size:13.5px;font-weight:600;color:var(--ink);margin-top:13px;"></div>'
+    +'<div id="stNoteText" style="font-size:12px;line-height:1.62;color:var(--ink);margin-top:9px;"></div>'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:16px;padding-top:11px;border-top:1px solid var(--border);"><span style="font-size:9px;font-family:\'IBM Plex Mono\',monospace;color:var(--faint);">auto-generated · review before circulating</span><div style="display:flex;align-items:center;gap:8px;"><div data-act="notecopy" style="font-size:10.5px;letter-spacing:.04em;color:var(--green);border:1px solid var(--border);border-radius:8px;padding:6px 14px;cursor:pointer;font-family:\'IBM Plex Mono\',monospace;">Copy</div><div data-act="noteclose" style="font-size:10.5px;color:var(--muted);background:var(--inset);border:1px solid var(--border);border-radius:8px;padding:6px 14px;cursor:pointer;font-family:\'IBM Plex Mono\',monospace;">Close</div></div></div>'
+  +'</div></div>';
+function setBubble(id){const inp=document.querySelector('input[data-driver="'+id+'"]'),bub=document.getElementById('stbub-'+id),dot=document.getElementById('stdot-'+id);
+  const d=M.DRIVERS.find(x=>x.id===id);if(bub){bub.textContent=M.fmtDriver(id,S.values[id]);bub.style.left=((S.values[id]-d.min)/(d.max-d.min)*100).toFixed(1)+'%';}
+  if(dot)dot.style.display=Math.abs(S.values[id]-d.base)>1e-9?'':'none';}
+function openNote(){const vm=derive();document.getElementById('stNoteTitle').textContent=vm.noteTitle;document.getElementById('stNoteText').textContent=vm.noteText;document.getElementById('stNoteModal').style.display='flex';}
 function mount(host){
   const dark=M.THEMES.dark;
   let vars='';for(const k in dark)vars+='--'+k+':'+dark[k]+';';
   host.innerHTML='<div id="stRoot" style="'+vars+'width:100%;position:relative;color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:13px;line-height:1.35;">'
-    +'<div id="stScale" style="width:1360px;transform-origin:top left;padding:13px 16px 18px;">'+skeleton()+'</div></div>';
+    +'<div id="stScale" style="width:1360px;transform-origin:top left;padding:13px 16px 18px;">'+skeleton()+'</div>'+NOTE_MODAL+'</div>';
   const scale=document.getElementById('stScale');
   scale.addEventListener('input',e=>{const inp=e.target.closest('input[data-driver]');if(!inp)return;
     S.values[inp.dataset.driver]=Number(inp.value);
     const lab=document.getElementById('stval-'+inp.dataset.driver);if(lab)lab.textContent=M.fmtDriver(inp.dataset.driver,S.values[inp.dataset.driver]);
+    setBubble(inp.dataset.driver);
     glow(inp.dataset.driver);            // cause→effect: light up the instruments this driver moves
     updateOutputs();fit();});
   scale.addEventListener('click',e=>{
     const reg=e.target.closest('[data-regime]'); if(reg){S.regime=reg.dataset.regime;updateOutputs();fit();return;}
+    const pre=e.target.closest('[data-preset]'); if(pre){const p=M.PRESETS.find(x=>x.id===pre.dataset.preset);if(p){S.values=Object.assign({},p.values);S.regime=p.regime;syncSliders();updateOutputs();fit();}return;}
     const pr=e.target.closest('[data-pin-restore]'); if(pr){const p=S.pinned[+pr.dataset.pinRestore];if(p){S.values=Object.assign({},p.values);S.regime=p.regime;syncSliders();updateOutputs();fit();}return;}
     const a=e.target.closest('[data-act]'); if(!a)return; const act=a.dataset.act;
     if(act==='reset'){S.values=Object.assign({},M.PLAN);S.regime='BASE';syncSliders();updateOutputs();}
     else if(act==='pin'){const mc=M.runMC(S.values,S.regime);const lbl=mc.p50.toFixed(1)+'·'+M.brPct(mc.breach);
       S.pinned=[{id:++_pinSeq,label:lbl,values:Object.assign({},S.values),regime:S.regime}].concat(S.pinned).slice(0,4);updateOutputs();}
+    else if(act==='note'){openNote();return;}
     else if(act==='tfcf'){S.tornadoMetric='fcf';updateOutputs();}
     else if(act==='tbreach'){S.tornadoMetric='breach';updateOutputs();}
     else if(act==='arisk'){S.attMetric='risk';updateOutputs();}
     else if(act==='acash'){S.attMetric='cash';updateOutputs();}
     fit();
   });
+  document.getElementById('stNoteModal').addEventListener('click',e=>{const a=e.target.closest('[data-act]');
+    if(a&&a.dataset.act==='notecopy'){try{navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('stNoteText').textContent);}catch(_){}a.textContent='Copied ✓';setTimeout(()=>{a.textContent='Copy';},1400);return;}
+    if((a&&a.dataset.act==='noteclose')||!e.target.closest('[data-modalcard]'))document.getElementById('stNoteModal').style.display='none';});
 }
 function show(){const host=document.getElementById('stressView');if(!host)return;
   if(!mounted){mount(host);mounted=true;}
