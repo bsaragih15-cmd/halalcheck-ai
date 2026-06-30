@@ -1,0 +1,237 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MIND ID · Portfolio Control Tower — Performance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+ --bg:#06140f; --panel:rgba(255,255,255,.025); --panel2:rgba(255,255,255,.045);
+ --border:rgba(120,170,155,.16); --border2:rgba(120,170,155,.30);
+ --tx:#eafff8; --mut:#9fc4ba; --faint:#5e7a72;
+ --teal:#2fe0c0; --green:#37d39a; --amber:#f5b94a; --red:#ff5d5d; --blue:#5cc8e0; --violet:#8f9dff; --gold:#e5c84a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100%;background:radial-gradient(120% 120% at 60% -10%,#0c2320 0%,var(--bg) 55%,#03100c 100%);color:var(--tx);font-family:Inter,system-ui,Arial,sans-serif}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+#app{max-width:1640px;margin:0 auto;padding:18px 26px 48px}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-bottom:13px;border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:11px;font-size:16px;font-weight:700}
+.brand .dot{width:16px;height:16px;border-radius:5px;background:var(--teal);box-shadow:0 0 16px var(--teal)}
+.brand .sub{color:var(--mut);font-weight:500}
+.toptabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:4px}
+.tt{font-family:inherit;font-size:13px;font-weight:600;color:var(--mut);background:transparent;border:0;padding:7px 15px;border-radius:6px;cursor:pointer;text-decoration:none}
+.tt.active{background:var(--teal);color:#05201b}
+.asof{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--faint);letter-spacing:.06em;text-align:right}
+/* verdict */
+.verdict{display:flex;gap:16px;align-items:flex-start;margin:20px 0 6px;padding:16px 20px;border-radius:14px;background:linear-gradient(120deg,rgba(143,157,255,.08),rgba(47,224,192,.04));border:1px solid rgba(143,157,255,.22)}
+.verdict .vi{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.12em;color:#0a0a1a;background:var(--violet);padding:5px 9px;border-radius:6px;white-space:nowrap;margin-top:3px}
+.verdict .vt{font-size:18px;font-weight:700;line-height:1.34;letter-spacing:-.005em}
+.verdict .vr{font-size:12.5px;color:var(--mut);line-height:1.5;margin-top:6px}
+.aibadge{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;padding:2px 7px;border-radius:5px;text-transform:uppercase;margin-left:8px;vertical-align:middle}
+.aibadge.live{color:#05201b;background:var(--teal)} .aibadge.sim{color:var(--mut);border:1px solid var(--border)}
+/* section heads */
+.sh{display:flex;align-items:baseline;gap:11px;margin:26px 0 13px}
+.sh .n{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#05201b;background:var(--teal);padding:3px 8px;border-radius:5px}
+.sh h2{font-size:16px;font-weight:700}
+.sh .h{font-size:11.5px;color:var(--faint);font-family:'IBM Plex Mono',monospace}
+.sh .vd{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:6px}
+.vd.amber{color:#3a2600;background:rgba(245,185,74,.18)} .vd.red{color:#3a0000;background:rgba(255,93,93,.18)} .vd.green{color:#062;background:rgba(55,211,154,.16)}
+/* KPI vs plan */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:15px 16px;position:relative}
+.kpi .l{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);font-family:'IBM Plex Mono',monospace}
+.kpi .act{font-size:30px;font-weight:800;letter-spacing:-.02em;font-family:'IBM Plex Mono',monospace;margin-top:8px}
+.kpi .act small{font-size:12px;font-weight:600;color:var(--mut)}
+.kpi .base{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-top:3px}
+.kpi .var{position:absolute;top:14px;right:15px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;padding:4px 8px;border-radius:6px}
+.up{color:#062;background:rgba(55,211,154,.16)} .down{color:#3a0000;background:rgba(255,93,93,.16)}
+.kpi .note{font-size:11px;color:var(--mut);margin-top:9px;line-height:1.4}
+.kpi .note b{color:var(--tx)}
+/* cards */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
+.bcread{font-size:12.5px;color:var(--mut);line-height:1.5;margin-bottom:4px}
+.bcread b{color:var(--tx)}
+svg text{font-family:'IBM Plex Mono',monospace}
+/* subsidiary table */
+.scroll{overflow-x:auto;border:1px solid var(--border);border-radius:13px;background:var(--panel)}
+table.fin{border-collapse:collapse;width:100%;min-width:1080px;font-size:12.5px}
+.fin thead th{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);text-align:right;padding:12px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+.fin thead th.l{text-align:left}
+.fin tbody td{padding:13px 14px;border-bottom:1px solid rgba(120,170,155,.08);text-align:right;white-space:nowrap}
+.fin tbody tr:last-child td{border-bottom:0}
+.fin tbody tr.tot td{background:rgba(255,255,255,.018);font-weight:700;border-top:1px solid var(--border)}
+.nm{display:flex;align-items:center;gap:10px;text-align:left}
+.nm .e{width:3px;height:30px;border-radius:2px;flex:none}
+.nm b{font-size:13.5px;font-weight:700}.nm .sec{font-size:10px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin-top:1px}
+.big{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
+.pl{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--faint)}
+.vpos{color:var(--green)}.vneg{color:var(--red)}
+.rag{font-size:9.5px;font-weight:700;font-family:'IBM Plex Mono',monospace;padding:3px 8px;border-radius:5px}
+.rag.green{color:#062;background:rgba(55,211,154,.16)}.rag.amber{color:#3a2600;background:rgba(245,185,74,.16)}.rag.red{color:#3a0000;background:rgba(255,93,93,.16)}
+.shareb{display:inline-block;height:7px;border-radius:4px;vertical-align:middle;margin-right:7px}
+/* outlook */
+.outlook{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.ol{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:15px 16px;border-left:3px solid var(--mut)}
+.ol.r{border-left-color:var(--red)}.ol.a{border-left-color:var(--amber)}.ol.t{border-left-color:var(--teal)}
+.ol .t1{font-size:13px;font-weight:700}.ol .t2{font-size:11.5px;color:var(--mut);margin-top:6px;line-height:1.45}
+.foot{font-size:10.5px;color:var(--faint);margin-top:22px;line-height:1.55;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em}
+</style></head>
+<body><div id="app">
+
+ <div class="topbar">
+   <div class="brand"><span class="dot"></span>MIND ID <span class="sub">· Portfolio Control Tower</span></div>
+   <div class="toptabs"><span class="tt active">Performance</span><a class="tt" href="portfolio-cockpit.html">Operational</a><a class="tt" href="ceo-cockpit.html">Stress Test</a></div>
+   <div class="asof">FY2024 ACTUAL vs RKAP BUDGET<br>MIND ID CONSOLIDATED · Rp trillion</div>
+ </div>
+
+ <div class="verdict">
+   <span class="vi">CFO READ<span class="aibadge sim" id="aibadge" style="display:none"></span></span>
+   <div><div class="vt" id="vtitle">Group delivered revenue but missed EBITDA against the RKAP plan — a price-led miss, concentrated in the assets that matter most.</div>
+   <div class="vr" id="vread">Revenue beat plan on record gold trading, but EBITDA came in ~Rp 5T under budget because coal and nickel prices ran below RKAP assumptions. The miss flows straight to net profit, the dividend, and the State contribution.</div></div>
+ </div>
+
+ <!-- 1. Holding vs RKAP -->
+ <div class="sh"><span class="n">01</span><h2>Holding performance vs RKAP</h2><span class="h">consolidated · actual vs budget · Rp T</span><span class="vd red" id="vd1">EBITDA −10% vs plan</span></div>
+ <div class="kpis" id="kpis"></div>
+
+ <!-- 2. Variance bridge -->
+ <div class="sh"><span class="n">02</span><h2>What drove the EBITDA miss</h2><span class="h">RKAP → drivers → actual · Rp T</span><span class="vd amber" id="vd2">PRICE-LED</span></div>
+ <div class="card">
+   <div class="bcread">The gap to budget is <b>price, not operations</b>: <b>coal and nickel</b> ran below RKAP price assumptions; <b>gold trading and a weaker rupiah</b> only partly offset. Volume and unit cost broadly held.</div>
+   <svg id="wf" width="100%" viewBox="0 0 1560 380" preserveAspectRatio="xMidYMid meet"></svg>
+ </div>
+
+ <!-- 3. Subsidiary financials vs RKAP -->
+ <div class="sh"><span class="n">03</span><h2>Subsidiary financial performance vs RKAP</h2><span class="h">ranked by share of group net profit · Rp T</span></div>
+ <div class="scroll"><table class="fin" id="fin"></table></div>
+
+ <!-- 4. Variance by subsidiary -->
+ <div class="sh"><span class="n">04</span><h2>Net-profit variance vs plan — by subsidiary</h2><span class="h">who beat, who dragged · Rp T vs RKAP</span></div>
+ <div class="card">
+   <div class="bcread">The <b>beats are the small assets</b> (Timah turnaround, Inalum, Antam gold); the <b>misses are the big earners</b> — Freeport (grade/disruption) and Bukit Asam (coal price). Mix, not management, drove the result.</div>
+   <svg id="dv" width="100%" viewBox="0 0 1560 250" preserveAspectRatio="xMidYMid meet"></svg>
+ </div>
+
+ <!-- 5. Outlook -->
+ <div class="sh"><span class="n">05</span><h2>Outlook — what to watch into FY2025</h2><span class="h">forward risks to plan, dividend &amp; State contribution</span></div>
+ <div class="outlook" id="outlook"></div>
+
+ <div class="foot" id="foot"></div>
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+function E(p,t,a,txt){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;p.appendChild(e);return e;}
+const COL={ptfi:'#8f9dff',ptba:'#d9920f',antam:'#37d39a',inalum:'#5cc8e0',timah:'#dc5a50'};
+
+/* ── 1. Group KPIs vs RKAP (illustrative budget) ── */
+const KPI=[
+ {l:'Revenue',act:145.2,plan:132,note:'Beat plan — but the beat is <b>low-margin gold trading</b>, not core mining.'},
+ {l:'EBITDA',act:40.5,plan:45,note:'Missed by <b>~Rp 4.5T</b> — margin, not volume, is the gap.'},
+ {l:'Net profit · parent',act:36.5,plan:41,note:'Feeds the <b>dividend &amp; State contribution</b> — the miss matters.'},
+ {l:'Free cash flow',act:18.0,plan:22,note:'Lower earnings + capex on <b>Manyar &amp; SGAR</b>.'},
+ {l:'Contribution to State',act:90.4,plan:88,note:'Tax+PNBP+royalty+dividend; <b>royalty up</b> on PP19/2025.'},
+];
+document.getElementById('kpis').innerHTML=KPI.map(k=>{const v=(k.act-k.plan)/k.plan*100;const up=v>=0;
+ return `<div class="kpi"><div class="l">${k.l}</div><div class="var ${up?'up':'down'}">${up?'▲ +':'▼ '}${v.toFixed(0)}%</div>
+  <div class="act">${k.act.toFixed(1)}<small> Rp T</small></div><div class="base">vs RKAP ${k.plan}</div>
+  <div class="note">${k.note}</div></div>`;}).join('');
+
+/* ── 2. EBITDA variance waterfall ── */
+(function(){const wf=document.getElementById('wf');
+ const steps=[
+  {l:'RKAP plan',v:45,type:'base'},
+  {l:'Coal price',v:-3.0,sub:'HBA/ICI below budget'},
+  {l:'Nickel price+vol',v:-2.0,sub:'LME soft · FeNi <target'},
+  {l:'Tin / other',v:-0.5,sub:''},
+  {l:'Gold contribution',v:+1.2,sub:'record trade volume'},
+  {l:'FX (weaker IDR)',v:+0.8,sub:'USD exports flattered'},
+  {l:'Cost / opex',v:-1.0,sub:'royalty + inflation'},
+  {l:'Actual',v:40.5,type:'act'},
+ ];
+ const x0=44,x1=1540,y0=320,topV=48;const n=steps.length;const bw=120;const gap=(x1-x0-bw*n)/(n-1);
+ const sc=v=>(y0-26)*v/topV;
+ for(let g=0;g<=48;g+=12){const y=y0-sc(g);E(wf,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'rgba(120,170,155,.09)'});E(wf,'text',{x:x0-8,y:y+4,'text-anchor':'end','font-size':10,fill:'#5e7a72'},'Rp '+g);}
+ let x=x0,run=0;
+ steps.forEach((s,i)=>{
+  if(s.type){run=s.v;const yT=y0-sc(s.v);E(wf,'rect',{x,y:yT,width:bw,height:sc(s.v),rx:3,fill:s.type==='base'?'#9fc4ba':'#2fe0c0',opacity:.92});
+   E(wf,'text',{x:x+bw/2,y:yT-9,'text-anchor':'middle','font-size':15,'font-weight':700,fill:'#eafff8'},'Rp '+s.v.toFixed(1));}
+  else{const from=run,to=run+s.v,yF=y0-sc(from),yT=y0-sc(to);const yTop=Math.min(yF,yT),h=Math.max(Math.abs(sc(s.v)),3);
+   E(wf,'rect',{x,y:yTop,width:bw,height:h,rx:3,fill:s.v<0?'#ff5d5d':'#37d39a',opacity:.85});
+   E(wf,'text',{x:x+bw/2,y:yTop-9,'text-anchor':'middle','font-size':13.5,'font-weight':700,fill:s.v<0?'#ff9d9d':'#7ce8bf'},(s.v>0?'+':'')+s.v.toFixed(1));
+   run=to;E(wf,'line',{x1:x+bw,y1:y0-sc(run),x2:x+bw+gap,y2:y0-sc(run),stroke:'rgba(120,170,155,.3)','stroke-dasharray':'3 3'});}
+  E(wf,'text',{x:x+bw/2,y:y0+20,'text-anchor':'middle','font-size':11,fill:'#9fc4ba','font-weight':600},s.l);
+  if(s.sub)E(wf,'text',{x:x+bw/2,y:y0+35,'text-anchor':'middle','font-size':9,fill:'#5e7a72'},s.sub);
+  x+=bw+gap;
+ });
+})();
+
+/* ── 3. Subsidiary financials vs RKAP ── */
+const SUBS=[
+ {id:'ptfi',nm:'Freeport Indonesia',sec:'Copper · Gold · 51% MIND ID',rev:150,revP:160,marg:40,np:48.8,npP:52,rag:'amber',drv:'grade dilution + Sept-25 force majeure'},
+ {id:'ptba',nm:'Bukit Asam',sec:'PTBA · Coal',rev:42.8,revP:44,marg:19,np:5.1,npP:6.5,rag:'red',drv:'coal price (ICI-3 −12%) below budget'},
+ {id:'antam',nm:'Antam',sec:'ANTM · Ni·Au·Bauxite',rev:69.2,revP:50,marg:10,np:3.6,npP:3.2,rag:'green',drv:'record gold trade; nickel soft'},
+ {id:'inalum',nm:'Inalum',sec:'Aluminium · 100% MIND ID',rev:11.4,revP:11,marg:26,np:2.0,npP:1.5,rag:'green',drv:'low-cost hydro; volume +27%'},
+ {id:'timah',nm:'Timah',sec:'TINS · Tin',rev:10.9,revP:9.5,marg:16,np:1.2,npP:0.6,rag:'green',drv:'turnaround on price +17%, volume +23%'},
+];
+const totNp=SUBS.reduce((a,s)=>a+s.np,0);
+const vcell=(a,p)=>{const v=(a-p)/p*100;return `<span class="big">${a.toFixed(1)}</span> <span class="pl">/ ${p}</span> <span class="${v>=0?'vpos':'vneg'}">${v>=0?'+':''}${v.toFixed(0)}%</span>`;};
+const fin=document.getElementById('fin');
+fin.innerHTML=`<thead><tr>
+ <th class="l">Subsidiary</th><th>Revenue<br>act / RKAP</th><th>EBITDA<br>margin</th><th>Net profit<br>act / RKAP</th><th class="l">Share of group profit</th><th>Variance<br>driver</th><th>RAG</th>
+</tr></thead><tbody>${SUBS.map(s=>{const share=s.np/totNp*100;return `<tr>
+ <td><div class="nm"><span class="e" style="background:${COL[s.id]}"></span><div><b>${s.nm}</b><div class="sec">${s.sec}</div></div></div></td>
+ <td>${vcell(s.rev,s.revP)}</td>
+ <td><span class="big">${s.marg}%</span></td>
+ <td>${vcell(s.np,s.npP)}</td>
+ <td class="l"><span class="shareb" style="width:${Math.max(share*1.4,5)}px;background:${COL[s.id]}"></span><span class="pl">${share.toFixed(0)}%</span></td>
+ <td class="pl" style="text-align:right">${s.drv}</td>
+ <td><span class="rag ${s.rag}">${s.rag==='green'?'✓':s.rag==='amber'?'!':'▲'}</span></td>
+</tr>`}).join('')}
+ <tr class="tot"><td><div class="nm" style="padding-left:13px">Group (sum of subsidiaries)</div></td>
+ <td><span class="big">284</span></td><td></td><td><span class="big">${totNp.toFixed(1)}</span></td>
+ <td class="l pl" style="text-transform:none">PTFI equity-accounted into MIND ID at 51%</td><td></td><td></td></tr>
+</tbody>`;
+
+/* ── 4. Net-profit variance vs plan, by subsidiary (diverging) ── */
+(function(){const dv=document.getElementById('dv');
+ const rows=SUBS.map(s=>({nm:s.nm.split(' ')[0],id:s.id,v:s.np-s.npP})).sort((a,b)=>a.v-b.v);
+ const x0=150,x1=1540,y1=24,bh=30,gap=14;const mx=4;
+ const zx=x0+(x1-x0)*mx/(mx*2);  // zero at center
+ const sx=v=>zx+(x1-x0)/(mx*2)*v;
+ E(dv,'line',{x1:zx,y1:14,x2:zx,y2:14+(bh+gap)*rows.length,stroke:'rgba(120,170,155,.3)'});
+ E(dv,'text',{x:zx,y:14+(bh+gap)*rows.length+16,'text-anchor':'middle','font-size':10,fill:'#5e7a72'},'on plan');
+ let y=y1;
+ rows.forEach(r=>{const neg=r.v<0;const xA=neg?sx(r.v):zx,w=Math.abs(sx(r.v)-zx);
+  E(dv,'text',{x:x0-14,y:y+bh/2+4,'text-anchor':'end','font-size':12,fill:'#eafff8','font-weight':600},r.nm);
+  E(dv,'rect',{x:xA,y,width:Math.max(w,2),height:bh,rx:4,fill:neg?'#ff5d5d':'#37d39a',opacity:.85});
+  E(dv,'text',{x:neg?xA-8:xA+w+8,y:y+bh/2+4,'text-anchor':neg?'end':'start','font-size':12.5,'font-weight':700,fill:neg?'#ff9d9d':'#7ce8bf'},(r.v>0?'+':'')+r.v.toFixed(1));
+  y+=bh+gap;
+ });
+})();
+
+/* ── 5. Outlook ── */
+const OL=[
+ {c:'r',t1:'Grasberg force majeure',t2:'The Sept-2025 mud rush cuts 2026 PTFI output ~35%. Largest single forward risk to group profit & the dividend — model it in Stress Test.'},
+ {c:'a',t1:'Coal price cycle',t2:'PTBA margin tracks HBA/ICI; the DMO 25% at $70/t caps domestic upside. Watch the coal benchmark vs the FY2025 RKAP price deck.'},
+ {c:'a',t1:'Royalty step-up (PP19/2025)',t2:'Progressive royalties (nickel 14–19%, gold 7–16%, copper 7–10%) are a structural cost increase across the whole book from Apr-2025.'},
+ {c:'t',t1:'Dividend & State contribution',t2:'The EBITDA miss flows to net profit → the dividend (now routed via Danantara) and the Rp 90T State contribution. Anchor the payout to a conservative case.'},
+];
+document.getElementById('outlook').innerHTML=OL.map(o=>`<div class="ol ${o.c}"><div class="t1">${o.t1}</div><div class="t2">${o.t2}</div></div>`).join('');
+
+/* ── AI verdict (reuse board-read; static fallback already in the markup) ── */
+(async function(){
+ try{
+  const h=await (await fetch('/api/health')).json();const live=h.aiMode==='live';
+  const bd=document.getElementById('aibadge');bd.style.display='inline-block';bd.className='aibadge '+(live?'live':'sim');bd.textContent=live?'live':'simulated';
+  const r=await (await fetch('/api/portfolio/board-read',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({group:{revenue:145.2,revenueYoY:34.6,ebitdaVsPlan:-10,note:'EBITDA missed RKAP by ~Rp4.5T on coal+nickel price; revenue beat on gold trading',stateContribution:90.4,onTrack:3,watch:1,risk:1},
+    subs:SUBS.map(s=>({nm:s.nm,status:s.rag==='green'?'green':s.rag==='amber'?'amber':'red',note:s.drv}))})})).json();
+  if(r&&r.headline){document.getElementById('vtitle').textContent=r.headline;if(r.read)document.getElementById('vread').textContent=r.read;}
+ }catch(e){/* keep the static verdict already in the HTML */}
+})();
+
+document.getElementById('foot').innerHTML=
+ 'Holding Performance Review · MIND ID consolidated, FY2024 actual vs RKAP budget. Actuals are FY2024 public disclosures; the RKAP budget and the variance decomposition are illustrative until MIND ID\'s plan is loaded. '+
+ 'PTFI is shown standalone (FY2023 profit) and equity-accounted into the group at 51%. The CFO Read line is AI-generated over the live state (live with ANTHROPIC_API_KEY, else a static read).';
+</script></body></html>
