@@ -539,6 +539,15 @@
   #stressView .st-slider:hover .st-bubble,#stressView input[type=range]:focus-visible+.st-bubble{opacity:1}
   #stressView input[type=range]:focus-visible,#stressView .st-chip:focus-visible,#stressView .st-btn:focus-visible,#stressView [data-act]:focus-visible,#stressView [data-regime]:focus-visible,#stressView [data-preset]:focus-visible{outline:2px solid var(--green);outline-offset:2px;border-radius:4px}
   @media (prefers-reduced-motion:reduce){#stressView *,#stressView *::before,#stressView *::after{transition:none!important;animation:none!important}}
+  /* copilot handoff banner (shown when navigating from portfolio scenario copilot) */
+  #handoffBar{display:none;position:fixed;top:50px;left:50%;transform:translateX(-50%);z-index:55;
+    padding:7px 14px 7px 12px;background:#040e0b;border:1px solid rgba(47,224,196,.32);border-radius:10px;
+    font-size:11.5px;color:#b8d8cc;align-items:center;gap:9px;white-space:nowrap;max-width:90vw;
+    box-shadow:0 6px 24px rgba(0,0,0,.55)}
+  #handoffBar.vis{display:flex}
+  #handoffBar b{color:#2fe0c0}
+  #handoffBar .hb-x{cursor:pointer;border:none;background:transparent;color:#557067;font-size:15px;line-height:1;padding:0;margin-left:6px}
+  #handoffBar .hb-x:hover{color:#c8f0e6}
   @media(max-width:1000px){.app{grid-template-columns:1fr}.stage{grid-column:1;grid-row:1}.crail{grid-column:1;grid-row:2;height:auto;position:static;border-left:none;border-top:1px solid var(--line)}}
   /* right rail: scenario controls + driver copilot */
   .crail{position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;border-left:1px solid var(--line);background:var(--paper2);padding:16px 14px 40px;display:flex;flex-direction:column;gap:13px}
@@ -851,6 +860,8 @@
   <a class="pt" href="portfolio.html" role="tab">Control Tower</a>
   <span class="pt active" role="tab" aria-selected="true">Stress Test</span>
 </div>
+
+<div id="handoffBar"></div>
 
 <!-- print-only board brief: populated on Export PDF, then window.print(). Hidden on screen. -->
 <div id="printBrief" aria-hidden="true"></div>
@@ -2520,6 +2531,41 @@ tickClock(); setInterval(tickClock, 1000);                                // liv
 setInterval(microJitter, 3000);                                           // ambient signal jitter
 setHeartbeat(); fetchLiveFx(); setInterval(fetchLiveFx, 60000);           // real USD/IDR feed + heartbeat
 
+/* ── portfolio copilot handoff ──────────────────────────────────── */
+function applyHandoff(){
+  try{
+    const raw=localStorage.getItem('mindid_copilot_handoff');
+    if(!raw)return;
+    const h=JSON.parse(raw);
+    if(Date.now()-h.ts>900000)return; // 15-min TTL
+    const drivers=h.drivers||[];if(!drivers.length)return;
+    const upd={};
+    drivers.forEach(dr=>{
+      const nm=(dr.name||'').toLowerCase();
+      const pct=parseFloat(String(dr.change||'0').replace(/[^\d.\-]/g,'').replace('−','-'));
+      if(isNaN(pct))return;
+      if(/coal|nickel|copper|tin/.test(nm)){if(upd.cycle===undefined||Math.abs(pct)>Math.abs(upd.cycle))upd.cycle=Math.max(-40,Math.min(40,Math.round(pct)));}
+      else if(/alumin/.test(nm)&&upd.cycle===undefined)upd.cycle=Math.max(-40,Math.min(40,Math.round(pct*.7)));
+      if(/rupiah|idr|fx|rupee/.test(nm))upd.fx=Math.round(Math.max(14500,Math.min(18000,16000*(1+pct/100))));
+      if(/energy|power/.test(nm))upd.energy=Math.max(-30,Math.min(60,Math.round(pct)));
+    });
+    if(!Object.keys(upd).length)return;
+    // apply to scenbar sliders (main model)
+    for(const[id,val]of Object.entries(upd)){const el=document.getElementById(id);if(el)el.value=val;}
+    if(upd.energy!==undefined){const m=document.getElementById('scenbarMore'),b=document.getElementById('moreBtn');if(m&&m.hasAttribute('hidden')){m.removeAttribute('hidden');if(b)b.textContent='– fewer drivers';}}
+    markCustom();syncLabels();requestAnimationFrame(run);
+    // apply to StressTest module
+    if(window.StressTest&&window.StressTest.setValues)window.StressTest.setValues(upd);
+    // show banner
+    const bar=document.getElementById('handoffBar');
+    if(bar){const labs=drivers.slice(0,3).map(d=>esc(d.name)+' <b>'+esc(d.change)+'</b>').join(' · ');
+      bar.innerHTML='<span>◇ From <b>Portfolio Copilot</b>: '+labs+'</span>'
+        +'<button class="hb-x" onclick="document.getElementById(\'handoffBar\').classList.remove(\'vis\');try{localStorage.removeItem(\'mindid_copilot_handoff\')}catch(e){}" title="Dismiss">✕</button>';
+      bar.classList.add('vis');setTimeout(()=>bar.classList.remove('vis'),12000);}
+  }catch(e){}
+}
+setTimeout(applyHandoff,150); // runs after StressTest IIFE finishes
+
 /* ── guided tour ────────────────────────────────────────────────── */
 const TOUR=[
   {sel:'[data-tour=factors]',t:'1 · Set the scenario',b:'Dial the key drivers — China demand, USD/IDR, the commodity cycle and the board cash floor. “+ more drivers” reveals energy, carbon, regulation and financing. Every change re-runs the model and the cash view live.'},
@@ -3175,7 +3221,9 @@ function show(){const host=document.getElementById('stressView');if(!host)return
   if(!mounted){mount(host);mounted=true;}
   applyTheme();updateOutputs();fit();requestAnimationFrame(fit);}
 window.addEventListener('resize',()=>{requestAnimationFrame(fit);});
-window.StressTest={show,fit,applyTheme};
+window.StressTest={show,fit,applyTheme,
+  setValues(patch){Object.assign(S.values,patch);if(mounted){syncSliders();updateOutputs();fit();}}
+};
 // default tab is the Stress Test: setView('cash') ran before this script defined StressTest,
 // so mount now if the view is already active.
 const _h=document.getElementById('stressView');
