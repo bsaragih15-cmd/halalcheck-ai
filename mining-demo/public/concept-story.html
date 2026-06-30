@@ -1,0 +1,109 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Concept — story-driven</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06140f;--panel:rgba(255,255,255,.03);--border:rgba(120,170,155,.16);--tx:#eafff8;--mut:#9fc4ba;--faint:#5e7a72;
+ --teal:#2fe0c0;--green:#37d39a;--amber:#f5b94a;--red:#ff5d5d;--violet:#8f9dff;--gold:#e5c84a}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,system-ui,sans-serif}
+body{background:radial-gradient(130% 130% at 70% -10%,#10312b,#06140f 55%,#03100c);color:var(--tx);width:1600px;height:900px;overflow:hidden}
+.mono{font-family:'IBM Plex Mono',monospace}
+#wrap{height:900px;display:flex;flex-direction:column;padding:26px 40px 24px}
+/* story spine */
+.spine{display:flex;gap:0;align-items:center;margin-bottom:6px}
+.beat{flex:1;display:flex;align-items:center;gap:9px;opacity:.45}
+.beat.on{opacity:1}
+.beat .n{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid var(--border2,rgba(120,170,155,.3));color:var(--mut);flex:none}
+.beat.on .n{background:var(--teal);color:#05201b;border-color:var(--teal)}
+.beat.done .n{border-color:var(--teal);color:var(--teal)}
+.beat .t{font-size:11.5px;color:var(--mut);font-weight:600;line-height:1.15}
+.beat.on .t{color:var(--tx)}
+.beat .ln{flex:1;height:1px;background:rgba(120,170,155,.18);margin:0 4px}
+.beat:last-child .ln{display:none}
+.tophint{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.tophint .brand{font-size:12px;font-weight:700;color:var(--mut)}
+.tophint .brand b{color:var(--tx)}
+.tophint .mode{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--faint);border:1px solid var(--border);padding:4px 10px;border-radius:6px}
+/* scene */
+.scene{flex:1;display:grid;grid-template-columns:1.05fr 1fr;gap:54px;align-items:center}
+.kick{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;letter-spacing:.18em;color:var(--red);margin-bottom:18px}
+h1{font-size:62px;font-weight:800;line-height:1.04;letter-spacing:-.02em;margin-bottom:22px}
+h1 .hl{color:var(--violet)}
+.lede{font-size:18px;line-height:1.55;color:var(--mut);max-width:620px;margin-bottom:28px}
+.lede b{color:var(--tx)}
+.chips{display:flex;gap:12px;flex-wrap:wrap}
+.chip{background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:12px 16px}
+.chip .v{font-size:24px;font-weight:800;font-family:'IBM Plex Mono',monospace;letter-spacing:-.01em}
+.chip .l{font-size:11px;color:var(--faint);margin-top:3px;font-family:'IBM Plex Mono',monospace;letter-spacing:.03em}
+.flag{display:inline-flex;align-items:center;gap:9px;margin-top:24px;background:rgba(255,93,93,.10);border:1px solid rgba(255,93,93,.35);border-radius:10px;padding:11px 15px;font-size:14px;color:#ffd0d0;font-weight:600}
+.flag .d{width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 12px var(--red)}
+/* hero viz */
+.viz{position:relative}
+.vlab{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--faint);letter-spacing:.05em;margin-bottom:14px}
+.bars{display:flex;align-items:flex-end;gap:20px;height:330px;padding-left:6px}
+.bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:9px;height:100%}
+.bar .col{width:100%;border-radius:7px 7px 0 0;position:relative;transition:height .4s}
+.bar .amt{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700}
+.bar .nm{font-size:11px;color:var(--mut);text-align:center;line-height:1.2}
+.bar .badge{position:absolute;top:-26px;left:50%;transform:translateX(-50%);font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#3a0000;background:var(--red);padding:3px 7px;border-radius:5px;white-space:nowrap}
+.vnote{font-size:13px;color:var(--mut);margin-top:18px;line-height:1.5;border-left:2px solid var(--violet);padding-left:14px}
+.vnote b{color:var(--tx)}
+/* footer nav */
+.nav{display:flex;align-items:center;justify-content:space-between;margin-top:14px}
+.dots{display:flex;gap:8px}.dot{width:8px;height:8px;border-radius:50%;background:rgba(120,170,155,.3)}.dot.on{background:var(--teal);width:22px;border-radius:4px}
+.navbtns{display:flex;gap:12px;align-items:center}
+.nb{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--mut);border:1px solid var(--border);border-radius:9px;padding:9px 18px;cursor:pointer}
+.nb.primary{background:var(--teal);color:#05201b;border-color:var(--teal);font-weight:700}
+.skip{font-size:12px;color:var(--faint);font-family:'IBM Plex Mono',monospace}
+.skip b{color:var(--mut)}
+</style></head>
+<body><div id="wrap">
+
+ <div class="tophint">
+   <div class="brand"><b>MIND ID</b> · Portfolio Control Tower — <span style="color:var(--teal)">Brief mode</span></div>
+   <div class="mode">⌨ press → to advance · "show me the data" to drop into the analytics</div>
+ </div>
+
+ <div class="spine">
+  <div class="beat done"><span class="n">1</span><span class="t">A record<br>year</span><span class="ln"></span></div>
+  <div class="beat done"><span class="n">2</span><span class="t">But strength<br>is borrowed</span><span class="ln"></span></div>
+  <div class="beat on"><span class="n">3</span><span class="t">It all leans<br>on Grasberg</span><span class="ln"></span></div>
+  <div class="beat"><span class="n">4</span><span class="t">What if<br>copper turns?</span><span class="ln"></span></div>
+  <div class="beat"><span class="n">5</span><span class="t">The move</span><span class="ln"></span></div>
+  <div class="beat"><span class="n">6</span><span class="t">Board<br>brief</span><span class="ln"></span></div>
+ </div>
+
+ <div class="scene">
+  <div class="left">
+    <div class="kick">03 · THE CONCENTRATION</div>
+    <h1>It all leans on <span class="hl">Grasberg</span>.</h1>
+    <div class="lede">Strip away gold trading and the coal cycle, and one asset carries the group. <b>Freeport Indonesia is ~80% of subsidiary profit</b> — the lowest-cost copper we own, and only <b>51% ours</b>. It is also the one asset under a live disruption.</div>
+    <div class="chips">
+      <div class="chip"><div class="v">~80%</div><div class="l">of subsidiary profit</div></div>
+      <div class="chip"><div class="v">$0<span style="font-size:14px">/lb</span></div><div class="l">net cash cost</div></div>
+      <div class="chip"><div class="v">51.2%</div><div class="l">MIND ID owned</div></div>
+    </div>
+    <div class="flag"><span class="d"></span>Grasberg mud rush · Sept 2025 · force majeure · 2026 output −35%</div>
+  </div>
+
+  <div class="viz">
+    <div class="vlab">SUBSIDIARY NET PROFIT · Rp T · FY2024 (PTFI FY2023)</div>
+    <div class="bars">
+      <div class="bar"><div class="amt" style="color:var(--violet)">48.8</div><div class="col" style="height:92%;background:linear-gradient(180deg,#8f9dff,rgba(143,157,255,.25))"><div class="badge">▲ FORCE MAJEURE</div></div><div class="nm">Freeport</div></div>
+      <div class="bar"><div class="amt">5.1</div><div class="col" style="height:11%;background:linear-gradient(180deg,#d9920f,rgba(217,146,15,.2))"></div><div class="nm">Bukit Asam</div></div>
+      <div class="bar"><div class="amt">3.9</div><div class="col" style="height:9%;background:linear-gradient(180deg,#37d39a,rgba(55,211,154,.2))"></div><div class="nm">Antam</div></div>
+      <div class="bar"><div class="amt">2.0</div><div class="col" style="height:5%;background:linear-gradient(180deg,#5cc8e0,rgba(92,200,224,.2))"></div><div class="nm">Inalum</div></div>
+      <div class="bar"><div class="amt">1.2</div><div class="col" style="height:3.5%;background:linear-gradient(180deg,#dc5a50,rgba(220,90,80,.2))"></div><div class="nm">Timah</div></div>
+    </div>
+    <div class="vnote">The portfolio looks diversified across five commodities — <b>but the profit isn't</b>. Concentration, not breadth, is the risk that matters.</div>
+  </div>
+ </div>
+
+ <div class="nav">
+   <div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot on"></span><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+   <div class="navbtns">
+     <span class="skip">or <b>"show me the data" ↗</b> for the full cockpit</span>
+     <div class="nb">← back</div>
+     <div class="nb primary">Next: what if copper turns? →</div>
+   </div>
+ </div>
+</div></body></html>
