@@ -1,0 +1,94 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Concept — performance review</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06140f;--panel:rgba(255,255,255,.03);--border:rgba(120,170,155,.16);--tx:#eafff8;--mut:#9fc4ba;--faint:#5e7a72;
+ --teal:#2fe0c0;--green:#37d39a;--amber:#f5b94a;--red:#ff5d5d;--violet:#8f9dff;--gold:#e5c84a}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,system-ui,sans-serif}
+body{background:radial-gradient(130% 130% at 60% -10%,#0c2320,#06140f 55%,#03100c);color:var(--tx);width:1600px;height:980px;padding:30px 44px}
+.mono{font-family:'IBM Plex Mono',monospace}
+.kick{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.16em;color:var(--teal);margin-bottom:6px}
+h1{font-size:30px;font-weight:800;letter-spacing:-.01em}
+.sub{font-size:13px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin-top:4px;margin-bottom:22px}
+/* KPI vs baseline */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:24px}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 20px;position:relative}
+.kpi .l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-family:'IBM Plex Mono',monospace}
+.kpi .row{display:flex;align-items:baseline;gap:16px;margin-top:9px}
+.kpi .act{font-size:38px;font-weight:800;letter-spacing:-.02em;font-family:'IBM Plex Mono',monospace}
+.kpi .base{font-size:14px;color:var(--mut);font-family:'IBM Plex Mono',monospace}
+.kpi .var{position:absolute;top:18px;right:20px;font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:700;padding:5px 10px;border-radius:7px}
+.up{color:#062;background:rgba(55,211,154,.16)} .down{color:#3a0000;background:rgba(255,93,93,.16)}
+.kpi .note{font-size:12px;color:var(--mut);margin-top:11px;line-height:1.4}
+/* bridge */
+.bridgecard{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 24px}
+.bc-h{display:flex;align-items:baseline;gap:12px;margin-bottom:4px}
+.bc-h h2{font-size:17px;font-weight:700}
+.bc-h .s{font-size:11.5px;color:var(--faint);font-family:'IBM Plex Mono',monospace}
+.bc-read{font-size:13px;color:var(--mut);margin-bottom:6px}
+.bc-read b{color:var(--tx)}
+.verdict{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:700;color:#3a2600;background:rgba(245,185,74,.18);padding:4px 9px;border-radius:6px;margin-left:8px}
+text{font-family:'IBM Plex Mono',monospace}
+</style></head>
+<body>
+ <div class="kick">01 · HOLDING PERFORMANCE</div>
+ <h1>Group delivered revenue — but missed EBITDA against plan.</h1>
+ <div class="sub">MIND ID consolidated · FY2024 actual vs RKAP baseline · illustrative figures</div>
+
+ <div class="kpis">
+   <div class="kpi"><div class="l">Revenue</div><div class="var up">▲ +10%</div>
+     <div class="row"><span class="act">145.2</span><span class="base">vs plan 132 · Rp T</span></div>
+     <div class="note">Beat plan — but the beat is <b>low-margin gold trading</b>, not core mining.</div></div>
+   <div class="kpi"><div class="l">EBITDA</div><div class="var down">▼ −11%</div>
+     <div class="row"><span class="act">40.0</span><span class="base">vs plan 45 · Rp T</span></div>
+     <div class="note">Missed plan by <b>Rp 5T</b> — margin, not volume, is the problem.</div></div>
+   <div class="kpi"><div class="l">Net profit · to parent</div><div class="var down">▼ −11%</div>
+     <div class="row"><span class="act">36.5</span><span class="base">vs plan 41 · Rp T</span></div>
+     <div class="note">Flows to the dividend &amp; the State contribution — the miss matters.</div></div>
+ </div>
+
+ <div class="bridgecard">
+   <div class="bc-h"><h2>What drove the EBITDA miss</h2><span class="s">02 · variance bridge · Rp T · baseline → actual</span><span class="verdict">PRICE-LED MISS</span></div>
+   <div class="bc-read">The gap to plan is <b>price</b>, not operations: <b>coal and nickel prices</b> fell below budget assumptions; <b>gold and a weaker rupiah</b> only partly offset. Volume and cost held.</div>
+   <svg id="wf" width="1500" height="430" viewBox="0 0 1500 430"></svg>
+ </div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+function E(p,t,a,txt){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;p.appendChild(e);return e;}
+const wf=document.getElementById('wf');
+// waterfall steps: baseline -> deltas -> actual
+const steps=[
+ {l:'RKAP plan',v:45,type:'base'},
+ {l:'Coal price',v:-3.0,sub:'HBA/ICI below budget'},
+ {l:'Nickel price+vol',v:-2.0,sub:'LME soft · FeNi below target'},
+ {l:'Tin / other',v:-0.5,sub:''},
+ {l:'Gold contribution',v:+1.2,sub:'record trade volume'},
+ {l:'FX (weaker IDR)',v:+0.8,sub:'USD exports flattered'},
+ {l:'Cost / opex',v:-1.0,sub:'royalty PP19/2025 + inflation'},
+ {l:'Actual',v:40.5,type:'act'},
+];
+const x0=40,x1=1480,y0=380,topV=48; const bw=128, gap=(x1-x0-bw*steps.length)/(steps.length-1);
+const sc=v=>(y0-30)*v/topV;
+// gridlines
+for(let g=0;g<=48;g+=12){const y=y0-sc(g);E(wf,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'rgba(120,170,155,.09)'});E(wf,'text',{x:x0-8,y:y+4,'text-anchor':'end','font-size':10,fill:'#5e7a72'},'Rp '+g);}
+let x=x0, running=0;
+steps.forEach((s,i)=>{
+ let yTop,h,col;
+ if(s.type){running=s.v;yTop=y0-sc(s.v);h=sc(s.v);col=s.type==='base'?'#9fc4ba':'#2fe0c0';
+  E(wf,'rect',{x,y:yTop,width:bw,height:h,rx:3,fill:col,opacity:.9});
+  E(wf,'text',{x:x+bw/2,y:yTop-9,'text-anchor':'middle','font-size':15,'font-weight':700,fill:'#eafff8'},'Rp '+s.v.toFixed(1));
+ } else {
+  const from=running, to=running+s.v; const yF=y0-sc(from), yT=y0-sc(to);
+  yTop=Math.min(yF,yT); h=Math.abs(sc(s.v)); col=s.v<0?'#ff5d5d':'#37d39a';
+  E(wf,'rect',{x,y:yTop,width:bw,height:Math.max(h,3),rx:3,fill:col,opacity:.85});
+  E(wf,'text',{x:x+bw/2,y:yTop-9,'text-anchor':'middle','font-size':14,'font-weight':700,fill:s.v<0?'#ff9d9d':'#7ce8bf'},(s.v>0?'+':'')+s.v.toFixed(1));
+  running=to;
+  // connector
+  E(wf,'line',{x1:x+bw,y1:y0-sc(running),x2:x+bw+gap,y2:y0-sc(running),stroke:'rgba(120,170,155,.3)','stroke-dasharray':'3 3'});
+ }
+ E(wf,'text',{x:x+bw/2,y:y0+20,'text-anchor':'middle','font-size':11.5,fill:'#9fc4ba','font-weight':600},s.l);
+ if(s.sub)E(wf,'text',{x:x+bw/2,y:y0+36,'text-anchor':'middle','font-size':9.5,fill:'#5e7a72'},s.sub);
+ x+=bw+gap;
+});
+</script></body></html>
