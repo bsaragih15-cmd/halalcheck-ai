@@ -10,7 +10,7 @@ import { irocFallback, irocParseFallback, irocCopilotFallback } from './data/iro
 import { blastFallback, blastParseFallback, blastCopilotFallback } from './data/blast.js';
 import { shippingFallback, shippingDisruptionFallback, shippingCopilotFallback } from './data/shipping.js';
 import { cockpitBriefFallback } from './data/cockpit.js';
-import { boardReadFallback, scenarioFallback } from './data/portfolio.js';
+import { boardReadFallback, scenarioFallback, capitalCopilotFallback } from './data/portfolio.js';
 import { USE_CASES } from './public/js/usecases.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -494,6 +494,15 @@ Domain rules:
 
 IMPORTANT: Return ONLY valid JSON, no other text.`;
 
+const CAPITAL_COPILOT_PROMPT = `You are the AI Chief of Staff to MIND ID's Group CEO, answering questions about the FY2024 capital-allocation picture shown on the Capital tab of the Portfolio Control Tower. Answer in 2-3 sentences, grounded ONLY in the provided state JSON. Be concrete and quantified (Rp T). You MAY wrap a key figure in <b>...</b>.
+
+The state describes: how operating cash was generated and deployed (EBITDA → operating cash → sustaining capex → free cash flow → growth capex, debt drawn, dividend → net cash); returns by subsidiary (ROIC vs WACC, capital employed, economic profit); capital discipline ratios; and the growth-project pipeline (Manyar copper smelter, SGAR alumina, Grasberg underground). The central story: FCF covers the dividend ~2.0x, but the Rp 12T downstreaming build is part debt-funded; only Freeport clearly earns above its cost of capital (~96% of group economic profit); leverage stays low (~0.8x net debt/EBITDA); the watch item is concentration in Freeport.
+
+Return JSON with EXACTLY this structure:
+{ "answer": "<2-3 sentences, grounded in the state; may use <b>...</b>>" }
+
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
 // ── Endpoints ─────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, aiMode: aiMode() }));
 
@@ -531,6 +540,19 @@ app.post('/api/portfolio/scenario', async (req, res) => {
     systemPrompt: SCENARIO_PROMPT,
     userMessage: `CEO question / scenario: "${String(body.query || '').slice(0, 400)}"\n\nPortfolio context:\n${JSON.stringify(body.subs || [], null, 2).slice(0, 4000)}\n\nReturn only valid JSON.`,
     fallback: scenarioFallback(body),
+  });
+  res.json(result);
+});
+
+// Portfolio Control Tower: Capital Copilot — grounded Q&A over the capital-allocation state.
+app.post('/api/portfolio/capital-copilot', async (req, res) => {
+  const { question, state } = req.body || {};
+  if (!question || !question.trim()) return res.status(400).json({ error: 'A question is required' });
+  const result = await askClaude({
+    label: 'portfolio:capital-copilot',
+    systemPrompt: CAPITAL_COPILOT_PROMPT,
+    userMessage: `Capital-allocation state:\n${JSON.stringify(state || {}, null, 2).slice(0, 4000)}\n\nCEO question: ${question.trim().slice(0, 400)}\n\nReturn only valid JSON.`,
+    fallback: capitalCopilotFallback({ question }),
   });
   res.json(result);
 });
