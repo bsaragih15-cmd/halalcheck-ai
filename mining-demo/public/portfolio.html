@@ -13,11 +13,28 @@
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
 body{background:radial-gradient(60% 60% at 100% 0%,rgba(155,157,255,.08),transparent 60%),linear-gradient(170deg,#0a1c18,#050f0c 60%);
- color:var(--tx);font-family:Inter,system-ui,Arial,sans-serif;height:100vh;overflow:hidden;display:flex}
+ color:var(--tx);font-family:Inter,system-ui,Arial,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
 .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
 svg text{font-family:'IBM Plex Mono',monospace}
+/* ── market signal ticker (persistent across tabs) ── */
+.shell{display:flex;flex:1;min-height:0;width:100%}
+.ticker{flex:none;border-bottom:1px solid var(--border);background:rgba(0,0,0,.3);padding:5px 16px 7px}
+.tkhead{display:flex;align-items:center;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+.tkhead .lab{color:var(--teal)}.tkhead .lab b{color:var(--mut);font-weight:500;letter-spacing:.06em;margin-left:4px}
+.tkdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);margin-right:7px;vertical-align:middle}
+.tkrow{display:flex;align-items:stretch}
+.tk{flex:1;min-width:0;padding:0 10px;border-right:1px solid rgba(120,170,155,.1);display:flex;flex-direction:column;gap:1px;overflow:hidden}
+.tk:first-child{padding-left:2px}.tk:last-child{border-right:0;padding-right:2px}
+.tk .n{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--mut);font-weight:600;white-space:nowrap;overflow:hidden;min-width:0}
+.tk .n>span{overflow:hidden;text-overflow:ellipsis}
+.tk .sub{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:700;padding:1px 5px;border-radius:4px;white-space:nowrap;flex:none}
+.tk .px{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:var(--tx);white-space:nowrap}.tk .px small{font-size:8.5px;color:var(--faint);font-weight:500;margin-left:1px}
+.tk .bot{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.tk .d{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700}.tk .d.up{color:var(--green)}.tk .d.dn{color:var(--red)}
+.tkflash{animation:tkf 1.1s ease}@keyframes tkf{0%{background:rgba(155,157,255,.2)}100%{background:transparent}}
+#tkstate a{color:var(--teal);cursor:pointer;text-decoration:underline}
 /* ── left rail ── */
-.rail{width:238px;flex:none;height:100vh;border-right:1px solid var(--border);background:rgba(0,0,0,.18);display:flex;flex-direction:column;padding:20px 14px}
+.rail{width:238px;flex:none;height:100%;border-right:1px solid var(--border);background:rgba(0,0,0,.18);display:flex;flex-direction:column;padding:20px 14px}
 .logo{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:800;letter-spacing:.02em;padding:4px 8px 16px}
 .logo .dot{width:15px;height:15px;border-radius:5px;background:var(--teal);box-shadow:0 0 18px var(--teal)}
 .logo .s{color:var(--mut);font-weight:500;font-size:11px}
@@ -33,12 +50,12 @@ svg text{font-family:'IBM Plex Mono',monospace}
 .railft .ai{color:var(--violet)}
 .railft .pill{display:inline-block;border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--tx);margin-top:6px}
 /* ── main ── */
-.main{flex:1;height:100vh;display:flex;flex-direction:column;padding:22px 30px 24px;overflow:hidden;min-width:0}
+.main{flex:1;height:100%;display:flex;flex-direction:column;padding:16px 28px 14px;overflow:hidden;min-width:0}
 .vhead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding-bottom:14px;border-bottom:1px solid var(--border);flex:none}
 .vhead .t{font-size:22px;font-weight:800;letter-spacing:-.01em}
 .vhead .c{font-size:12px;color:var(--mut);margin-top:4px}
 .vhead .r{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--faint);text-align:right;line-height:1.6}
-.view{flex:1;min-height:0;display:none;flex-direction:column;gap:14px;padding-top:16px}
+.view{flex:1;min-height:0;display:none;flex-direction:column;gap:12px;padding-top:12px}
 .view.on{display:flex;animation:fade .3s ease}
 /* lighter views read as an exec brief — center their content in the viewport */
 #v-overview.on{justify-content:center;gap:30px;padding-bottom:24px}
@@ -62,18 +79,21 @@ svg text{font-family:'IBM Plex Mono',monospace}
 .r .big{color:var(--red)}.r .ed{background:var(--red)}.v2 .big{color:var(--violet)}.v2 .ed{background:var(--violet)}.a2 .big{color:var(--amber)}.a2 .ed{background:var(--amber)}
 /* kpi */
 .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;flex:none}
-.kpi{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:15px 16px;position:relative}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:12px 15px;position:relative}
 .kpi .l{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-family:'IBM Plex Mono',monospace}
 .kpi .act{font-size:30px;font-weight:800;font-family:'IBM Plex Mono',monospace;margin-top:8px}.kpi .act small{font-size:12px;color:var(--mut)}
 .kpi .base{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-top:3px}
 .kpi .var{position:absolute;top:14px;right:14px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;padding:4px 8px;border-radius:6px}
 .up{color:#062;background:rgba(55,211,154,.16)}.down{color:#3a0000;background:rgba(255,93,93,.16)}
 .kpi .note{font-size:10.5px;color:var(--mut);margin-top:8px;line-height:1.4}.kpi .note b{color:var(--tx)}
+.kpi.hero{border-color:rgba(255,93,93,.42);box-shadow:0 0 0 1px rgba(255,93,93,.16),0 6px 22px rgba(255,93,93,.07)}
+.kpi .mgc{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#f5d089;background:rgba(245,185,74,.12);border-radius:6px;padding:4px 7px;margin-top:7px;display:inline-block}
+.kpi .flag{font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:700;color:#f5d089;background:rgba(245,185,74,.1);border:1px solid rgba(245,185,74,.3);border-radius:5px;padding:2px 6px;margin-top:7px;display:inline-block}
 /* tables */
 table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 .fin thead th{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);text-align:right;padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
 .fin thead th.l{text-align:left}
-.fin tbody td{padding:11px 12px;border-bottom:1px solid rgba(120,170,155,.08);text-align:right;white-space:nowrap}
+.fin tbody td{padding:8px 12px;border-bottom:1px solid rgba(120,170,155,.08);text-align:right;white-space:nowrap}
 .fin tbody tr:last-child td{border-bottom:0}
 .fin tbody tr{cursor:pointer;transition:background .14s}.fin tbody tr:hover{background:rgba(120,170,155,.05)}.fin tbody tr.sel{background:rgba(47,224,192,.07)}
 .bhead{display:flex;align-items:center;gap:12px}.bhead .ccsel{margin-left:auto;margin-bottom:0}
@@ -119,6 +139,13 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 </style></head>
 <body>
 
+ <!-- ════ MARKET SIGNAL TICKER (persistent across all tabs) ════ -->
+ <div class="ticker" id="ticker">
+   <div class="tkhead"><span class="lab"><span class="tkdot"></span>Market signal <b id="tkstate">prices &amp; Δ move with the scenario · vs plan</b></span><span id="tkmarks">Marks as of 30 Jun · 15:09 WIB</span></div>
+   <div class="tkrow" id="tkrow"></div>
+ </div>
+
+ <div class="shell">
  <!-- ════ LEFT RAIL ════ -->
  <div class="rail">
    <div class="logo"><span class="dot"></span><div>MIND ID<div class="s">Portfolio Control Tower</div></div></div>
@@ -206,6 +233,7 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
    </div>
 
  </div>
+ </div><!-- /shell -->
 
 <script>
 const NS='http://www.w3.org/2000/svg';
@@ -228,9 +256,40 @@ const CURVES={
 };
 const CMNAME={copper:'Copper',nickel:'Nickel',coal:'Coal',alu:'Aluminium',tin:'Tin'};
 
+/* ── market signal ticker (persistent across tabs; reacts to the scenario copilot) ── */
+const SUBCOL={ptba:'#d9920f',antam:'#37d39a',inalum:'#5cc8e0',timah:'#dc5a50',ptfi:'#9b9dff'};
+const COMMOD=[
+ {id:'coalhba',n:'Coal HBA',px:117,u:'/t',d:-1.4,sub:'ptba',sn:'Bukit Asam'},
+ {id:'coalnew',n:'Coal Newc.',px:124,u:'/t',d:-0.8,sub:'ptba',sn:'Bukit Asam'},
+ {id:'gold',n:'Gold',px:2335,u:'/oz',d:1.0,sub:'antam',sn:'Antam'},
+ {id:'nickel',n:'Nickel LME',px:16578,u:'/t',d:-0.5,sub:'antam',sn:'Antam'},
+ {id:'nickelore',n:'Nickel ore',px:52,u:'/wmt',d:-0.6,sub:'antam',sn:'Antam'},
+ {id:'alu',n:'Alum. LME',px:2426,u:'/t',d:0.6,sub:'inalum',sn:'Inalum'},
+ {id:'alumina',n:'Alumina',px:382,u:'/t',d:1.6,sub:'inalum',sn:'Inalum'},
+ {id:'tin',n:'Tin LME',px:31189,u:'/t',d:-0.5,sub:'timah',sn:'Timah'},
+ {id:'copper',n:'Copper LME',px:9675,u:'/t',d:-0.4,sub:'ptfi',sn:'Freeport',jv:1},
+ {id:'bauxite',n:'Bauxite',px:57,u:'/t',d:0.5,sub:'antam',sn:'Antam'},
+ {id:'idr',n:'USD / IDR',px:16000,u:'',d:0.0,sub:null,sn:null},
+];
+const TKBASE=COMMOD.map(c=>c.d);
+const fmtPx=v=>v>=1000?v.toLocaleString('en-US'):String(v);
+function sparkSVG(seed,dir,color){const W=46,H=16,pts=[];let v=.5;for(let i=0;i<9;i++){v+=Math.sin(seed*1.7+i*1.05)*.16+dir*.045;v=Math.max(.12,Math.min(.88,v));pts.push(v);}let d='';pts.forEach((p,i)=>{const x=(i/8*W).toFixed(1),y=(H-2-p*(H-4)).toFixed(1);d+=(i?' L':'M')+x+' '+y;});return `<svg width="${W}" height="${H}" style="display:block"><path d="${d}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/></svg>`;}
+function tkChip(c,i){const up=c.d>=0,col=up?'#37d39a':'#ff5d5d',sc=c.sub?SUBCOL[c.sub]:'#586f67',pill=c.sn?`<span class="sub" style="color:${sc};background:${sc}22">${c.sn}${c.jv?' · JV':''}</span>`:'';return `<div class="tk" id="tk-${c.id}"><div class="n"><span>${c.n}</span>${pill}</div><div class="px">${c.u?'$':''}${fmtPx(c.px)}<small>${c.u}</small></div><div class="bot"><span class="d ${up?'up':'dn'}">${up?'▲':'▼'}${Math.abs(c.d).toFixed(1)}%</span>${sparkSVG(i+1,up?1:-1,col)}</div></div>`;}
+function renderTicker(){document.getElementById('tkrow').innerHTML=COMMOD.map((c,i)=>tkChip(c,i)).join('');}
+renderTicker();
+/* the scenario copilot feeds shocks straight into the ticker Δ */
+const DRV2TK={copper:['copper'],coal:['coalhba','coalnew'],nickel:['nickel','nickelore'],gold:['gold'],tin:['tin'],aluminium:['alu','alumina'],alumin:['alu','alumina'],bauxite:['bauxite'],rupiah:['idr'],idr:['idr'],rupee:['idr']};
+function applyTickerScenario(drivers){if(!drivers||!drivers.length)return;const touched=[];drivers.forEach(dr=>{const nm=(dr.name||'').toLowerCase(),key=Object.keys(DRV2TK).find(k=>nm.includes(k));if(!key)return;const pct=parseFloat(String(dr.change).replace(/[^0-9.\-−]/g,'').replace('−','-'));if(isNaN(pct))return;DRV2TK[key].forEach(id=>{const c=COMMOD.find(x=>x.id===id);if(c){c.d=pct;touched.push(id);}});});if(!touched.length)return;renderTicker();const st=document.getElementById('tkstate');if(st){st.innerHTML='scenario applied · Δ vs plan — <a id="tkreset">reset</a>';const rb=document.getElementById('tkreset');if(rb)rb.onclick=resetTicker;}touched.forEach(id=>{const el=document.getElementById('tk-'+id);if(el){el.classList.remove('tkflash');void el.offsetWidth;el.classList.add('tkflash');}});}
+function resetTicker(){COMMOD.forEach((c,i)=>c.d=TKBASE[i]);renderTicker();document.getElementById('tkstate').innerHTML='prices &amp; Δ move with the scenario · vs plan';}
+
 /* KPIs */
-const KPI=[{l:'Revenue',a:145.2,p:132,n:'Beat plan — but <b>gold trading</b>, not core mining.'},{l:'EBITDA',a:40.5,p:45,n:'Missed by <b>~Rp 4.5T</b> — margin, not volume.'},{l:'Net profit',a:36.5,p:41,n:'Feeds the <b>dividend &amp; State</b>.'},{l:'Free cash flow',a:18.0,p:22,n:'Lower earnings + <b>Manyar/SGAR</b> capex.'},{l:'To State',a:90.4,p:88,n:'<b>Royalty up</b> on PP19/2025.'}];
-document.getElementById('kpis').innerHTML=KPI.map(k=>{const v=(k.a-k.p)/k.p*100,up=v>=0;return `<div class="kpi"><div class="l">${k.l}</div><div class="var ${up?'up':'down'}">${up?'▲ +':'▼ '}${v.toFixed(0)}%</div><div class="act">${k.a.toFixed(1)}<small> Rp T</small></div><div class="base">vs RKAP ${k.p}</div><div class="note">${k.n}</div></div>`}).join('');
+const KPI=[
+ {l:'Revenue',a:145.2,p:132,n:'Beat plan — on <b>gold trading</b>, not core mining.',flag:'⚠ low-margin trade'},
+ {l:'EBITDA',a:40.5,p:45,n:'Margin squeeze, <b>not volume</b>.',hero:1,margin:'Margin 34.1% → 27.9% · −6.2 pts'},
+ {l:'Net profit',a:36.5,p:41,n:'Feeds the <b>dividend &amp; State</b>.'},
+ {l:'Free cash flow',a:18.0,p:22,n:'Lower earnings + <b>Manyar/SGAR</b> capex.'},
+ {l:'To State',a:90.4,p:88,n:'<b>Royalty up</b> on PP19/2025.'}];
+document.getElementById('kpis').innerHTML=KPI.map(k=>{const v=(k.a-k.p)/k.p*100,up=v>=0;return `<div class="kpi${k.hero?' hero':''}"><div class="l">${k.l}</div><div class="var ${up?'up':'down'}">${up?'▲ +':'▼ '}${v.toFixed(0)}%</div><div class="act">${k.a.toFixed(1)}<small> Rp T</small></div><div class="base">vs RKAP ${k.p}</div>${k.margin?`<div class="mgc">${k.margin}</div>`:''}<div class="note">${k.n}</div>${k.flag?`<div class="flag">${k.flag}</div>`:''}</div>`}).join('');
 
 /* EBITDA variance bridge — same Rp 45→40.5 gap, decomposed two ways (why ⇄ who) */
 const EV={ptba:-3.0,ptfi:-1.3,antam:-0.9,inalum:0.4,timah:0.3}; // per-subsidiary EBITDA Δ vs plan, sums to −4.5
@@ -243,9 +302,17 @@ const BRIDGE={
 };
 let curBridge='driver';
 function wf(mode){curBridge=mode||curBridge;const B=BRIDGE[curBridge],steps=B.steps;const s=document.getElementById('wf');s.innerHTML='';
- const x0=44,x1=1540,y0=270,topV=48,n=steps.length,bw=Math.min(150,(x1-x0)/n-14),gap=(x1-x0-bw*n)/(n-1),sc=v=>(y0-26)*v/topV;
- for(let g=0;g<=48;g+=12){const y=y0-sc(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'rgba(120,170,155,.09)'});E(s,'text',{x:x0-8,y:y+4,'text-anchor':'end','font-size':10,fill:'#586f67'},'Rp '+g);}
- let x=x0,run=0;steps.forEach((st)=>{if(st.t){run=st.v;const yT=y0-sc(st.v);E(s,'rect',{x,y:yT,width:bw,height:sc(st.v),rx:3,fill:st.t==='b'?'#9fc4ba':'#2fe0c0',opacity:.92});E(s,'text',{x:x+bw/2,y:yT-9,'text-anchor':'middle','font-size':15,'font-weight':700,fill:'#eafff8'},'Rp '+st.v.toFixed(1));}else{const f=run,to=run+st.v,yF=y0-sc(f),yT=y0-sc(to),yTop=Math.min(yF,yT),h=Math.max(Math.abs(sc(st.v)),3),g2=E(s,'g',st.id?{style:'cursor:pointer'}:{});if(st.id)g2.addEventListener('click',()=>selRow(st.id));E(g2,'rect',{x,y:yTop,width:bw,height:h,rx:3,fill:st.v<0?'#ff5d5d':'#37d39a',opacity:.85});E(g2,'text',{x:x+bw/2,y:yTop-9,'text-anchor':'middle','font-size':13.5,'font-weight':700,fill:st.v<0?'#ff9d9d':'#7ce8bf'},(st.v>0?'+':'')+st.v.toFixed(1));run=to;E(s,'line',{x1:x+bw,y1:y0-sc(run),x2:x+bw+gap,y2:y0-sc(run),stroke:'rgba(120,170,155,.3)','stroke-dasharray':'3 3'});}E(s,'text',{x:x+bw/2,y:y0+20,'text-anchor':'middle','font-size':11,fill:st.col||'#9fc4ba','font-weight':600},st.l);if(st.sub)E(s,'text',{x:x+bw/2,y:y0+35,'text-anchor':'middle','font-size':9,fill:'#586f67'},st.sub);x+=bw+gap;});
+ const x0=44,x1=1540,y0=270,base=35,top=47,H=y0-26,n=steps.length,bw=Math.min(150,(x1-x0)/n-14),gap=(x1-x0-bw*n)/(n-1),sc=v=>H*(v-base)/(top-base);
+ for(let g=base;g<=top;g+=3){const y=y0-sc(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'rgba(120,170,155,.09)'});E(s,'text',{x:x0-8,y:y+4,'text-anchor':'end','font-size':10,fill:'#586f67'},'Rp '+g);}
+ E(s,'text',{x:x0-8,y:y0+4,'text-anchor':'end','font-size':8.5,fill:'#586f67'},'⁄⁄');
+ let x=x0,run=0,actualX=0;steps.forEach((st)=>{if(st.t){if(st.t==='a')actualX=x;run=st.v;const yT=y0-sc(st.v);E(s,'rect',{x,y:yT,width:bw,height:sc(st.v),rx:3,fill:st.t==='b'?'#9fc4ba':'#2fe0c0',opacity:.92});E(s,'text',{x:x+bw/2,y:yT-9,'text-anchor':'middle','font-size':15,'font-weight':700,fill:'#eafff8'},'Rp '+st.v.toFixed(1));}else{const f=run,to=run+st.v,yF=y0-sc(f),yT=y0-sc(to),yTop=Math.min(yF,yT),h=Math.max(Math.abs(yF-yT),3),g2=E(s,'g',st.id?{style:'cursor:pointer'}:{});if(st.id)g2.addEventListener('click',()=>selRow(st.id));E(g2,'rect',{x,y:yTop,width:bw,height:h,rx:3,fill:st.v<0?'#ff5d5d':'#37d39a',opacity:.85});E(g2,'text',{x:x+bw/2,y:yTop-9,'text-anchor':'middle','font-size':13.5,'font-weight':700,fill:st.v<0?'#ff9d9d':'#7ce8bf'},(st.v>0?'+':'')+st.v.toFixed(1));run=to;E(s,'line',{x1:x+bw,y1:y0-sc(run),x2:x+bw+gap,y2:y0-sc(run),stroke:'rgba(120,170,155,.3)','stroke-dasharray':'3 3'});}E(s,'text',{x:x+bw/2,y:y0+20,'text-anchor':'middle','font-size':11,fill:st.col||'#9fc4ba','font-weight':600},st.l);if(st.sub)E(s,'text',{x:x+bw/2,y:y0+35,'text-anchor':'middle','font-size':9,fill:'#586f67'},st.sub);x+=bw+gap;});
+ // gap bracket: the miss made unmissable — plan level + drop arrow to actual
+ const planTop=y0-sc(45),actTop=y0-sc(40.5),ax=actualX+bw/2;
+ E(s,'line',{x1:x0,y1:planTop,x2:x1,y2:planTop,stroke:'rgba(245,185,74,.35)','stroke-dasharray':'5 4'});
+ E(s,'line',{x1:ax,y1:planTop,x2:ax,y2:actTop,stroke:'#f5b94a','stroke-width':1.4,'stroke-dasharray':'3 2'});
+ E(s,'path',{d:`M ${ax-4} ${actTop-7} L ${ax} ${actTop} L ${ax+4} ${actTop-7}`,fill:'none',stroke:'#f5b94a','stroke-width':1.4});
+ E(s,'text',{x:ax+9,y:(planTop+actTop)/2-1,'font-size':12,'font-weight':700,fill:'#f5d089'},'−Rp 4.5T');
+ E(s,'text',{x:ax+9,y:(planTop+actTop)/2+13,'font-size':10,'font-weight':700,fill:'#f5d089'},'−10% vs RKAP');
  document.getElementById('wfread').innerHTML=B.read;}
 const bsel=document.getElementById('bridgesel');[...bsel.children].forEach(b=>b.onclick=()=>{[...bsel.children].forEach(x=>x.classList.toggle('on',x===b));wf(b.dataset.m);});
 
@@ -288,7 +355,7 @@ document.getElementById('outlookcards').innerHTML=OL.map(o=>`<div class="ol ${o.
 async function postJSON(u,b){const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});return r.json();}
 const aiSubs=SUBS.map(s=>({nm:s.nm,status:s.rag,note:s.watch}));
 (async function(){try{const h=await (await fetch('/api/health')).json();const live=h.aiMode==='live';document.getElementById('aibadge').textContent=live?'· live':'· simulated';const r=await postJSON('/api/portfolio/board-read',{group:{revenue:145.2,revenueYoY:34.6,ebitdaVsPlan:-10,note:'EBITDA missed RKAP ~Rp4.5T on coal+nickel price; revenue beat on gold trading; profit ~80% in Freeport under force majeure',stateContribution:90.4,onTrack:3,watch:1,risk:1},subs:aiSubs});if(r&&r.read)document.getElementById('ovread').textContent=r.read;}catch(e){}})();
-function renderScenario(r){document.getElementById('scres').innerHTML=`<span class="vdt ${r.verdict||'UNCLEAR'}">${r.verdict||'UNCLEAR'}</span>`+(r.drivers&&r.drivers.length?`<div class="drv">${r.drivers.map(d=>`<span>${esc(d.name)} <b style="color:var(--teal)">${esc(d.change)}</b></span>`).join('')}</div>`:'')+`<div class="imp">${esc(r.impact)} <a href="ceo-cockpit.html">→ size it in Stress</a></div>`;}
+function renderScenario(r){document.getElementById('scres').innerHTML=`<span class="vdt ${r.verdict||'UNCLEAR'}">${r.verdict||'UNCLEAR'}</span>`+(r.drivers&&r.drivers.length?`<div class="drv">${r.drivers.map(d=>`<span>${esc(d.name)} <b style="color:var(--teal)">${esc(d.change)}</b></span>`).join('')}</div>`:'')+`<div class="imp">${esc(r.impact)} <a href="ceo-cockpit.html">→ size it in Stress</a></div>`;applyTickerScenario(r.drivers);}
 async function runScenario(q){if(!q)return;document.getElementById('scres').innerHTML='<span class="pl">Modelling the shock…</span>';try{renderScenario(await postJSON('/api/portfolio/scenario',{query:q,subs:aiSubs}));}catch(e){document.getElementById('scres').innerHTML='<span class="pl">Open on the deployed site to run the live copilot.</span>';}}
 document.getElementById('scform').addEventListener('submit',e=>{e.preventDefault();runScenario(document.getElementById('scq').value);});
 document.querySelectorAll('.scex a').forEach(a=>a.onclick=()=>{document.getElementById('scq').value=a.dataset.q;runScenario(a.dataset.q);});
