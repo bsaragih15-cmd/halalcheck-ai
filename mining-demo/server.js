@@ -10,6 +10,7 @@ import { irocFallback, irocParseFallback, irocCopilotFallback } from './data/iro
 import { blastFallback, blastParseFallback, blastCopilotFallback } from './data/blast.js';
 import { shippingFallback, shippingDisruptionFallback, shippingCopilotFallback } from './data/shipping.js';
 import { cockpitBriefFallback } from './data/cockpit.js';
+import { boardReadFallback, scenarioFallback } from './data/portfolio.js';
 import { USE_CASES } from './public/js/usecases.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -450,6 +451,49 @@ Domain rules:
 
 IMPORTANT: Return ONLY valid JSON, no other text.`;
 
+const BOARD_READ_PROMPT = `You are the AI Chief of Staff to the Group CEO of MIND ID (Mining Industry Indonesia), the Indonesian state mining holding that owns PT Bukit Asam (PTBA, coal), PT Antam (nickel/gold/bauxite), PT Inalum (aluminium), a 51% stake in PT Freeport Indonesia (copper/gold, Grasberg), and PT Timah (tin).
+
+You are given the live Portfolio Control Tower state: the group roll-up (revenue, EBITDA, contribution to State, on-track/watch/risk counts, group safety) and a per-subsidiary scorecard (status, production vs guidance, unit cost, cost-curve quartile, EBITDA margin, net-profit move, and a one-line note).
+
+Write a sharp, board-grade "morning read" — what a CEO needs in 20 seconds. Return JSON with EXACTLY this structure:
+{
+  "headline": "<one punchy sentence — the single most important truth about the portfolio today>",
+  "read": "<3-4 sentences: what's really going on beneath the headline numbers. Name the assets. Distinguish a flattering top line from the underlying economics.>",
+  "watchlist": [{"asset": "<name>", "why": "<one line, grounded in its status/note>"}],
+  "oneThing": "<the single most valuable action or stress test to run next>",
+  "posture": "CONSTRUCTIVE" | "BALANCED" | "WATCHFUL"
+}
+
+Domain rules:
+- Ground every claim in the provided numbers — quote revenue, the on/watch/risk split, quartiles, margins. Never invent figures.
+- Be honest about quality of earnings: e.g. a record top line driven by low-margin gold trading is not the same as strong mining economics.
+- The cost-curve quartile is the resilience tell: Q1 assets survive the price cycle; Q4 assets are first to go underwater.
+- Lead the reader to the concentration of risk (the RISK-flagged asset) and the cash-floor stress test.
+- 2-3 watchlist items, most severe first. Crisp, not corporate.
+
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
+const SCENARIO_PROMPT = `You are the Scenario Copilot for MIND ID's Portfolio Control Tower. The CEO types a natural-language commodity/market shock; you parse it into structured driver deltas and explain, grounded in the portfolio, which assets are exposed.
+
+MIND ID assets and their commodities: Bukit Asam = thermal coal (cost-curve Q2); Antam = nickel ferronickel (Q4, high-cost) + gold (trading) + bauxite; Inalum = aluminium (Q1, captive hydro, low-cost); Freeport Indonesia = copper + gold (Q1; net cash cost ~$0/lb because Grasberg gold credits offset the copper cash cost — so it is unusually resilient to copper price falls but is the group's largest earnings stream); Timah = tin (Q3).
+
+Return JSON with EXACTLY this structure:
+{
+  "drivers": [{"name": "<e.g. Copper price>", "change": "<e.g. -30%>"}],
+  "exposed": [{"asset": "<name>", "effect": "<one line: how this asset is hit or protected>", "severity": "positive" | "low" | "medium" | "high"}],
+  "verdict": "ACT" | "WATCH" | "HOLD" | "UNCLEAR",
+  "impact": "<2-3 sentences: the net read on group cash and where the concentration is. End by pointing to the full cash-floor Stress Test.>"
+}
+
+Domain rules:
+- Parse every commodity and FX move you can find (e.g. "copper -30%", "rupiah weakens 10%", "coal falls 20%").
+- A high-cost (Q4) asset under a price fall is the one that goes underwater / curtails first — flag severity "high". A Q1 asset under the same fall compresses margin but survives — "medium" or "low".
+- A weaker rupiah flatters reported IDR earnings on USD-priced exports (partly offsetting commodity weakness) but adds variance.
+- verdict ACT if any asset is pushed toward curtailment or the group cash floor is threatened; WATCH if margins compress materially; HOLD if cover comfortably holds; UNCLEAR if no shock could be parsed.
+- Never invent specific dividend figures — direct the user to the Monte-Carlo Stress Test to size the cash impact.
+
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
 // ── Endpoints ─────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, aiMode: aiMode() }));
 
@@ -461,6 +505,32 @@ app.post('/api/cockpit/brief', async (req, res) => {
     systemPrompt: COCKPIT_BRIEF_PROMPT,
     userMessage: `Live dividend-at-risk state:\n${JSON.stringify(body, null, 2).slice(0, 6000)}\n\nReturn only valid JSON.`,
     fallback: cockpitBriefFallback(body),
+  });
+  res.json(result);
+});
+
+// Portfolio Control Tower: AI "Board Read" — group-level narrative over the
+// Tier 0/1 scorecard state the cockpit posts.
+app.post('/api/portfolio/board-read', async (req, res) => {
+  const body = req.body || {};
+  const result = await askClaude({
+    label: 'portfolio:board-read',
+    systemPrompt: BOARD_READ_PROMPT,
+    userMessage: `Live MIND ID portfolio state (group roll-up + per-subsidiary scorecard):\n${JSON.stringify(body, null, 2).slice(0, 6000)}\n\nReturn only valid JSON.`,
+    fallback: boardReadFallback(body),
+  });
+  res.json(result);
+});
+
+// Portfolio Control Tower: Scenario Copilot — parse a natural-language commodity
+// shock into driver deltas + a grounded read of which assets are exposed.
+app.post('/api/portfolio/scenario', async (req, res) => {
+  const body = req.body || {};
+  const result = await askClaude({
+    label: 'portfolio:scenario',
+    systemPrompt: SCENARIO_PROMPT,
+    userMessage: `CEO question / scenario: "${String(body.query || '').slice(0, 400)}"\n\nPortfolio context:\n${JSON.stringify(body.subs || [], null, 2).slice(0, 4000)}\n\nReturn only valid JSON.`,
+    fallback: scenarioFallback(body),
   });
   res.json(result);
 });

@@ -100,6 +100,38 @@ table.t1{border-collapse:collapse;width:100%;min-width:1260px;font-size:12.5px}
 .brwrap .bs{font-size:10px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin-bottom:4px}
 .t2note{grid-column:1/-1;margin-top:4px;font-size:11.5px;color:var(--faint);line-height:1.5}
 .foot{font-size:10.5px;color:var(--faint);margin-top:20px;line-height:1.55;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em}
+/* AI layer */
+.aiwrap{display:grid;grid-template-columns:1.35fr 1fr;gap:16px}
+.aitag{background:var(--violet)!important;color:#0a0a1a!important}
+.aibadge{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;padding:2px 7px;border-radius:5px;text-transform:uppercase}
+.aibadge.live{color:#05201b;background:var(--teal)} .aibadge.sim{color:var(--mut);border:1px solid var(--border)}
+.airead{border-color:rgba(143,157,255,.25)!important}
+.airead .hl{font-size:16px;font-weight:700;line-height:1.32;letter-spacing:-.01em}
+.airead .rd{font-size:12.5px;color:var(--mut);line-height:1.55;margin-top:9px}
+.wl{margin-top:11px;display:flex;flex-direction:column;gap:6px}
+.wl .it{display:flex;gap:9px;font-size:11.5px;color:var(--mut);line-height:1.4}
+.wl .it b{color:var(--tx);white-space:nowrap}
+.wl .it .dot{width:6px;height:6px;border-radius:50%;background:var(--amber);margin-top:5px;flex:none}
+.one{margin-top:12px;padding:10px 12px;border-radius:9px;background:rgba(47,224,192,.07);border:1px solid rgba(47,224,192,.22);font-size:12px;color:var(--tx);line-height:1.45}
+.one b{color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:3px}
+.copilot form{display:flex;gap:8px;margin-top:2px}
+.copilot input{flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--tx);font-family:inherit;font-size:12.5px;outline:none}
+.copilot input:focus{border-color:var(--border2)}
+.copilot button{background:var(--teal);color:#05201b;border:0;border-radius:8px;padding:0 16px;font-weight:700;font-size:12.5px;cursor:pointer}
+.scex{font-size:10.5px;color:var(--faint);margin-top:7px;font-family:'IBM Plex Mono',monospace}
+.scex a{color:var(--mut);cursor:pointer;text-decoration:underline;text-decoration-color:var(--border2)}
+#scres{margin-top:11px}
+.vd{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;margin-bottom:8px}
+.vd.ACT{color:#3a0000;background:rgba(255,93,93,.18)} .vd.WATCH{color:#3a2600;background:rgba(245,185,74,.18)} .vd.HOLD{color:#062;background:rgba(55,211,154,.16)} .vd.UNCLEAR{color:var(--mut);border:1px solid var(--border)}
+.drv{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
+.drv span{font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:3px 8px;border-radius:5px;background:var(--panel2);border:1px solid var(--border);color:var(--tx)}
+.exp{font-size:11.5px;color:var(--mut);line-height:1.45;display:flex;flex-direction:column;gap:5px;margin-bottom:9px}
+.exp .e{display:flex;gap:8px}.exp .e b{color:var(--tx);white-space:nowrap}
+.exp .e .s{width:6px;height:6px;border-radius:50%;margin-top:5px;flex:none}
+.s-high{background:var(--red)}.s-medium{background:var(--amber)}.s-low{background:var(--mut)}.s-positive{background:var(--green)}
+.imp{font-size:12px;color:var(--tx);line-height:1.5}
+.imp a{color:var(--teal)}
+.skel{color:var(--faint);font-size:12px;font-family:'IBM Plex Mono',monospace}
 </style></head>
 <body><div id="app">
 
@@ -111,6 +143,18 @@ table.t1{border-collapse:collapse;width:100%;min-width:1260px;font-size:12.5px}
 
  <div class="tierhead"><span class="tag">TIER 0</span><h2>Group roll-up</h2><span class="hint">the board's one screen — consolidated, decomposes to each subsidiary</span></div>
  <div class="t0" id="t0"></div>
+
+ <div class="tierhead"><span class="tag aitag">AI</span><h2>Board read</h2><span class="hint" id="aimode">· AI Chief-of-Staff · generating…</span></div>
+ <div class="aiwrap">
+   <div class="card airead" id="boardread"><div class="skel">Reading the portfolio…</div></div>
+   <div class="card copilot">
+     <div class="ch">Scenario copilot</div>
+     <div class="cs">type a commodity/market shock in plain English → who's exposed</div>
+     <form id="scform"><input id="scq" autocomplete="off" placeholder="e.g. copper −30% and rupiah weakens 10%"><button type="submit">Run</button></form>
+     <div class="scex">try: <a data-q="coal falls 20%">coal falls 20%</a> · <a data-q="nickel down 25%">nickel −25%</a> · <a data-q="copper -30% and rupiah weakens 10%">copper −30% + rupiah −10%</a></div>
+     <div id="scres"></div>
+   </div>
+ </div>
 
  <div class="tierhead"><span class="tag">PORTFOLIO SHAPE</span><h2>Cost position &amp; quality</h2><span class="hint">where each asset sits on its commodity cost curve · drag the price line to stress</span></div>
  <div class="charts">
@@ -415,6 +459,50 @@ function drill(id){
 }
 document.querySelectorAll('#t1 tbody tr').forEach(tr=>tr.onclick=()=>drill(tr.dataset.id));
 drill('ptfi');
+
+/* ─── AI LAYER ─── */
+function portfolioState(){
+ return {
+  group:{revenue:145.2,revenueYoY:34.6,ebitda:40,margin:27,npParent:36.5,stateContribution:90.4,
+   onTrack:SUBS.filter(s=>s.st==='green').length,watch:SUBS.filter(s=>s.st==='amber').length,risk:SUBS.filter(s=>s.st==='red').length,fatalities:fatalities},
+  subs:SUBS.map(s=>({nm:s.nm,commodity:s.sec,status:s.st==='green'?'green':s.st==='amber'?'amber':'red',
+   prodVsGuidance:s.prodU,unitCost:s.cost,quartile:s.quart,margin:s.margin,npVs:s.npVs,note:s.watch}))
+ };
+}
+async function postJSON(url,body){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});return r.json();}
+const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+(async function health(){try{const h=await (await fetch('/api/health')).json();const live=h.aiMode==='live';
+ document.getElementById('aimode').innerHTML='· AI Chief-of-Staff · <span class="aibadge '+(live?'live':'sim')+'">'+(live?'live':'simulated')+'</span>';
+}catch(e){document.getElementById('aimode').innerHTML='· AI Chief-of-Staff';}})();
+
+(async function boardRead(){
+ const box=document.getElementById('boardread');
+ try{
+  const r=await postJSON('/api/portfolio/board-read',portfolioState());
+  box.innerHTML=`<div class="hl">${esc(r.headline)}</div><div class="rd">${esc(r.read)}</div>`+
+   (r.watchlist&&r.watchlist.length?`<div class="wl">${r.watchlist.map(w=>`<div class="it"><span class="dot"></span><div><b>${esc(w.asset)}</b> — ${esc(w.why)}</div></div>`).join('')}</div>`:'')+
+   (r.oneThing?`<div class="one"><b>Do this next</b>${esc(r.oneThing)}</div>`:'');
+ }catch(e){
+  // file:// / offline — render the deterministic read so the UI is never blank
+  box.innerHTML='<div class="hl">Record group revenue, uneven quality.</div><div class="rd">Open this on the deployed site for the live AI Board Read (group revenue Rp 145.2T +34.6%; 2 on track, 2 watch, 1 risk). Freeport is the concentration of risk; Antam\'s record top line is gold-trading-driven while nickel stays high-cost.</div><div class="one"><b>Do this next</b>Stress the cash floor against a copper / Grasberg shock — that is where the portfolio is most concentrated.</div>';
+ }
+})();
+
+function renderScenario(r){
+ const box=document.getElementById('scres');
+ box.innerHTML=`<span class="vd ${r.verdict||'UNCLEAR'}">${r.verdict||'UNCLEAR'}</span>`+
+  (r.drivers&&r.drivers.length?`<div class="drv">${r.drivers.map(d=>`<span>${esc(d.name)} <b style="color:var(--teal)">${esc(d.change)}</b></span>`).join('')}</div>`:'')+
+  (r.exposed&&r.exposed.length?`<div class="exp">${r.exposed.map(e=>`<div class="e"><span class="s s-${e.severity||'low'}"></span><div><b>${esc(e.asset)}</b> — ${esc(e.effect)}</div></div>`).join('')}</div>`:'')+
+  `<div class="imp">${esc(r.impact)} <a href="ceo-cockpit.html">→ size it in the Stress Test</a></div>`;
+}
+async function runScenario(q){
+ if(!q)return;const box=document.getElementById('scres');box.innerHTML='<div class="skel">Modelling the shock…</div>';
+ try{ renderScenario(await postJSON('/api/portfolio/scenario',{query:q,subs:portfolioState().subs})); }
+ catch(e){ box.innerHTML='<div class="skel">Open on the deployed site to run the live copilot.</div>'; }
+}
+document.getElementById('scform').addEventListener('submit',e=>{e.preventDefault();runScenario(document.getElementById('scq').value);});
+document.querySelectorAll('.scex a').forEach(a=>a.onclick=()=>{document.getElementById('scq').value=a.dataset.q;runScenario(a.dataset.q);});
 
 document.getElementById('foot').innerHTML=
  'Tier 0/1/2 of the Subsidiary Performance Metrics Framework. FY2024 public disclosures; financial/operational detail not publicly broken out is modelled (·m). '+
