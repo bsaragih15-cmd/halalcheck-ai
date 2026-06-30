@@ -513,6 +513,15 @@
   body.stress-solo #stressView{overflow:hidden}
   body.stress-solo #vtabs{display:none}
   #vtabs .vtab[data-v="monitor"],#vtabs .vtab[data-v="forecast"],#vtabs .vtab[data-v="allocate"]{display:none}
+  /* product-level Monitor ⇄ Stress Test toggle (matches portfolio-monitor.html) */
+  #prodToggle{display:none}
+  body.stress-solo #prodToggle{display:flex;position:fixed;top:9px;left:50%;transform:translateX(-50%);z-index:60;
+    gap:6px;background:#0b1614;border:1px solid rgba(47,224,192,.18);border-radius:9px;padding:4px;
+    box-shadow:0 6px 22px rgba(0,0,0,.45)}
+  #prodToggle .pt{font-family:inherit;font-size:13px;font-weight:600;color:#82a79e;text-decoration:none;
+    padding:7px 16px;border-radius:6px;cursor:pointer;transition:background .15s ease,color .15s ease;line-height:1}
+  #prodToggle .pt:hover{color:#cfeee6}
+  #prodToggle .pt.active{background:#2fe0c0;color:#05201b;cursor:default}
   /* ── Stress Test module (Cash & Scenarios redesign) ── */
   @keyframes ompulse{0%,100%{opacity:1}50%{opacity:.4}}
   @keyframes omscan{0%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
@@ -794,6 +803,41 @@
   @keyframes skFlow{to{stroke-dashoffset:-16}}
   @media(prefers-reduced-motion:reduce){.sk-link{animation:none;stroke-dasharray:none}.sk-node,.sk-verdict{animation:none;opacity:1}}
   [data-theme="neo"] .sk-link{opacity:.7}
+
+  /* ── board brief (print / Save-as-PDF) ───────────────────────── */
+  #printBrief{display:none;}
+  @media print{
+    @page{size:A4 portrait;margin:14mm 14mm;}
+    html,body{background:#fff !important;}
+    body>*{display:none !important;}            /* hide the dark cockpit UI */
+    body>#printBrief{display:block !important;}
+    #printBrief{position:static;color:#16211d;background:#fff;
+      font-family:Inter,system-ui,sans-serif;font-size:11pt;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    #printBrief *{box-shadow:none !important;}
+    .pb-head{border-bottom:2px solid #16211d;padding-bottom:8px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-end;}
+    .pb-title{font-size:17pt;font-weight:700;letter-spacing:-.01em;}
+    .pb-sub{font-size:9.5pt;color:#64756f;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.08em;}
+    .pb-scenario{font-size:12pt;font-weight:600;margin-bottom:10px;}
+    .pb-verdict{border:1.4px solid #16211d;border-radius:7px;padding:10px 13px;margin-bottom:14px;display:flex;gap:11px;align-items:flex-start;}
+    .pb-vbadge{font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:10.5pt;border:1.4px solid #16211d;border-radius:5px;padding:2px 8px;white-space:nowrap;flex-shrink:0;}
+    .pb-vline{font-size:13pt;font-weight:600;line-height:1.4;}
+    .pb-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px 22px;margin-bottom:14px;}
+    .pb-fig{border-bottom:1px solid #c4d5cb;padding-bottom:5px;}
+    .pb-fl{font-size:8.5pt;text-transform:uppercase;letter-spacing:.07em;color:#64756f;}
+    .pb-fv{font-size:13pt;font-weight:600;font-family:'IBM Plex Mono',monospace;}
+    .pb-fn{font-size:9pt;color:#64756f;}
+    .pb-h{font-size:9pt;text-transform:uppercase;letter-spacing:.1em;color:#15a06d;font-weight:700;margin:0 0 6px;}
+    .pb-sec{margin-bottom:14px;}
+    table.pb-tab{width:100%;border-collapse:collapse;font-size:10pt;}
+    table.pb-tab th{text-align:left;font-size:8pt;text-transform:uppercase;letter-spacing:.06em;color:#64756f;border-bottom:1px solid #16211d;padding:3px 6px;}
+    table.pb-tab td{padding:3px 6px;border-bottom:1px solid #e2eae5;font-family:'IBM Plex Mono',monospace;}
+    table.pb-tab td:first-child{font-family:Inter,sans-serif;}
+    .pb-list{list-style:none;padding:0;margin:0;}
+    .pb-list li{padding:4px 0;border-bottom:1px solid #e2eae5;display:flex;justify-content:space-between;gap:10px;font-size:10pt;}
+    .pb-list .pb-c{font-family:'IBM Plex Mono',monospace;color:#64756f;}
+    .pb-note{font-size:9.5pt;line-height:1.55;color:#16211d;background:#f2f7f2;border:1px solid #c4d5cb;border-radius:6px;padding:9px 11px;}
+    .pb-foot{margin-top:16px;padding-top:8px;border-top:1px solid #c4d5cb;font-size:8pt;color:#8b9a92;font-family:'IBM Plex Mono',monospace;display:flex;justify-content:space-between;}
+  }
 </style>
 <script>(function(){var d=document.documentElement;
   if(new URLSearchParams(location.search).has('embed'))d.classList.add('embed');
@@ -801,6 +845,15 @@
   if(t!=='forest')d.setAttribute('data-theme',t);})();</script>
 </head>
 <body>
+
+<!-- product-level nav: Monitor (portfolio-monitor.html) ⇄ Stress Test (this view). Shown full-bleed in stress-solo. -->
+<div id="prodToggle" role="tablist" aria-label="Switch screen">
+  <a class="pt" href="portfolio-monitor.html" role="tab">Monitor</a>
+  <span class="pt active" role="tab" aria-selected="true">Stress Test</span>
+</div>
+
+<!-- print-only board brief: populated on Export PDF, then window.print(). Hidden on screen. -->
+<div id="printBrief" aria-hidden="true"></div>
 
 <div class="bar">
   <div class="logo">OS</div>
@@ -2789,9 +2842,28 @@ function derive(){
   const pinned=S.pinned.map((p,i)=>({i,label:p.label}));
   const presetId=M.detectPreset(v,regime);
   const presetLabel=(M.PRESETS.find(p=>p.id===presetId)||{label:'Custom scenario'}).label;
+  /* prescriptive headline verdict: state + breach prob + single highest-impact driver to hedge */
+  const topDriver=topRow.d.label, topDriverLc=topDriver.toLowerCase();
+  let verdictLine, verdictGlyph, verdictTag;
+  if(status==='ACT'){verdictGlyph='▲';verdictTag='BREACH';
+    verdictLine='ACT — '+brs+' chance cash falls below the '+fl+' floor. Hedge '+topDriverLc+' first'+(best.arr.length?(' and run the '+best.arr[0].label.toLowerCase()):'')+'.';}
+  else if(status==='WATCH'){verdictGlyph='!';verdictTag='WATCH';
+    verdictLine='WATCH — '+brs+' of paths breach the '+fl+' floor at the 1-in-10 downside. Pre-clear '+topDriverLc+' hedging before it widens.';}
+  else{verdictGlyph='✓';verdictTag='OK';
+    verdictLine='HOLD — only '+brs+' breach risk; P10 clears the '+fl+' floor. Keep '+topDriverLc+' hedged and re-stress on a regime shift.';}
+  const verdict={status,line:verdictLine,glyph:verdictGlyph,tag:verdictTag,color:M.cv(recT.c),topDriver,breachText:brs,floorText:fl};
   const noteTitle=presetLabel+' · '+regime+' regime';
   const noteText='Scenario: '+presetLabel+' ('+regime+' regime). Holding residual FCF is projected at '+kpi.p50Text+' (P10 '+kpi.p10Text+' / P90 '+kpi.p90Text+'), against the '+kpi.floorText+' board cash floor. Floor-breach probability is '+kpi.breachText+' across '+M._noise.N.toLocaleString('en-US')+' simulated paths. '+assessment+(best.arr.length?(' Recommended package: '+best.arr.map(m=>m.label).join(', ')+' — trims breach to '+M.brPct(afterBreach)+' at cost score '+best.cost+'/'+maxCost+'.'):' No mitigation required; the 1-in-10 downside already clears the floor.');
-  return{kpi,market,tBars,tLab,subsidiary,mitigation,wfBars,wfLab,ai,sliders,pinned,metric,attMetric,regime,presetId,noteTitle,noteText};
+  /* board-brief payload for the print/PDF export — reuses the figures above, never recomputes */
+  const brief={scenario:noteTitle,verdict:verdictLine,verdictTag,
+    p50:kpi.p50Text,floor:kpi.floorText,breach:kpi.breachText,p10:kpi.p10Text,p90:kpi.p90Text,far:kpi.farText,
+    floorClears:mc.p10>=v.floor,topDriver:topDriver,swingText:'±'+sw.toFixed(1)+'T per 1σ',
+    mitHeadline:mitigation.headline,mitEmpty:mitigation.empty,
+    mitLevers:mitigation.levers.map(m=>({label:m.label,effect:m.effectText,cost:m.costLabel})),
+    mitBefore:mitigation.beforeText,mitAfter:mitigation.afterText,mitCost:mitigation.costText,
+    subsidiary:subsidiary.map(s=>({name:s.name,up:s.upText,share:s.shareText,dPlan:s.dPlanText})),
+    attMetricLabel:attMetric==='cash'?'cash share':'risk share',noteText:noteText};
+  return{kpi,market,tBars,tLab,subsidiary,mitigation,wfBars,wfLab,ai,sliders,pinned,metric,attMetric,regime,presetId,noteTitle,noteText,verdict,brief};
 }
 
 function skeleton(){
@@ -2826,7 +2898,7 @@ function skeleton(){
   <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding-bottom:11px;border-bottom:1px solid var(--border);">
     <div style="display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;">
       <span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--green);">03</span>
-      <span style="font-size:13.5px;font-weight:600;">Stress Test — scenario → cash</span>
+      <span style="font-size:13.5px;font-weight:600;">CEO Cockpit — scenario → cash</span>
       <span style="font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);">common-factor Monte Carlo · illustrative</span>
     </div>
     <div id="stRegime" style="display:flex;align-items:center;gap:0;background:var(--inset);border:1px solid var(--border);border-radius:9px;padding:2px;"></div>
@@ -2844,6 +2916,7 @@ function skeleton(){
     <span style="font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);">Board scenarios</span>
     <div id="stPresets" style="display:flex;gap:6px;flex-wrap:wrap;">${M.PRESETS.map(p=>`<button class="st-chip" data-preset="${p.id}" style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--muted);background:var(--inset);border:1px solid var(--border);border-radius:7px;padding:4px 9px;cursor:pointer;white-space:nowrap;transition:color .2s,background .2s,border-color .2s;">${p.label}</button>`).join('')}</div>
     <button class="st-btn" data-act="note" title="Generate a board-ready note from this scenario" style="margin-left:auto;display:flex;align-items:center;gap:6px;font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--green);background:var(--inset);border:1px solid var(--border);border-radius:7px;padding:4px 11px;cursor:pointer;white-space:nowrap;">⧉ Copy board note</button>
+    <button class="st-btn" data-act="pdf" title="Build a one-page board brief and open the print dialog — Save as PDF" style="display:flex;align-items:center;gap:6px;font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--green);background:var(--inset);border:1px solid var(--border);border-radius:7px;padding:4px 11px;cursor:pointer;white-space:nowrap;">⤓ Export PDF</button>
   </div>
   <div style="display:grid;grid-template-columns:1fr 420px;grid-template-rows:auto auto;gap:14px;margin-top:12px;align-items:stretch;">
     <div style="grid-column:1;grid-row:1;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:11px 14px 11px;display:flex;flex-direction:column;">
@@ -2859,7 +2932,7 @@ function skeleton(){
     </div>
     <div style="grid-column:2;grid-row:1 / span 2;align-self:start;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:11px 14px 11px;display:flex;flex-direction:column;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:9.5px;font-family:'IBM Plex Mono',monospace;color:var(--green);">01</span><span style="font-size:12.5px;font-weight:600;">Driver sensitivity</span></div>
+        <div style="display:flex;align-items:baseline;gap:8px;"><span style="font-size:9.5px;font-family:'IBM Plex Mono',monospace;color:var(--green);">01</span><span title="How far residual cash (or breach odds) moves when each driver is shocked ±1σ — the top bar is the driver to hedge first." style="font-size:12.5px;font-weight:600;cursor:help;">Driver sensitivity</span></div>
         <div style="display:flex;align-items:center;gap:0;background:var(--inset);border:1px solid var(--border);border-radius:7px;padding:2px;">
           <div data-act="tfcf" style="${seg(vm.metric==='fcf')}">Δ FCF</div><div data-act="tbreach" style="${seg(vm.metric==='breach')}">Δ breach</div>
         </div>
@@ -2871,7 +2944,7 @@ function skeleton(){
     <div style="grid-column:1;grid-row:2;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:8px 14px 9px;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
         <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
-          <span style="font-size:9.5px;font-family:'IBM Plex Mono',monospace;color:var(--green);">02</span><span style="font-size:12.5px;font-weight:600;">Subsidiary attribution</span>
+          <span style="font-size:9.5px;font-family:'IBM Plex Mono',monospace;color:var(--green);">02</span><span title="Where the holding's cash and risk actually sit, broken out per operating subsidiary." style="font-size:12.5px;font-weight:600;cursor:help;">Subsidiary attribution</span>
           <span style="font-size:9.5px;color:var(--muted);margin-left:4px;"><span style="font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--green);">Good for</span> where the cash &amp; the risk actually sit · per entity</span>
         </div>
         <div style="display:flex;align-items:center;gap:0;background:var(--inset);border:1px solid var(--border);border-radius:7px;padding:2px;">
@@ -2886,27 +2959,34 @@ function skeleton(){
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
         <div style="display:flex;align-items:baseline;gap:9px;"><span style="font-size:10px;font-family:'IBM Plex Mono',monospace;color:var(--green);">03</span><span style="font-size:13.5px;font-weight:600;">Holding FCF waterfall · mitigation overlay</span></div>
         <div style="display:flex;align-items:center;gap:8px;">
-          <svg id="stGauge" width="34" height="34" viewBox="0 0 34 34" style="flex-shrink:0;"></svg>
+          <svg id="stGauge" width="34" height="34" viewBox="0 0 34 34" style="flex-shrink:0;cursor:help;"><title>Breach gauge — % of simulated paths that fall below the cash floor.</title></svg>
           <span style="font-size:8.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--violet);border:1px solid var(--border);border-radius:6px;padding:3px 7px;font-family:'IBM Plex Mono',monospace;white-space:nowrap;">overlay · 0 new</span>
           <div id="stRecPill" style="display:flex;align-items:center;gap:6px;font-size:10px;font-family:'IBM Plex Mono',monospace;font-weight:600;letter-spacing:.06em;border:1px solid var(--border);border-radius:7px;padding:3px 8px;"></div>
         </div>
       </div>
-      <div id="stKpi" style="display:flex;align-items:flex-end;gap:20px;margin-top:9px;flex-wrap:wrap;">
+      <div id="stVerdict" title="The single decisive call for this scenario — what to do, the breach odds, and the driver to hedge first." style="display:flex;align-items:center;gap:10px;margin-top:11px;padding:9px 12px;border-radius:10px;border:1px solid var(--border);background:var(--inset);">
+        <span id="stVerdictBadge" style="display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:11px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;padding:3px 8px;border-radius:6px;border:1px solid var(--border);"><span id="stVerdictGlyph" style="font-size:12px;line-height:1;"></span><span id="stVerdictTag"></span></span>
+        <span id="stVerdictLine" style="font-size:13.5px;font-weight:600;line-height:1.4;color:var(--ink);"></span>
+      </div>
+      <div id="stKpi" style="display:flex;align-items:flex-end;gap:20px;margin-top:11px;flex-wrap:wrap;">
         <div style="display:flex;align-items:baseline;gap:7px;">
           <span id="stk-p50" style="font-size:25px;font-weight:600;font-family:'IBM Plex Mono',monospace;line-height:1;transition:color .3s ease;">Rp 0.0T</span>
-          <span id="stk-p50lbl" style="font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);">Residual P50</span>
+          <span id="stk-p50lbl" title="Median (50th-percentile) free cash flow left at the holding after debt service and capex — the central case across simulated paths." style="font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);cursor:help;">Residual P50</span>
           <span id="stk-vsplan" style="font-size:9.5px;font-family:'IBM Plex Mono',monospace;align-self:center;white-space:nowrap;margin-left:1px;"></span>
         </div>
         <div style="display:flex;align-items:flex-end;gap:15px;">
           <div style="display:flex;flex-direction:column;gap:1px;"><span style="font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);">P10 / P90</span><span style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--muted);"><span id="stk-p10">—</span> · <span id="stk-p90">—</span></span></div>
-          <div style="display:flex;flex-direction:column;gap:1px;"><span style="font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);">FCF-at-Risk</span><span id="stk-far" style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--gold);">—</span></div>
-          <div style="display:flex;flex-direction:column;gap:1px;"><span style="font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);">Floor breach</span><span id="stk-breach" style="font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace;transition:color .3s ease;">—</span></div>
-          <div style="display:flex;flex-direction:column;gap:1px;"><span style="font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);">Board floor</span><span id="stk-floor" style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--gold);">—</span></div>
+          <div style="display:flex;flex-direction:column;gap:1px;" title="The cash gap between the median and the 1-in-10 downside (P50 − P10) — how much FCF is at risk in a bad draw."><span style="font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);cursor:help;">FCF-at-Risk</span><span id="stk-far" style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--gold);">—</span></div>
+          <div style="display:flex;flex-direction:column;gap:1px;" title="Share of simulated paths where residual cash falls below the board cash floor. Above ~25% triggers ACT.">
+            <span style="font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);cursor:help;">Floor breach</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span id="stk-breach" style="font-size:11px;font-weight:600;font-family:'IBM Plex Mono',monospace;transition:color .3s ease;">—</span><span id="stk-breachCue" style="font-size:9px;font-weight:700;font-family:'IBM Plex Mono',monospace;letter-spacing:.03em;transition:color .3s ease;"></span></span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:1px;" title="The minimum residual cash the board mandates the holding must hold at period end."><span style="font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);cursor:help;">Board floor</span><span id="stk-floor" style="font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--gold);">—</span></div>
         </div>
       </div>
       <div id="stWf" style="position:relative;height:200px;margin-top:18px;"></div>
       <div style="height:16px;"></div>
-      <div id="stMit" style="display:flex;align-items:stretch;gap:12px;margin-top:auto;padding-top:11px;border-top:1px solid var(--border);min-height:102px;"></div>
+      <div id="stMit" title="The cheapest combination of levers that trims floor-breach probability to ≤10%, with its before/after odds and cost score." style="display:flex;align-items:stretch;gap:12px;margin-top:auto;padding-top:11px;border-top:1px solid var(--border);min-height:102px;"></div>
       <div style="font-size:9px;color:var(--faint);margin-top:8px;"><span style="font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);">Blind spot</span> shows the chosen package, not the full trade-off space</div>
     </div>
     <div style="background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:13px 15px 12px;display:flex;flex-direction:column;position:relative;overflow:hidden;">
@@ -2966,7 +3046,17 @@ function updateOutputs(){
   const vp=$('stk-vsplan');if(vp){vp.textContent=k.vsPlanText;vp.style.color=k.vsPlanColor;}
   tweenN($('stk-p10'),k.p10N,1,'Rp ','T');tweenN($('stk-p90'),k.p90N,1,'Rp ','T');tweenN($('stk-far'),k.farN,1,'Rp ','T');
   const br=$('stk-breach');if(br)br.style.color=k.breachColor;tweenN(br,k.breachN*100,0,'','%');
+  /* colorblind-safe breach cue: glyph + word, not colour alone */
+  const bc=$('stk-breachCue');if(bc){bc.textContent=vm.verdict.glyph+' '+vm.verdict.tag;bc.style.color=k.breachColor;}
   tweenN($('stk-floor'),k.floorN,1,'Rp ','T');
+  /* prescriptive verdict banner + colorblind cue */
+  const vd=vm.verdict;
+  const vbadge=$('stVerdictBadge'),vline=$('stVerdictLine'),vglyph=$('stVerdictGlyph'),vtag=$('stVerdictTag'),vbox=$('stVerdict');
+  if(vline)vline.textContent=vd.line;
+  if(vglyph)vglyph.textContent=vd.glyph;
+  if(vtag)vtag.textContent=vd.tag;
+  if(vbadge){vbadge.style.color=vd.color;vbadge.style.borderColor=vd.color;}
+  if(vbox){vbox.style.borderColor=vd.color;vbox.style.boxShadow='inset 3px 0 0 '+vd.color;}
   /* recommendation pill + breach gauge + verdict accent */
   $('stRecPill').style.color=k.recColor;
   $('stRecPill').innerHTML=`<div style="width:7px;height:7px;border-radius:50%;background:${k.recColor};animation:ompulse 2.4s ease-in-out infinite;"></div>${k.recText}`;
@@ -3021,6 +3111,34 @@ function setBubble(id){const inp=document.querySelector('input[data-driver="'+id
   const d=M.DRIVERS.find(x=>x.id===id);if(bub){bub.textContent=M.fmtDriver(id,S.values[id]);bub.style.left=((S.values[id]-d.min)/(d.max-d.min)*100).toFixed(1)+'%';}
   if(dot)dot.style.display=Math.abs(S.values[id]-d.base)>1e-9?'':'none';}
 function openNote(){const vm=derive();document.getElementById('stNoteTitle').textContent=vm.noteTitle;document.getElementById('stNoteText').textContent=vm.noteText;document.getElementById('stNoteModal').style.display='flex';}
+/* build the print-only board brief from the current derived state, then open the print dialog (Save as PDF) */
+function buildBrief(){const b=derive().brief;
+  const subRows=b.subsidiary.map(s=>`<tr><td>${esc(s.name)}</td><td>${esc(s.up)}</td><td>${esc(s.share)}</td><td>${esc(s.dPlan)}</td></tr>`).join('');
+  const mitBlock=b.mitEmpty
+    ? `<div style="font-size:10pt;">${esc(b.mitHeadline)} — P10 already clears the floor; no levers required.</div>`
+    : `<ul class="pb-list">${b.mitLevers.map(m=>`<li><span>${esc(m.label)} <span class="pb-c">${esc(m.effect)}</span></span><span class="pb-c">${esc(m.cost)}</span></li>`).join('')}
+        <li><span>Breach ${esc(b.mitBefore)} → ${esc(b.mitAfter)} after package</span><span class="pb-c">cost ${esc(b.mitCost)}</span></li></ul>`;
+  const now=new Date();
+  const stamp=now.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})+' · '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('printBrief').innerHTML=`
+    <div class="pb-head"><div><div class="pb-title">CEO Cockpit — Cash Stress Brief</div><div class="pb-sub">Common-factor Monte Carlo · illustrative</div></div><div class="pb-sub">${esc(stamp)}</div></div>
+    <div class="pb-scenario">Scenario: ${esc(b.scenario)}</div>
+    <div class="pb-verdict"><span class="pb-vbadge">${esc(b.verdictTag)}</span><span class="pb-vline">${esc(b.verdict)}</span></div>
+    <div class="pb-grid">
+      <div class="pb-fig"><div class="pb-fl">Residual FCF (P50)</div><div class="pb-fv">${esc(b.p50)}</div><div class="pb-fn">P10 ${esc(b.p10)} · P90 ${esc(b.p90)} · FCF-at-Risk ${esc(b.far)}</div></div>
+      <div class="pb-fig"><div class="pb-fl">Board cash floor</div><div class="pb-fv">${esc(b.floor)}</div><div class="pb-fn">${b.floorClears?'1-in-10 downside clears the floor':'1-in-10 downside breaches the floor'}</div></div>
+      <div class="pb-fig"><div class="pb-fl">Floor-breach probability</div><div class="pb-fv">${esc(b.breach)}</div><div class="pb-fn">share of simulated paths below floor</div></div>
+      <div class="pb-fig"><div class="pb-fl">Top driver to hedge</div><div class="pb-fv">${esc(b.topDriver)}</div><div class="pb-fn">largest swing · ${esc(b.swingText)}</div></div>
+    </div>
+    <div class="pb-sec"><div class="pb-h">${esc(b.mitHeadline)}</div>${mitBlock}</div>
+    <div class="pb-sec"><div class="pb-h">Subsidiary attribution · ${esc(b.attMetricLabel)}</div>
+      <table class="pb-tab"><thead><tr><th>Entity</th><th>Upstream</th><th>Share</th><th>vs plan</th></tr></thead><tbody>${subRows}</tbody></table></div>
+    <div class="pb-sec"><div class="pb-h">Board note</div><div class="pb-note">${esc(b.noteText)}</div></div>
+    <div class="pb-foot"><span>Illustrative — review before circulating</span><span>CEO Cockpit · cash stress brief</span></div>`;
+}
+function printPDF(){buildBrief();
+  if(window.matchMedia&&!window.matchMedia('print').matches){/* normal path */}
+  setTimeout(()=>{try{window.print();}catch(_){}},30);}
 function mount(host){
   const dark=M.THEMES.dark;
   let vars='';for(const k in dark)vars+='--'+k+':'+dark[k]+';';
@@ -3042,6 +3160,7 @@ function mount(host){
     else if(act==='pin'){const mc=M.runMC(S.values,S.regime);const lbl=mc.p50.toFixed(1)+'·'+M.brPct(mc.breach);
       S.pinned=[{id:++_pinSeq,label:lbl,values:Object.assign({},S.values),regime:S.regime}].concat(S.pinned).slice(0,4);updateOutputs();}
     else if(act==='note'){openNote();return;}
+    else if(act==='pdf'){printPDF();return;}
     else if(act==='tfcf'){S.tornadoMetric='fcf';updateOutputs();}
     else if(act==='tbreach'){S.tornadoMetric='breach';updateOutputs();}
     else if(act==='arisk'){S.attMetric='risk';updateOutputs();}
