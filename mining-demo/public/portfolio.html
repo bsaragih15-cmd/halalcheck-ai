@@ -2,28 +2,28 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MIND ID · Portfolio Control Tower</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
- --bg:#050f0c; --panel:rgba(255,255,255,.03); --panel2:rgba(255,255,255,.05);
- --border:rgba(120,170,155,.15); --border2:rgba(120,170,155,.28);
- --tx:#eafff8; --mut:#9fc4ba; --faint:#586f67;
- --teal:#2fe0c0; --green:#37d39a; --amber:#f5b94a; --red:#ff5d5d; --blue:#5cc8e0; --violet:#9b9dff; --gold:#e5c84a;
+ --bg:#EBE6DB; --panel:#FFFFFF; --panel2:#FAF9F6;
+ --border:#EBE3D5; --border2:#E6DECF;
+ --tx:#211C16; --mut:#6B655B; --faint:#A39B8C;
+ --teal:#9C6644; --green:#5E7350; --amber:#A9842F; --red:#A4543C; --blue:#7C766B; --violet:#7C766B; --gold:#A9842F;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
-body{background:radial-gradient(60% 60% at 100% 0%,rgba(155,157,255,.08),transparent 60%),linear-gradient(170deg,#0a1c18,#050f0c 60%);
- color:var(--tx);font-family:Inter,system-ui,Arial,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+body{background:radial-gradient(70% 60% at 100% 0%,rgba(156,102,68,.05),transparent 60%),linear-gradient(170deg,#EFEAE0,#EBE6DB 60%);
+ color:var(--tx);font-family:'IBM Plex Sans',system-ui,Arial,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
 .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
 svg text{font-family:'IBM Plex Mono',monospace}
 /* ── market signal ticker (persistent across tabs) ── */
 .shell{display:flex;flex:1;min-height:0;width:100%}
-.ticker{flex:none;border-bottom:1px solid var(--border);background:rgba(0,0,0,.3);padding:5px 16px 7px}
+.ticker{flex:none;border-bottom:1px solid var(--border);background:#F4EFE4;padding:5px 16px 7px}
 .tkhead{display:flex;align-items:center;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin-bottom:5px}
 .tkhead .lab{color:var(--teal)}.tkhead .lab b{color:var(--mut);font-weight:500;letter-spacing:.06em;margin-left:4px}
 .tkdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--teal);box-shadow:0 0 8px var(--teal);margin-right:7px;vertical-align:middle}
 .tkrow{display:flex;align-items:stretch}
-.tk{flex:1;min-width:0;padding:0 10px;border-right:1px solid rgba(120,170,155,.1);display:flex;flex-direction:column;gap:1px;overflow:hidden}
+.tk{flex:1;min-width:0;padding:0 10px;border-right:1px solid #E6DECF;display:flex;flex-direction:column;gap:1px;overflow:hidden}
 .tk:first-child{padding-left:2px}.tk:last-child{border-right:0;padding-right:2px}
 .tk .n{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--mut);font-weight:600;white-space:nowrap;overflow:hidden;min-width:0}
 .tk .n>span{overflow:hidden;text-overflow:ellipsis}
@@ -31,10 +31,10 @@ svg text{font-family:'IBM Plex Mono',monospace}
 .tk .px{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:var(--tx);white-space:nowrap}.tk .px small{font-size:8.5px;color:var(--faint);font-weight:500;margin-left:1px}
 .tk .bot{display:flex;align-items:center;justify-content:space-between;gap:6px}
 .tk .d{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700}.tk .d.up{color:var(--green)}.tk .d.dn{color:var(--red)}
-.tkflash{animation:tkf 1.1s ease}@keyframes tkf{0%{background:rgba(155,157,255,.2)}100%{background:transparent}}
+.tkflash{animation:tkf 1.1s ease}@keyframes tkf{0%{background:rgba(156,102,68,.16)}100%{background:transparent}}
 #tkstate a{color:var(--teal);cursor:pointer;text-decoration:underline}
 /* ── left rail ── */
-.rail{width:238px;flex:none;height:100%;border-right:1px solid var(--border);background:rgba(0,0,0,.18);display:flex;flex-direction:column;padding:20px 14px}
+.rail{width:238px;flex:none;height:100%;border-right:1px solid var(--border);background:#F2ECE0;display:flex;flex-direction:column;padding:20px 14px}
 .logo{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:800;letter-spacing:.02em;padding:4px 8px 16px}
 .logo .dot{width:15px;height:15px;border-radius:5px;background:var(--teal);box-shadow:0 0 18px var(--teal)}
 .logo .s{color:var(--mut);font-weight:500;font-size:11px}
@@ -45,7 +45,7 @@ svg text{font-family:'IBM Plex Mono',monospace}
 .item.on .ic{color:var(--teal)}
 .item .ic{font-family:'IBM Plex Mono',monospace;font-size:11px;width:18px;color:var(--faint);font-weight:700}
 .item .kx{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:5px}
-.kx.dn{color:#ff9d9d;background:rgba(255,93,93,.14)}.kx.am{color:#f5d089;background:rgba(245,185,74,.14)}.kx.gn{color:#7ce8bf;background:rgba(55,211,154,.14)}
+.kx.dn{color:#A4543C;background:#F3E5DF}.kx.am{color:#8A7B55;background:#F5EEDC}.kx.gn{color:#5E7350;background:#ECF0E4}
 .railft{margin-top:auto;border-top:1px solid var(--border);padding:14px 10px 4px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--faint);line-height:1.7}
 .railft .ai{color:var(--violet)}
 .railft .pill{display:inline-block;border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--tx);margin-top:6px}
@@ -62,12 +62,14 @@ svg text{font-family:'IBM Plex Mono',monospace}
 #v-outlook.on{justify-content:center;gap:18px;padding-bottom:24px}
 @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px;min-height:0}
+/* elegant lift — surfaces float off the warm paper (handoff shadow token) */
+.card,.kpi,.m,.op,.mv,.ol{box-shadow:0 1px 2px rgba(42,36,28,.04),0 12px 30px -20px rgba(42,36,28,.22)}
 .ch{font-size:13px;font-weight:700}.cs{font-size:10.5px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin:1px 0 6px}
 .bcread{font-size:12px;color:var(--mut);line-height:1.5}.bcread b{color:var(--tx)}
 .fillsvg{flex:1;min-height:0}.fillsvg svg{width:100%;height:100%;display:block}
 /* overview */
 .verdict{display:flex;gap:16px;align-items:flex-start}
-.verdict .vi{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.12em;color:#0a0a1a;background:var(--violet);padding:5px 9px;border-radius:6px;white-space:nowrap;margin-top:4px}
+.verdict .vi{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.12em;color:#FBF8F2;background:var(--violet);padding:5px 9px;border-radius:6px;white-space:nowrap;margin-top:4px}
 .verdict h1{font-size:34px;font-weight:900;line-height:1.08;letter-spacing:-.02em}
 .verdict h1 .u{color:var(--amber)}
 .verdict .vr{font-size:14px;color:var(--mut);line-height:1.55;margin-top:12px;max-width:880px}
@@ -84,18 +86,20 @@ svg text{font-family:'IBM Plex Mono',monospace}
 .kpi .act{font-size:30px;font-weight:800;font-family:'IBM Plex Mono',monospace;margin-top:8px}.kpi .act small{font-size:12px;color:var(--mut)}
 .kpi .base{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-top:3px}
 .kpi .var{position:absolute;top:14px;right:14px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;padding:4px 8px;border-radius:6px}
-.up{color:#062;background:rgba(55,211,154,.16)}.down{color:#3a0000;background:rgba(255,93,93,.16)}
+.up{color:#5E7350;background:#ECF0E4}.down{color:#A4543C;background:#F3E5DF}
 .kpi .note{font-size:10.5px;color:var(--mut);margin-top:8px;line-height:1.4}.kpi .note b{color:var(--tx)}
-.kpi.hero{border-color:rgba(255,93,93,.42);box-shadow:0 0 0 1px rgba(255,93,93,.16),0 6px 22px rgba(255,93,93,.07)}
-.kpi .mgc{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#f5d089;background:rgba(245,185,74,.12);border-radius:6px;padding:4px 7px;margin-top:7px;display:inline-block}
-.kpi .flag{font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:700;color:#f5d089;background:rgba(245,185,74,.1);border:1px solid rgba(245,185,74,.3);border-radius:5px;padding:2px 6px;margin-top:7px;display:inline-block}
+.kpi.hero{border-color:rgba(164,84,60,.4);box-shadow:0 0 0 1px #F3E5DF,0 6px 22px rgba(164,84,60,.08)}
+.kpi .mgc{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#8A7B55;background:#F5EFE2;border-radius:6px;padding:4px 7px;margin-top:7px;display:inline-block}
+.kpi .flag{font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:700;color:#8A7B55;background:#F5EFE2;border:1px solid #EBE0CB;border-radius:5px;padding:2px 6px;margin-top:7px;display:inline-block}
+.kpi .spk{display:block;width:100%;height:auto;margin:9px 0 1px}
+.kpi .spkc{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.03em;color:var(--faint)}
 /* tables */
 table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 .fin thead th{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);text-align:right;padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
 .fin thead th.l{text-align:left}
-.fin tbody td{padding:8px 12px;border-bottom:1px solid rgba(120,170,155,.08);text-align:right;white-space:nowrap}
+.fin tbody td{padding:8px 12px;border-bottom:1px solid #F2EDE3;text-align:right;white-space:nowrap}
 .fin tbody tr:last-child td{border-bottom:0}
-.fin tbody tr{cursor:pointer;transition:background .14s}.fin tbody tr:hover{background:rgba(120,170,155,.05)}.fin tbody tr.sel{background:rgba(47,224,192,.07)}
+.fin tbody tr{cursor:pointer;transition:background .14s}.fin tbody tr:hover{background:#F7F3EA}.fin tbody tr.sel{background:#F7F3EA}
 .bhead{display:flex;align-items:center;gap:12px}.bhead .ccsel{margin-left:auto;margin-bottom:0}
 .evval{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700}
 .nm{display:flex;align-items:center;gap:10px;text-align:left}.nm .e{width:3px;height:28px;border-radius:2px;flex:none}
@@ -103,13 +107,13 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 .big{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}.pl{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--faint)}
 .vpos{color:var(--green)}.vneg{color:var(--red)}
 .rag{font-size:9.5px;font-weight:700;font-family:'IBM Plex Mono',monospace;padding:3px 8px;border-radius:5px}
-.rag.green{color:#062;background:rgba(55,211,154,.16)}.rag.amber{color:#3a2600;background:rgba(245,185,74,.16)}.rag.red{color:#3a0000;background:rgba(255,93,93,.16)}
+.rag.green{color:#5E7350;background:#ECF0E4}.rag.amber{color:#A9842F;background:#F5EEDC}.rag.red{color:#A4543C;background:#F3E5DF}
 .shareb{display:inline-block;height:7px;border-radius:4px;vertical-align:middle;margin-right:7px}
 /* cost & quality */
 .two{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;flex:1;min-height:0}
 .ccsel{display:flex;gap:5px;margin:2px 0 2px;flex-wrap:wrap}
 .ccsel button{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--mut);background:var(--panel2);border:1px solid var(--border);padding:4px 9px;border-radius:6px;cursor:pointer}
-.ccsel button.on{color:#05201b;background:var(--teal);border-color:var(--teal)}
+.ccsel button.on{color:#FBF8F2;background:var(--teal);border-color:var(--teal)}
 .ccread{font-size:11px;color:var(--mut);margin-top:4px}.ccread b{color:var(--tx)}.txt-green{color:var(--green)}.txt-red{color:var(--red)}
 .op{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:9px 11px}
 .op .l{font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);font-family:'IBM Plex Mono',monospace}
@@ -122,16 +126,16 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 .copilot form{display:flex;gap:8px}
 .copilot input{flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--tx);font-family:inherit;font-size:12.5px;outline:none}
 .copilot input:focus{border-color:var(--violet)}
-.copilot button{background:var(--violet);color:#0a0a1a;border:0;border-radius:8px;padding:0 18px;font-weight:700;cursor:pointer}
+.copilot button{background:var(--violet);color:#FBF8F2;border:0;border-radius:8px;padding:0 18px;font-weight:700;cursor:pointer}
 .scex{font-size:10.5px;color:var(--faint);margin-top:7px;font-family:'IBM Plex Mono',monospace}.scex a{color:var(--mut);cursor:pointer;text-decoration:underline}
 #scres{margin-top:11px;font-size:12px;color:var(--mut);line-height:1.5}.vdt{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;margin-bottom:8px}
-.vdt.ACT{color:#3a0000;background:rgba(255,93,93,.18)}.vdt.WATCH{color:#3a2600;background:rgba(245,185,74,.18)}.vdt.HOLD{color:#062;background:rgba(55,211,154,.16)}.vdt.UNCLEAR{color:var(--mut);border:1px solid var(--border)}
+.vdt.ACT{color:#A4543C;background:#F3E5DF}.vdt.WATCH{color:#A9842F;background:#F5EEDC}.vdt.HOLD{color:#5E7350;background:#ECF0E4}.vdt.UNCLEAR{color:var(--mut);border:1px solid var(--border)}
 .drv{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.drv span{font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:3px 8px;border-radius:5px;background:var(--panel2);border:1px solid var(--border);color:var(--tx)}
 .imp a{color:var(--teal)}
 /* stress / act */
 .big-cta{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px}
 .big-cta .h{font-size:30px;font-weight:800;letter-spacing:-.01em}.big-cta .p{font-size:14px;color:var(--mut);max-width:620px;line-height:1.55}
-.big-cta a{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:#05201b;background:var(--teal);border-radius:12px;padding:14px 28px;text-decoration:none;box-shadow:0 8px 28px rgba(47,224,192,.2)}
+.big-cta a{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:#FBF8F2;background:var(--teal);border-radius:12px;padding:14px 28px;text-decoration:none;box-shadow:0 8px 28px rgba(94,115,80,.28)}
 .moves{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 .mv{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:16px 18px;display:flex;gap:14px}
 .mv .n{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:800;color:var(--teal)}
@@ -153,8 +157,9 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
    <a class="item on" data-v="overview"><span class="ic">◆</span>Overview</a>
    <div class="grp">Performance · vs RKAP</div>
    <a class="item" data-v="financials"><span class="ic">01</span>Financials<span class="kx dn">−10%</span></a>
-   <a class="item" data-v="ops"><span class="ic">02</span>Operations<span class="kx am">1 risk</span></a>
-   <a class="item" data-v="outlook"><span class="ic">03</span>Outlook</a>
+   <a class="item" data-v="capital"><span class="ic">02</span>Capital</a>
+   <a class="item" data-v="ops"><span class="ic">03</span>Operations<span class="kx am">1 risk</span></a>
+   <a class="item" data-v="outlook"><span class="ic">04</span>Outlook</a>
    <div class="grp">Decide</div>
    <a class="item" href="ceo-cockpit.html"><span class="ic">◇</span>Stress test</a>
    <a class="item" data-v="act"><span class="ic">→</span>Act</a>
@@ -191,6 +196,16 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
        <div class="ch" style="margin-bottom:7px">Per-subsidiary detail <span class="cs" style="display:inline">· EBITDA Δ vs plan ties to the “by subsidiary” cut above · click a row to highlight</span></div>
        <table class="fin" id="fin"></table>
      </div>
+   </div>
+
+   <!-- CAPITAL ALLOCATION (sources → uses; BHP/Rio-style framework) -->
+   <div class="view" id="v-capital">
+     <div class="card" style="flex:1;display:flex;flex-direction:column">
+       <div class="bhead"><div class="ch">How operating cash was generated &amp; deployed <span class="cs" style="display:inline">· Rp T · FY2024 · sources → uses of cash</span></div></div>
+       <div class="fillsvg"><svg id="caf" viewBox="0 0 1560 330" preserveAspectRatio="xMidYMid meet"></svg></div>
+       <div class="ccread" id="cafread"></div>
+     </div>
+     <div class="capstats" id="capstats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:13px;flex:none"></div>
    </div>
 
    <!-- OPERATIONS -->
@@ -239,13 +254,13 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 const NS='http://www.w3.org/2000/svg';
 function E(p,t,a,txt){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;p.appendChild(e);return e;}
 const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
-const COL={ptfi:'#9b9dff',ptba:'#d9920f',antam:'#37d39a',inalum:'#5cc8e0',timah:'#dc5a50'};
+const COL={ptfi:'#9C6644',ptba:'#6B5B4A',antam:'#5E7350',inalum:'#7C766B',timah:'#B07A4A'};
 const SUBS=[
- {id:'ptfi',nm:'Freeport Indonesia',tic:'—',sec:'Copper · Gold',cm:'copper',frev:150,frevP:160,fnp:48.8,fnpP:52,rag:'amber',fdrv:'grade dilution + force majeure',margin:40,quart:1,ebScale:60,st:'red',own:'PTFI · MIND ID 51.2% / FCX 48.8%',ops:[{l:'Mill throughput',v:'~200 ktpd',d:'240 nameplate; all-underground'},{l:'Ore grade',v:'0.92% Cu',d:'+0.76 g/t Au — world-class'},{l:'Net cash cost',v:'~$0/lb',d:'C1 $2.71/lb − gold credits'},{l:'Block cave',v:'133 ktpd',d:'record 151,582 t/day'}],watch:'Lowest-cost copper, biggest earner — but the Sept-2025 mud rush cuts 2026 output ~35%.'},
- {id:'ptba',nm:'Bukit Asam',tic:'PTBA',sec:'Thermal coal',cm:'coal',frev:42.8,frevP:44,fnp:5.1,fnpP:6.5,rag:'red',fdrv:'coal price below budget',margin:19,quart:2,ebScale:14,st:'amber',own:'IDX: PTBA · MIND ID 65%',ops:[{l:'Coal production',v:'43.3 Mt',d:'record'},{l:'Strip ratio',v:'6.23×',d:'beat 6.44× target'},{l:'Cash cost',v:'~$53/t',d:'−6% YoY'},{l:'Realized',v:'$74/t',d:'−12% YoY ICI-3'}],watch:'Margin squeezed by coal price (−22% vs plan) despite record volume.'},
- {id:'antam',nm:'Antam',tic:'ANTM',sec:'Ni · Au · Bauxite',cm:'nickel',frev:69.2,frevP:50,fnp:3.6,fnpP:3.2,rag:'green',fdrv:'record gold trade; nickel soft',margin:10,quart:4,ebScale:12,st:'green',own:'IDX: ANTM · MIND ID 65%',ops:[{l:'Ferronickel',v:'20,103 TNi',d:'below 22.5k target'},{l:'Gold sold',v:'43.8 t',d:'record 1.41 Moz trade'},{l:'Gold revenue',v:'Rp 57.6 T',d:'+120% — drove top line'},{l:'Ni cost-curve',v:'Q4',d:'RKEF FeNi high-cost'}],watch:'Record revenue is gold-trading-driven; nickel economics soft & high-cost.'},
- {id:'inalum',nm:'Inalum',tic:'—',sec:'Aluminium',cm:'alu',frev:11.4,frevP:11,fnp:2.0,fnpP:1.5,rag:'green',fdrv:'low-cost hydro; vol +27%',margin:26,quart:1,ebScale:18,st:'green',own:'Unlisted · MIND ID 100%',ops:[{l:'Aluminium',v:'274 kt',d:'+27%; target ~900 kt'},{l:'Specific energy',v:'~14,000',d:'DC kWh/t'},{l:'Captive power',v:'~603 MW',d:'Asahan hydro — low-carbon'},{l:'Cost-curve',v:'Q1',d:'first-quartile resilience'}],watch:'Structurally advantaged (hydro, low carbon). EBITDA +213%. Watch growth execution.'},
- {id:'timah',nm:'Timah',tic:'TINS',sec:'Tin',cm:'tin',frev:10.9,frevP:9.5,fnp:1.2,fnpP:0.6,rag:'green',fdrv:'turnaround on price +17%',margin:16,quart:3,ebScale:8,st:'amber',own:'IDX: TINS · MIND ID 65%',ops:[{l:'Refined tin',v:'18,915 t',d:'+23% YoY'},{l:'Realized',v:'$31,181/t',d:'+17% YoY'},{l:'Net profit',v:'Rp 1.19 T',d:'+364% — reversed loss'},{l:'Reserve life',v:'<15 yr',d:'depletion the watch'}],watch:'Genuine turnaround, but tin is volatile and reserve life is the structural watch.'},
+ {id:'ptfi',nm:'Freeport Indonesia',tic:'—',sec:'Copper · Gold',cm:'copper',frev:150,frevP:160,febitda:21.3,febitdaP:22.6,fnp:48.8,fnpP:52,rag:'amber',fdrv:'grade dilution + force majeure',margin:40,quart:1,ebScale:60,st:'red',own:'PTFI · MIND ID 51.2% / FCX 48.8%',ops:[{l:'Mill throughput',v:'~200 ktpd',d:'240 nameplate; all-underground'},{l:'Ore grade',v:'0.92% Cu',d:'+0.76 g/t Au — world-class'},{l:'Net cash cost',v:'~$0/lb',d:'C1 $2.71/lb − gold credits'},{l:'Block cave',v:'133 ktpd',d:'record 151,582 t/day'}],watch:'Lowest-cost copper, biggest earner — but the Sept-2025 mud rush cuts 2026 output ~35%.'},
+ {id:'ptba',nm:'Bukit Asam',tic:'PTBA',sec:'Thermal coal',cm:'coal',frev:42.8,frevP:44,febitda:7.4,febitdaP:10.4,fnp:5.1,fnpP:6.5,rag:'red',fdrv:'coal price below budget',margin:19,quart:2,ebScale:14,st:'amber',own:'IDX: PTBA · MIND ID 65%',ops:[{l:'Coal production',v:'43.3 Mt',d:'record'},{l:'Strip ratio',v:'6.23×',d:'beat 6.44× target'},{l:'Cash cost',v:'~$53/t',d:'−6% YoY'},{l:'Realized',v:'$74/t',d:'−12% YoY ICI-3'}],watch:'Margin squeezed by coal price (−22% vs plan) despite record volume.'},
+ {id:'antam',nm:'Antam',tic:'ANTM',sec:'Ni · Au · Bauxite',cm:'nickel',frev:69.2,frevP:50,febitda:6.5,febitdaP:7.4,fnp:3.6,fnpP:3.2,rag:'green',fdrv:'record gold trade; nickel soft',margin:10,quart:4,ebScale:12,st:'green',own:'IDX: ANTM · MIND ID 65%',ops:[{l:'Ferronickel',v:'20,103 TNi',d:'below 22.5k target'},{l:'Gold sold',v:'43.8 t',d:'record 1.41 Moz trade'},{l:'Gold revenue',v:'Rp 57.6 T',d:'+120% — drove top line'},{l:'Ni cost-curve',v:'Q4',d:'RKEF FeNi high-cost'}],watch:'Record revenue is gold-trading-driven; nickel economics soft & high-cost.'},
+ {id:'inalum',nm:'Inalum',tic:'—',sec:'Aluminium',cm:'alu',frev:11.4,frevP:11,febitda:4.0,febitdaP:3.6,fnp:2.0,fnpP:1.5,rag:'green',fdrv:'low-cost hydro; vol +27%',margin:26,quart:1,ebScale:18,st:'green',own:'Unlisted · MIND ID 100%',ops:[{l:'Aluminium',v:'274 kt',d:'+27%; target ~900 kt'},{l:'Specific energy',v:'~14,000',d:'DC kWh/t'},{l:'Captive power',v:'~603 MW',d:'Asahan hydro — low-carbon'},{l:'Cost-curve',v:'Q1',d:'first-quartile resilience'}],watch:'Structurally advantaged (hydro, low carbon). EBITDA +213%. Watch growth execution.'},
+ {id:'timah',nm:'Timah',tic:'TINS',sec:'Tin',cm:'tin',frev:10.9,frevP:9.5,febitda:1.3,febitdaP:1.0,fnp:1.2,fnpP:0.6,rag:'green',fdrv:'turnaround on price +17%',margin:16,quart:3,ebScale:8,st:'amber',own:'IDX: TINS · MIND ID 65%',ops:[{l:'Refined tin',v:'18,915 t',d:'+23% YoY'},{l:'Realized',v:'$31,181/t',d:'+17% YoY'},{l:'Net profit',v:'Rp 1.19 T',d:'+364% — reversed loss'},{l:'Reserve life',v:'<15 yr',d:'depletion the watch'}],watch:'Genuine turnaround, but tin is volatile and reserve life is the structural watch.'},
 ];
 const CURVES={
  copper:{unit:'$/lb',ymax:4.0,fmt:v=>'$'+v.toFixed(2),price:4.20,asset:'ptfi',assetCum:5,assetCost:0.0,steps:[[0,0.4],[8,0.4],[8,1.2],[28,1.2],[28,1.8],[55,1.8],[55,2.4],[80,2.4],[80,3.1],[100,3.4]]},
@@ -257,7 +272,7 @@ const CURVES={
 const CMNAME={copper:'Copper',nickel:'Nickel',coal:'Coal',alu:'Aluminium',tin:'Tin'};
 
 /* ── market signal ticker (persistent across tabs; reacts to the scenario copilot) ── */
-const SUBCOL={ptba:'#d9920f',antam:'#37d39a',inalum:'#5cc8e0',timah:'#dc5a50',ptfi:'#9b9dff'};
+const SUBCOL={ptba:'#6B5B4A',antam:'#5E7350',inalum:'#7C766B',timah:'#B07A4A',ptfi:'#9C6644'};
 const COMMOD=[
  {id:'coalhba',n:'Coal HBA',px:117,u:'/t',d:-1.4,sub:'ptba',sn:'Bukit Asam'},
  {id:'coalnew',n:'Coal Newc.',px:124,u:'/t',d:-0.8,sub:'ptba',sn:'Bukit Asam'},
@@ -274,7 +289,7 @@ const COMMOD=[
 const TKBASE=COMMOD.map(c=>c.d);
 const fmtPx=v=>v>=1000?v.toLocaleString('en-US'):String(v);
 function sparkSVG(seed,dir,color){const W=46,H=16,pts=[];let v=.5;for(let i=0;i<9;i++){v+=Math.sin(seed*1.7+i*1.05)*.16+dir*.045;v=Math.max(.12,Math.min(.88,v));pts.push(v);}let d='';pts.forEach((p,i)=>{const x=(i/8*W).toFixed(1),y=(H-2-p*(H-4)).toFixed(1);d+=(i?' L':'M')+x+' '+y;});return `<svg width="${W}" height="${H}" style="display:block"><path d="${d}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/></svg>`;}
-function tkChip(c,i){const up=c.d>=0,col=up?'#37d39a':'#ff5d5d',sc=c.sub?SUBCOL[c.sub]:'#586f67',pill=c.sn?`<span class="sub" style="color:${sc};background:${sc}22">${c.sn}${c.jv?' · JV':''}</span>`:'';return `<div class="tk" id="tk-${c.id}"><div class="n"><span>${c.n}</span>${pill}</div><div class="px">${c.u?'$':''}${fmtPx(c.px)}<small>${c.u}</small></div><div class="bot"><span class="d ${up?'up':'dn'}">${up?'▲':'▼'}${Math.abs(c.d).toFixed(1)}%</span>${sparkSVG(i+1,up?1:-1,col)}</div></div>`;}
+function tkChip(c,i){const up=c.d>=0,col=up?'#5E7350':'#A4543C',sc=c.sub?SUBCOL[c.sub]:'#A39B8C',pill=c.sn?`<span class="sub" style="color:${sc};background:${sc}22">${c.sn}${c.jv?' · JV':''}</span>`:'';return `<div class="tk" id="tk-${c.id}"><div class="n"><span>${c.n}</span>${pill}</div><div class="px">${c.u?'$':''}${fmtPx(c.px)}<small>${c.u}</small></div><div class="bot"><span class="d ${up?'up':'dn'}">${up?'▲':'▼'}${Math.abs(c.d).toFixed(1)}%</span>${sparkSVG(i+1,up?1:-1,col)}</div></div>`;}
 function renderTicker(){document.getElementById('tkrow').innerHTML=COMMOD.map((c,i)=>tkChip(c,i)).join('');}
 renderTicker();
 /* the scenario copilot feeds shocks straight into the ticker Δ */
@@ -284,12 +299,18 @@ function resetTicker(){COMMOD.forEach((c,i)=>c.d=TKBASE[i]);renderTicker();docum
 
 /* KPIs */
 const KPI=[
- {l:'Revenue',a:145.2,p:132,n:'Beat plan — on <b>gold trading</b>, not core mining.',flag:'⚠ low-margin trade'},
- {l:'EBITDA',a:40.5,p:45,n:'Margin squeeze, <b>not volume</b>.',hero:1,margin:'Margin 34.1% → 27.9% · −6.2 pts'},
- {l:'Net profit',a:36.5,p:41,n:'Feeds the <b>dividend &amp; State</b>.'},
- {l:'Free cash flow',a:18.0,p:22,n:'Lower earnings + <b>Manyar/SGAR</b> capex.'},
- {l:'To State',a:90.4,p:88,n:'<b>Royalty up</b> on PP19/2025.'}];
-document.getElementById('kpis').innerHTML=KPI.map(k=>{const v=(k.a-k.p)/k.p*100,up=v>=0;return `<div class="kpi${k.hero?' hero':''}"><div class="l">${k.l}</div><div class="var ${up?'up':'down'}">${up?'▲ +':'▼ '}${v.toFixed(0)}%</div><div class="act">${k.a.toFixed(1)}<small> Rp T</small></div><div class="base">vs RKAP ${k.p}</div>${k.margin?`<div class="mgc">${k.margin}</div>`:''}<div class="note">${k.n}</div>${k.flag?`<div class="flag">${k.flag}</div>`:''}</div>`}).join('');
+ {l:'Revenue',a:145.2,p:132,q:[32.5,35.0,37.5,40.2],n:'Beat plan — on <b>gold trading</b>, not core mining.',flag:'⚠ low-margin trade'},
+ {l:'EBITDA',a:40.5,p:45,q:[12.2,10.8,9.3,8.2],n:'Margin squeeze, <b>not volume</b>.',hero:1,margin:'Margin 34.1% → 27.9% · −6.2 pts'},
+ {l:'Net profit',a:36.5,p:41,q:[10.8,9.6,8.4,7.7],n:'Feeds the <b>dividend &amp; State</b>.'},
+ {l:'Free cash flow',a:18.0,p:22,q:[5.6,3.2,4.4,4.8],n:'Lower earnings + <b>Manyar/SGAR</b> capex.'},
+ {l:'To State',a:90.4,p:88,q:[21.4,22.3,23.2,23.5],n:'<b>Royalty up</b> on PP19/2025.'}];
+/* quarterly trend sparkline — line vs a dashed plan-pace (RKAP ÷ 4) reference */
+function spark(q,plan,up){const W=158,H=30,pad=3,all=q.concat([plan]),mn=Math.min(...all),mx=Math.max(...all),rng=(mx-mn)||1;
+ const x=i=>pad+i*(W-2*pad)/(q.length-1),y=v=>H-pad-(v-mn)/rng*(H-2*pad),col=up?'#5E7350':'#A4543C';
+ const pts=q.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' '),area=pad+','+(H-pad)+' '+pts+' '+(W-pad)+','+(H-pad);
+ const py=y(plan).toFixed(1),lx=x(q.length-1).toFixed(1),ly=y(q[q.length-1]).toFixed(1);
+ return `<svg class="spk" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet"><polyline points="${area}" fill="${col}" opacity=".09"/><line x1="${pad}" y1="${py}" x2="${W-pad}" y2="${py}" stroke="#B7B0A3" stroke-width="1" stroke-dasharray="3 3" opacity=".55"/><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${lx}" cy="${ly}" r="2.5" fill="${col}"/></svg>`;}
+document.getElementById('kpis').innerHTML=KPI.map(k=>{const v=(k.a-k.p)/k.p*100,up=v>=0;return `<div class="kpi${k.hero?' hero':''}"><div class="l">${k.l}</div><div class="var ${up?'up':'down'}">${up?'▲ +':'▼ '}${v.toFixed(0)}%</div><div class="act">${k.a.toFixed(1)}<small> Rp T</small></div><div class="base">vs RKAP ${k.p}</div>${spark(k.q,k.p/4,up)}<div class="spkc">Q1→Q4 quarterly · ‑‑ plan pace</div>${k.margin?`<div class="mgc">${k.margin}</div>`:''}<div class="note">${k.n}</div>${k.flag?`<div class="flag">${k.flag}</div>`:''}</div>`}).join('');
 
 /* EBITDA variance bridge — same Rp 45→40.5 gap, decomposed two ways (why ⇄ who) */
 const EV={ptba:-3.0,ptfi:-1.3,antam:-0.9,inalum:0.4,timah:0.3}; // per-subsidiary EBITDA Δ vs plan, sums to −4.5
@@ -303,45 +324,83 @@ const BRIDGE={
 let curBridge='driver';
 function wf(mode){curBridge=mode||curBridge;const B=BRIDGE[curBridge],steps=B.steps;const s=document.getElementById('wf');s.innerHTML='';
  const x0=44,x1=1540,y0=270,base=35,top=47,H=y0-26,n=steps.length,bw=Math.min(150,(x1-x0)/n-14),gap=(x1-x0-bw*n)/(n-1),sc=v=>H*(v-base)/(top-base);
- for(let g=base;g<=top;g+=3){const y=y0-sc(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'rgba(120,170,155,.09)'});E(s,'text',{x:x0-8,y:y+4,'text-anchor':'end','font-size':10,fill:'#586f67'},'Rp '+g);}
- E(s,'text',{x:x0-8,y:y0+4,'text-anchor':'end','font-size':8.5,fill:'#586f67'},'⁄⁄');
- let x=x0,run=0,actualX=0;steps.forEach((st)=>{if(st.t){if(st.t==='a')actualX=x;run=st.v;const yT=y0-sc(st.v);E(s,'rect',{x,y:yT,width:bw,height:sc(st.v),rx:3,fill:st.t==='b'?'#9fc4ba':'#2fe0c0',opacity:.92});E(s,'text',{x:x+bw/2,y:yT-9,'text-anchor':'middle','font-size':15,'font-weight':700,fill:'#eafff8'},'Rp '+st.v.toFixed(1));}else{const f=run,to=run+st.v,yF=y0-sc(f),yT=y0-sc(to),yTop=Math.min(yF,yT),h=Math.max(Math.abs(yF-yT),3),g2=E(s,'g',st.id?{style:'cursor:pointer'}:{});if(st.id)g2.addEventListener('click',()=>selRow(st.id));E(g2,'rect',{x,y:yTop,width:bw,height:h,rx:3,fill:st.v<0?'#ff5d5d':'#37d39a',opacity:.85});E(g2,'text',{x:x+bw/2,y:yTop-9,'text-anchor':'middle','font-size':13.5,'font-weight':700,fill:st.v<0?'#ff9d9d':'#7ce8bf'},(st.v>0?'+':'')+st.v.toFixed(1));run=to;E(s,'line',{x1:x+bw,y1:y0-sc(run),x2:x+bw+gap,y2:y0-sc(run),stroke:'rgba(120,170,155,.3)','stroke-dasharray':'3 3'});}E(s,'text',{x:x+bw/2,y:y0+20,'text-anchor':'middle','font-size':11,fill:st.col||'#9fc4ba','font-weight':600},st.l);if(st.sub)E(s,'text',{x:x+bw/2,y:y0+35,'text-anchor':'middle','font-size':9,fill:'#586f67'},st.sub);x+=bw+gap;});
+ for(let g=base;g<=top;g+=3){const y=y0-sc(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'#E7DFCF'});E(s,'text',{x:x0-8,y:y+4,'text-anchor':'end','font-size':10,fill:'#A39B8C'},'Rp '+g);}
+ E(s,'text',{x:x0-8,y:y0+4,'text-anchor':'end','font-size':8.5,fill:'#A39B8C'},'⁄⁄');
+ let x=x0,run=0,actualX=0;steps.forEach((st)=>{if(st.t){if(st.t==='a')actualX=x;run=st.v;const yT=y0-sc(st.v);E(s,'rect',{x,y:yT,width:bw,height:sc(st.v),rx:3,fill:st.t==='b'?'#B7B0A0':'#5E7350',opacity:.92});E(s,'text',{x:x+bw/2,y:yT-9,'text-anchor':'middle','font-size':15,'font-weight':700,fill:'#211C16'},'Rp '+st.v.toFixed(1));}else{const f=run,to=run+st.v,yF=y0-sc(f),yT=y0-sc(to),yTop=Math.min(yF,yT),h=Math.max(Math.abs(yF-yT),3),g2=E(s,'g',st.id?{style:'cursor:pointer'}:{});if(st.id)g2.addEventListener('click',()=>selRow(st.id));E(g2,'rect',{x,y:yTop,width:bw,height:h,rx:3,fill:st.v<0?'#A4543C':'#5E7350',opacity:.85});E(g2,'text',{x:x+bw/2,y:yTop-9,'text-anchor':'middle','font-size':13.5,'font-weight':700,fill:st.v<0?'#A4543C':'#5E7350'},(st.v>0?'+':'')+st.v.toFixed(1));run=to;E(s,'line',{x1:x+bw,y1:y0-sc(run),x2:x+bw+gap,y2:y0-sc(run),stroke:'#CBC2B0','stroke-dasharray':'3 3'});}E(s,'text',{x:x+bw/2,y:y0+20,'text-anchor':'middle','font-size':11,fill:st.col||'#6B655B','font-weight':600},st.l);if(st.sub)E(s,'text',{x:x+bw/2,y:y0+35,'text-anchor':'middle','font-size':9,fill:'#A39B8C'},st.sub);x+=bw+gap;});
  // gap bracket: the miss made unmissable — plan level + drop arrow to actual
  const planTop=y0-sc(45),actTop=y0-sc(40.5),ax=actualX+bw/2;
- E(s,'line',{x1:x0,y1:planTop,x2:x1,y2:planTop,stroke:'rgba(245,185,74,.35)','stroke-dasharray':'5 4'});
- E(s,'line',{x1:ax,y1:planTop,x2:ax,y2:actTop,stroke:'#f5b94a','stroke-width':1.4,'stroke-dasharray':'3 2'});
- E(s,'path',{d:`M ${ax-4} ${actTop-7} L ${ax} ${actTop} L ${ax+4} ${actTop-7}`,fill:'none',stroke:'#f5b94a','stroke-width':1.4});
- E(s,'text',{x:ax+9,y:(planTop+actTop)/2-1,'font-size':12,'font-weight':700,fill:'#f5d089'},'−Rp 4.5T');
- E(s,'text',{x:ax+9,y:(planTop+actTop)/2+13,'font-size':10,'font-weight':700,fill:'#f5d089'},'−10% vs RKAP');
+ E(s,'line',{x1:x0,y1:planTop,x2:x1,y2:planTop,stroke:'rgba(169,132,47,.45)','stroke-dasharray':'5 4'});
+ E(s,'line',{x1:ax,y1:planTop,x2:ax,y2:actTop,stroke:'#A9842F','stroke-width':1.4,'stroke-dasharray':'3 2'});
+ E(s,'path',{d:`M ${ax-4} ${actTop-7} L ${ax} ${actTop} L ${ax+4} ${actTop-7}`,fill:'none',stroke:'#A9842F','stroke-width':1.4});
+ E(s,'text',{x:ax+9,y:(planTop+actTop)/2-1,'font-size':12,'font-weight':700,fill:'#8A7B55'},'−Rp 4.5T');
+ E(s,'text',{x:ax+9,y:(planTop+actTop)/2+13,'font-size':10,'font-weight':700,fill:'#8A7B55'},'−10% vs RKAP');
  document.getElementById('wfread').innerHTML=B.read;}
 const bsel=document.getElementById('bridgesel');[...bsel.children].forEach(b=>b.onclick=()=>{[...bsel.children].forEach(x=>x.classList.toggle('on',x===b));wf(b.dataset.m);});
 
 /* subsidiary table — EBITDA Δ vs plan inline bar folds in the old diverging chart */
 const totNp=SUBS.reduce((a,s)=>a+s.fnp,0);
 const vc=(a,p)=>{const v=(a-p)/p*100;return `<span class="big">${a.toFixed(1)}</span> <span class="pl">/ ${p}</span> <span class="${v>=0?'vpos':'vneg'}">${v>=0?'+':''}${v.toFixed(0)}%</span>`;};
-function evbar(v){const W=128,H=18,zx=W/2,sc=40/3.2,w=Math.min(Math.abs(v)*sc,W/2-3),x=v<0?zx-w:zx,c=v<0?'#ff5d5d':'#37d39a';return `<svg width="${W}" height="${H}" style="vertical-align:middle"><line x1="${zx}" y1="2" x2="${zx}" y2="${H-2}" stroke="rgba(120,170,155,.3)"/><rect x="${x}" y="4" width="${Math.max(w,1.5)}" height="${H-8}" rx="3" fill="${c}" opacity=".85"/></svg>`;}
-document.getElementById('fin').innerHTML=`<thead><tr><th class="l">Subsidiary</th><th>Revenue act/RKAP</th><th>EBITDA margin</th><th>EBITDA Δ vs plan</th><th class="l">Share of group profit</th><th>Variance driver</th><th>RAG</th></tr></thead><tbody>${SUBS.map(s=>{const sh=s.fnp/totNp*100,ev=EV[s.id];return `<tr data-id="${s.id}"><td><div class="nm"><span class="e" style="background:${COL[s.id]}"></span><div><b>${s.nm}</b><div class="sec">${s.tic} · ${s.sec}</div></div></div></td><td>${vc(s.frev,s.frevP)}</td><td><span class="big">${s.margin}%</span></td><td style="white-space:nowrap">${evbar(ev)} <span class="evval ${ev<0?'vneg':'vpos'}">${ev>0?'+':''}${ev.toFixed(1)}</span></td><td class="l"><span class="shareb" style="width:${Math.max(sh*1.4,5)}px;background:${COL[s.id]}"></span><span class="pl">${sh.toFixed(0)}%</span></td><td class="pl" style="text-align:right">${s.fdrv}</td><td><span class="rag ${s.rag}">${s.rag==='green'?'✓':s.rag==='amber'?'!':'▲'}</span></td></tr>`}).join('')}</tbody>`;
+function evbar(v){const W=128,H=18,zx=W/2,sc=40/3.2,w=Math.min(Math.abs(v)*sc,W/2-3),x=v<0?zx-w:zx,c=v<0?'#A4543C':'#5E7350';return `<svg width="${W}" height="${H}" style="vertical-align:middle"><line x1="${zx}" y1="2" x2="${zx}" y2="${H-2}" stroke="#CBC2B0"/><rect x="${x}" y="4" width="${Math.max(w,1.5)}" height="${H-8}" rx="3" fill="${c}" opacity=".85"/></svg>`;}
+document.getElementById('fin').innerHTML=`<thead><tr><th class="l">Subsidiary</th><th>Revenue act/RKAP</th><th>EBITDA act/RKAP</th><th>EBITDA margin</th><th>EBITDA Δ vs plan</th><th class="l">Share of group profit</th><th>Variance driver</th><th>RAG</th></tr></thead><tbody>${SUBS.map(s=>{const sh=s.fnp/totNp*100,ev=EV[s.id];return `<tr data-id="${s.id}"><td><div class="nm"><span class="e" style="background:${COL[s.id]}"></span><div><b>${s.nm}</b><div class="sec">${s.tic} · ${s.sec}</div></div></div></td><td>${vc(s.frev,s.frevP)}</td><td>${vc(s.febitda,s.febitdaP)}</td><td><span class="big">${s.margin}%</span></td><td style="white-space:nowrap">${evbar(ev)} <span class="evval ${ev<0?'vneg':'vpos'}">${ev>0?'+':''}${ev.toFixed(1)}</span></td><td class="l"><span class="shareb" style="width:${Math.max(sh*1.4,5)}px;background:${COL[s.id]}"></span><span class="pl">${sh.toFixed(0)}%</span></td><td class="pl" style="text-align:right">${s.fdrv}</td><td><span class="rag ${s.rag}">${s.rag==='green'?'✓':s.rag==='amber'?'!':'▲'}</span></td></tr>`}).join('')}</tbody>`;
 const finRows=[...document.querySelectorAll('#fin tbody tr')];
 finRows.forEach(tr=>tr.onclick=()=>selRow(tr.dataset.id));
 function selRow(id){finRows.forEach(tr=>tr.classList.toggle('sel',tr.dataset.id===id));if(curBridge!=='subsidiary'){[...bsel.children].forEach(x=>x.classList.toggle('on',x.dataset.m==='subsidiary'));wf('subsidiary');}}
+
+/* ── capital allocation — sources → uses waterfall (BHP/Rio-style framework) ── */
+const CAPALLOC=[
+ {l:'EBITDA',v:40.5,t:'b',sub:'group · vs RKAP 45'},
+ {l:'Tax & interest',v:-9.0,sub:'cash tax + finance'},
+ {l:'Working capital',v:-2.0,sub:'inventory + AR'},
+ {l:'Sustaining capex',v:-11.5,sub:'maintain assets'},
+ {l:'Free cash flow',v:18.0,t:'s',sub:'vs RKAP 22'},
+ {l:'Growth capex',v:-12.0,sub:'Manyar · SGAR',col:'#9C6644'},
+ {l:'Net debt drawn',v:5.0,sub:'funds the gap',col:'#7C766B'},
+ {l:'Dividends',v:-9.0,sub:'State + minorities'},
+ {l:'Net cash Δ',v:2.0,t:'a',sub:'retained'},
+];
+const CAPREAD='FCF of <b>Rp 18T</b> covers the dividend twice over — but the downstreaming build (<b>Manyar smelter + SGAR</b>, Rp 12T) tips the year into a <b>Rp 5T draw on debt</b>. Capital discipline holds; a softer-price year is what tightens it.';
+function capWf(){const steps=CAPALLOC,s=document.getElementById('caf');s.innerHTML='';
+ const x0=120,x1=1540,y0=276,yT0=20,ymax=46,H=y0-yT0,sc=v=>H*v/ymax;
+ const n=steps.length,bw=Math.min(140,(x1-x0)/n-16),gap=(x1-x0-bw*n)/(n-1);
+ for(let g=0;g<=40;g+=10){const y=y0-sc(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'#E7DFCF'});E(s,'text',{x:x0-8,y:y+4,'text-anchor':'end','font-size':10,fill:'#A39B8C'},'Rp '+g);}
+ let x=x0,run=0;
+ steps.forEach((st,i)=>{
+  if(st.t){run=st.v;const yt=y0-sc(st.v),fill=st.t==='b'?'#B7B0A0':st.t==='a'?'#5E7350':'#7A8A6E';
+   E(s,'rect',{x,y:yt,width:bw,height:sc(st.v),rx:3,fill,opacity:.92});
+   E(s,'text',{x:x+bw/2,y:yt-10,'text-anchor':'middle','font-size':15,'font-weight':700,fill:'#211C16'},'Rp '+st.v.toFixed(1));}
+  else{const f=run,to=run+st.v,yF=y0-sc(f),yt=y0-sc(to),top=Math.min(yF,yt),h=Math.max(Math.abs(yF-yt),3);
+   const fill=st.col||(st.v<0?'#A4543C':'#5E7350'),tc=st.col||(st.v<0?'#A4543C':'#5E7350');
+   E(s,'rect',{x,y:top,width:bw,height:h,rx:3,fill,opacity:.85});
+   E(s,'text',{x:x+bw/2,y:top-10,'text-anchor':'middle','font-size':13.5,'font-weight':700,fill:tc},(st.v>0?'+':'')+st.v.toFixed(1));run=to;}
+  if(i<n-1)E(s,'line',{x1:x+bw,y1:y0-sc(run),x2:x+bw+gap,y2:y0-sc(run),stroke:'#CBC2B0','stroke-dasharray':'3 3'});
+  E(s,'text',{x:x+bw/2,y:y0+20,'text-anchor':'middle','font-size':11,fill:st.col||'#6B655B','font-weight':600},st.l);
+  if(st.sub)E(s,'text',{x:x+bw/2,y:y0+35,'text-anchor':'middle','font-size':9,fill:'#A39B8C'},st.sub);
+  x+=bw+gap;});
+ document.getElementById('cafread').innerHTML=CAPREAD;}
+const CAPSTATS=[
+ {l:'FCF cover of dividend',v:'2.0×',d:'Rp 18T free cash flow against Rp 9T paid out — the distribution to the State is self-funded.',c:'var(--green)'},
+ {l:'Growth capex intensity',v:'41%',d:'of operating cash flow goes to the downstreaming build — Manyar copper smelter + SGAR alumina.',c:'var(--violet)'},
+ {l:'Net debt drawn',v:'+Rp 5T',d:'Growth + dividend (Rp 21T) outrun FCF (Rp 18T); the gap is debt-funded. Watch gearing if prices soften.',c:'var(--amber)'},
+];
+document.getElementById('capstats').innerHTML=CAPSTATS.map(s=>`<div class="op" style="border-left:3px solid ${s.c}"><div class="l">${s.l}</div><div class="v" style="color:${s.c};font-size:22px">${s.v}</div><div class="d" style="font-size:10.5px;margin-top:5px">${s.d}</div></div>`).join('');
 
 /* cost curve */
 let curCm='copper',dragPrice={};
 const ccsel=document.getElementById('ccsel');Object.keys(CURVES).forEach(c=>{const b=document.createElement('button');b.textContent=CMNAME[c];b.dataset.c=c;b.onclick=()=>{curCm=c;curve();[...ccsel.children].forEach(x=>x.classList.toggle('on',x.dataset.c===c));};ccsel.appendChild(b);});ccsel.children[0].classList.add('on');
 const cc=document.getElementById('cc');
 function curve(){const C=CURVES[curCm];cc.innerHTML='';const x0=52,x1=720,y0=255,y1=18,sub=SUBS.find(s=>s.id===C.asset);const px=p=>x0+(x1-x0)*p/100,py=v=>y0-(y0-y1)*Math.min(v,C.ymax)/C.ymax;if(dragPrice[curCm]===undefined)dragPrice[curCm]=C.price;const price=dragPrice[curCm];
- for(let i=0;i<=5;i++){const v=C.ymax*i/5,y=py(v);E(cc,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'rgba(120,170,155,.09)'});E(cc,'text',{x:x0-6,y:y+3,'text-anchor':'end','font-size':9,fill:'#586f67'},C.fmt(v));}
- let d='M '+px(C.steps[0][0])+' '+py(C.steps[0][1]);C.steps.forEach(p=>d+=' L '+px(p[0])+' '+py(p[1]));d+=' L '+px(100)+' '+y0+' L '+px(0)+' '+y0+' Z';E(cc,'path',{d,fill:'rgba(120,170,155,.06)',stroke:'#6f8a82','stroke-width':1.4});
- E(cc,'rect',{x:x0,y:y1,width:x1-x0,height:py(price)-y1,fill:'rgba(255,93,93,.05)'});
- const ax=px(Math.max(C.assetCum-3,0)),uw=C.assetCost>price,aTop=py(C.assetCost),aH=Math.max(y0-aTop,3);E(cc,'rect',{x:ax,y:aTop,width:18,height:aH,fill:uw?'rgba(255,93,93,.28)':COL[C.asset],opacity:uw?1:.22,rx:2});E(cc,'rect',{x:ax,y:aTop,width:18,height:aH,fill:'none',stroke:COL[C.asset],'stroke-width':1.6,rx:2});E(cc,'text',{x:ax+9,y:aTop-8,'text-anchor':'middle','font-size':10,fill:COL[C.asset]},sub.nm.split(' ')[0]);E(cc,'text',{x:ax+9,y:aTop+(aH>22?15:-20),'text-anchor':'middle','font-size':9.5,fill:'#eafff8'},'Q'+sub.quart);
- const yP=py(price);E(cc,'line',{x1:x0,y1:yP,x2:x1,y2:yP,stroke:uw?'#ff5d5d':'#37d39a','stroke-width':2,'stroke-dasharray':'6 4'});E(cc,'text',{x:x1-2,y:yP-6,'text-anchor':'end','font-size':10,fill:uw?'#ff5d5d':'#37d39a'},'price '+C.fmt(price)+' — drag ↕');
- const hit=E(cc,'rect',{x:x0,y:yP-10,width:x1-x0,height:20,fill:'transparent',style:'cursor:ns-resize'});E(cc,'text',{x:(x0+x1)/2,y:y0+22,'text-anchor':'middle','font-size':9.5,fill:'#586f67'},'cumulative global production →');
+ for(let i=0;i<=5;i++){const v=C.ymax*i/5,y=py(v);E(cc,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'#E7DFCF'});E(cc,'text',{x:x0-6,y:y+3,'text-anchor':'end','font-size':9,fill:'#A39B8C'},C.fmt(v));}
+ let d='M '+px(C.steps[0][0])+' '+py(C.steps[0][1]);C.steps.forEach(p=>d+=' L '+px(p[0])+' '+py(p[1]));d+=' L '+px(100)+' '+y0+' L '+px(0)+' '+y0+' Z';E(cc,'path',{d,fill:'#F4EFE4',stroke:'#9B9486','stroke-width':1.4});
+ E(cc,'rect',{x:x0,y:y1,width:x1-x0,height:py(price)-y1,fill:'rgba(164,84,60,.05)'});
+ const ax=px(Math.max(C.assetCum-3,0)),uw=C.assetCost>price,aTop=py(C.assetCost),aH=Math.max(y0-aTop,3);E(cc,'rect',{x:ax,y:aTop,width:18,height:aH,fill:uw?'rgba(164,84,60,.28)':COL[C.asset],opacity:uw?1:.22,rx:2});E(cc,'rect',{x:ax,y:aTop,width:18,height:aH,fill:'none',stroke:COL[C.asset],'stroke-width':1.6,rx:2});E(cc,'text',{x:ax+9,y:aTop-8,'text-anchor':'middle','font-size':10,fill:COL[C.asset]},sub.nm.split(' ')[0]);E(cc,'text',{x:ax+9,y:aTop+(aH>22?15:-20),'text-anchor':'middle','font-size':9.5,fill:'#211C16'},'Q'+sub.quart);
+ const yP=py(price);E(cc,'line',{x1:x0,y1:yP,x2:x1,y2:yP,stroke:uw?'#A4543C':'#5E7350','stroke-width':2,'stroke-dasharray':'6 4'});E(cc,'text',{x:x1-2,y:yP-6,'text-anchor':'end','font-size':10,fill:uw?'#A4543C':'#5E7350'},'price '+C.fmt(price)+' — drag ↕');
+ const hit=E(cc,'rect',{x:x0,y:yP-10,width:x1-x0,height:20,fill:'transparent',style:'cursor:ns-resize'});E(cc,'text',{x:(x0+x1)/2,y:y0+22,'text-anchor':'middle','font-size':9.5,fill:'#A39B8C'},'cumulative global production →');
  function setY(cy){const r=cc.getBoundingClientRect();const vy=(cy-r.top)/r.height*300;dragPrice[curCm]=Math.max(0,Math.min(C.ymax,C.ymax*(y0-vy)/(y0-y1)));curve();}
  hit.addEventListener('mousedown',ev=>{ev.preventDefault();const mv=e=>setY(e.clientY),up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);};document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);});
  const mg=price-C.assetCost;document.getElementById('ccread').innerHTML=`<b>${sub.nm}</b> at <b>${C.fmt(C.assetCost)}</b> (Q${sub.quart}) vs <b>${C.fmt(price)}</b> → `+(uw?`<span class="txt-red">underwater ${C.fmt(C.assetCost-price)} — curtails first</span>`:`<span class="txt-green">${C.fmt(mg)} margin — survives</span>`);}
 
 /* scatter */
-function scatter(){const s=document.getElementById('sc');s.innerHTML='';const x0=58,x1=596,y0=272,y1=22,pxq=q=>x0+(x1-x0)*(q-1)/3,py=m=>y0-(y0-y1)*m/45;E(s,'rect',{x:x0,y:y1,width:(x1-x0)/3,height:py(20)-y1,fill:'rgba(55,211,154,.05)'});E(s,'text',{x:x0+8,y:y1+14,'font-size':9.5,fill:'#37d39a'},'low-cost · high-margin');E(s,'line',{x1:x0,y1:y0,x2:x1,y2:y0,stroke:'rgba(120,170,155,.25)'});E(s,'line',{x1:x0,y1:y0,x2:x0,y2:y1,stroke:'rgba(120,170,155,.25)'});[1,2,3,4].forEach(q=>E(s,'text',{x:pxq(q),y:y0+16,'text-anchor':'middle','font-size':10,fill:'#586f67'},'Q'+q));[10,20,30,40].forEach(m=>E(s,'text',{x:x0-8,y:py(m)+3,'text-anchor':'end','font-size':9,fill:'#586f67'},m+'%'));SUBS.forEach(p=>{const cx=pxq(p.quart),cy=py(p.margin),r=8+p.ebScale*0.56,g=E(s,'g',{style:'cursor:pointer'});g.addEventListener('click',()=>drill(p.id));E(g,'circle',{cx,cy,r,fill:COL[p.id],opacity:.2});E(g,'circle',{cx,cy,r,fill:'none',stroke:COL[p.id],'stroke-width':1.6});E(g,'circle',{cx,cy,r:3,fill:COL[p.id]});E(g,'text',{x:cx,y:cy-r-5,'text-anchor':'middle','font-size':10,fill:'#eafff8'},p.nm.split(' ')[0]);});}
+function scatter(){const s=document.getElementById('sc');s.innerHTML='';const x0=58,x1=596,y0=272,y1=22,pxq=q=>x0+(x1-x0)*(q-1)/3,py=m=>y0-(y0-y1)*m/45;E(s,'rect',{x:x0,y:y1,width:(x1-x0)/3,height:py(20)-y1,fill:'#ECF0E4'});E(s,'text',{x:x0+8,y:y1+14,'font-size':9.5,fill:'#5E7350'},'low-cost · high-margin');E(s,'line',{x1:x0,y1:y0,x2:x1,y2:y0,stroke:'#CBC2B0'});E(s,'line',{x1:x0,y1:y0,x2:x0,y2:y1,stroke:'#CBC2B0'});[1,2,3,4].forEach(q=>E(s,'text',{x:pxq(q),y:y0+16,'text-anchor':'middle','font-size':10,fill:'#A39B8C'},'Q'+q));[10,20,30,40].forEach(m=>E(s,'text',{x:x0-8,y:py(m)+3,'text-anchor':'end','font-size':9,fill:'#A39B8C'},m+'%'));SUBS.forEach(p=>{const cx=pxq(p.quart),cy=py(p.margin),r=8+p.ebScale*0.56,g=E(s,'g',{style:'cursor:pointer'});g.addEventListener('click',()=>drill(p.id));E(g,'circle',{cx,cy,r,fill:COL[p.id],opacity:.2});E(g,'circle',{cx,cy,r,fill:'none',stroke:COL[p.id],'stroke-width':1.6});E(g,'circle',{cx,cy,r:3,fill:COL[p.id]});E(g,'text',{x:cx,y:cy-r-5,'text-anchor':'middle','font-size':10,fill:'#211C16'},p.nm.split(' ')[0]);});}
 
 /* drill panel */
 const stx={green:{c:'rag green',g:'✓',w:'ON TRACK'},amber:{c:'rag amber',g:'!',w:'WATCH'},red:{c:'rag red',g:'▲',w:'RISK'}};
@@ -355,20 +414,20 @@ document.getElementById('outlookcards').innerHTML=OL.map(o=>`<div class="ol ${o.
 async function postJSON(u,b){const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});return r.json();}
 const aiSubs=SUBS.map(s=>({nm:s.nm,status:s.rag,note:s.watch}));
 (async function(){try{const h=await (await fetch('/api/health')).json();const live=h.aiMode==='live';document.getElementById('aibadge').textContent=live?'· live':'· simulated';const r=await postJSON('/api/portfolio/board-read',{group:{revenue:145.2,revenueYoY:34.6,ebitdaVsPlan:-10,note:'EBITDA missed RKAP ~Rp4.5T on coal+nickel price; revenue beat on gold trading; profit ~80% in Freeport under force majeure',stateContribution:90.4,onTrack:3,watch:1,risk:1},subs:aiSubs});if(r&&r.read)document.getElementById('ovread').textContent=r.read;}catch(e){}})();
-function renderScenario(r){document.getElementById('scres').innerHTML=`<span class="vdt ${r.verdict||'UNCLEAR'}">${r.verdict||'UNCLEAR'}</span>`+(r.drivers&&r.drivers.length?`<div class="drv">${r.drivers.map(d=>`<span>${esc(d.name)} <b style="color:var(--teal)">${esc(d.change)}</b></span>`).join('')}</div>`:'')+`<div class="imp">${esc(r.impact)} <a href="ceo-cockpit.html">→ size it in Stress</a></div>`;applyTickerScenario(r.drivers);}
+function renderScenario(r){document.getElementById('scres').innerHTML=`<span class="vdt ${r.verdict||'UNCLEAR'}">${r.verdict||'UNCLEAR'}</span>`+(r.drivers&&r.drivers.length?`<div class="drv">${r.drivers.map(d=>`<span>${esc(d.name)} <b style="color:var(--teal)">${esc(d.change)}</b></span>`).join('')}</div>`:'')+`<div class="imp">${esc(r.impact)} <a href="ceo-cockpit.html">→ size it in Stress</a></div>`;applyTickerScenario(r.drivers);try{localStorage.setItem('mindid_copilot_handoff',JSON.stringify({drivers:r.drivers,ts:Date.now()}));}catch(e){}}
 async function runScenario(q){if(!q)return;document.getElementById('scres').innerHTML='<span class="pl">Modelling the shock…</span>';try{renderScenario(await postJSON('/api/portfolio/scenario',{query:q,subs:aiSubs}));}catch(e){document.getElementById('scres').innerHTML='<span class="pl">Open on the deployed site to run the live copilot.</span>';}}
 document.getElementById('scform').addEventListener('submit',e=>{e.preventDefault();runScenario(document.getElementById('scq').value);});
 document.querySelectorAll('.scex a').forEach(a=>a.onclick=()=>{document.getElementById('scq').value=a.dataset.q;runScenario(a.dataset.q);});
 
 /* view switching */
-const TITLES={overview:['Overview','State of the portfolio'],financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],ops:['Operations','Cost position & asset state'],outlook:['Outlook','Forward risks & scenario copilot'],act:['Act','The recommended moves']};
+const TITLES={overview:['Overview','State of the portfolio'],financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],capital:['Capital allocation','How operating cash was generated & deployed · FY2024'],ops:['Operations','Cost position & asset state'],outlook:['Outlook','Forward risks & scenario copilot'],act:['Act','The recommended moves']};
 let drawn={};
 function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById('v-'+v).classList.add('on');
  document.querySelectorAll('.item[data-v]').forEach(i=>i.classList.toggle('on',i.dataset.v===v));
  document.getElementById('vt').textContent=TITLES[v][0];document.getElementById('vc').textContent=TITLES[v][1];
  try{history.replaceState(null,'','#'+v);}catch(e){}
  // render charts lazily (need layout, so after display)
- requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='ops'&&!drawn.ops){curve();scatter();drill('ptfi');drawn.ops=1;}});
+ requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){capWf();drawn.cap=1;}if(v==='ops'&&!drawn.ops){curve();scatter();drill('ptfi');drawn.ops=1;}});
 }
 document.querySelectorAll('.item[data-v]').forEach(i=>i.onclick=()=>show(i.dataset.v));
 document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=()=>show(a.dataset.jump));
