@@ -129,3 +129,35 @@ export function scenarioFallback(body = {}) {
 
   return { drivers, exposed: exposed.slice(0, 4), verdict, impact };
 }
+
+// ── Capital Copilot — grounded Q&A over the capital-allocation state ──
+export function capitalCopilotFallback(body = {}) {
+  const t = String(body.question || '').toLowerCase();
+  const m = (...ks) => ks.some((k) => t.includes(k));
+  let answer;
+  if (m('source', 'come from', 'generated', 'generate', 'where did the cash', 'inflow'))
+    answer = "The cash came from <b>Rp 40.5T EBITDA</b>; after ~Rp 9T tax & interest and Rp 2T working capital that's <b>Rp 29.5T of operating cash</b>. A further <b>Rp 5T was drawn from debt</b> to help fund the build.";
+  else if (m('deploy', 'allocat', 'where did it go', 'spent', 'spend', 'use of', 'uses', 'outflow'))
+    answer = 'Of the Rp 29.5T operating cash: <b>Rp 11.5T sustaining capex</b>, <b>Rp 12T growth capex</b> (Manyar + SGAR), and <b>Rp 9T dividend</b> to the State — leaving ~Rp 2T retained after the Rp 5T debt draw.';
+  else if (m('return', 'roic', 'wacc', 'cost of capital', 'economic profit', 'value creat', 'earning its'))
+    answer = 'Only <b>Freeport</b> clearly out-earns its cost of capital (ROIC ~14% vs ~10% → <b>+Rp 6.8T</b> economic profit). Coal & nickel capital is underwater this year — Bukit Asam −Rp 0.7T, Antam −Rp 1.2T. Group economic profit <b>+Rp 5.3T, ~96% from Freeport</b>.';
+  else if (m('freeport', 'ptfi', 'grasberg', 'concentr'))
+    answer = '<b>Freeport</b> ties up ~<b>Rp 170T (63%)</b> of group capital and earns ROIC ~14% → <b>+Rp 6.8T</b> economic profit — the value engine, but ~80% of profit and under force majeure.';
+  else if (m('debt', 'leverage', 'gearing', 'afford', 'borrow'))
+    answer = 'Net debt/EBITDA is <b>~0.8×</b>, up from 0.7× on the Rp 5T draw — low, with wide headroom to a ~2.0× comfort line. Growth + dividend (Rp 21T) outrun FCF (Rp 18T), so the gap is debt-funded; affordable, but a soft-price year tightens it.';
+  else if (m('dividend', 'payout', 'to state', 'shareholder'))
+    answer = "The dividend was <b>Rp 9T</b>, covered <b>2.0×</b> by FCF — self-funded. It's the committed claim, protected ahead of the discretionary growth spend.";
+  else if (m('pipeline', 'manyar', 'sgar', 'build', 'project', 'when', 'smelter', 'first prod', 'irr'))
+    answer = 'The Rp 12T build: <b>Manyar smelter Rp 5.5T</b> (95%, first cathode 2024, IRR ~14%), <b>SGAR alumina Rp 3.5T</b> (85%, 2025, ~13%), <b>Grasberg underground Rp 2.0T</b> (ramping), and Rp 1T smelters/debottleneck.';
+  else if (m('conversion', 'fcf/ebitda', 'quality of cash'))
+    answer = 'Cash conversion (FCF/EBITDA) is <b>44%</b> — earnings convert to cash; the downstreaming build, not margin, is what holds FCF below plan.';
+  else if (m('reinvest', 'over time', 'trend', 'history', 'build phase'))
+    answer = 'Reinvestment is <b>80%</b> of operating cash (Rp 23.5T capex). Growth capex has tripled — <b>Rp 4T → Rp 12T</b> over five years — now the single biggest use of cash.';
+  else if (m('risk', 'concern', 'worry', 'watch', 'weak'))
+    answer = 'The watch item is <b>concentration</b>: ~96% of economic profit and ~63% of capital sit in Freeport, which is under force majeure. Coal & nickel capital earns below its cost of capital this year.';
+  else if (m('summar', 'overview', 'insight', 'read', 'sound', 'how are we', 'tell me'))
+    answer = 'The group turned <b>Rp 29.5T</b> of operating cash into <b>Rp 23.5T</b> of capex and <b>Rp 9T</b> of dividends; FCF covers the dividend <b>2.0×</b>, but the <b>Rp 12T build</b> is part debt-funded. Only Freeport clearly beats its cost of capital (<b>+Rp 6.8T</b>, ~96% of the group). Leverage stays low (~0.8×); the watch item is concentration.';
+  else
+    answer = 'I can answer on the <b>sources</b> & <b>uses</b> of cash, <b>returns vs cost of capital</b>, the <b>debt draw / leverage</b>, the <b>dividend</b>, or the <b>growth pipeline</b>. Try one of those, or ask about a specific subsidiary.';
+  return { answer };
+}
