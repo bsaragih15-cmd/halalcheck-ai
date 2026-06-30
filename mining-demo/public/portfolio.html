@@ -93,6 +93,18 @@ svg text{font-family:'IBM Plex Mono',monospace}
 .kpi .flag{font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:700;color:#8A7B55;background:#F5EFE2;border:1px solid #EBE0CB;border-radius:5px;padding:2px 6px;margin-top:7px;display:inline-block}
 .kpi .spk{display:block;width:100%;height:auto;margin:9px 0 1px}
 .kpi .spkc{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.03em;color:var(--faint)}
+/* capital — growth-capex deployment bars + discipline scorecard */
+.dpl{display:flex;align-items:center;gap:11px;margin:8px 0}
+.dpl .dn{font-size:11.5px;font-weight:600;color:var(--tx);width:150px;flex:none;line-height:1.15}
+.dpl .dn small{display:block;font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--faint);font-weight:500;margin-top:2px}
+.dpl .dt{flex:1;height:13px;background:var(--panel2);border:1px solid var(--border);border-radius:7px;overflow:hidden}
+.dpl .df{height:100%;border-radius:7px}
+.dpl .dv{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--tx);width:80px;text-align:right;flex:none}
+.dpl .dv small{color:var(--faint);font-weight:500}
+.disc{display:grid;grid-template-columns:1fr 1fr;gap:13px 18px}
+.disc .dnum{font-size:23px;font-weight:600;letter-spacing:-.01em}
+.disc .dcap{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-top:2px}
+.disc .dsub{font-size:10.5px;color:var(--mut);margin-top:4px;line-height:1.35}
 /* tables */
 table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 .fin thead th{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);text-align:right;padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
@@ -201,11 +213,15 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
    <!-- CAPITAL ALLOCATION (sources → uses; BHP/Rio-style framework) -->
    <div class="view" id="v-capital">
      <div class="card" style="flex:1;display:flex;flex-direction:column">
-       <div class="bhead"><div class="ch">How operating cash was generated &amp; deployed <span class="cs" style="display:inline">· Rp T · FY2024 · sources → uses of cash</span></div></div>
+       <div class="bhead"><div class="ch">Capital allocation <span class="cs" id="caphead" style="display:inline">· sources → uses of cash · Rp T</span></div>
+         <div class="ccsel" id="caplens"><button data-l="sources" class="on">Sources → uses</button><button data-l="cascade">Priorities</button><button data-l="returns">Returns</button></div></div>
        <div class="fillsvg"><svg id="caf" viewBox="0 0 1560 330" preserveAspectRatio="xMidYMid meet"></svg></div>
        <div class="ccread" id="cafread"></div>
      </div>
-     <div class="capstats" id="capstats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:13px;flex:none"></div>
+     <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:13px;flex:none">
+       <div class="card" style="padding:14px 18px"><div class="ch">Where the growth capital goes <span class="cs" style="display:inline">· Rp 12T · the −12 bar, exploded</span></div><div id="capdeploy" style="margin-top:9px"></div></div>
+       <div class="card" style="padding:14px 18px"><div class="ch">Capital discipline <span class="cs" style="display:inline">· is the allocation sound?</span></div><div class="disc" id="capdisc" style="margin-top:12px"></div></div>
+     </div>
    </div>
 
    <!-- OPERATIONS -->
@@ -359,10 +375,30 @@ const CAPALLOC=[
  {l:'Net cash Δ',v:2.0,t:'a',sub:'retained'},
 ];
 const CAPREAD='FCF of <b>Rp 18T</b> covers the dividend twice over — but the downstreaming build (<b>Manyar smelter + SGAR</b>, Rp 12T) tips the year into a <b>Rp 5T draw on debt</b>. Capital discipline holds; a softer-price year is what tightens it.';
-function capWf(){const steps=CAPALLOC,s=document.getElementById('caf');s.innerHTML='';
- const x0=120,x1=1540,y0=276,yT0=20,ymax=46,H=y0-yT0,sc=v=>H*v/ymax;
+/* lens 2 — priority cascade: the same cash, read top-down by priority of claim (BHP/Rio framework) */
+const CASCADE=[
+ {l:'Operating cash',v:29.5,t:'b',sub:'EBITDA − tax & WC'},
+ {l:'Sustaining capex',v:-11.5,sub:'P1 · keep assets running',col:'#8A8275'},
+ {l:'Free cash flow',v:18.0,t:'s',sub:'available to allocate'},
+ {l:'Base dividend',v:-9.0,sub:'P2 · committed to State',col:'#A9842F'},
+ {l:'Net debt drawn',v:5.0,sub:'plug · bridges the build',col:'#7C766B'},
+ {l:'Growth capex',v:-12.0,sub:'P3 · discretionary build',col:'#9C6644'},
+ {l:'Net cash Δ',v:2.0,t:'a',sub:'retained'},
+];
+const CASCADEREAD='Read top-down by <b>priority of claim</b>: sustaining capex (P1) and the committed dividend (P2) take internal cash first, leaving <b>Rp 9T</b> against a <b>Rp 12T discretionary build</b> (P3). The <b>Rp 5T gap is debt-funded</b> — growth is financed at the margin, so a soft-price year squeezes the build, not the dividend.';
+/* lens 3 — returns: ROIC vs cost of capital by subsidiary; bar=ROIC, tick=WACC, height=capital, value=economic profit (sorted by spread) */
+const RET=[
+ {nm:'Freeport',ce:170,roic:14,wacc:10},
+ {nm:'Inalum',ce:28,roic:11,wacc:9},
+ {nm:'Timah',ce:8,roic:10,wacc:12},
+ {nm:'Bukit Asam',ce:22,roic:9,wacc:12},
+ {nm:'Antam',ce:40,roic:8,wacc:11},
+];
+const RETREAD='Capital earns its keep at <b>Freeport</b> — ROIC ~14% on a ~10% cost of capital, <b>+Rp 6.8T economic profit</b>. But <b>coal &amp; nickel capital is underwater</b> this year: Bukit Asam and Antam earn below their cost of capital (−Rp 1.9T). Net group economic profit <b>+Rp 5.3T — but ~96% of it is one asset.</b>';
+function drawWaterfall(steps,ymax){const s=document.getElementById('caf');s.innerHTML='';
+ const x0=120,x1=1540,y0=276,yT0=20,H=y0-yT0,sc=v=>H*v/ymax;
  const n=steps.length,bw=Math.min(140,(x1-x0)/n-16),gap=(x1-x0-bw*n)/(n-1);
- for(let g=0;g<=40;g+=10){const y=y0-sc(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'#E7DFCF'});E(s,'text',{x:x0-8,y:y+4,'text-anchor':'end','font-size':10,fill:'#A39B8C'},'Rp '+g);}
+ for(let g=0;g<=ymax;g+=10){const y=y0-sc(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'#E7DFCF'});E(s,'text',{x:x0-8,y:y+4,'text-anchor':'end','font-size':10,fill:'#A39B8C'},'Rp '+g);}
  let x=x0,run=0;
  steps.forEach((st,i)=>{
   if(st.t){run=st.v;const yt=y0-sc(st.v),fill=st.t==='b'?'#B7B0A0':st.t==='a'?'#5E7350':'#7A8A6E';
@@ -375,14 +411,45 @@ function capWf(){const steps=CAPALLOC,s=document.getElementById('caf');s.innerHT
   if(i<n-1)E(s,'line',{x1:x+bw,y1:y0-sc(run),x2:x+bw+gap,y2:y0-sc(run),stroke:'#CBC2B0','stroke-dasharray':'3 3'});
   E(s,'text',{x:x+bw/2,y:y0+20,'text-anchor':'middle','font-size':11,fill:st.col||'#6B655B','font-weight':600},st.l);
   if(st.sub)E(s,'text',{x:x+bw/2,y:y0+35,'text-anchor':'middle','font-size':9,fill:'#A39B8C'},st.sub);
-  x+=bw+gap;});
- document.getElementById('cafread').innerHTML=CAPREAD;}
-const CAPSTATS=[
- {l:'FCF cover of dividend',v:'2.0×',d:'Rp 18T free cash flow against Rp 9T paid out — the distribution to the State is self-funded.',c:'var(--green)'},
- {l:'Growth capex intensity',v:'41%',d:'of operating cash flow goes to the downstreaming build — Manyar copper smelter + SGAR alumina.',c:'var(--violet)'},
- {l:'Net debt drawn',v:'+Rp 5T',d:'Growth + dividend (Rp 21T) outrun FCF (Rp 18T); the gap is debt-funded. Watch gearing if prices soften.',c:'var(--amber)'},
+  x+=bw+gap;});}
+function returnsMap(){const s=document.getElementById('caf');s.innerHTML='';
+ const px0=330,px1=1290,rx=1308,top=58,bot=250,n=RET.length,band=(bot-top)/n,xmax=16,sx=v=>px0+(px1-px0)*v/xmax;
+ for(let g=0;g<=xmax;g+=4){const x=sx(g);E(s,'line',{x1:x,y1:top-14,x2:x,y2:bot,stroke:'#E7DFCF','stroke-dasharray':'2 5'});E(s,'text',{x,y:bot+18,'text-anchor':'middle','font-size':9.5,fill:'#A39B8C'},g+'%');}
+ E(s,'text',{x:px0,y:top-28,'font-size':11,fill:'#6B655B'},'return on invested capital (bar)  ·  cost of capital (tick)  ·  bar height = capital employed');
+ RET.forEach((r,i)=>{const cy=top+band*i+band/2,sp=r.roic-r.wacc,ep=sp*r.ce/100,up=sp>=0,col=up?'#5E7350':'#A4543C';
+  const bh=Math.max(11,Math.min(34,r.ce/170*34));
+  E(s,'rect',{x:px0,y:cy-bh/2,width:Math.max(sx(r.roic)-px0,2),height:bh,rx:3,fill:col,opacity:.8});
+  const wx=sx(r.wacc);E(s,'line',{x1:wx,y1:cy-bh/2-5,x2:wx,y2:cy+bh/2+5,stroke:'#3A352D','stroke-width':1.8});
+  E(s,'text',{x:30,y:cy-2,'font-size':13,'font-weight':600,fill:'#211C16'},r.nm);
+  E(s,'text',{x:30,y:cy+14,'font-size':9,fill:'#A39B8C'},'capital Rp '+r.ce+'T');
+  E(s,'text',{x:rx,y:cy-2,'font-size':12,'font-weight':700,fill:'#211C16'},'ROIC '+r.roic+'% · WACC '+r.wacc+'%');
+  E(s,'text',{x:rx,y:cy+14,'font-size':11,'font-weight':700,fill:col},(ep>=0?'value +Rp ':'value −Rp ')+Math.abs(ep).toFixed(1)+'T');});
+ E(s,'line',{x1:px0,y1:bot,x2:px1,y2:bot,stroke:'#CBC2B0'});}
+let capLens='sources';
+function capRender(l){capLens=l||capLens;const sel=document.getElementById('caplens');
+ if(sel)[...sel.children].forEach(b=>b.classList.toggle('on',b.dataset.l===capLens));
+ const head=document.getElementById('caphead'),read=document.getElementById('cafread');
+ if(capLens==='cascade'){if(head)head.textContent='· priority of claims on cash · Rp T';drawWaterfall(CASCADE,32);if(read)read.innerHTML=CASCADEREAD;}
+ else if(capLens==='returns'){if(head)head.textContent='· ROIC vs cost of capital · value created';returnsMap();if(read)read.innerHTML=RETREAD;}
+ else{if(head)head.textContent='· sources → uses of cash · Rp T';drawWaterfall(CAPALLOC,46);if(read)read.innerHTML=CAPREAD;}}
+{const sel=document.getElementById('caplens');if(sel)[...sel.children].forEach(b=>b.onclick=()=>capRender(b.dataset.l));}
+/* growth-capex deployment — the −12 bar exploded into the actual build */
+const CAPDEPLOY=[
+ {nm:'Manyar copper smelter',sub:'PTFI · Gresik — first cathode',v:5.5,c:'#9C6644'},
+ {nm:'SGAR alumina refinery',sub:'Inalum/Antam · Mempawah Ph.1',v:3.5,c:'#7C766B'},
+ {nm:'Grasberg underground',sub:'PTFI · sustains block-cave ramp',v:2.0,c:'#A9842F'},
+ {nm:'Smelters & debottleneck',sub:'Antam · Timah · other',v:1.0,c:'#A39B8C'},
 ];
-document.getElementById('capstats').innerHTML=CAPSTATS.map(s=>`<div class="op" style="border-left:3px solid ${s.c}"><div class="l">${s.l}</div><div class="v" style="color:${s.c};font-size:22px">${s.v}</div><div class="d" style="font-size:10.5px;margin-top:5px">${s.d}</div></div>`).join('');
+const GTOT=CAPDEPLOY.reduce((a,d)=>a+d.v,0);
+document.getElementById('capdeploy').innerHTML=CAPDEPLOY.map(d=>{const p=d.v/GTOT*100;return `<div class="dpl"><div class="dn">${d.nm}<small>${d.sub}</small></div><div class="dt"><div class="df" style="width:${p.toFixed(0)}%;background:${d.c}"></div></div><div class="dv">${d.v.toFixed(1)}<small> / ${p.toFixed(0)}%</small></div></div>`}).join('');
+/* capital discipline — the metrics that judge whether the allocation is sound */
+const CAPDISC=[
+ {num:'2.0×',cap:'FCF / dividend cover',sub:'Rp 18T free cash vs Rp 9T paid — distribution self-funded.',c:'var(--green)'},
+ {num:'0.8×',cap:'Net debt / EBITDA',sub:'Up from 0.7× on the Rp 5T draw — wide headroom to a ~2.0× comfort line.',c:'var(--amber)'},
+ {num:'44%',cap:'Cash conversion · FCF/EBITDA',sub:'Earnings convert to cash; the build, not margin, is the drag on FCF.',c:'var(--tx)'},
+ {num:'80%',cap:'Reinvestment · capex/op cash',sub:'Rp 23.5T capex of Rp 29.5T operating cash — peak downstreaming spend.',c:'var(--violet)'},
+];
+document.getElementById('capdisc').innerHTML=CAPDISC.map(s=>`<div class="ds"><div class="dnum" style="color:${s.c}">${s.num}</div><div class="dcap">${s.cap}</div><div class="dsub">${s.sub}</div></div>`).join('');
 
 /* cost curve */
 let curCm='copper',dragPrice={};
@@ -420,14 +487,14 @@ document.getElementById('scform').addEventListener('submit',e=>{e.preventDefault
 document.querySelectorAll('.scex a').forEach(a=>a.onclick=()=>{document.getElementById('scq').value=a.dataset.q;runScenario(a.dataset.q);});
 
 /* view switching */
-const TITLES={overview:['Overview','State of the portfolio'],financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],capital:['Capital allocation','How operating cash was generated & deployed · FY2024'],ops:['Operations','Cost position & asset state'],outlook:['Outlook','Forward risks & scenario copilot'],act:['Act','The recommended moves']};
+const TITLES={overview:['Overview','State of the portfolio'],financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],capital:['Capital allocation','Where cash is generated & deployed — and whether it earns its cost of capital'],ops:['Operations','Cost position & asset state'],outlook:['Outlook','Forward risks & scenario copilot'],act:['Act','The recommended moves']};
 let drawn={};
 function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById('v-'+v).classList.add('on');
  document.querySelectorAll('.item[data-v]').forEach(i=>i.classList.toggle('on',i.dataset.v===v));
  document.getElementById('vt').textContent=TITLES[v][0];document.getElementById('vc').textContent=TITLES[v][1];
  try{history.replaceState(null,'','#'+v);}catch(e){}
  // render charts lazily (need layout, so after display)
- requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){capWf();drawn.cap=1;}if(v==='ops'&&!drawn.ops){curve();scatter();drill('ptfi');drawn.ops=1;}});
+ requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){capRender(capLens);drawn.cap=1;}if(v==='ops'&&!drawn.ops){curve();scatter();drill('ptfi');drawn.ops=1;}});
 }
 document.querySelectorAll('.item[data-v]').forEach(i=>i.onclick=()=>show(i.dataset.v));
 document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=()=>show(a.dataset.jump));
