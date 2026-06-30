@@ -513,6 +513,15 @@
   body.stress-solo #stressView{overflow:hidden}
   body.stress-solo #vtabs{display:none}
   #vtabs .vtab[data-v="monitor"],#vtabs .vtab[data-v="forecast"],#vtabs .vtab[data-v="allocate"]{display:none}
+  /* product-level Monitor ⇄ Stress Test toggle (matches portfolio-monitor.html) */
+  #prodToggle{display:none}
+  body.stress-solo #prodToggle{display:flex;position:fixed;top:9px;left:50%;transform:translateX(-50%);z-index:60;
+    gap:6px;background:#0b1614;border:1px solid rgba(47,224,192,.18);border-radius:9px;padding:4px;
+    box-shadow:0 6px 22px rgba(0,0,0,.45)}
+  #prodToggle .pt{font-family:inherit;font-size:13px;font-weight:600;color:#82a79e;text-decoration:none;
+    padding:7px 16px;border-radius:6px;cursor:pointer;transition:background .15s ease,color .15s ease;line-height:1}
+  #prodToggle .pt:hover{color:#cfeee6}
+  #prodToggle .pt.active{background:#2fe0c0;color:#05201b;cursor:default}
   /* ── Stress Test module (Cash & Scenarios redesign) ── */
   @keyframes ompulse{0%,100%{opacity:1}50%{opacity:.4}}
   @keyframes omscan{0%{transform:translateX(-120%)}100%{transform:translateX(320%)}}
@@ -836,6 +845,12 @@
   if(t!=='forest')d.setAttribute('data-theme',t);})();</script>
 </head>
 <body>
+
+<!-- product-level nav: Monitor (portfolio-monitor.html) ⇄ Stress Test (this view). Shown full-bleed in stress-solo. -->
+<div id="prodToggle" role="tablist" aria-label="Switch screen">
+  <a class="pt" href="portfolio-monitor.html" role="tab">Monitor</a>
+  <span class="pt active" role="tab" aria-selected="true">Stress Test</span>
+</div>
 
 <!-- print-only board brief: populated on Export PDF, then window.print(). Hidden on screen. -->
 <div id="printBrief" aria-hidden="true"></div>
