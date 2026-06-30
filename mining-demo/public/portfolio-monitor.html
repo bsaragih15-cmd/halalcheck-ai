@@ -1,6 +1,6 @@
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MIND ID · Portfolio Control Tower</title>
+<title>Portfolio Control Tower</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -89,7 +89,7 @@ main{flex:1;margin-top:16px;overflow:hidden}
 </style></head>
 <body><div id="app">
  <div class="topbar">
-   <div class="brand"><span class="dot"></span>MIND ID <span class="sub">· Portfolio Control Tower</span> <span class="illus">Illustrative</span></div>
+   <div class="brand"><span class="dot"></span>Portfolio Control Tower <span class="illus">Illustrative</span></div>
    <div class="toptabs"><button class="tt active">Monitor</button><button class="tt" id="goStress">Stress Test</button></div>
    <div class="asof" id="asof">AS OF 30 JUN 2026 · MTD</div>
  </div>
@@ -119,25 +119,25 @@ function spark(seed,trend){let s=seed;const r=()=>{s=(s*1103515245+12345)&0x7fff
  return `<svg class="spark" viewBox="0 0 ${w} ${h}"><path d="${d}" fill="none" stroke="${col}" stroke-width="1.6" opacity=".9"/><circle cx="${xy[n-1][0].toFixed(1)}" cy="${xy[n-1][1].toFixed(1)}" r="2.4" fill="${col}"/></svg>`;}
 
 const SUBS=[
- {nm:'Antam',sec:'Nickel · Gold',eb:168,vsb:+2,ytd:+1,rev:0.9,st:'green',sd:7},
- {nm:'Freeport Indonesia',sec:'Copper · Gold',eb:273,vsb:+5,ytd:+4,rev:1.6,st:'green',sd:23},
- {nm:'Inalum',sec:'Aluminium',eb:121,vsb:-4,ytd:-3,rev:0.8,st:'amber',sd:11},
- {nm:'Bukit Asam (PTBA)',sec:'Coal',eb:142,vsb:-11,ytd:-8,rev:1.1,st:'red',sd:31},
- {nm:'Timah',sec:'Tin',eb:38,vsb:-24,ytd:-19,rev:0.4,st:'red',sd:5},
+ {nm:'Subsidiary 1',sec:'Coal',eb:142,vsb:-11,ytd:-8,rev:1.1,st:'red',sd:31},
+ {nm:'Subsidiary 2',sec:'Nickel · Gold',eb:168,vsb:+2,ytd:+1,rev:0.9,st:'green',sd:7},
+ {nm:'Subsidiary 3',sec:'Aluminium',eb:121,vsb:-4,ytd:-3,rev:0.8,st:'amber',sd:11},
+ {nm:'Subsidiary 4',sec:'Tin',eb:38,vsb:-24,ytd:-19,rev:0.4,st:'red',sd:5},
+ {nm:'Subsidiary 5',sec:'Copper · Gold · JV',eb:273,vsb:+5,ytd:+4,rev:1.6,st:'green',sd:23},
 ];
 const INIT=[
  {nm:'Smelter ramp-up & downstreaming',own:'Operations',st:'green',pct:72,imp:180,risk:'Power supply continuity at Line 2',ms:'Line 2 commissioning · Q3'},
  {nm:'Group procurement synergy',own:'Procurement',st:'amber',pct:48,imp:95,risk:'Subsidiary adoption of category waves',ms:'Category waves 3–4 sign-off'},
  {nm:'Working-capital release',own:'Finance',st:'green',pct:64,imp:120,risk:'Offtake payment-term renegotiation',ms:'Payables standardization rollout'},
- {nm:'Coal cost-out program',own:'Bukit Asam',st:'red',pct:35,imp:60,risk:'Stripping ratio above plan',ms:'Fleet productivity reset'},
+ {nm:'Coal cost-out program',own:'Subsidiary 1',st:'red',pct:35,imp:60,risk:'Stripping ratio above plan',ms:'Fleet productivity reset'},
  {nm:'Portfolio decarbonization',own:'Strategy',st:'amber',pct:22,imp:45,risk:'Capex approval for renewables PPAs',ms:'2 PPA signings'},
 ];
 const CAPEX=[
- {nm:'Smelter Manyar (Gresik)',sub:'Freeport',bud:3.0,spent:2.6,pct:88,varc:+4,st:'amber'},
- {nm:'Smelter expansion P-III',sub:'Inalum',bud:1.8,spent:0.9,pct:50,varc:0,st:'green'},
- {nm:'Nickel HPAL complex',sub:'Antam',bud:2.4,spent:1.1,pct:46,varc:+6,st:'amber'},
- {nm:'Coal-to-DME & rail',sub:'Bukit Asam',bud:1.6,spent:0.4,pct:24,varc:-1,st:'green'},
- {nm:'Ausmelt furnace upgrade',sub:'Timah',bud:0.3,spent:0.2,pct:70,varc:+9,st:'red'},
+ {nm:'Copper smelter — phase II',sub:'Subsidiary 5',bud:3.0,spent:2.6,pct:88,varc:+4,st:'amber'},
+ {nm:'Smelter expansion P-III',sub:'Subsidiary 3',bud:1.8,spent:0.9,pct:50,varc:0,st:'green'},
+ {nm:'Nickel HPAL complex',sub:'Subsidiary 2',bud:2.4,spent:1.1,pct:46,varc:+6,st:'amber'},
+ {nm:'Coal-to-DME & rail',sub:'Subsidiary 1',bud:1.6,spent:0.4,pct:24,varc:-1,st:'green'},
+ {nm:'Ausmelt furnace upgrade',sub:'Subsidiary 4',bud:0.3,spent:0.2,pct:70,varc:+9,st:'red'},
 ];
 const sgn=v=>(v>0?'+':'')+v;
 const cnt=arr=>({green:arr.filter(x=>x.st==='green').length,amber:arr.filter(x=>x.st==='amber').length,red:arr.filter(x=>x.st==='red').length});
