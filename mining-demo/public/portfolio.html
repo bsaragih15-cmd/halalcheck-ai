@@ -87,6 +87,7 @@ svg text{font-family:'IBM Plex Mono',monospace}
 .kpi .base{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-top:3px}
 .kpi .var{position:absolute;top:14px;right:14px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;padding:4px 8px;border-radius:6px}
 .up{color:#5E7350;background:#ECF0E4}.down{color:#A4543C;background:#F3E5DF}
+.kpi .var.flat{color:#7C766B;background:#EFEAE0}
 .kpi .note{font-size:10.5px;color:var(--mut);margin-top:8px;line-height:1.4}.kpi .note b{color:var(--tx)}
 .kpi.hero{border-color:rgba(164,84,60,.4);box-shadow:0 0 0 1px #F3E5DF,0 6px 22px rgba(164,84,60,.08)}
 .kpi .mgc{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#8A7B55;background:#F5EFE2;border-radius:6px;padding:4px 7px;margin-top:7px;display:inline-block}
@@ -101,8 +102,8 @@ svg text{font-family:'IBM Plex Mono',monospace}
 .dpl .df{height:100%;border-radius:7px}
 .dpl .dv{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--tx);width:80px;text-align:right;flex:none}
 .dpl .dv small{color:var(--faint);font-weight:500}
-.disc{display:grid;grid-template-columns:1fr 1fr;gap:13px 16px}
-.disc .dnum{font-size:22px;font-weight:600;letter-spacing:-.01em}
+.disc{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px}
+.disc .dnum{font-size:20px;font-weight:600;letter-spacing:-.01em}
 .disc .dcap{font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.03em;text-transform:uppercase;color:var(--faint);margin-top:2px}
 .disc .dsub{font-size:10px;color:var(--mut);margin-top:3px;line-height:1.32}
 /* growth pipeline mini-table */
@@ -225,17 +226,24 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
      </div>
    </div>
 
-   <!-- CAPITAL ALLOCATION — single view: generation/deployment + returns + pipeline + discipline -->
+   <!-- CAPITAL ALLOCATION — KPI strip · waterfall + read · returns / pipeline / multi-year -->
    <div class="view" id="v-capital">
-     <div class="card" style="flex:1;display:flex;flex-direction:column">
-       <div class="bhead"><div class="ch">How operating cash was generated &amp; deployed <span class="cs" style="display:inline">· sources → uses · Rp T · FY2024</span></div></div>
-       <div class="fillsvg"><svg id="caf" viewBox="0 0 1560 330" preserveAspectRatio="xMidYMid meet"></svg></div>
-       <div class="ccread" id="cafread"></div>
+     <div class="kpis" id="ckpis"></div>
+     <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;flex:1;min-height:0">
+       <div class="card" style="display:flex;flex-direction:column;min-height:0">
+         <div class="bhead"><div class="ch">How operating cash was generated &amp; deployed <span class="cs" style="display:inline">· sources → uses · Rp T · FY2024</span></div></div>
+         <div class="fillsvg"><svg id="caf" viewBox="0 0 1560 330" preserveAspectRatio="xMidYMid meet"></svg></div>
+       </div>
+       <div class="card" style="display:flex;flex-direction:column;min-height:0">
+         <div class="ch">The read <span class="cs" style="display:inline">· is the allocation sound?</span></div>
+         <div class="bcread" id="capreadbig" style="margin-top:9px;font-size:12.5px;line-height:1.55"></div>
+         <div class="disc" id="capdisc" style="margin-top:auto;border-top:1px solid var(--border);padding-top:13px"></div>
+       </div>
      </div>
-     <div style="display:grid;grid-template-columns:1.05fr 1.2fr 0.92fr;gap:12px;flex:none">
+     <div style="display:grid;grid-template-columns:1.05fr 1.2fr 1fr;gap:12px;flex:none">
        <div class="card" style="padding:13px 16px"><div class="ch">Returns on capital <span class="cs" style="display:inline">· ROIC vs cost of capital</span></div><svg id="capret" viewBox="0 0 520 214" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;margin-top:6px"></svg></div>
        <div class="card" style="padding:13px 16px"><div class="ch">Growth pipeline <span class="cs" style="display:inline">· what the build buys, &amp; when</span></div><div id="cappipe" style="margin-top:9px"></div></div>
-       <div class="card" style="padding:13px 16px"><div class="ch">Capital discipline <span class="cs" style="display:inline">· is it sound?</span></div><div class="disc" id="capdisc" style="margin-top:11px"></div></div>
+       <div class="card" style="padding:13px 16px"><div class="ch">Capital deployed over time <span class="cs" style="display:inline">· the build phase</span></div><svg id="caphist" viewBox="0 0 520 214" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;margin-top:6px"></svg></div>
      </div>
    </div>
 
@@ -336,8 +344,8 @@ const KPI=[
  {l:'Free cash flow',a:18.0,p:22,q:[5.6,3.2,4.4,4.8],n:'Lower earnings + <b>Manyar/SGAR</b> capex.'},
  {l:'To State',a:90.4,p:88,q:[21.4,22.3,23.2,23.5],n:'<b>Royalty up</b> on PP19/2025.'}];
 /* quarterly trend sparkline — line vs a dashed plan-pace (RKAP ÷ 4) reference */
-function spark(q,plan,up){const W=158,H=30,pad=3,all=q.concat([plan]),mn=Math.min(...all),mx=Math.max(...all),rng=(mx-mn)||1;
- const x=i=>pad+i*(W-2*pad)/(q.length-1),y=v=>H-pad-(v-mn)/rng*(H-2*pad),col=up?'#5E7350':'#A4543C';
+function spark(q,plan,up,co){const W=158,H=30,pad=3,all=q.concat([plan]),mn=Math.min(...all),mx=Math.max(...all),rng=(mx-mn)||1;
+ const x=i=>pad+i*(W-2*pad)/(q.length-1),y=v=>H-pad-(v-mn)/rng*(H-2*pad),col=co||(up?'#5E7350':'#A4543C');
  const pts=q.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' '),area=pad+','+(H-pad)+' '+pts+' '+(W-pad)+','+(H-pad);
  const py=y(plan).toFixed(1),lx=x(q.length-1).toFixed(1),ly=y(q[q.length-1]).toFixed(1);
  return `<svg class="spk" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet"><polyline points="${area}" fill="${col}" opacity=".09"/><line x1="${pad}" y1="${py}" x2="${W-pad}" y2="${py}" stroke="#B7B0A3" stroke-width="1" stroke-dasharray="3 3" opacity=".55"/><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${lx}" cy="${ly}" r="2.5" fill="${col}"/></svg>`;}
@@ -389,7 +397,17 @@ const CAPALLOC=[
  {l:'Dividends',v:-9.0,sub:'State + minorities'},
  {l:'Net cash Δ',v:2.0,t:'a',sub:'retained'},
 ];
-const CAPREAD='FCF of <b>Rp 18T</b> covers the dividend twice over, but the <b>Rp 12T downstreaming build</b> (Manyar + SGAR) tips the year into a <b>Rp 5T debt draw</b> — growth is funded at the margin, so a soft-price year squeezes the build, not the dividend.';
+const CAPREAD='The group turned <b>Rp 29.5T</b> of operating cash into <b>Rp 23.5T</b> of capex — half the downstreaming build — plus <b>Rp 9T</b> to the State. FCF covers the dividend twice, but growth + dividend outrun internal cash, so the <b>Rp 12T build is part debt-funded</b>. Leverage stays low and the dividend is self-funded; a soft-price year is what tightens it.';
+document.getElementById('capreadbig').innerHTML=CAPREAD;
+/* capital KPI strip — headline generation/deployment metrics with quarterly sparklines */
+const CKPI=[
+ {l:'Operating cash',a:29.5,p:31,u:'Rp T',q:[6.8,7.2,7.6,7.9],gd:'up',n:'EBITDA less tax & working capital.'},
+ {l:'Free cash flow',a:18.0,p:22,u:'Rp T',q:[5.6,3.2,4.4,4.8],gd:'up',n:'Post-sustaining capex — below plan.'},
+ {l:'Growth capex',a:12.0,p:10,u:'Rp T',q:[2.4,3.0,3.2,3.4],gd:'flat',n:'Manyar + SGAR — the build, ramping.'},
+ {l:'Dividend paid',a:9.0,p:9.5,u:'Rp T',q:[2.1,2.2,2.3,2.4],gd:'flat',n:'To the State & minorities.'},
+ {l:'Net debt / EBITDA',a:0.8,p:0.7,u:'×',dec:1,q:[0.55,0.6,0.7,0.8],gd:'down',n:'Rose on the draw; headroom to ~2.0×.'},
+];
+document.getElementById('ckpis').innerHTML=CKPI.map(k=>{const v=(k.a-k.p)/k.p*100,pos=k.gd==='flat'?null:(k.gd==='up'?v>=0:v<=0),cls=pos===null?'flat':(pos?'up':'down'),co=pos===null?'#7C766B':(pos?'#5E7350':'#A4543C'),pp=k.u==='×'?k.p:k.p/4,vt=k.a.toFixed(1),pt=k.dec?k.p.toFixed(1):k.p,ux=k.u==='×'?'×':'';return `<div class="kpi"><div class="l">${k.l}</div><div class="var ${cls}">${v>=0?'▲ +':'▼ '}${Math.abs(v).toFixed(0)}%</div><div class="act">${vt}<small> ${k.u}</small></div><div class="base">vs RKAP ${pt}${ux}</div>${spark(k.q,pp,true,co)}<div class="spkc">quarterly · ‑‑ plan</div><div class="note">${k.n}</div></div>`}).join('');
 /* returns by subsidiary — ROIC vs cost of capital; bar=ROIC, tick=WACC, height=capital, label=economic profit (sorted by spread) */
 const RET=[
  {nm:'Freeport',ce:170,roic:14,wacc:10},
@@ -428,6 +446,24 @@ function returnsMini(){const s=document.getElementById('capret');if(!s)return;s.
   E(s,'text',{x:rx,y:cy+3,'font-size':9.5,'font-weight':700,fill:col},(ep>=0?'+':'−')+'Rp '+Math.abs(ep).toFixed(1)+'T');});
  E(s,'line',{x1:px0,y1:bot,x2:px1,y2:bot,stroke:'#CBC2B0'});
  E(s,'text',{x:6,y:bot+16,'font-size':8.5,fill:'#6B655B'},'Group economic profit +Rp 5.3T · ~96% from Freeport');}
+/* capital deployed over time — stacked uses of cash (sustaining/dividend/growth), FY20→FY24 */
+const CHIST=[
+ {y:'FY20',sus:9.0,div:7.0,grw:4.0},
+ {y:'FY21',sus:9.5,div:8.0,grw:6.0},
+ {y:'FY22',sus:10.0,div:11.0,grw:8.0},
+ {y:'FY23',sus:11.0,div:10.0,grw:10.0},
+ {y:'FY24',sus:11.5,div:9.0,grw:12.0},
+];
+function histRender(){const s=document.getElementById('caphist');if(!s)return;s.innerHTML='';
+ const x0=34,x1=508,y0=176,y1=36,n=CHIST.length,tot=CHIST.map(d=>d.sus+d.div+d.grw),ymax=Math.ceil(Math.max(...tot)/10)*10;
+ const sc=v=>(y0-y1)*v/ymax,bw=Math.min(54,(x1-x0)/n-14),gap=(x1-x0-bw*n)/(n-1);
+ for(let g=0;g<=ymax;g+=10){const y=y0-sc(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'#E7DFCF'});E(s,'text',{x:x0-5,y:y+3,'text-anchor':'end','font-size':8,fill:'#A39B8C'},g);}
+ const segs=[['sus','#B7B0A0'],['div','#A9842F'],['grw','#9C6644']];let x=x0;
+ CHIST.forEach(d=>{let yb=y0;segs.forEach(([k,c])=>{const h=sc(d[k]);if(h>0)E(s,'rect',{x,y:yb-h,width:bw,height:h,fill:c,opacity:.86});yb-=h;});
+  E(s,'text',{x:x+bw/2,y:y0+13,'text-anchor':'middle','font-size':9,fill:'#6B655B'},d.y);x+=bw+gap;});
+ const lg=[['Sustaining','#B7B0A0'],['Dividend','#A9842F'],['Growth','#9C6644']];let lx=x0;
+ lg.forEach(([t,c])=>{E(s,'rect',{x:lx,y:14,width:9,height:9,rx:1.5,fill:c,opacity:.86});E(s,'text',{x:lx+13,y:22,'font-size':8.5,fill:'#6B655B'},t);lx+=t.length*5.4+34;});
+ E(s,'text',{x:x1,y:22,'text-anchor':'end','font-size':8.5,'font-weight':700,fill:'#9C6644'},'growth 4→12 · now the biggest use');}
 /* growth pipeline — the Rp 12T build, by project: capex · % complete · first production · expected IRR */
 const PIPE=[
  {nm:'Manyar Cu smelter',own:'PTFI · Gresik',cap:5.5,pct:95,prod:'2024',irr:14},
@@ -488,7 +524,7 @@ function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.remov
  document.getElementById('vt').textContent=TITLES[v][0];document.getElementById('vc').textContent=TITLES[v][1];
  try{history.replaceState(null,'','#'+v);}catch(e){}
  // render charts lazily (need layout, so after display)
- requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);document.getElementById('cafread').innerHTML=CAPREAD;returnsMini();drawn.cap=1;}if(v==='ops'&&!drawn.ops){curve();scatter();drill('ptfi');drawn.ops=1;}});
+ requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();drawn.cap=1;}if(v==='ops'&&!drawn.ops){curve();scatter();drill('ptfi');drawn.ops=1;}});
 }
 document.querySelectorAll('.item[data-v]').forEach(i=>i.onclick=()=>show(i.dataset.v));
 document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=()=>show(a.dataset.jump));
