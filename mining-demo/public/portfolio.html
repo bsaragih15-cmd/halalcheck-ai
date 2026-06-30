@@ -1,0 +1,299 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MIND ID · Portfolio Control Tower</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+ --bg:#050f0c; --panel:rgba(255,255,255,.03); --panel2:rgba(255,255,255,.05);
+ --border:rgba(120,170,155,.15); --border2:rgba(120,170,155,.28);
+ --tx:#eafff8; --mut:#9fc4ba; --faint:#586f67;
+ --teal:#2fe0c0; --green:#37d39a; --amber:#f5b94a; --red:#ff5d5d; --blue:#5cc8e0; --violet:#9b9dff; --gold:#e5c84a;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:radial-gradient(60% 60% at 100% 0%,rgba(155,157,255,.08),transparent 60%),linear-gradient(170deg,#0a1c18,#050f0c 60%);
+ color:var(--tx);font-family:Inter,system-ui,Arial,sans-serif;height:100vh;overflow:hidden;display:flex}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+svg text{font-family:'IBM Plex Mono',monospace}
+/* ── left rail ── */
+.rail{width:238px;flex:none;height:100vh;border-right:1px solid var(--border);background:rgba(0,0,0,.18);display:flex;flex-direction:column;padding:20px 14px}
+.logo{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:800;letter-spacing:.02em;padding:4px 8px 16px}
+.logo .dot{width:15px;height:15px;border-radius:5px;background:var(--teal);box-shadow:0 0 18px var(--teal)}
+.logo .s{color:var(--mut);font-weight:500;font-size:11px}
+.grp{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.18em;color:var(--faint);text-transform:uppercase;padding:14px 10px 6px}
+.item{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:9px;cursor:pointer;color:var(--mut);font-size:13px;font-weight:600;transition:background .14s,color .14s;text-decoration:none}
+.item:hover{background:var(--panel);color:var(--tx)}
+.item.on{background:var(--panel2);color:var(--tx)}
+.item.on .ic{color:var(--teal)}
+.item .ic{font-family:'IBM Plex Mono',monospace;font-size:11px;width:18px;color:var(--faint);font-weight:700}
+.item .kx{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;padding:2px 6px;border-radius:5px}
+.kx.dn{color:#ff9d9d;background:rgba(255,93,93,.14)}.kx.am{color:#f5d089;background:rgba(245,185,74,.14)}.kx.gn{color:#7ce8bf;background:rgba(55,211,154,.14)}
+.railft{margin-top:auto;border-top:1px solid var(--border);padding:14px 10px 4px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--faint);line-height:1.7}
+.railft .ai{color:var(--violet)}
+.railft .pill{display:inline-block;border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--tx);margin-top:6px}
+/* ── main ── */
+.main{flex:1;height:100vh;display:flex;flex-direction:column;padding:22px 30px 24px;overflow:hidden;min-width:0}
+.vhead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding-bottom:14px;border-bottom:1px solid var(--border);flex:none}
+.vhead .t{font-size:22px;font-weight:800;letter-spacing:-.01em}
+.vhead .c{font-size:12px;color:var(--mut);margin-top:4px}
+.vhead .r{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--faint);text-align:right;line-height:1.6}
+.view{flex:1;min-height:0;display:none;flex-direction:column;gap:14px;padding-top:16px}
+.view.on{display:flex;animation:fade .3s ease}
+/* lighter views read as an exec brief — center their content in the viewport */
+#v-overview.on{justify-content:center;gap:30px;padding-bottom:24px}
+#v-outlook.on{justify-content:center;gap:18px;padding-bottom:24px}
+@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px;min-height:0}
+.ch{font-size:13px;font-weight:700}.cs{font-size:10.5px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin:1px 0 6px}
+.bcread{font-size:12px;color:var(--mut);line-height:1.5}.bcread b{color:var(--tx)}
+.fillsvg{flex:1;min-height:0}.fillsvg svg{width:100%;height:100%;display:block}
+/* overview */
+.verdict{display:flex;gap:16px;align-items:flex-start}
+.verdict .vi{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.12em;color:#0a0a1a;background:var(--violet);padding:5px 9px;border-radius:6px;white-space:nowrap;margin-top:4px}
+.verdict h1{font-size:34px;font-weight:900;line-height:1.08;letter-spacing:-.02em}
+.verdict h1 .u{color:var(--amber)}
+.verdict .vr{font-size:14px;color:var(--mut);line-height:1.55;margin-top:12px;max-width:880px}
+.matters{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.m{display:flex;align-items:center;gap:15px;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:16px 17px;position:relative;overflow:hidden;text-decoration:none;color:inherit;transition:transform .18s,border-color .18s}
+.m:hover{transform:translateY(-2px);border-color:var(--border2)}.m .ed{position:absolute;left:0;top:0;bottom:0;width:4px}
+.m .big{font-family:'IBM Plex Mono',monospace;font-size:27px;font-weight:800;min-width:108px}
+.m .tx b{font-weight:700;font-size:13.5px}.m .tx .s{color:var(--mut);font-size:11.5px;margin-top:2px}
+.r .big{color:var(--red)}.r .ed{background:var(--red)}.v2 .big{color:var(--violet)}.v2 .ed{background:var(--violet)}.a2 .big{color:var(--amber)}.a2 .ed{background:var(--amber)}
+/* kpi */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;flex:none}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:15px 16px;position:relative}
+.kpi .l{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-family:'IBM Plex Mono',monospace}
+.kpi .act{font-size:30px;font-weight:800;font-family:'IBM Plex Mono',monospace;margin-top:8px}.kpi .act small{font-size:12px;color:var(--mut)}
+.kpi .base{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-top:3px}
+.kpi .var{position:absolute;top:14px;right:14px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;padding:4px 8px;border-radius:6px}
+.up{color:#062;background:rgba(55,211,154,.16)}.down{color:#3a0000;background:rgba(255,93,93,.16)}
+.kpi .note{font-size:10.5px;color:var(--mut);margin-top:8px;line-height:1.4}.kpi .note b{color:var(--tx)}
+/* tables */
+table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
+.fin thead th{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);text-align:right;padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+.fin thead th.l{text-align:left}
+.fin tbody td{padding:11px 12px;border-bottom:1px solid rgba(120,170,155,.08);text-align:right;white-space:nowrap}
+.fin tbody tr:last-child td{border-bottom:0}
+.nm{display:flex;align-items:center;gap:10px;text-align:left}.nm .e{width:3px;height:28px;border-radius:2px;flex:none}
+.nm b{font-size:13px;font-weight:700}.nm .sec{font-size:9.5px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin-top:1px}
+.big{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}.pl{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--faint)}
+.vpos{color:var(--green)}.vneg{color:var(--red)}
+.rag{font-size:9.5px;font-weight:700;font-family:'IBM Plex Mono',monospace;padding:3px 8px;border-radius:5px}
+.rag.green{color:#062;background:rgba(55,211,154,.16)}.rag.amber{color:#3a2600;background:rgba(245,185,74,.16)}.rag.red{color:#3a0000;background:rgba(255,93,93,.16)}
+.shareb{display:inline-block;height:7px;border-radius:4px;vertical-align:middle;margin-right:7px}
+/* cost & quality */
+.two{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;flex:1;min-height:0}
+.ccsel{display:flex;gap:5px;margin:2px 0 2px;flex-wrap:wrap}
+.ccsel button{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--mut);background:var(--panel2);border:1px solid var(--border);padding:4px 9px;border-radius:6px;cursor:pointer}
+.ccsel button.on{color:#05201b;background:var(--teal);border-color:var(--teal)}
+.ccread{font-size:11px;color:var(--mut);margin-top:4px}.ccread b{color:var(--tx)}.txt-green{color:var(--green)}.txt-red{color:var(--red)}
+.op{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:9px 11px}
+.op .l{font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);font-family:'IBM Plex Mono',monospace}
+.op .v{font-size:15px;font-weight:700;margin-top:3px;font-family:'IBM Plex Mono',monospace}.op .d{font-size:10px;color:var(--mut);margin-top:3px;line-height:1.3}
+/* outlook + copilot */
+.outlook{display:grid;grid-template-columns:repeat(2,1fr);gap:13px}
+.ol{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:14px 16px;border-left:3px solid var(--mut)}
+.ol.r{border-left-color:var(--red)}.ol.a{border-left-color:var(--amber)}.ol.t{border-left-color:var(--teal)}
+.ol .t1c{font-size:13px;font-weight:700}.ol .t2c{font-size:11.5px;color:var(--mut);margin-top:6px;line-height:1.45}
+.copilot form{display:flex;gap:8px}
+.copilot input{flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:8px;padding:10px 13px;color:var(--tx);font-family:inherit;font-size:12.5px;outline:none}
+.copilot input:focus{border-color:var(--violet)}
+.copilot button{background:var(--violet);color:#0a0a1a;border:0;border-radius:8px;padding:0 18px;font-weight:700;cursor:pointer}
+.scex{font-size:10.5px;color:var(--faint);margin-top:7px;font-family:'IBM Plex Mono',monospace}.scex a{color:var(--mut);cursor:pointer;text-decoration:underline}
+#scres{margin-top:11px;font-size:12px;color:var(--mut);line-height:1.5}.vdt{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:3px 8px;border-radius:5px;margin-bottom:8px}
+.vdt.ACT{color:#3a0000;background:rgba(255,93,93,.18)}.vdt.WATCH{color:#3a2600;background:rgba(245,185,74,.18)}.vdt.HOLD{color:#062;background:rgba(55,211,154,.16)}.vdt.UNCLEAR{color:var(--mut);border:1px solid var(--border)}
+.drv{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.drv span{font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:3px 8px;border-radius:5px;background:var(--panel2);border:1px solid var(--border);color:var(--tx)}
+.imp a{color:var(--teal)}
+/* stress / act */
+.big-cta{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px}
+.big-cta .h{font-size:30px;font-weight:800;letter-spacing:-.01em}.big-cta .p{font-size:14px;color:var(--mut);max-width:620px;line-height:1.55}
+.big-cta a{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:700;color:#05201b;background:var(--teal);border-radius:12px;padding:14px 28px;text-decoration:none;box-shadow:0 8px 28px rgba(47,224,192,.2)}
+.moves{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.mv{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:16px 18px;display:flex;gap:14px}
+.mv .n{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:800;color:var(--teal)}
+.mv .t1{font-size:14px;font-weight:700}.mv .t2{font-size:12px;color:var(--mut);margin-top:5px;line-height:1.45}
+</style></head>
+<body>
+
+ <!-- ════ LEFT RAIL ════ -->
+ <div class="rail">
+   <div class="logo"><span class="dot"></span><div>MIND ID<div class="s">Portfolio Control Tower</div></div></div>
+   <div class="grp">Brief</div>
+   <a class="item on" data-v="overview"><span class="ic">◆</span>Overview</a>
+   <div class="grp">Performance · vs RKAP</div>
+   <a class="item" data-v="financials"><span class="ic">01</span>Financials<span class="kx dn">−10%</span></a>
+   <a class="item" data-v="subs"><span class="ic">02</span>Subsidiaries</a>
+   <a class="item" data-v="ops"><span class="ic">03</span>Operations<span class="kx am">1 risk</span></a>
+   <a class="item" data-v="outlook"><span class="ic">04</span>Outlook</a>
+   <div class="grp">Decide</div>
+   <a class="item" href="ceo-cockpit.html"><span class="ic">◇</span>Stress test</a>
+   <a class="item" data-v="act"><span class="ic">→</span>Act</a>
+   <div class="railft">FY2024 · vs RKAP<br><span class="ai">◇ AI Chief of Staff</span> <span id="aibadge"></span><br><span class="pill">as of 30 Jun 2026</span></div>
+ </div>
+
+ <!-- ════ MAIN ════ -->
+ <div class="main">
+   <div class="vhead"><div><div class="t" id="vt">Overview</div><div class="c" id="vc">State of the portfolio</div></div>
+     <div class="r">MIND ID CONSOLIDATED<br>Rp trillion · FY2024 actual vs RKAP</div></div>
+
+   <!-- OVERVIEW -->
+   <div class="view on" id="v-overview">
+     <div class="verdict"><span class="vi" id="cfobadge">CFO READ</span>
+       <div><h1>A record top line that <span class="u">missed the plan</span> that matters.</h1>
+       <div class="vr" id="ovread">Revenue beat RKAP on gold trading, but EBITDA came in ~Rp 4.5T under budget on coal and nickel prices — and the profit that's left leans ~80% on one asset, now under force majeure. The story is concentration, not the headline.</div></div></div>
+     <div class="matters">
+       <a class="m r" data-jump="financials"><span class="ed"></span><span class="big">−10%</span><div class="tx"><b>EBITDA missed plan.</b><div class="s">Price-led — coal &amp; nickel below the RKAP deck.</div></div></a>
+       <a class="m v2" data-jump="ops"><span class="ed"></span><span class="big">80%</span><div class="tx"><b>Profit leans on Grasberg.</b><div class="s">One asset, 51% owned — under force majeure.</div></div></a>
+       <a class="m a2" data-jump="outlook"><span class="ed"></span><span class="big">Rp 90T</span><div class="tx"><b>State contribution exposed.</b><div class="s">The miss flows to the dividend via Danantara.</div></div></a>
+     </div>
+   </div>
+
+   <!-- FINANCIALS -->
+   <div class="view" id="v-financials">
+     <div class="kpis" id="kpis"></div>
+     <div class="card" style="flex:1;display:flex;flex-direction:column">
+       <div class="ch">What drove the EBITDA miss <span class="cs" style="display:inline">· RKAP → drivers → actual · Rp T · a price-led miss</span></div>
+       <div class="fillsvg"><svg id="wf" viewBox="0 0 1560 360" preserveAspectRatio="xMidYMid meet"></svg></div>
+     </div>
+   </div>
+
+   <!-- SUBSIDIARIES -->
+   <div class="view" id="v-subs">
+     <div class="card" style="flex:none"><table class="fin" id="fin"></table></div>
+     <div class="card" style="flex:1;display:flex;flex-direction:column">
+       <div class="ch">Net-profit variance vs plan — by subsidiary <span class="cs" style="display:inline">· the big earners dragged, the small assets beat</span></div>
+       <div class="fillsvg"><svg id="dv" viewBox="0 0 1560 230" preserveAspectRatio="xMidYMid meet"></svg></div>
+     </div>
+   </div>
+
+   <!-- OPERATIONS -->
+   <div class="view" id="v-ops">
+     <div class="two">
+       <div class="card" style="display:flex;flex-direction:column">
+         <div class="ch">Cost curve — drag the price line</div><div class="cs">asset goes underwater when its cost is above the price</div>
+         <div class="ccsel" id="ccsel"></div>
+         <div class="fillsvg"><svg id="cc" viewBox="0 0 760 300" preserveAspectRatio="xMidYMid meet"></svg></div>
+         <div class="ccread" id="ccread"></div>
+       </div>
+       <div class="card" style="display:flex;flex-direction:column">
+         <div class="ch">Portfolio quality map</div><div class="cs">cost quartile × EBITDA margin · bubble = EBITDA · click to drill</div>
+         <div class="fillsvg"><svg id="sc" viewBox="0 0 620 320" preserveAspectRatio="xMidYMid meet"></svg></div>
+       </div>
+     </div>
+     <div class="card" id="opdrill" style="flex:none"></div>
+   </div>
+
+   <!-- OUTLOOK -->
+   <div class="view" id="v-outlook">
+     <div class="outlook" id="outlookcards"></div>
+     <div class="card copilot" style="flex:none">
+       <div class="ch" style="margin-bottom:8px">◇ Scenario copilot <span class="cs" style="display:inline">· type a shock → who's exposed</span></div>
+       <form id="scform"><input id="scq" autocomplete="off" placeholder="e.g. copper −30% and rupiah weakens 10%"><button type="submit">Run</button></form>
+       <div class="scex">try: <a data-q="coal falls 20%">coal falls 20%</a> · <a data-q="nickel down 25%">nickel −25%</a> · <a data-q="copper -30% and rupiah weakens 10%">copper −30% + rupiah −10%</a></div>
+       <div id="scres"></div>
+     </div>
+   </div>
+
+   <!-- ACT -->
+   <div class="view" id="v-act">
+     <div class="moves">
+       <div class="mv"><span class="n">01</span><div><div class="t1">Hedge part of the coal price</div><div class="t2">Coal is the dominant drag vs plan and the biggest cash-floor exposure. Lock 30–50% of seaborne price for two quarters to collapse the left tail.</div></div></div>
+       <div class="mv"><span class="n">02</span><div><div class="t1">Anchor the dividend to a conservative case</div><div class="t2">Set the payout against P10, not P50 — protects the State contribution in a soft-price year while preserving upside.</div></div></div>
+       <div class="mv"><span class="n">03</span><div><div class="t1">Pre-position on Grasberg</div><div class="t2">Freeport is ~80% of profit and under force majeure. Stress the cash floor against the 2026 ramp and stage contingency before the dividend cycle.</div></div></div>
+       <div class="mv"><span class="n">04</span><div><div class="t1">Engage ESDM on royalty &amp; DMO</div><div class="t2">PP19/2025 royalties are a structural cost step-up. Manage the regulated levers (DMO mix, royalty timing) inside management control.</div></div></div>
+     </div>
+     <div class="card big-cta" style="flex:1"><div class="h">Size any of these in the Stress Test →</div><a href="ceo-cockpit.html">Open the Monte-Carlo cash-floor model</a></div>
+   </div>
+
+ </div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+function E(p,t,a,txt){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;p.appendChild(e);return e;}
+const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const COL={ptfi:'#9b9dff',ptba:'#d9920f',antam:'#37d39a',inalum:'#5cc8e0',timah:'#dc5a50'};
+const SUBS=[
+ {id:'ptfi',nm:'Freeport Indonesia',tic:'—',sec:'Copper · Gold',cm:'copper',frev:150,frevP:160,fnp:48.8,fnpP:52,rag:'amber',fdrv:'grade dilution + force majeure',margin:40,quart:1,ebScale:60,st:'red',own:'PTFI · MIND ID 51.2% / FCX 48.8%',ops:[{l:'Mill throughput',v:'~200 ktpd',d:'240 nameplate; all-underground'},{l:'Ore grade',v:'0.92% Cu',d:'+0.76 g/t Au — world-class'},{l:'Net cash cost',v:'~$0/lb',d:'C1 $2.71/lb − gold credits'},{l:'Block cave',v:'133 ktpd',d:'record 151,582 t/day'}],watch:'Lowest-cost copper, biggest earner — but the Sept-2025 mud rush cuts 2026 output ~35%.'},
+ {id:'ptba',nm:'Bukit Asam',tic:'PTBA',sec:'Thermal coal',cm:'coal',frev:42.8,frevP:44,fnp:5.1,fnpP:6.5,rag:'red',fdrv:'coal price below budget',margin:19,quart:2,ebScale:14,st:'amber',own:'IDX: PTBA · MIND ID 65%',ops:[{l:'Coal production',v:'43.3 Mt',d:'record'},{l:'Strip ratio',v:'6.23×',d:'beat 6.44× target'},{l:'Cash cost',v:'~$53/t',d:'−6% YoY'},{l:'Realized',v:'$74/t',d:'−12% YoY ICI-3'}],watch:'Margin squeezed by coal price (−22% vs plan) despite record volume.'},
+ {id:'antam',nm:'Antam',tic:'ANTM',sec:'Ni · Au · Bauxite',cm:'nickel',frev:69.2,frevP:50,fnp:3.6,fnpP:3.2,rag:'green',fdrv:'record gold trade; nickel soft',margin:10,quart:4,ebScale:12,st:'green',own:'IDX: ANTM · MIND ID 65%',ops:[{l:'Ferronickel',v:'20,103 TNi',d:'below 22.5k target'},{l:'Gold sold',v:'43.8 t',d:'record 1.41 Moz trade'},{l:'Gold revenue',v:'Rp 57.6 T',d:'+120% — drove top line'},{l:'Ni cost-curve',v:'Q4',d:'RKEF FeNi high-cost'}],watch:'Record revenue is gold-trading-driven; nickel economics soft & high-cost.'},
+ {id:'inalum',nm:'Inalum',tic:'—',sec:'Aluminium',cm:'alu',frev:11.4,frevP:11,fnp:2.0,fnpP:1.5,rag:'green',fdrv:'low-cost hydro; vol +27%',margin:26,quart:1,ebScale:18,st:'green',own:'Unlisted · MIND ID 100%',ops:[{l:'Aluminium',v:'274 kt',d:'+27%; target ~900 kt'},{l:'Specific energy',v:'~14,000',d:'DC kWh/t'},{l:'Captive power',v:'~603 MW',d:'Asahan hydro — low-carbon'},{l:'Cost-curve',v:'Q1',d:'first-quartile resilience'}],watch:'Structurally advantaged (hydro, low carbon). EBITDA +213%. Watch growth execution.'},
+ {id:'timah',nm:'Timah',tic:'TINS',sec:'Tin',cm:'tin',frev:10.9,frevP:9.5,fnp:1.2,fnpP:0.6,rag:'green',fdrv:'turnaround on price +17%',margin:16,quart:3,ebScale:8,st:'amber',own:'IDX: TINS · MIND ID 65%',ops:[{l:'Refined tin',v:'18,915 t',d:'+23% YoY'},{l:'Realized',v:'$31,181/t',d:'+17% YoY'},{l:'Net profit',v:'Rp 1.19 T',d:'+364% — reversed loss'},{l:'Reserve life',v:'<15 yr',d:'depletion the watch'}],watch:'Genuine turnaround, but tin is volatile and reserve life is the structural watch.'},
+];
+const CURVES={
+ copper:{unit:'$/lb',ymax:4.0,fmt:v=>'$'+v.toFixed(2),price:4.20,asset:'ptfi',assetCum:5,assetCost:0.0,steps:[[0,0.4],[8,0.4],[8,1.2],[28,1.2],[28,1.8],[55,1.8],[55,2.4],[80,2.4],[80,3.1],[100,3.4]]},
+ nickel:{unit:'$/lb',ymax:9.0,fmt:v=>'$'+v.toFixed(1),price:6.8,asset:'antam',assetCum:74,assetCost:7.6,steps:[[0,3.8],[20,3.8],[20,4.6],[45,4.6],[45,5.6],[68,5.6],[68,7.2],[88,7.2],[88,8.4],[100,8.6]]},
+ coal:{unit:'$/t',ymax:110,fmt:v=>'$'+Math.round(v),price:90,asset:'ptba',assetCum:30,assetCost:53,steps:[[0,30],[18,30],[18,45],[42,45],[42,60],[66,60],[66,80],[88,80],[88,98],[100,102]]},
+ alu:{unit:'$/t',ymax:3000,fmt:v=>'$'+Math.round(v),price:2550,asset:'inalum',assetCum:15,assetCost:1920,steps:[[0,1700],[20,1700],[20,2000],[48,2000],[48,2300],[72,2300],[72,2650],[100,2900]]},
+ tin:{unit:'$/t',ymax:38000,fmt:v=>'$'+(v/1000).toFixed(0)+'k',price:31000,asset:'timah',assetCum:60,assetCost:25500,steps:[[0,16000],[25,16000],[25,21000],[50,21000],[50,26000],[78,26000],[78,32000],[100,34000]]},
+};
+const CMNAME={copper:'Copper',nickel:'Nickel',coal:'Coal',alu:'Aluminium',tin:'Tin'};
+
+/* KPIs */
+const KPI=[{l:'Revenue',a:145.2,p:132,n:'Beat plan — but <b>gold trading</b>, not core mining.'},{l:'EBITDA',a:40.5,p:45,n:'Missed by <b>~Rp 4.5T</b> — margin, not volume.'},{l:'Net profit',a:36.5,p:41,n:'Feeds the <b>dividend &amp; State</b>.'},{l:'Free cash flow',a:18.0,p:22,n:'Lower earnings + <b>Manyar/SGAR</b> capex.'},{l:'To State',a:90.4,p:88,n:'<b>Royalty up</b> on PP19/2025.'}];
+document.getElementById('kpis').innerHTML=KPI.map(k=>{const v=(k.a-k.p)/k.p*100,up=v>=0;return `<div class="kpi"><div class="l">${k.l}</div><div class="var ${up?'up':'down'}">${up?'▲ +':'▼ '}${v.toFixed(0)}%</div><div class="act">${k.a.toFixed(1)}<small> Rp T</small></div><div class="base">vs RKAP ${k.p}</div><div class="note">${k.n}</div></div>`}).join('');
+
+/* variance waterfall */
+function wf(){const s=document.getElementById('wf');s.innerHTML='';const steps=[{l:'RKAP plan',v:45,t:'b'},{l:'Coal price',v:-3.0,sub:'HBA/ICI < budget'},{l:'Nickel',v:-2.0,sub:'LME soft'},{l:'Tin/other',v:-0.5},{l:'Gold',v:1.2,sub:'record trade'},{l:'FX',v:0.8,sub:'weaker IDR'},{l:'Cost',v:-1.0,sub:'royalty+infl'},{l:'Actual',v:40.5,t:'a'}];
+ const x0=44,x1=1540,y0=300,topV=48,n=steps.length,bw=124,gap=(x1-x0-bw*n)/(n-1),sc=v=>(y0-26)*v/topV;
+ for(let g=0;g<=48;g+=12){const y=y0-sc(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'rgba(120,170,155,.09)'});E(s,'text',{x:x0-8,y:y+4,'text-anchor':'end','font-size':10,fill:'#586f67'},'Rp '+g);}
+ let x=x0,run=0;steps.forEach((st,i)=>{if(st.t){run=st.v;const yT=y0-sc(st.v);E(s,'rect',{x,y:yT,width:bw,height:sc(st.v),rx:3,fill:st.t==='b'?'#9fc4ba':'#2fe0c0',opacity:.92});E(s,'text',{x:x+bw/2,y:yT-9,'text-anchor':'middle','font-size':15,'font-weight':700,fill:'#eafff8'},'Rp '+st.v.toFixed(1));}else{const f=run,to=run+st.v,yF=y0-sc(f),yT=y0-sc(to),yTop=Math.min(yF,yT),h=Math.max(Math.abs(sc(st.v)),3);E(s,'rect',{x,y:yTop,width:bw,height:h,rx:3,fill:st.v<0?'#ff5d5d':'#37d39a',opacity:.85});E(s,'text',{x:x+bw/2,y:yTop-9,'text-anchor':'middle','font-size':13.5,'font-weight':700,fill:st.v<0?'#ff9d9d':'#7ce8bf'},(st.v>0?'+':'')+st.v.toFixed(1));run=to;E(s,'line',{x1:x+bw,y1:y0-sc(run),x2:x+bw+gap,y2:y0-sc(run),stroke:'rgba(120,170,155,.3)','stroke-dasharray':'3 3'});}E(s,'text',{x:x+bw/2,y:y0+20,'text-anchor':'middle','font-size':11,fill:'#9fc4ba','font-weight':600},st.l);if(st.sub)E(s,'text',{x:x+bw/2,y:y0+35,'text-anchor':'middle','font-size':9,fill:'#586f67'},st.sub);x+=bw+gap;});}
+
+/* subsidiary table + variance */
+const totNp=SUBS.reduce((a,s)=>a+s.fnp,0);
+const vc=(a,p)=>{const v=(a-p)/p*100;return `<span class="big">${a.toFixed(1)}</span> <span class="pl">/ ${p}</span> <span class="${v>=0?'vpos':'vneg'}">${v>=0?'+':''}${v.toFixed(0)}%</span>`;};
+document.getElementById('fin').innerHTML=`<thead><tr><th class="l">Subsidiary</th><th>Revenue act/RKAP</th><th>EBITDA margin</th><th>Net profit act/RKAP</th><th class="l">Share of group profit</th><th>Variance driver</th><th>RAG</th></tr></thead><tbody>${SUBS.map(s=>{const sh=s.fnp/totNp*100;return `<tr><td><div class="nm"><span class="e" style="background:${COL[s.id]}"></span><div><b>${s.nm}</b><div class="sec">${s.tic} · ${s.sec}</div></div></div></td><td>${vc(s.frev,s.frevP)}</td><td><span class="big">${s.margin}%</span></td><td>${vc(s.fnp,s.fnpP)}</td><td class="l"><span class="shareb" style="width:${Math.max(sh*1.4,5)}px;background:${COL[s.id]}"></span><span class="pl">${sh.toFixed(0)}%</span></td><td class="pl" style="text-align:right">${s.fdrv}</td><td><span class="rag ${s.rag}">${s.rag==='green'?'✓':s.rag==='amber'?'!':'▲'}</span></td></tr>`}).join('')}</tbody>`;
+function dvchart(){const dv=document.getElementById('dv');dv.innerHTML='';const rows=SUBS.map(s=>({nm:s.nm.split(' ')[0],v:s.fnp-s.fnpP})).sort((a,b)=>a.v-b.v);const x0=150,x1=1540,y1=20,bh=28,gap=12,mx=4,zx=x0+(x1-x0)/2,sx=v=>zx+(x1-x0)/(mx*2)*v;E(dv,'line',{x1:zx,y1:12,x2:zx,y2:12+(bh+gap)*rows.length,stroke:'rgba(120,170,155,.3)'});E(dv,'text',{x:zx,y:12+(bh+gap)*rows.length+15,'text-anchor':'middle','font-size':10,fill:'#586f67'},'on plan');let y=y1;rows.forEach(r=>{const neg=r.v<0,xA=neg?sx(r.v):zx,w=Math.abs(sx(r.v)-zx);E(dv,'text',{x:x0-14,y:y+bh/2+4,'text-anchor':'end','font-size':12,fill:'#eafff8','font-weight':600},r.nm);E(dv,'rect',{x:xA,y,width:Math.max(w,2),height:bh,rx:4,fill:neg?'#ff5d5d':'#37d39a',opacity:.85});E(dv,'text',{x:neg?xA-8:xA+w+8,y:y+bh/2+4,'text-anchor':neg?'end':'start','font-size':12.5,'font-weight':700,fill:neg?'#ff9d9d':'#7ce8bf'},(r.v>0?'+':'')+r.v.toFixed(1));y+=bh+gap;});}
+
+/* cost curve */
+let curCm='copper',dragPrice={};
+const ccsel=document.getElementById('ccsel');Object.keys(CURVES).forEach(c=>{const b=document.createElement('button');b.textContent=CMNAME[c];b.dataset.c=c;b.onclick=()=>{curCm=c;curve();[...ccsel.children].forEach(x=>x.classList.toggle('on',x.dataset.c===c));};ccsel.appendChild(b);});ccsel.children[0].classList.add('on');
+const cc=document.getElementById('cc');
+function curve(){const C=CURVES[curCm];cc.innerHTML='';const x0=52,x1=720,y0=255,y1=18,sub=SUBS.find(s=>s.id===C.asset);const px=p=>x0+(x1-x0)*p/100,py=v=>y0-(y0-y1)*Math.min(v,C.ymax)/C.ymax;if(dragPrice[curCm]===undefined)dragPrice[curCm]=C.price;const price=dragPrice[curCm];
+ for(let i=0;i<=5;i++){const v=C.ymax*i/5,y=py(v);E(cc,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'rgba(120,170,155,.09)'});E(cc,'text',{x:x0-6,y:y+3,'text-anchor':'end','font-size':9,fill:'#586f67'},C.fmt(v));}
+ let d='M '+px(C.steps[0][0])+' '+py(C.steps[0][1]);C.steps.forEach(p=>d+=' L '+px(p[0])+' '+py(p[1]));d+=' L '+px(100)+' '+y0+' L '+px(0)+' '+y0+' Z';E(cc,'path',{d,fill:'rgba(120,170,155,.06)',stroke:'#6f8a82','stroke-width':1.4});
+ E(cc,'rect',{x:x0,y:y1,width:x1-x0,height:py(price)-y1,fill:'rgba(255,93,93,.05)'});
+ const ax=px(Math.max(C.assetCum-3,0)),uw=C.assetCost>price,aTop=py(C.assetCost),aH=Math.max(y0-aTop,3);E(cc,'rect',{x:ax,y:aTop,width:18,height:aH,fill:uw?'rgba(255,93,93,.28)':COL[C.asset],opacity:uw?1:.22,rx:2});E(cc,'rect',{x:ax,y:aTop,width:18,height:aH,fill:'none',stroke:COL[C.asset],'stroke-width':1.6,rx:2});E(cc,'text',{x:ax+9,y:aTop-8,'text-anchor':'middle','font-size':10,fill:COL[C.asset]},sub.nm.split(' ')[0]);E(cc,'text',{x:ax+9,y:aTop+(aH>22?15:-20),'text-anchor':'middle','font-size':9.5,fill:'#eafff8'},'Q'+sub.quart);
+ const yP=py(price);E(cc,'line',{x1:x0,y1:yP,x2:x1,y2:yP,stroke:uw?'#ff5d5d':'#37d39a','stroke-width':2,'stroke-dasharray':'6 4'});E(cc,'text',{x:x1-2,y:yP-6,'text-anchor':'end','font-size':10,fill:uw?'#ff5d5d':'#37d39a'},'price '+C.fmt(price)+' — drag ↕');
+ const hit=E(cc,'rect',{x:x0,y:yP-10,width:x1-x0,height:20,fill:'transparent',style:'cursor:ns-resize'});E(cc,'text',{x:(x0+x1)/2,y:y0+22,'text-anchor':'middle','font-size':9.5,fill:'#586f67'},'cumulative global production →');
+ function setY(cy){const r=cc.getBoundingClientRect();const vy=(cy-r.top)/r.height*300;dragPrice[curCm]=Math.max(0,Math.min(C.ymax,C.ymax*(y0-vy)/(y0-y1)));curve();}
+ hit.addEventListener('mousedown',ev=>{ev.preventDefault();const mv=e=>setY(e.clientY),up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);};document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);});
+ const mg=price-C.assetCost;document.getElementById('ccread').innerHTML=`<b>${sub.nm}</b> at <b>${C.fmt(C.assetCost)}</b> (Q${sub.quart}) vs <b>${C.fmt(price)}</b> → `+(uw?`<span class="txt-red">underwater ${C.fmt(C.assetCost-price)} — curtails first</span>`:`<span class="txt-green">${C.fmt(mg)} margin — survives</span>`);}
+
+/* scatter */
+function scatter(){const s=document.getElementById('sc');s.innerHTML='';const x0=58,x1=596,y0=272,y1=22,pxq=q=>x0+(x1-x0)*(q-1)/3,py=m=>y0-(y0-y1)*m/45;E(s,'rect',{x:x0,y:y1,width:(x1-x0)/3,height:py(20)-y1,fill:'rgba(55,211,154,.05)'});E(s,'text',{x:x0+8,y:y1+14,'font-size':9.5,fill:'#37d39a'},'low-cost · high-margin');E(s,'line',{x1:x0,y1:y0,x2:x1,y2:y0,stroke:'rgba(120,170,155,.25)'});E(s,'line',{x1:x0,y1:y0,x2:x0,y2:y1,stroke:'rgba(120,170,155,.25)'});[1,2,3,4].forEach(q=>E(s,'text',{x:pxq(q),y:y0+16,'text-anchor':'middle','font-size':10,fill:'#586f67'},'Q'+q));[10,20,30,40].forEach(m=>E(s,'text',{x:x0-8,y:py(m)+3,'text-anchor':'end','font-size':9,fill:'#586f67'},m+'%'));SUBS.forEach(p=>{const cx=pxq(p.quart),cy=py(p.margin),r=8+p.ebScale*0.56,g=E(s,'g',{style:'cursor:pointer'});g.addEventListener('click',()=>drill(p.id));E(g,'circle',{cx,cy,r,fill:COL[p.id],opacity:.2});E(g,'circle',{cx,cy,r,fill:'none',stroke:COL[p.id],'stroke-width':1.6});E(g,'circle',{cx,cy,r:3,fill:COL[p.id]});E(g,'text',{x:cx,y:cy-r-5,'text-anchor':'middle','font-size':10,fill:'#eafff8'},p.nm.split(' ')[0]);});}
+
+/* drill panel */
+const stx={green:{c:'rag green',g:'✓',w:'ON TRACK'},amber:{c:'rag amber',g:'!',w:'WATCH'},red:{c:'rag red',g:'▲',w:'RISK'}};
+function drill(id){const s=SUBS.find(x=>x.id===id);const S=stx[s.st];document.getElementById('opdrill').innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:11px"><span style="width:4px;height:26px;border-radius:2px;background:${COL[s.id]}"></span><b style="font-size:16px">${s.nm}</b><span class="${S.c}">${S.g} ${S.w}</span><span class="pl">${s.sec} · Q${s.quart}</span><span class="pl" style="margin-left:auto">${s.own}</span></div><div style="display:grid;grid-template-columns:repeat(4,1fr) 1.4fr;gap:11px"><div class="op"><div class="l">${s.ops[0].l}</div><div class="v">${s.ops[0].v}</div><div class="d">${s.ops[0].d}</div></div><div class="op"><div class="l">${s.ops[1].l}</div><div class="v">${s.ops[1].v}</div><div class="d">${s.ops[1].d}</div></div><div class="op"><div class="l">${s.ops[2].l}</div><div class="v">${s.ops[2].v}</div><div class="d">${s.ops[2].d}</div></div><div class="op"><div class="l">${s.ops[3].l}</div><div class="v">${s.ops[3].v}</div><div class="d">${s.ops[3].d}</div></div><div class="op" style="background:transparent;border-color:transparent"><div class="l">Read</div><div class="d" style="font-size:11.5px;margin-top:6px">${s.watch}</div></div></div>`;}
+
+/* outlook */
+const OL=[{c:'r',t1:'Grasberg force majeure',t2:'Sept-2025 mud rush cuts 2026 PTFI output ~35%. Largest forward risk to group profit & the dividend.'},{c:'a',t1:'Coal price cycle',t2:'PTBA margin tracks HBA/ICI; DMO 25% at $70/t caps domestic upside.'},{c:'a',t1:'Royalty step-up (PP19/2025)',t2:'Progressive royalties are a structural cost increase across the whole book.'},{c:'t',t1:'Dividend & State contribution',t2:'The EBITDA miss flows to the dividend (via Danantara) and the Rp 90T State contribution.'}];
+document.getElementById('outlookcards').innerHTML=OL.map(o=>`<div class="ol ${o.c}"><div class="t1c">${o.t1}</div><div class="t2c">${o.t2}</div></div>`).join('');
+
+/* AI */
+async function postJSON(u,b){const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});return r.json();}
+const aiSubs=SUBS.map(s=>({nm:s.nm,status:s.rag,note:s.watch}));
+(async function(){try{const h=await (await fetch('/api/health')).json();const live=h.aiMode==='live';document.getElementById('aibadge').textContent=live?'· live':'· simulated';const r=await postJSON('/api/portfolio/board-read',{group:{revenue:145.2,revenueYoY:34.6,ebitdaVsPlan:-10,note:'EBITDA missed RKAP ~Rp4.5T on coal+nickel price; revenue beat on gold trading; profit ~80% in Freeport under force majeure',stateContribution:90.4,onTrack:3,watch:1,risk:1},subs:aiSubs});if(r&&r.read)document.getElementById('ovread').textContent=r.read;}catch(e){}})();
+function renderScenario(r){document.getElementById('scres').innerHTML=`<span class="vdt ${r.verdict||'UNCLEAR'}">${r.verdict||'UNCLEAR'}</span>`+(r.drivers&&r.drivers.length?`<div class="drv">${r.drivers.map(d=>`<span>${esc(d.name)} <b style="color:var(--teal)">${esc(d.change)}</b></span>`).join('')}</div>`:'')+`<div class="imp">${esc(r.impact)} <a href="ceo-cockpit.html">→ size it in Stress</a></div>`;}
+async function runScenario(q){if(!q)return;document.getElementById('scres').innerHTML='<span class="pl">Modelling the shock…</span>';try{renderScenario(await postJSON('/api/portfolio/scenario',{query:q,subs:aiSubs}));}catch(e){document.getElementById('scres').innerHTML='<span class="pl">Open on the deployed site to run the live copilot.</span>';}}
+document.getElementById('scform').addEventListener('submit',e=>{e.preventDefault();runScenario(document.getElementById('scq').value);});
+document.querySelectorAll('.scex a').forEach(a=>a.onclick=()=>{document.getElementById('scq').value=a.dataset.q;runScenario(a.dataset.q);});
+
+/* view switching */
+const TITLES={overview:['Overview','State of the portfolio'],financials:['Financial performance','Holding results vs RKAP budget'],subs:['Subsidiaries','Per-subsidiary results vs plan'],ops:['Operations','Cost position & asset state'],outlook:['Outlook','Forward risks & scenario copilot'],act:['Act','The recommended moves']};
+let drawn={};
+function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById('v-'+v).classList.add('on');
+ document.querySelectorAll('.item[data-v]').forEach(i=>i.classList.toggle('on',i.dataset.v===v));
+ document.getElementById('vt').textContent=TITLES[v][0];document.getElementById('vc').textContent=TITLES[v][1];
+ try{history.replaceState(null,'','#'+v);}catch(e){}
+ // render charts lazily (need layout, so after display)
+ requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf();drawn.fin=1;}if(v==='subs'&&!drawn.subs){dvchart();drawn.subs=1;}if(v==='ops'&&!drawn.ops){curve();scatter();drill('ptfi');drawn.ops=1;}});
+}
+document.querySelectorAll('.item[data-v]').forEach(i=>i.onclick=()=>show(i.dataset.v));
+document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=()=>show(a.dataset.jump));
+/* deep-link router: honour #hash on load + back/forward (old links use #operations/#ops) */
+const HASHALIAS={operations:'ops',financial:'financials',subsidiaries:'subs',performance:'financials'};
+function fromHash(){let h=(location.hash||'').replace('#','');h=HASHALIAS[h]||h;if(TITLES[h])show(h);}
+fromHash();window.addEventListener('hashchange',fromHash);
+</script></body></html>
