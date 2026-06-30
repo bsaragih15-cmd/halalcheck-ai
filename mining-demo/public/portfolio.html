@@ -93,6 +93,18 @@ svg text{font-family:'IBM Plex Mono',monospace}
 .kpi .flag{font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:700;color:#8A7B55;background:#F5EFE2;border:1px solid #EBE0CB;border-radius:5px;padding:2px 6px;margin-top:7px;display:inline-block}
 .kpi .spk{display:block;width:100%;height:auto;margin:9px 0 1px}
 .kpi .spkc{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.03em;color:var(--faint)}
+/* capital — growth-capex deployment bars + discipline scorecard */
+.dpl{display:flex;align-items:center;gap:11px;margin:8px 0}
+.dpl .dn{font-size:11.5px;font-weight:600;color:var(--tx);width:150px;flex:none;line-height:1.15}
+.dpl .dn small{display:block;font-family:'IBM Plex Mono',monospace;font-size:8.5px;color:var(--faint);font-weight:500;margin-top:2px}
+.dpl .dt{flex:1;height:13px;background:var(--panel2);border:1px solid var(--border);border-radius:7px;overflow:hidden}
+.dpl .df{height:100%;border-radius:7px}
+.dpl .dv{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--tx);width:80px;text-align:right;flex:none}
+.dpl .dv small{color:var(--faint);font-weight:500}
+.disc{display:grid;grid-template-columns:1fr 1fr;gap:13px 18px}
+.disc .dnum{font-size:23px;font-weight:600;letter-spacing:-.01em}
+.disc .dcap{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-top:2px}
+.disc .dsub{font-size:10.5px;color:var(--mut);margin-top:4px;line-height:1.35}
 /* tables */
 table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 .fin thead th{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);text-align:right;padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
@@ -205,7 +217,10 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
        <div class="fillsvg"><svg id="caf" viewBox="0 0 1560 330" preserveAspectRatio="xMidYMid meet"></svg></div>
        <div class="ccread" id="cafread"></div>
      </div>
-     <div class="capstats" id="capstats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:13px;flex:none"></div>
+     <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:13px;flex:none">
+       <div class="card" style="padding:14px 18px"><div class="ch">Where the growth capital goes <span class="cs" style="display:inline">· Rp 12T · the −12 bar, exploded</span></div><div id="capdeploy" style="margin-top:9px"></div></div>
+       <div class="card" style="padding:14px 18px"><div class="ch">Capital discipline <span class="cs" style="display:inline">· is the allocation sound?</span></div><div class="disc" id="capdisc" style="margin-top:12px"></div></div>
+     </div>
    </div>
 
    <!-- OPERATIONS -->
@@ -377,12 +392,23 @@ function capWf(){const steps=CAPALLOC,s=document.getElementById('caf');s.innerHT
   if(st.sub)E(s,'text',{x:x+bw/2,y:y0+35,'text-anchor':'middle','font-size':9,fill:'#A39B8C'},st.sub);
   x+=bw+gap;});
  document.getElementById('cafread').innerHTML=CAPREAD;}
-const CAPSTATS=[
- {l:'FCF cover of dividend',v:'2.0×',d:'Rp 18T free cash flow against Rp 9T paid out — the distribution to the State is self-funded.',c:'var(--green)'},
- {l:'Growth capex intensity',v:'41%',d:'of operating cash flow goes to the downstreaming build — Manyar copper smelter + SGAR alumina.',c:'var(--violet)'},
- {l:'Net debt drawn',v:'+Rp 5T',d:'Growth + dividend (Rp 21T) outrun FCF (Rp 18T); the gap is debt-funded. Watch gearing if prices soften.',c:'var(--amber)'},
+/* growth-capex deployment — the −12 bar exploded into the actual build */
+const CAPDEPLOY=[
+ {nm:'Manyar copper smelter',sub:'PTFI · Gresik — first cathode',v:5.5,c:'#9C6644'},
+ {nm:'SGAR alumina refinery',sub:'Inalum/Antam · Mempawah Ph.1',v:3.5,c:'#7C766B'},
+ {nm:'Grasberg underground',sub:'PTFI · sustains block-cave ramp',v:2.0,c:'#A9842F'},
+ {nm:'Smelters & debottleneck',sub:'Antam · Timah · other',v:1.0,c:'#A39B8C'},
 ];
-document.getElementById('capstats').innerHTML=CAPSTATS.map(s=>`<div class="op" style="border-left:3px solid ${s.c}"><div class="l">${s.l}</div><div class="v" style="color:${s.c};font-size:22px">${s.v}</div><div class="d" style="font-size:10.5px;margin-top:5px">${s.d}</div></div>`).join('');
+const GTOT=CAPDEPLOY.reduce((a,d)=>a+d.v,0);
+document.getElementById('capdeploy').innerHTML=CAPDEPLOY.map(d=>{const p=d.v/GTOT*100;return `<div class="dpl"><div class="dn">${d.nm}<small>${d.sub}</small></div><div class="dt"><div class="df" style="width:${p.toFixed(0)}%;background:${d.c}"></div></div><div class="dv">${d.v.toFixed(1)}<small> / ${p.toFixed(0)}%</small></div></div>`}).join('');
+/* capital discipline — the metrics that judge whether the allocation is sound */
+const CAPDISC=[
+ {num:'2.0×',cap:'FCF / dividend cover',sub:'Rp 18T free cash vs Rp 9T paid — distribution self-funded.',c:'var(--green)'},
+ {num:'0.8×',cap:'Net debt / EBITDA',sub:'Up from 0.7× on the Rp 5T draw — wide headroom to a ~2.0× comfort line.',c:'var(--amber)'},
+ {num:'44%',cap:'Cash conversion · FCF/EBITDA',sub:'Earnings convert to cash; the build, not margin, is the drag on FCF.',c:'var(--tx)'},
+ {num:'80%',cap:'Reinvestment · capex/op cash',sub:'Rp 23.5T capex of Rp 29.5T operating cash — peak downstreaming spend.',c:'var(--violet)'},
+];
+document.getElementById('capdisc').innerHTML=CAPDISC.map(s=>`<div class="ds"><div class="dnum" style="color:${s.c}">${s.num}</div><div class="dcap">${s.cap}</div><div class="dsub">${s.sub}</div></div>`).join('');
 
 /* cost curve */
 let curCm='copper',dragPrice={};
