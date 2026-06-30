@@ -1,0 +1,80 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Concept — cover / home</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050f0c;--panel:rgba(255,255,255,.03);--border:rgba(120,170,155,.16);--tx:#eafff8;--mut:#9fc4ba;--faint:#586f67;
+ --teal:#2fe0c0;--green:#37d39a;--amber:#f5b94a;--red:#ff5d5d;--violet:#9b9dff}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,system-ui,sans-serif}
+body{background:
+ radial-gradient(80% 90% at 88% -5%,rgba(155,157,255,.10),transparent 60%),
+ radial-gradient(70% 80% at 10% 110%,rgba(47,224,192,.08),transparent 60%),
+ linear-gradient(160deg,#0b201b,#050f0c 60%);color:var(--tx);width:1600px;height:900px;overflow:hidden}
+#wrap{height:900px;display:flex;flex-direction:column;padding:34px 56px 30px}
+.top{display:flex;justify-content:space-between;align-items:center;padding-bottom:18px;border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:700;letter-spacing:.04em}
+.brand .dot{width:15px;height:15px;border-radius:5px;background:var(--teal);box-shadow:0 0 18px var(--teal)}
+.brand .mut{color:var(--mut);font-weight:500}
+.period{display:flex;gap:10px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mut)}
+.period .pill{border:1px solid var(--border);border-radius:7px;padding:6px 12px;color:var(--tx)}
+.mid{flex:1;display:grid;grid-template-columns:1.15fr .85fr;gap:60px;align-items:center}
+.kick{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.22em;color:var(--teal);margin-bottom:20px;display:flex;align-items:center;gap:10px}
+.kick .ai{color:var(--violet);border:1px solid rgba(155,157,255,.4);border-radius:5px;padding:3px 8px;font-size:9px;letter-spacing:.12em}
+h1{font-size:64px;font-weight:900;line-height:1.02;letter-spacing:-.025em}
+h1 .u{color:var(--amber)}
+.lede{font-size:17px;line-height:1.6;color:var(--mut);max-width:640px;margin-top:24px}
+.lede b{color:var(--tx)}
+/* what matters now */
+.matters{display:flex;flex-direction:column;gap:13px}
+.mlab{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:var(--faint);margin-bottom:2px}
+.m{display:flex;align-items:center;gap:16px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px;position:relative;overflow:hidden}
+.m .ed{position:absolute;left:0;top:0;bottom:0;width:4px}
+.m .big{font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:800;letter-spacing:-.02em;min-width:118px}
+.m .tx{font-size:13px;line-height:1.4}
+.m .tx b{font-weight:700}
+.m .tx .s{color:var(--mut);font-size:11.5px}
+.r .big{color:var(--red)}.r .ed{background:var(--red)}
+.v .big{color:var(--violet)}.v .ed{background:var(--violet)}
+.a .big{color:var(--amber)}.a .ed{background:var(--amber)}
+/* decision spine */
+.spine{display:flex;gap:0;align-items:stretch;margin-top:24px;border-top:1px solid var(--border);padding-top:22px}
+.step{flex:1;padding-right:26px;position:relative;cursor:pointer}
+.step:not(:last-child){border-right:1px solid var(--border);margin-right:26px}
+.step .sn{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--teal);font-weight:700}
+.step .st{font-size:16px;font-weight:700;margin-top:7px}
+.step .ss{font-size:12px;color:var(--mut);margin-top:5px;line-height:1.4}
+.step .sk{font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:9px;font-weight:600}
+.step .sk.dn{color:var(--red)}.step .sk.am{color:var(--amber)}.step .sk.gn{color:var(--green)}
+.step .arrow{position:absolute;right:26px;top:0;color:var(--faint)}
+.enter{margin-top:8px;display:flex;justify-content:flex-end}
+.enter .btn{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#05201b;background:var(--teal);border-radius:10px;padding:11px 22px}
+</style></head>
+<body><div id="wrap">
+
+ <div class="top">
+   <div class="brand"><span class="dot"></span>MIND ID <span class="mut">· PORTFOLIO CONTROL TOWER</span></div>
+   <div class="period"><span>FY2024</span><span class="pill">vs RKAP ▾</span><span>as of 30 Jun 2026</span></div>
+ </div>
+
+ <div class="mid">
+   <div>
+     <div class="kick">STATE OF THE PORTFOLIO <span class="ai">◇ AI CHIEF OF STAFF</span></div>
+     <h1>A record top line<br>that <span class="u">missed the plan</span><br>that matters.</h1>
+     <div class="lede">Revenue beat RKAP on gold trading, but <b>EBITDA came in Rp 4.5T under budget</b> on coal and nickel prices — and the profit that's left <b>leans ~80% on one asset</b>, now under force majeure. The story this quarter is concentration, not the headline.</div>
+   </div>
+
+   <div class="matters">
+     <div class="mlab">WHAT MATTERS NOW · 3 THINGS</div>
+     <div class="m r"><span class="ed"></span><span class="big">−10%</span><div class="tx"><b>EBITDA missed plan.</b><div class="s">Price-led — coal & nickel below the RKAP deck.</div></div></div>
+     <div class="m v"><span class="ed"></span><span class="big">80%</span><div class="tx"><b>Profit leans on Grasberg.</b><div class="s">One asset, 51% owned — and under force majeure.</div></div></div>
+     <div class="m a"><span class="ed"></span><span class="big">Rp 90T</span><div class="tx"><b>The State contribution is exposed.</b><div class="s">The miss flows to the dividend via Danantara.</div></div></div>
+   </div>
+ </div>
+
+ <div class="spine">
+   <div class="step"><span class="arrow">→</span><div class="sn">01</div><div class="st">Performance</div><div class="ss">Did we hit the RKAP plan?</div><div class="sk dn">EBITDA −10% vs budget</div></div>
+   <div class="step"><span class="arrow">→</span><div class="sn">02</div><div class="st">Operational</div><div class="ss">What's the state of each asset?</div><div class="sk am">1 risk · 1 watch · 3 on track</div></div>
+   <div class="step"><span class="arrow">→</span><div class="sn">03</div><div class="st">Stress</div><div class="ss">What could break the cash floor?</div><div class="sk am">copper / Grasberg = the tail</div></div>
+   <div class="step"><div class="sn">04</div><div class="st">Act</div><div class="ss">What's the move?</div><div class="sk gn">hedge · anchor dividend to P10</div></div>
+ </div>
+ <div class="enter"><span class="btn">Enter the brief →</span></div>
+</div></body></html>

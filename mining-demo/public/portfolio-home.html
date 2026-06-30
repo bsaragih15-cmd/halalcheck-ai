@@ -1,0 +1,138 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MIND ID · Portfolio Control Tower</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+ --bg:#050f0c; --panel:rgba(255,255,255,.03); --panel2:rgba(255,255,255,.05);
+ --border:rgba(120,170,155,.15); --border2:rgba(120,170,155,.28);
+ --tx:#eafff8; --mut:#9fc4ba; --faint:#586f67;
+ --teal:#2fe0c0; --green:#37d39a; --amber:#f5b94a; --red:#ff5d5d; --violet:#9b9dff;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:
+ radial-gradient(70% 80% at 90% -8%,rgba(155,157,255,.13),transparent 58%),
+ radial-gradient(65% 75% at 6% 112%,rgba(47,224,192,.10),transparent 58%),
+ linear-gradient(165deg,#0b201b,#050f0c 62%);
+ color:var(--tx);font-family:Inter,system-ui,Arial,sans-serif;min-height:100%;overflow-x:hidden}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+#app{max-width:1500px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding:30px 56px 28px}
+/* nav */
+.top{display:flex;justify-content:space-between;align-items:center;padding-bottom:18px;border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:700;letter-spacing:.05em}
+.brand .dot{width:15px;height:15px;border-radius:5px;background:var(--teal);box-shadow:0 0 20px var(--teal)}
+.brand .mut{color:var(--mut);font-weight:500}
+.nav{display:flex;gap:4px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:4px}
+.nv{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--mut);text-decoration:none;padding:7px 15px;border-radius:7px}
+.nv.active{background:var(--teal);color:#05201b}
+.nv:not(.active):hover{color:var(--tx)}
+.period{display:flex;gap:9px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--mut)}
+.period .pill{border:1px solid var(--border);border-radius:7px;padding:6px 11px;color:var(--tx)}
+/* hero */
+.mid{flex:1;display:grid;grid-template-columns:1.12fr .88fr;gap:56px;align-items:center;padding:40px 0}
+.kick{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.22em;color:var(--teal);margin-bottom:22px;display:flex;align-items:center;gap:11px}
+.kick .ai{color:var(--violet);border:1px solid rgba(155,157,255,.4);border-radius:5px;padding:3px 8px;font-size:9px;letter-spacing:.12em;display:inline-flex;align-items:center;gap:5px}
+.kick .ai .b{width:5px;height:5px;border-radius:50%;background:var(--violet);box-shadow:0 0 8px var(--violet)}
+h1{font-size:60px;font-weight:900;line-height:1.03;letter-spacing:-.025em}
+h1 .u{color:var(--amber)}
+.lede{font-size:16.5px;line-height:1.62;color:var(--mut);max-width:640px;margin-top:24px}
+.lede b{color:var(--tx);font-weight:600}
+/* what matters */
+.matters{display:flex;flex-direction:column;gap:13px}
+.mlab{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.16em;color:var(--faint);margin-bottom:3px}
+.m{display:flex;align-items:center;gap:16px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px;position:relative;overflow:hidden;transition:transform .2s,border-color .2s}
+.m:hover{transform:translateY(-2px);border-color:var(--border2)}
+.m .ed{position:absolute;left:0;top:0;bottom:0;width:4px}
+.m .big{font-family:'IBM Plex Mono',monospace;font-size:29px;font-weight:800;letter-spacing:-.02em;min-width:120px}
+.m .tx{font-size:13px;line-height:1.42}
+.m .tx b{font-weight:700}
+.m .tx .s{color:var(--mut);font-size:11.5px}
+.r .big{color:var(--red)}.r .ed{background:var(--red)}
+.v .big{color:var(--violet)}.v .ed{background:var(--violet)}
+.a .big{color:var(--amber)}.a .ed{background:var(--amber)}
+/* decision spine */
+.spine{display:flex;align-items:stretch;border-top:1px solid var(--border);padding-top:24px}
+.step{flex:1;padding-right:26px;position:relative;text-decoration:none;color:inherit;transition:transform .18s}
+.step:not(:last-child){border-right:1px solid var(--border);margin-right:26px}
+.step:hover{transform:translateY(-3px)}
+.step:hover .st{color:var(--teal)}
+.step .sn{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--teal);font-weight:700}
+.step .st{font-size:17px;font-weight:700;margin-top:7px;transition:color .18s}
+.step .ss{font-size:12px;color:var(--mut);margin-top:5px;line-height:1.4}
+.step .sk{font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:10px;font-weight:600}
+.sk.dn{color:var(--red)}.sk.am{color:var(--amber)}.sk.gn{color:var(--green)}
+.step .arrow{position:absolute;right:24px;top:1px;color:var(--faint);font-size:15px;transition:color .18s,transform .18s}
+.step:hover .arrow{color:var(--teal);transform:translateX(3px)}
+.enter{margin-top:16px;display:flex;justify-content:flex-end}
+.enter a{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:#05201b;background:var(--teal);border-radius:11px;padding:12px 24px;text-decoration:none;box-shadow:0 6px 24px rgba(47,224,192,.18);transition:transform .18s,box-shadow .18s}
+.enter a:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(47,224,192,.28)}
+/* entrance motion */
+.anim{opacity:0;animation:up .7s cubic-bezier(.2,.7,.2,1) forwards}
+@keyframes up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.anim{animation:none;opacity:1}}
+</style></head>
+<body><div id="app">
+
+ <div class="top anim">
+   <div class="brand"><span class="dot"></span>MIND ID <span class="mut">· PORTFOLIO CONTROL TOWER</span></div>
+   <div class="nav">
+     <span class="nv active">Home</span>
+     <a class="nv" href="portfolio-performance.html">Performance</a>
+     <a class="nv" href="portfolio-cockpit.html">Operational</a>
+     <a class="nv" href="ceo-cockpit.html">Stress</a>
+   </div>
+   <div class="period"><span>FY2024</span><span class="pill">vs RKAP</span><span id="asof">as of 30 Jun 2026</span></div>
+ </div>
+
+ <div class="mid">
+   <div>
+     <div class="kick anim" style="animation-delay:.06s">STATE OF THE PORTFOLIO <span class="ai"><span class="b"></span>AI CHIEF OF STAFF<span id="aibadge" class="mono" style="margin-left:4px;color:var(--faint)"></span></span></div>
+     <h1 class="anim" id="hl" style="animation-delay:.12s">A record top line<br>that <span class="u">missed the plan</span><br>that matters.</h1>
+     <div class="lede anim" id="lede" style="animation-delay:.20s">Revenue beat RKAP on gold trading, but <b>EBITDA came in Rp 4.5T under budget</b> on coal and nickel prices — and the profit that's left <b>leans ~80% on one asset</b>, now under force majeure. The story this quarter is concentration, not the headline.</div>
+   </div>
+
+   <div class="matters">
+     <div class="mlab anim" style="animation-delay:.26s">WHAT MATTERS NOW · 3 THINGS</div>
+     <a class="m r anim" style="animation-delay:.32s;text-decoration:none;color:inherit" href="portfolio-performance.html"><span class="ed"></span><span class="big" data-count="-10" data-suf="%">−10%</span><div class="tx"><b>EBITDA missed plan.</b><div class="s">Price-led — coal &amp; nickel below the RKAP deck.</div></div></a>
+     <a class="m v anim" style="animation-delay:.40s;text-decoration:none;color:inherit" href="portfolio-cockpit.html"><span class="ed"></span><span class="big" data-count="80" data-suf="%">80%</span><div class="tx"><b>Profit leans on Grasberg.</b><div class="s">One asset, 51% owned — and under force majeure.</div></div></a>
+     <a class="m a anim" style="animation-delay:.48s;text-decoration:none;color:inherit" href="ceo-cockpit.html"><span class="ed"></span><span class="big">Rp 90T</span><div class="tx"><b>The State contribution is exposed.</b><div class="s">The miss flows to the dividend via Danantara.</div></div></a>
+   </div>
+ </div>
+
+ <div class="spine anim" style="animation-delay:.54s">
+   <a class="step" href="portfolio-performance.html"><span class="arrow">→</span><div class="sn">01</div><div class="st">Performance</div><div class="ss">Did we hit the RKAP plan?</div><div class="sk dn">EBITDA −10% vs budget</div></a>
+   <a class="step" href="portfolio-cockpit.html"><span class="arrow">→</span><div class="sn">02</div><div class="st">Operational</div><div class="ss">What's the state of each asset?</div><div class="sk am">1 risk · 1 watch · 3 on track</div></a>
+   <a class="step" href="ceo-cockpit.html"><span class="arrow">→</span><div class="sn">03</div><div class="st">Stress</div><div class="ss">What could break the cash floor?</div><div class="sk am">copper / Grasberg = the tail</div></a>
+   <a class="step" href="ceo-cockpit.html"><div class="sn">04</div><div class="st">Act</div><div class="ss">What's the move?</div><div class="sk gn">hedge · anchor dividend to P10</div></a>
+ </div>
+ <div class="enter anim" style="animation-delay:.6s"><a href="portfolio-performance.html">Enter the brief →</a></div>
+</div>
+
+<script>
+/* count-up on the hero metrics */
+function countUp(el){const t=+el.dataset.count,suf=el.dataset.suf||'',neg=t<0,abs=Math.abs(t);let s=null;
+ function f(ts){if(!s)s=ts;const p=Math.min((ts-s)/700,1);const e=1-Math.pow(1-p,3);const v=Math.round(abs*e);
+  el.textContent=(neg?'−':'')+v+suf;if(p<1)requestAnimationFrame(f);}requestAnimationFrame(f);}
+setTimeout(()=>document.querySelectorAll('[data-count]').forEach(countUp),360);
+
+/* live AI verdict over the performance state (board-read endpoint) */
+const SUBS=[
+ {nm:'Freeport Indonesia',status:'amber',note:'grade dilution + Sept-25 force majeure; ~80% of group profit'},
+ {nm:'Bukit Asam',status:'red',note:'coal price below RKAP — net profit −22% vs plan'},
+ {nm:'Antam',status:'green',note:'record gold trade; nickel soft'},
+ {nm:'Inalum',status:'green',note:'low-cost hydro; volume +27%'},
+ {nm:'Timah',status:'green',note:'turnaround from FY23 loss'},
+];
+(async function(){
+ try{
+  const h=await (await fetch('/api/health')).json();const live=h.aiMode==='live';
+  document.getElementById('aibadge').textContent=live?'· live':'· simulated';
+  const r=await (await fetch('/api/portfolio/board-read',{method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({group:{revenue:145.2,revenueYoY:34.6,ebitdaVsPlan:-10,note:'EBITDA missed RKAP by ~Rp4.5T on coal+nickel price; revenue beat on low-margin gold trading; profit ~80% concentrated in Freeport which is under force majeure',stateContribution:90.4,onTrack:3,watch:1,risk:1},subs:SUBS})})).json();
+  // Keep the crafted editorial headline as the hero; let the AI narrate the lede beneath it.
+  if(r&&r.read)document.getElementById('lede').innerHTML=r.read;
+ }catch(e){/* keep the static editorial copy */}
+})();
+</script></body></html>
