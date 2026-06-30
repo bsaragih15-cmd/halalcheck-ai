@@ -8,14 +8,13 @@
  --bg:#06140f; --panel:rgba(255,255,255,.025); --panel2:rgba(255,255,255,.045);
  --border:rgba(120,170,155,.16); --border2:rgba(120,170,155,.30);
  --tx:#eafff8; --mut:#9fc4ba; --faint:#5e7a72;
- --teal:#2fe0c0; --green:#37d39a; --amber:#f5b94a; --red:#ff5d5d; --blue:#5cc8e0;
+ --teal:#2fe0c0; --green:#37d39a; --amber:#f5b94a; --red:#ff5d5d; --blue:#5cc8e0; --violet:#8f9dff; --gold:#e5c84a;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{min-height:100%;background:radial-gradient(120% 120% at 50% -10%,#0c2320 0%,var(--bg) 55%,#040d0a 100%);color:var(--tx);
  font-family:Inter,system-ui,Arial,sans-serif}
 .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
-#app{max-width:1680px;margin:0 auto;padding:18px 24px 40px}
-/* top bar */
+#app{max-width:1680px;margin:0 auto;padding:18px 24px 44px}
 .topbar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-bottom:13px;border-bottom:1px solid var(--border)}
 .brand{display:flex;align-items:center;gap:11px;font-size:16px;font-weight:700;letter-spacing:.01em}
 .brand .dot{width:16px;height:16px;border-radius:5px;background:var(--teal);box-shadow:0 0 16px var(--teal)}
@@ -25,30 +24,38 @@ html,body{min-height:100%;background:radial-gradient(120% 120% at 50% -10%,#0c23
 .tt{font-family:inherit;font-size:13px;font-weight:600;color:var(--mut);background:transparent;border:0;padding:7px 16px;border-radius:6px;cursor:pointer;text-decoration:none}
 .tt.active{background:var(--teal);color:#05201b}
 .asof{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--faint);letter-spacing:.07em;text-align:right}
-/* section heads */
 .tierhead{display:flex;align-items:baseline;gap:11px;margin:22px 0 12px}
 .tierhead .tag{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.08em;color:#05201b;background:var(--teal);padding:3px 8px;border-radius:5px}
 .tierhead h2{font-size:15.5px;font-weight:700}
 .tierhead .hint{font-size:11px;color:var(--faint)}
-/* ── TIER 0 group strip ── */
+/* TIER 0 */
 .t0{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
 .t0 .gk{background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:13px 15px}
 .t0 .gk.span2{grid-column:span 2}
 .gk .lab{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--faint);font-family:'IBM Plex Mono',monospace}
-.gk .val{font-size:23px;font-weight:700;margin-top:6px;letter-spacing:-.01em}
+.gk .val{font-size:22px;font-weight:700;margin-top:6px;letter-spacing:-.01em}
 .gk .val small{font-size:12px;font-weight:600;color:var(--mut)}
-.gk .sub{font-size:11.5px;margin-top:4px;font-weight:600;color:var(--mut)}
-.gk .bd{display:flex;gap:10px;margin-top:7px;flex-wrap:wrap}
-.gk .bd span{font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--mut)}
+.gk .sub{font-size:11px;margin-top:4px;font-weight:600;color:var(--mut)}
 .stresslink{display:flex;flex-direction:column;justify-content:center;background:linear-gradient(120deg,rgba(255,93,93,.10),rgba(47,224,192,.05));border-color:rgba(255,93,93,.30)!important;text-decoration:none;color:inherit;cursor:pointer}
 .stresslink:hover{border-color:rgba(255,93,93,.55)!important}
-/* ── TIER 1 scorecard table ── */
+/* charts row */
+.charts{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:15px 17px;position:relative}
+.ch{font-size:13px;font-weight:700}
+.cs{font-size:10.5px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin:1px 0 6px}
+.ccsel{display:flex;gap:5px;margin:2px 0 4px;flex-wrap:wrap}
+.ccsel button{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:600;color:var(--mut);background:var(--panel2);border:1px solid var(--border);padding:4px 9px;border-radius:6px;cursor:pointer}
+.ccsel button.on{color:#05201b;background:var(--teal);border-color:var(--teal)}
+svg text{font-family:'IBM Plex Mono',monospace}
+.ccread{font-size:11px;color:var(--mut);margin-top:6px;min-height:16px}
+.ccread b{color:var(--tx)}
+/* TIER 1 table */
 .scroll{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:var(--panel)}
-table.t1{border-collapse:collapse;width:100%;min-width:1180px;font-size:12.5px}
+table.t1{border-collapse:collapse;width:100%;min-width:1260px;font-size:12.5px}
 .t1 thead th{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);
  text-align:right;padding:11px 12px;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0;background:#0a1813}
 .t1 thead th.l{text-align:left}
-.t1 tbody td{padding:13px 12px;border-bottom:1px solid rgba(120,170,155,.08);text-align:right;white-space:nowrap}
+.t1 tbody td{padding:11px 12px;border-bottom:1px solid rgba(120,170,155,.08);text-align:right;white-space:nowrap;vertical-align:middle}
 .t1 tbody tr{cursor:pointer;transition:background .12s}
 .t1 tbody tr:hover{background:rgba(255,255,255,.022)}
 .t1 tbody tr.sel{background:rgba(47,224,192,.07)}
@@ -58,7 +65,7 @@ table.t1{border-collapse:collapse;width:100%;min-width:1180px;font-size:12.5px}
 .nm b{font-size:13.5px;font-weight:700}
 .nm .sec{font-size:10px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin-top:1px}
 .mono.big{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600}
-.delta{font-size:10.5px;font-family:'IBM Plex Mono',monospace}
+.bullet{display:block}
 .txt-green{color:var(--green)} .txt-amber{color:var(--amber)} .txt-red{color:var(--red)} .txt-mut{color:var(--mut)} .txt-faint{color:var(--faint)}
 .q{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px}
 .q1{color:#062;background:rgba(55,211,154,.18)} .q2{color:#163;background:rgba(55,211,154,.10)}
@@ -67,14 +74,13 @@ table.t1{border-collapse:collapse;width:100%;min-width:1180px;font-size:12.5px}
 .pg{color:#062;background:rgba(55,211,154,.16);border:1px solid rgba(55,211,154,.4)}
 .pa{color:#3a2600;background:rgba(245,185,74,.16);border:1px solid rgba(245,185,74,.45)}
 .pr{color:#3a0000;background:rgba(255,93,93,.16);border:1px solid rgba(255,93,93,.45)}
-.pb{color:#06303a;background:rgba(92,200,224,.16);border:1px solid rgba(92,200,224,.4)}
 .glyph{font-weight:700;margin-right:2px}
 .proper{font-size:9.5px;font-weight:700;font-family:'IBM Plex Mono',monospace;padding:3px 7px;border-radius:5px}
 .pr-gold{color:#3a2c00;background:rgba(245,200,74,.22)} .pr-green{color:#062;background:rgba(55,211,154,.16)} .pr-blue{color:#06303a;background:rgba(92,200,224,.16)}
 .legend{display:flex;gap:16px;margin-top:9px;font-size:10.5px;color:var(--mut);align-items:center;flex-wrap:wrap}
 .legend i{display:inline-flex;align-items:center;gap:5px}
 .chip{width:9px;height:9px;border-radius:50%}.bgg{background:var(--green)}.bga{background:var(--amber)}.bgr{background:var(--red)}
-/* ── TIER 2 drilldown ── */
+/* TIER 2 */
 #t2{margin-top:14px}
 .t2card{background:var(--panel);border:1px solid var(--border2);border-radius:13px;padding:18px 20px;animation:fade .25s ease}
 @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -83,14 +89,17 @@ table.t1{border-collapse:collapse;width:100%;min-width:1180px;font-size:12.5px}
 .t2head h3{font-size:18px;font-weight:700}
 .t2head .meta{font-size:11px;color:var(--faint);font-family:'IBM Plex Mono',monospace}
 .t2head .own{margin-left:auto;font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace}
-.t2grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:13px}
-.op{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
-.op .l{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-family:'IBM Plex Mono',monospace}
-.op .v{font-size:18px;font-weight:700;margin-top:5px;font-family:'IBM Plex Mono',monospace;letter-spacing:-.01em}
-.op .d{font-size:11px;color:var(--mut);margin-top:4px;line-height:1.35}
-.t2note{margin-top:14px;font-size:11px;color:var(--faint);line-height:1.5}
-.foot{font-size:10.5px;color:var(--faint);margin-top:18px;line-height:1.55;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em}
-.foot a{color:var(--mut)}
+.t2body{display:grid;grid-template-columns:1fr 360px;gap:18px}
+.t2grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:12px;align-content:start}
+.op{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:11px 13px}
+.op .l{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);font-family:'IBM Plex Mono',monospace}
+.op .v{font-size:17px;font-weight:700;margin-top:5px;font-family:'IBM Plex Mono',monospace;letter-spacing:-.01em}
+.op .d{font-size:10.5px;color:var(--mut);margin-top:4px;line-height:1.35}
+.brwrap{background:var(--panel2);border:1px solid var(--border);border-radius:11px;padding:13px 14px}
+.brwrap .bt{font-size:11px;font-weight:700;color:var(--mut)}
+.brwrap .bs{font-size:10px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin-bottom:4px}
+.t2note{grid-column:1/-1;margin-top:4px;font-size:11.5px;color:var(--faint);line-height:1.5}
+.foot{font-size:10.5px;color:var(--faint);margin-top:20px;line-height:1.55;font-family:'IBM Plex Mono',monospace;letter-spacing:.02em}
 </style></head>
 <body><div id="app">
 
@@ -100,16 +109,29 @@ table.t1{border-collapse:collapse;width:100%;min-width:1180px;font-size:12.5px}
    <div class="asof">CONSOLIDATED · FY2024<br>MIND ID GROUP (5 SUBSIDIARIES)</div>
  </div>
 
- <!-- TIER 0 -->
  <div class="tierhead"><span class="tag">TIER 0</span><h2>Group roll-up</h2><span class="hint">the board's one screen — consolidated, decomposes to each subsidiary</span></div>
  <div class="t0" id="t0"></div>
 
- <!-- TIER 1 -->
+ <div class="tierhead"><span class="tag">PORTFOLIO SHAPE</span><h2>Cost position &amp; quality</h2><span class="hint">where each asset sits on its commodity cost curve · drag the price line to stress</span></div>
+ <div class="charts">
+   <div class="card">
+     <div class="ch">Cost curve — drag the price line</div>
+     <div class="cs" id="ccsub">global cash cost vs cumulative production · the asset goes underwater when its cost is above the price</div>
+     <div class="ccsel" id="ccsel"></div>
+     <svg id="cc" width="100%" viewBox="0 0 760 320" preserveAspectRatio="xMidYMid meet"></svg>
+     <div class="ccread" id="ccread"></div>
+   </div>
+   <div class="card">
+     <div class="ch">Portfolio quality map</div>
+     <div class="cs">cost-curve quartile × EBITDA margin · bubble = EBITDA scale · click to drill</div>
+     <svg id="sc" width="100%" viewBox="0 0 620 340" preserveAspectRatio="xMidYMid meet"></svg>
+   </div>
+ </div>
+
  <div class="tierhead"><span class="tag">TIER 1</span><h2>Common scorecard</h2><span class="hint">the same value-driver KPIs for every subsidiary — comparable across commodities · click a row to drill in</span></div>
  <div class="scroll"><table class="t1" id="t1"></table></div>
  <div class="legend" id="legend"></div>
 
- <!-- TIER 2 -->
  <div class="tierhead"><span class="tag">TIER 2</span><h2>Commodity operating layer</h2><span class="hint">the metrics that actually run the selected asset</span></div>
  <div id="t2"></div>
 
@@ -117,120 +139,119 @@ table.t1{border-collapse:collapse;width:100%;min-width:1180px;font-size:12.5px}
 </div>
 
 <script>
-/* ─────────────────────────────────────────────────────────────
-   DATA — MIND ID portfolio, FY2024. Public disclosures where
-   available; financial/operational detail not publicly broken
-   out is modelled and tagged ·m. Group anchors from MIND ID
-   FY2024 results briefing (Mar 2025) + RUPST (Jun 2025).
-   ───────────────────────────────────────────────────────────── */
+const NS='http://www.w3.org/2000/svg';
+function E(p,t,a,txt){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;p.appendChild(e);return e;}
 const COL={ptba:'#d9920f',antam:'#37d39a',inalum:'#5cc8e0',ptfi:'#8f9dff',timah:'#dc5a50'};
 
+/* ─── DATA: MIND ID FY2024 (public where available; modelled tagged ·m) ─── */
 const SUBS=[
- {id:'ptba',nm:'Bukit Asam',tic:'PTBA',sec:'Thermal coal',st:'amber',
-  // Tier 1
-  prod:'43.3 Mt',prodVs:+5,prodNote:'record vs ~41.3 Mt plan',
-  cost:'$53/t',costVs:-6,costNote:'cash cost −6%; SR 6.23× (vs 6.44×)',quart:2,
-  price:'ICI-3 $74/t',priceVs:-12,
-  rev:42.76,ebitda:8.3,margin:19,np:5.10,npVs:-16,
-  fcf:'+Rp 4.1 T',fcfM:true,roce:16,roceM:true,
-  trifr:'0.38',trifrM:true,fatal:0,proper:'Gold',life:'25+ yr',
-  // Tier 2
+ {id:'ptba',nm:'Bukit Asam',tic:'PTBA',sec:'Thermal coal',cm:'coal',st:'amber',
+  prodU:'43.3 Mt',prodLo:38,prodHi:44,prodAct:43.3,prodMax:46,prodOk:1,
+  cost:'$53/t',costVs:-6,quart:2,price:'ICI-3 $74/t',priceVs:-12,
+  rev:42.76,margin:19,np:5.10,npVs:-16,fcf:'+Rp 4.1 T',fcfM:1,roce:16,roceM:1,
+  trifr:'0.38',trifrM:1,fatal:0,proper:'Gold',life:'25+ yr',ebScale:14,
   own:'IDX: PTBA · MIND ID 65.0%',
   ops:[
-   {l:'Coal production',v:'43.3 Mt',d:'record (+16% sales YoY); export 20.3 Mt / domestic 22.6 Mt'},
+   {l:'Coal production',v:'43.3 Mt',d:'record (+16% sales YoY); export 20.3 / domestic 22.6 Mt'},
    {l:'Strip ratio',v:'6.23×',d:'overburden ÷ coal — the master cost lever (beat 6.44× target)'},
    {l:'Cash cost / tonne',v:'~$53/t',d:'≈Rp 844k/t, −6% YoY on lower SR'},
-   {l:'Calorific value',v:'4,200–6,322',d:'kcal/kg — HBA grade down to ICI-4'},
    {l:'Realized vs ICI-3',v:'$74/t',d:'−12% YoY; coal price the margin squeeze'},
    {l:'DMO compliance',v:'53% dom.',d:'25% min at $70/t cap (vs $100+ export)'},
    {l:'Rail throughput',v:'38.2 Mt',d:'record; expansion 32→52 Mt'},
-   {l:'Royalty (PP19/2025)',v:'4–14%',d:'progressive on HBA tiers'},
   ],
+  bridge:{t:'Cash cost stack',s:'USD/t coal · illustrative',unit:'$',ymax:60,
+   bars:[{l:'Mining',v:22,from:0,c:'#9fc4ba'},{l:'+ Overburden',v:18,from:22,c:'#d9920f'},{l:'+ Haul/port',v:13,from:40,c:'#5cc8e0'},{l:'Cash cost',v:53,tot:1,c:'#37d39a'}]},
   watch:'Margin squeezed by the coal-price cycle (net profit −16%) despite record volume — a WATCH, not a problem. The cash floor is most exposed here if coal falls further.'},
 
- {id:'antam',nm:'Antam',tic:'ANTM',sec:'Nickel · Gold · Bauxite',st:'green',
-  prod:'20,103 TNi',prodVs:-10,prodNote:'FeNi below 22.5k plan; gold sales record',
-  cost:'high',costVs:0,costNote:'RKEF ferronickel high on the Ni curve',quart:4,
-  price:'Ni $16.7k · Au rec.',priceVs:0,
-  rev:69.19,ebitda:6.73,margin:10,np:3.64,npVs:25,
-  fcf:'+Rp 2.0 T',fcfM:true,roce:9,roceM:true,
-  trifr:'0.31',trifrM:true,fatal:0,proper:'Green',life:'20+ yr',
+ {id:'antam',nm:'Antam',tic:'ANTM',sec:'Nickel · Gold · Bauxite',cm:'nickel',st:'green',
+  prodU:'20.1k TNi',prodLo:21,prodHi:23,prodAct:20.1,prodMax:24,prodOk:0,
+  cost:'high',costVs:0,quart:4,price:'Ni $16.7k',priceVs:0,
+  rev:69.19,margin:10,np:3.64,npVs:25,fcf:'+Rp 2.0 T',fcfM:1,roce:9,roceM:1,
+  trifr:'0.31',trifrM:1,fatal:0,proper:'Green',life:'20+ yr',ebScale:12,
   own:'IDX: ANTM · MIND ID 65.0%',
   ops:[
    {l:'Ferronickel',v:'20,103 TNi',d:'RKEF; sales 19,452 TNi (below 22.5k target)'},
-   {l:'Nickel ore',v:'9.94 M wmt',d:'sales 8.35 M wmt; saprolite (RKEF) vs limonite (HPAL)'},
+   {l:'Nickel ore',v:'9.94 M wmt',d:'saprolite (RKEF) vs limonite (HPAL)'},
    {l:'Gold — mined',v:'1,019 kg',d:'Pongkor dore — small (~33k oz)'},
    {l:'Gold — sold',v:'43.8 t',d:'record 1.41 Moz — Logam Mulia refines/trades 3rd-party gold'},
-   {l:'Gold revenue',v:'Rp 57.6 T',d:'+120% YoY — drove the record top line (low-margin trade)'},
-   {l:'Bauxite / alumina',v:'1.33 M wmt',d:'CGA ~160 kt; SGAR Mempawah (1 Mtpa SGA) ramping'},
-   {l:'Nickel cost-curve',v:'Q4',d:'older RKEF FeNi sits high-cost; >20% of world Ni loss-making'},
-   {l:'Class 1 vs 2',v:'Class 2',d:'FeNi for steel; HPAL/battery-grade via Pomalaa JV'},
+   {l:'Gold revenue',v:'Rp 57.6 T',d:'+120% YoY — drove the record top line (low-margin)'},
+   {l:'Bauxite / alumina',v:'1.33 M wmt',d:'CGA ~160 kt; SGAR Mempawah ramping'},
   ],
+  bridge:{t:'EBITDA by stream',s:'Rp T · illustrative split',unit:'Rp',ymax:7,
+   bars:[{l:'Gold trade',v:1.8,from:0,c:'#e5c84a'},{l:'+ Nickel',v:3.1,from:1.8,c:'#37d39a'},{l:'+ Bauxite',v:1.83,from:4.9,c:'#5cc8e0'},{l:'EBITDA',v:6.73,tot:1,c:'#37d39a'}]},
   watch:'Record revenue is gold-trading-driven (low margin); the mining economics — nickel — are soft and high on the cost curve. Watch ferronickel margin, not the headline.'},
 
- {id:'inalum',nm:'Inalum',tic:'—',sec:'Primary aluminium',st:'green',
-  prod:'274 kt',prodVs:-9,prodNote:'+27% YoY actual; below 300 kt target',
-  cost:'low',costVs:0,costNote:'captive hydro → structurally low cost',quart:1,
-  price:'LME $2.5k +MJP',priceVs:0,
-  rev:11.4,ebitda:2.9,margin:26,np:2.0,npVs:99,
-  fcf:'+Rp 1.5 T',fcfM:true,roce:7,roceM:true,
-  trifr:'0.22',trifrM:true,fatal:0,proper:'Green',life:'feedstock',
+ {id:'inalum',nm:'Inalum',tic:'—',sec:'Primary aluminium',cm:'alu',st:'green',
+  prodU:'274 kt',prodLo:28,prodHi:31,prodAct:27.4,prodMax:32,prodOk:0,
+  cost:'low',costVs:0,quart:1,price:'LME $2.5k',priceVs:0,
+  rev:11.4,margin:26,np:2.0,npVs:99,fcf:'+Rp 1.5 T',fcfM:1,roce:7,roceM:1,
+  trifr:'0.22',trifrM:1,fatal:0,proper:'Green',life:'feedstock',ebScale:18,
   own:'Unlisted · MIND ID 100%',
   ops:[
    {l:'Primary aluminium',v:'274 kt',d:'+27% YoY; 510 pots; group target ~900 kt'},
-   {l:'Specific energy',v:'~14,000',d:'DC kWh/t Al — power is 30–40% of cost'},
-   {l:'Captive power',v:'~603 MW',d:'Asahan hydro (Siguragura+Tangga) → low-cost, low-carbon'},
-   {l:'Alumina ratio',v:'~1.9 t/t',d:'alumina ~25%+ of cost'},
+   {l:'Specific energy',v:'~14,000',d:'DC kWh/t — power is 30–40% of cost'},
+   {l:'Captive power',v:'~603 MW',d:'Asahan hydro → low-cost, low-carbon'},
    {l:'Current efficiency',v:'94–96%',d:'actual ÷ Faraday-theoretical Al'},
-   {l:'Realized price',v:'LME +MJP',d:'LME ~$2,500/t + Japan premium ~$86–260/t'},
+   {l:'Realized price',v:'LME +MJP',d:'LME ~$2,500/t + Japan premium $86–260/t'},
    {l:'GHG intensity',v:'low',d:'hydro ~1–4 vs coal ~16+ tCO₂e/t — "green aluminium"'},
-   {l:'Cost-curve',v:'Q1',d:'captive hydropower = first-quartile resilience'},
   ],
+  bridge:{t:'Cost stack',s:'USD/t Al · illustrative',unit:'$',ymax:2400,
+   bars:[{l:'Power',v:760,from:0,c:'#5cc8e0'},{l:'+ Alumina',v:620,from:760,c:'#e5c84a'},{l:'+ Carbon',v:300,from:1380,c:'#9fc4ba'},{l:'+ Other',v:240,from:1680,c:'#8f9dff'},{l:'Cash cost',v:1920,tot:1,c:'#37d39a'}]},
   watch:'Structurally advantaged (hydro power, low carbon). EBITDA +213% YoY. The question is growth execution — the ~900 kt expansion — and whether new capacity stays low-carbon.'},
 
- {id:'ptfi',nm:'Freeport Indonesia',tic:'—',sec:'Copper · Gold',st:'red',
-  prod:'1.8 Blb Cu',prodVs:0,prodNote:'on plan FY24; −35% 2026 (mud rush)',
-  cost:'~$0/lb net',costVs:0,costNote:'gold credits ≈ full copper cash cost',quart:1,
-  price:'Cu $4.2 · Au rec.',priceVs:+15,
-  rev:150,revM:true,ebitda:60,ebitdaM:true,margin:40,np:48.8,npVs:0,np23:true,
-  fcf:'high',fcfM:true,roce:22,roceM:true,
-  trifr:'0.45',trifrM:true,fatal:2,proper:'Blue',life:'to 2041',
+ {id:'ptfi',nm:'Freeport Indonesia',tic:'—',sec:'Copper · Gold',cm:'copper',st:'red',
+  prodU:'1.8 Blb',prodLo:1.6,prodHi:1.95,prodAct:1.8,prodMax:2.1,prodOk:1,
+  cost:'~$0/lb',costVs:0,quart:1,price:'Cu $4.2',priceVs:15,
+  rev:150,revM:1,margin:40,np:48.8,npVs:0,np23:1,fcf:'high',fcfM:1,roce:22,roceM:1,
+  trifr:'0.45',trifrM:1,fatal:2,proper:'Blue',life:'to 2041',ebScale:60,
   own:'PTFI · MIND ID 51.2% / FCX 48.8% (operator)',
   ops:[
    {l:'Mill throughput',v:'~200 ktpd',d:'ore milled (240 ktpd nameplate); all-underground'},
    {l:'Ore grade',v:'0.92% Cu',d:'+ 0.76 g/t Au — world-class gold by-product grade'},
    {l:'Recovery',v:'~90% Cu',d:'~80% Au (flotation + gravity)'},
-   {l:'Net cash cost',v:'~$0/lb',d:'C1 ~$2.71/lb − gold credits → PTFI net ≈ $0 to −$0.08/lb'},
+   {l:'Net cash cost',v:'~$0/lb',d:'C1 ~$2.71/lb − gold credits → net ≈ $0'},
    {l:'Block cave (GBC)',v:'133 ktpd',d:'record 151,582 t/day; DMLZ ~65 ktpd'},
-   {l:'Cu / Au output',v:'1.8 Blb',d:'+ ~1.86 Moz Au (2024)'},
    {l:'Manyar smelter',v:'480 kt',d:'1.7 Mt conc → cathode + 50t Au/210t Ag; ~$3.7bn'},
-   {l:'Mud-rush status',v:'force majeure',d:'Sept 2025; 2 fatalities; ~85% restored H2-2026, full 2027'},
   ],
+  bridge:{t:'Net cash cost bridge',s:'USD/lb Cu · how gold erases the cost',unit:'$',ymax:3,
+   bars:[{l:'Site C1',v:2.71,from:0,c:'#9fc4ba'},{l:'− Gold',v:-2.40,from:2.71,c:'#e5c84a'},{l:'− Ag/Mo',v:-0.39,from:0.31,c:'#5cc8e0'},{l:'Net',v:-0.08,tot:1,c:'#37d39a'}]},
   watch:'Lowest-cost copper in the portfolio (gold credits) and the biggest profit driver — but carries the live tail risk: the Sept-2025 Grasberg mud rush (2 fatalities, force majeure) cuts 2026 output ~35%.'},
 
- {id:'timah',nm:'Timah',tic:'TINS',sec:'Tin',st:'amber',
-  prod:'18,915 t Sn',prodVs:+23,prodNote:'+23% YoY refined tin',
-  cost:'improving',costVs:0,costNote:'cost down; turnaround from FY23 loss',quart:3,
-  price:'LME $31.2k',priceVs:+17,
-  rev:10.86,ebitda:1.8,margin:16,ebitdaM:true,np:1.19,npVs:364,
-  fcf:'+Rp 0.6 T',fcfM:true,roce:8,roceM:true,
-  trifr:'0.35',trifrM:true,fatal:0,proper:'Blue',life:'<15 yr',
+ {id:'timah',nm:'Timah',tic:'TINS',sec:'Tin',cm:'tin',st:'amber',
+  prodU:'18.9k t',prodLo:14,prodHi:17,prodAct:18.9,prodMax:20,prodOk:1,
+  cost:'improving',costVs:0,quart:3,price:'LME $31.2k',priceVs:17,
+  rev:10.86,margin:16,np:1.19,npVs:364,fcf:'+Rp 0.6 T',fcfM:1,roce:8,roceM:1,
+  trifr:'0.35',trifrM:1,fatal:0,proper:'Blue',life:'<15 yr',ebScale:8,
   own:'IDX: TINS · MIND ID 65.0%',
   ops:[
    {l:'Refined tin',v:'18,915 t',d:'+23% YoY; sales 17,507 t'},
    {l:'Tin ore',v:'19,437 t Sn',d:'+31% YoY'},
    {l:'Realized price',v:'$31,181/t',d:'+17% YoY (LME tin)'},
    {l:'Net profit',v:'Rp 1.19 T',d:'+364% — reversed a Rp 450 B FY23 loss'},
-   {l:'Mining mix',v:'off/onshore',d:'offshore dredging + onshore'},
-   {l:'Cost-curve',v:'Q3',d:'smaller scale, mid-high cost'},
    {l:'Reserve life',v:'<15 yr',d:'depletion + illegal-mining leakage are the watch items'},
    {l:'Royalty',v:'3.75%',d:'flat (PP 19/2025)'},
   ],
+  bridge:{t:'Cash margin',s:'USD/t tin · illustrative',unit:'$',ymax:34000,
+   bars:[{l:'Cash cost',v:25500,from:0,c:'#9fc4ba'},{l:'+ Margin',v:5681,from:25500,c:'#37d39a'},{l:'Realized',v:31181,tot:1,c:'#5cc8e0'}]},
   watch:'A genuine turnaround (loss → Rp 1.19 T) on higher tin price + volume. But tin is volatile and reserve life is the structural watch — keep cost-vs-LME and reserve replacement on screen.'},
 ];
 
-/* ── TIER 0 group roll-up ── */
-const fmtT=v=>'Rp '+v.toFixed(1)+' T';
+/* commodity cost curves (illustrative global; asset marked). cost in the commodity's unit. */
+const CURVES={
+ copper:{unit:'$/lb',ymax:4.0,fmt:v=>'$'+v.toFixed(2),price:4.20,asset:'ptfi',assetCum:5,assetCost:0.0,
+  steps:[[0,0.4],[8,0.4],[8,1.2],[28,1.2],[28,1.8],[55,1.8],[55,2.4],[80,2.4],[80,3.1],[100,3.4]]},
+ nickel:{unit:'$/lb',ymax:9.0,fmt:v=>'$'+v.toFixed(1),price:6.8,asset:'antam',assetCum:74,assetCost:7.6,
+  steps:[[0,3.8],[20,3.8],[20,4.6],[45,4.6],[45,5.6],[68,5.6],[68,7.2],[88,7.2],[88,8.4],[100,8.6]]},
+ coal:{unit:'$/t',ymax:110,fmt:v=>'$'+Math.round(v),price:90,asset:'ptba',assetCum:30,assetCost:53,
+  steps:[[0,30],[18,30],[18,45],[42,45],[42,60],[66,60],[66,80],[88,80],[88,98],[100,102]]},
+ alu:{unit:'$/t',ymax:3000,fmt:v=>'$'+Math.round(v),price:2550,asset:'inalum',assetCum:15,assetCost:1920,
+  steps:[[0,1700],[20,1700],[20,2000],[48,2000],[48,2300],[72,2300],[72,2650],[100,2900]]},
+ tin:{unit:'$/t',ymax:38000,fmt:v=>'$'+(v/1000).toFixed(0)+'k',price:31000,asset:'timah',assetCum:60,assetCost:25500,
+  steps:[[0,16000],[25,16000],[25,21000],[50,21000],[50,26000],[78,26000],[78,32000],[100,34000]]},
+};
+const CMNAME={copper:'Copper',nickel:'Nickel',coal:'Coal',alu:'Aluminium',tin:'Tin'};
+
+/* ─── TIER 0 ─── */
 const onTrack=SUBS.filter(s=>s.st==='green').length;
 const fatalities=SUBS.reduce((a,s)=>a+s.fatal,0);
 const t0=[
@@ -244,25 +265,106 @@ const t0=[
  {lab:'Scope 1+2 ·m',val:'tracking',sub:'vs decarbonisation target'},
 ];
 document.getElementById('t0').innerHTML=t0.map(k=>`<div class="gk ${k.cls||''}"><div class="lab">${k.lab}</div><div class="val">${k.val}</div><div class="sub">${k.sub}</div></div>`).join('')
- +`<a class="gk span2 stresslink" href="ceo-cockpit.html"><div class="lab">Cash-floor stress →</div><div class="val" style="font-size:19px">Run scenario → cash</div><div class="sub">model any commodity shock against the board floor · the WATCH/RISK assets breach first</div></a>`;
+ +`<a class="gk span2 stresslink" href="ceo-cockpit.html"><div class="lab">Cash-floor stress →</div><div class="val" style="font-size:18px">Run scenario → cash</div><div class="sub">model any commodity shock against the board floor · the WATCH/RISK assets breach first</div></a>`;
 
-/* ── TIER 1 scorecard ── */
+/* ─── COST CURVE (interactive) ─── */
+let curCm='copper', dragPrice={};
+const ccsel=document.getElementById('ccsel');
+Object.keys(CURVES).forEach(c=>{const b=document.createElement('button');b.textContent=CMNAME[c];b.dataset.c=c;b.onclick=()=>{curCm=c;renderCurve();[...ccsel.children].forEach(x=>x.classList.toggle('on',x.dataset.c===c));};ccsel.appendChild(b);});
+ccsel.children[0].classList.add('on');
+const cc=document.getElementById('cc');
+function renderCurve(){
+ const C=CURVES[curCm]; cc.innerHTML='';
+ const x0=52,x1=720,y0=270,y1=24; const sub=SUBS.find(s=>s.id===C.asset);
+ const px=p=>x0+(x1-x0)*p/100, py=v=>y0-(y0-y1)*Math.min(v,C.ymax)/C.ymax;
+ if(dragPrice[curCm]===undefined)dragPrice[curCm]=C.price;
+ const price=dragPrice[curCm];
+ // y grid
+ const ticks=5;for(let i=0;i<=ticks;i++){const v=C.ymax*i/ticks,y=py(v);E(cc,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'rgba(120,170,155,.09)'});E(cc,'text',{x:x0-6,y:y+3,'text-anchor':'end','font-size':9,fill:'#5e7a72'},C.fmt(v));}
+ // curve area
+ let d='M '+px(C.steps[0][0])+' '+py(C.steps[0][1]);
+ C.steps.forEach(p=>d+=' L '+px(p[0])+' '+py(p[1]));
+ d+=' L '+px(100)+' '+y0+' L '+px(0)+' '+y0+' Z';
+ E(cc,'path',{d,fill:'rgba(120,170,155,.06)',stroke:'#6f8a82','stroke-width':1.4});
+ // underwater shading (above price line within curve) — simple band above price
+ E(cc,'rect',{x:x0,y:y1,width:x1-x0,height:py(price)-y1,fill:'rgba(255,93,93,.05)'});
+ // asset marker (column from baseline up to the asset's cost)
+ const ax=px(Math.max(C.assetCum-3,0));
+ const underwater=C.assetCost>price;
+ const aTop=py(C.assetCost), aH=Math.max(y0-aTop,3);
+ E(cc,'rect',{x:ax,y:aTop,width:18,height:aH,fill:underwater?'rgba(255,93,93,.28)':COL[C.asset],opacity:underwater?1:.22,rx:2});
+ E(cc,'rect',{x:ax,y:aTop,width:18,height:aH,fill:'none',stroke:COL[C.asset],'stroke-width':1.6,rx:2});
+ E(cc,'text',{x:ax+9,y:aTop-9,'text-anchor':'middle','font-size':10,fill:COL[C.asset]},sub.nm.split(' ')[0]);
+ E(cc,'text',{x:ax+9,y:aTop+(aH>22?16:-22),'text-anchor':'middle','font-size':9.5,fill:'#eafff8'},'Q'+sub.quart);
+ // price line (draggable)
+ const yP=py(price);
+ E(cc,'line',{x1:x0,y1:yP,x2:x1,y2:yP,stroke:underwater?'#ff5d5d':'#37d39a','stroke-width':2,'stroke-dasharray':'6 4'});
+ E(cc,'text',{x:x1-2,y:yP-7,'text-anchor':'end','font-size':10,fill:underwater?'#ff5d5d':'#37d39a'},'price '+C.fmt(price)+' — drag ↕');
+ const hit=E(cc,'rect',{x:x0,y:yP-10,width:x1-x0,height:20,fill:'transparent',style:'cursor:ns-resize'});
+ E(cc,'text',{x:(x0+x1)/2,y:y0+24,'text-anchor':'middle','font-size':9.5,fill:'#5e7a72'},'cumulative global production →');
+ // drag handling
+ function setFromY(cy){const r=cc.getBoundingClientRect();const vy=(cy-r.top)/r.height*320;const v=C.ymax*(y0-vy)/(y0-y1);dragPrice[curCm]=Math.max(0,Math.min(C.ymax,v));renderCurve();}
+ hit.addEventListener('mousedown',ev=>{ev.preventDefault();const mv=e=>setFromY(e.clientY);const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);};document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);});
+ cc.addEventListener('wheel',()=>{},{passive:true});
+ // read line
+ const margin=price-C.assetCost;
+ document.getElementById('ccread').innerHTML=
+  `<b>${sub.nm}</b> sits at <b>${C.fmt(C.assetCost)}</b> (Q${sub.quart}) vs price <b>${C.fmt(price)}</b> → `+
+  (underwater?`<span class="txt-red">underwater by ${C.fmt(C.assetCost-price)} — would curtail first</span>`
+   :`<span class="txt-green">${C.fmt(margin)}/${C.unit.split('/')[1]} margin — survives</span>`)+
+  ` &nbsp;·&nbsp; <a href="ceo-cockpit.html" style="color:var(--teal)">model the full cash impact in Stress Test →</a>`;
+}
+renderCurve();
+
+/* ─── QUALITY SCATTER ─── */
+function renderScatter(){
+ const s=document.getElementById('sc');s.innerHTML='';
+ const x0=58,x1=596,y0=292,y1=30;
+ const pxq=q=>x0+(x1-x0)*(q-1)/3, py=m=>y0-(y0-y1)*m/45;
+ E(s,'rect',{x:x0,y:y1,width:(x1-x0)/3,height:py(20)-y1,fill:'rgba(55,211,154,.05)'});
+ E(s,'text',{x:x0+10,y:y1+16,'font-size':9.5,fill:'#37d39a'},'low-cost · high-margin');
+ E(s,'line',{x1:x0,y1:y0,x2:x1,y2:y0,stroke:'rgba(120,170,155,.25)'});
+ E(s,'line',{x1:x0,y1:y0,x2:x0,y2:y1,stroke:'rgba(120,170,155,.25)'});
+ [1,2,3,4].forEach(q=>E(s,'text',{x:pxq(q),y:y0+18,'text-anchor':'middle','font-size':10,fill:'#5e7a72'},'Q'+q));
+ [10,20,30,40].forEach(m=>E(s,'text',{x:x0-8,y:py(m)+3,'text-anchor':'end','font-size':9,fill:'#5e7a72'},m+'%'));
+ E(s,'text',{x:(x0+x1)/2,y:y0+34,'text-anchor':'middle','font-size':9.5,fill:'#5e7a72'},'cost-curve quartile (Q1 = lowest cost, most resilient)');
+ SUBS.forEach(p=>{const cx=pxq(p.quart),cy=py(p.margin),r=9+p.ebScale*0.62;
+  const g=E(s,'g',{style:'cursor:pointer'});g.addEventListener('click',()=>drill(p.id));
+  E(g,'circle',{cx,cy,r,fill:COL[p.id],opacity:.20});
+  E(g,'circle',{cx,cy,r,fill:'none',stroke:COL[p.id],'stroke-width':1.6});
+  E(g,'circle',{cx,cy,r:3,fill:COL[p.id]});
+  E(g,'text',{x:cx,y:cy-r-6,'text-anchor':'middle','font-size':10.5,fill:'#eafff8'},p.nm.split(' ')[0]);
+ });
+}
+renderScatter();
+
+/* ─── BULLET (inline) ─── */
+function bullet(s){const w=150,h=18,mx=s.prodMax;const sx=v=>4+(w-8)*v/mx;
+ const col=s.prodOk?'#37d39a':'#f5b94a';
+ return `<svg class="bullet" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <rect x="4" y="6" width="${w-8}" height="6" rx="3" fill="rgba(255,255,255,.05)"/>
+  <rect x="${sx(s.prodLo)}" y="6" width="${sx(s.prodHi)-sx(s.prodLo)}" height="6" rx="3" fill="rgba(120,170,155,.28)"/>
+  <line x1="${sx(s.prodHi)}" y1="3" x2="${sx(s.prodHi)}" y2="15" stroke="#9fc4ba" stroke-width="1.2"/>
+  <circle cx="${sx(s.prodAct)}" cy="9" r="5" fill="${col}" stroke="#06140f" stroke-width="1.5"/></svg>`;}
+
+/* ─── TIER 1 ─── */
 const q=n=>`<span class="q q${n}">Q${n}</span>`;
-const dlt=(v,inv)=>{if(v===0||v===undefined)return '';const good=inv? v<0 : v>0;return `<span class="delta ${good?'txt-green':'txt-red'}">${v>0?'▲ +':'▼ '}${v}%</span>`;};
-const st={green:{c:'pg',g:'✓',w:'ON TRACK'},amber:{c:'pa',g:'!',w:'WATCH'},red:{c:'pr',g:'▲',w:'RISK'}};
-const pr={Gold:'pr-gold',Green:'pr-green',Blue:'pr-blue'};
+const fmtT=v=>'Rp '+v.toFixed(1)+' T';
+const dlt=(v,inv)=>{if(!v)return '';const good=inv? v<0:v>0;return `<span class="mono ${good?'txt-green':'txt-red'}" style="font-size:10.5px">${v>0?'▲ +':'▼ '}${v}%</span>`;};
+const stx={green:{c:'pg',g:'✓',w:'ON TRACK'},amber:{c:'pa',g:'!',w:'WATCH'},red:{c:'pr',g:'▲',w:'RISK'}};
+const prc={Gold:'pr-gold',Green:'pr-green',Blue:'pr-blue'};
 const m=b=>b?'<span class="txt-faint" style="font-size:9px"> ·m</span>':'';
 const t1=document.getElementById('t1');
 t1.innerHTML=`<thead><tr>
  <th class="l">Subsidiary</th><th class="l">Status</th>
- <th>Production<br>vs guidance</th><th>Unit cost<br>vs guidance</th><th>Cost<br>curve</th>
+ <th class="l">Production vs guidance</th><th>Unit cost</th><th>Cost<br>curve</th>
  <th>Realized vs<br>benchmark</th><th>Revenue</th><th>EBITDA<br>margin</th>
  <th>Net profit<br>vs PY</th><th>FCF</th><th>ROCE</th><th>Safety<br>TRIFR/fatal</th>
  <th>PROPER</th><th>Reserve<br>life</th>
-</tr></thead><tbody>${SUBS.map(s=>{const S=st[s.st];return `<tr data-id="${s.id}">
+</tr></thead><tbody>${SUBS.map(s=>{const S=stx[s.st];return `<tr data-id="${s.id}">
  <td><div class="nm"><span class="edge" style="background:${COL[s.id]}"></span><div><b>${s.nm}</b><div class="sec">${s.tic} · ${s.sec}</div></div></div></td>
  <td class="l"><span class="pill ${S.c}"><span class="glyph">${S.g}</span>${S.w}</span></td>
- <td><span class="mono big">${s.prod}</span> ${dlt(s.prodVs)}</td>
+ <td class="l"><div style="display:flex;align-items:center;gap:9px">${bullet(s)}<span class="mono big">${s.prodU}</span></div></td>
  <td><span class="mono big">${s.cost}</span> ${dlt(s.costVs,true)}</td>
  <td>${q(s.quart)}</td>
  <td><span class="mono">${s.price}</span> ${dlt(s.priceVs)}</td>
@@ -272,34 +374,50 @@ t1.innerHTML=`<thead><tr>
  <td><span class="mono">${s.fcf}</span>${m(s.fcfM)}</td>
  <td><span class="mono">${s.roce}%</span>${m(s.roceM)}</td>
  <td><span class="mono">${s.trifr}${m(s.trifrM)}</span> · <b class="${s.fatal?'txt-red':'txt-mut'}">${s.fatal}</b></td>
- <td><span class="proper ${pr[s.proper]}">${s.proper}</span></td>
+ <td><span class="proper ${prc[s.proper]}">${s.proper}</span></td>
  <td><span class="mono txt-mut">${s.life}</span></td>
 </tr>`}).join('')}</tbody>`;
 document.getElementById('legend').innerHTML=
  `<i><span class="chip bgg"></span>✓ On track</i><i><span class="chip bga"></span>! Watch</i><i><span class="chip bgr"></span>▲ Risk</i>`+
- `<i style="color:var(--faint)">Cost-curve Q1 = lowest-cost 25% globally (survives the price cycle) · Q4 = highest-cost</i>`+
- `<i style="color:var(--faint)">·m = modelled (not publicly disclosed)</i>`;
+ `<i style="color:var(--faint)">Production: ● actual vs │guidance range│ · cost-curve Q1 = lowest-cost 25% globally · ·m = modelled</i>`;
 
-/* ── TIER 2 drilldown ── */
+/* ─── TIER 2 with cost bridge ─── */
+function drawBridge(svg,B){
+ svg.innerHTML='';const W=320,H=180,y0=150,x0=16;const n=B.bars.length;const bw=(W-x0-10)/n-12;
+ const sc=v=>(y0-18)*v/B.ymax;
+ const yz=y0;E(svg,'line',{x1:x0,y1:yz,x2:W-6,y2:yz,stroke:'rgba(120,170,155,.2)'});
+ let x=x0+6;
+ B.bars.forEach((b,i)=>{
+  const yTop=b.tot? y0-sc(Math.abs(b.v)) : y0-sc(Math.max(b.from,b.from+b.v));
+  const hgt=Math.max(sc(Math.abs(b.v)),2);
+  E(svg,'rect',{x,y:yTop,width:bw,height:hgt,rx:2,fill:b.c,opacity:b.tot?1:.85});
+  E(svg,'text',{x:x+bw/2,y:yTop-5,'text-anchor':'middle','font-size':9.5,fill:'#eafff8'},(b.v>0&&!b.tot?'+':'')+(B.unit==='Rp'?b.v:(B.ymax>1000?Math.round(b.v):b.v)));
+  E(svg,'text',{x:x+bw/2,y:y0+13,'text-anchor':'middle','font-size':9,fill:'#9fc4ba'},b.l);
+  if(i<n-1&&!B.bars[i+1].tot){const yc=y0-sc(b.from+b.v);E(svg,'line',{x1:x+bw,y1:yc,x2:x+bw+12,y2:yc,stroke:'rgba(120,170,155,.3)','stroke-dasharray':'3 3'});}
+  x+=bw+12;
+ });
+}
 function drill(id){
  const s=SUBS.find(x=>x.id===id);
  document.querySelectorAll('#t1 tbody tr').forEach(tr=>tr.classList.toggle('sel',tr.dataset.id===id));
- const S=st[s.st];
+ const S=stx[s.st];
  document.getElementById('t2').innerHTML=`<div class="t2card">
   <div class="t2head"><span class="ed" style="background:${COL[s.id]}"></span>
    <h3>${s.nm}</h3><span class="pill ${S.c}"><span class="glyph">${S.g}</span>${S.w}</span>
-   <span class="meta">${s.sec} · cost-curve ${'Q'+s.quart}</span>
+   <span class="meta">${s.sec} · cost-curve Q${s.quart}</span>
    <span class="own">${s.own}</span></div>
-  <div class="t2grid">${s.ops.map(o=>`<div class="op"><div class="l">${o.l}</div><div class="v">${o.v}</div><div class="d">${o.d}</div></div>`).join('')}</div>
-  <div class="t2note"><b style="color:var(--mut)">Read:</b> ${s.watch}</div>
- </div>`;
+  <div class="t2body">
+   <div class="t2grid">${s.ops.map(o=>`<div class="op"><div class="l">${o.l}</div><div class="v">${o.v}</div><div class="d">${o.d}</div></div>`).join('')}</div>
+   <div class="brwrap"><div class="bt">${s.bridge.t}</div><div class="bs">${s.bridge.s}</div><svg id="brsvg" width="100%" viewBox="0 0 320 175"></svg></div>
+   <div class="t2note"><b style="color:var(--mut)">Read:</b> ${s.watch}</div>
+  </div></div>`;
+ drawBridge(document.getElementById('brsvg'),s.bridge);
 }
 document.querySelectorAll('#t1 tbody tr').forEach(tr=>tr.onclick=()=>drill(tr.dataset.id));
-drill('ptfi');  // open on the risk asset
+drill('ptfi');
 
 document.getElementById('foot').innerHTML=
- 'Tier 0/1/2 of the Subsidiary Performance Metrics Framework (see docs/subsidiary-performance-metrics-framework.md). '+
- 'Figures are FY2024 public disclosures (MIND ID group + subsidiary results); financial/operational detail not publicly broken out is modelled and tagged ·m. '+
- 'PTFI standalone files no Indonesian quarterly — net profit shown is FY2023 (Rp 48.79 T). '+
- 'Real MIND ID actuals vs budget/guidance would replace these in the live tool.';
+ 'Tier 0/1/2 of the Subsidiary Performance Metrics Framework. FY2024 public disclosures; financial/operational detail not publicly broken out is modelled (·m). '+
+ 'Cost curves and cost stacks are illustrative shapes with the asset placed at its real quartile. PTFI net profit shown is FY2023. '+
+ 'Real MIND ID actuals + guidance ranges would replace these in the live tool.';
 </script></body></html>

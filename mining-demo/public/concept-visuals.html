@@ -1,0 +1,161 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Concept — visual language</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#06140f;--panel:rgba(255,255,255,.03);--border:rgba(120,170,155,.16);--tx:#eafff8;--mut:#9fc4ba;--faint:#5e7a72;
+ --teal:#2fe0c0;--green:#37d39a;--amber:#f5b94a;--red:#ff5d5d;--blue:#5cc8e0;--violet:#8f9dff;--gold:#e5c84a}
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter,system-ui,sans-serif}
+body{background:radial-gradient(120% 120% at 50% -10%,#0c2320,#06140f 55%,#040d0a);color:var(--tx);width:1600px;height:1040px;padding:26px 30px}
+.mono{font-family:'IBM Plex Mono',monospace}
+h1{font-size:17px;font-weight:700;margin-bottom:3px}
+.sub{font-size:11.5px;color:var(--faint);font-family:'IBM Plex Mono',monospace;letter-spacing:.04em;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:16px;height:935px}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 18px;position:relative;overflow:hidden}
+.ch{font-size:13px;font-weight:700;margin-bottom:1px}
+.cs{font-size:10.5px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin-bottom:8px}
+.tagn{position:absolute;top:14px;right:16px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.12em;color:#05201b;background:var(--teal);padding:3px 8px;border-radius:5px}
+text{font-family:'IBM Plex Mono',monospace}
+.lbl{fill:var(--mut);font-size:11px}.flbl{fill:var(--faint);font-size:9.5px}
+</style></head>
+<body>
+<h1>Portfolio Control Tower — visual language concepts</h1>
+<div class="sub">illustrative · the four chart types that would replace the static table cells · MIND ID FY2024</div>
+<div class="grid">
+
+ <!-- A: COST CURVE -->
+ <div class="card"><div class="tagn">COST CURVE</div>
+  <div class="ch">Copper cost curve — where PT Freeport sits</div>
+  <div class="cs">global C1 cash cost vs cumulative production · drag the price line to stress</div>
+  <svg id="cc" width="720" height="360" viewBox="0 0 720 360"></svg>
+ </div>
+
+ <!-- B: BULLET vs GUIDANCE -->
+ <div class="card"><div class="tagn">BULLET BARS</div>
+  <div class="ch">Production vs guidance — the majors' scorecard</div>
+  <div class="cs">actual ● against the year's guidance range │ ─ ─ │</div>
+  <svg id="bb" width="720" height="360" viewBox="0 0 720 360"></svg>
+ </div>
+
+ <!-- C: NET CASH COST BRIDGE -->
+ <div class="card"><div class="tagn">COST BRIDGE</div>
+  <div class="ch">PT Freeport net cash cost — how gold erases the copper cost</div>
+  <div class="cs">site C1 minus by-product credits → net ≈ $0/lb · USD per lb copper</div>
+  <svg id="br" width="720" height="360" viewBox="0 0 720 360"></svg>
+ </div>
+
+ <!-- D: PORTFOLIO SCATTER -->
+ <div class="card"><div class="tagn">QUALITY MAP</div>
+  <div class="ch">Portfolio quality — cost position vs margin</div>
+  <div class="cs">x = cost-curve quartile · y = EBITDA margin · bubble = EBITDA scale</div>
+  <svg id="sc" width="720" height="360" viewBox="0 0 720 360"></svg>
+ </div>
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+function el(p,t,a){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e;}
+function txt(p,x,y,s,c,a){const e=el(p,'text',{x,y,'text-anchor':a||'start',fill:c||'#9fc4ba','font-size':11});e.textContent=s;return e;}
+
+/* ── A: COST CURVE ── */
+(function(){const s=document.getElementById('cc');const x0=46,x1=700,y0=300,y1=30;
+ const px=p=>x0+(x1-x0)*p/100, py=c=>y0-(y0-y1)*(c)/4.0;     // cost 0..4.0 $/lb
+ // grid
+ for(let c=0;c<=4;c++){const y=py(c);el(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'rgba(120,170,155,.10)'});txt(s,x0-6,y+3,'$'+c,'#5e7a72','end').setAttribute('font-size',9);}
+ // stepped curve (cumulative production vs C1) — rising cost
+ const steps=[[0,0.6],[6,0.6],[6,1.1],[22,1.1],[22,1.6],[45,1.6],[45,2.1],[68,2.1],[68,2.7],[86,2.7],[86,3.4],[100,3.4]];
+ let d='M '+px(steps[0][0])+' '+py(steps[0][1]);
+ steps.forEach(p=>d+=' L '+px(p[0])+' '+py(p[1]));
+ d+=' L '+px(100)+' '+y0+' L '+px(0)+' '+y0+' Z';
+ el(s,'path',{d,fill:'rgba(120,170,155,.07)',stroke:'#6f8a82','stroke-width':1.5});
+ // PTFI marker (first slab, lowest cost)
+ el(s,'rect',{x:px(0),y:py(0.6),width:px(6)-px(0),height:y0-py(0.6),fill:'rgba(143,157,255,.30)',stroke:'#8f9dff','stroke-width':1.5});
+ txt(s,px(3),py(0.6)-8,'PT Freeport','#8f9dff','middle').setAttribute('font-size',10);
+ txt(s,px(3),py(0.6)+18,'~$0/lb net','#eafff8','middle').setAttribute('font-size',10);
+ // price waterline
+ const yp=py(4.2>4?3.7:4.2); const yPrice=py(3.05);
+ el(s,'line',{x1:x0,y1:yPrice,x2:x1,y2:yPrice,stroke:'#37d39a','stroke-width':2,'stroke-dasharray':'6 4'});
+ txt(s,x1-4,yPrice-7,'Cu price $4.20/lb — everything below is in the money','#37d39a','end').setAttribute('font-size',10);
+ // underwater zone hint
+ txt(s,px(93),py(3.4)-6,'Q4 underwater','#ff5d5d','middle').setAttribute('font-size',9);
+ txt(s,360,y0+26,'cumulative global production →','#5e7a72','middle').setAttribute('font-size',9.5);
+})();
+
+/* ── B: BULLET BARS ── */
+(function(){const s=document.getElementById('bb');
+ const rows=[
+  {n:'Bukit Asam',u:'43.3 Mt',lo:38,hi:44,act:43.3,mx:46,c:'#d9920f',ok:1},
+  {n:'Antam (FeNi)',u:'20.1k TNi',lo:21,hi:23,act:20.1,mx:24,c:'#37d39a',ok:0},
+  {n:'Inalum',u:'274 kt',lo:28,hi:31,act:27.4,mx:32,c:'#5cc8e0',ok:0},
+  {n:'Freeport',u:'1.8 Blb',lo:1.6,hi:1.95,act:1.8,mx:2.1,c:'#8f9dff',ok:1},
+  {n:'Timah',u:'18.9k t',lo:14,hi:17,act:18.9,mx:20,c:'#dc5a50',ok:1},
+ ];
+ const x0=120,x1=600;let y=40;
+ rows.forEach(r=>{const sx=v=>x0+(x1-x0)*v/r.mx;
+  txt(s,12,y+4,r.n,'#eafff8');
+  el(s,'rect',{x:x0,y:y-7,width:x1-x0,height:14,rx:3,fill:'rgba(255,255,255,.04)'});
+  el(s,'rect',{x:sx(r.lo),y:y-7,width:sx(r.hi)-sx(r.lo),height:14,rx:3,fill:'rgba(120,170,155,.22)'});  // guidance band
+  el(s,'line',{x1:sx(r.lo),y1:y-10,x2:sx(r.lo),y2:y+10,stroke:'#9fc4ba'});
+  el(s,'line',{x1:sx(r.hi),y1:y-10,x2:sx(r.hi),y2:y+10,stroke:'#9fc4ba'});
+  el(s,'circle',{cx:sx(r.act),cy:y,r:6,fill:r.ok?'#37d39a':'#f5b94a',stroke:'#06140f','stroke-width':2});  // actual
+  txt(s,x1+12,y+4,r.u,r.ok?'#37d39a':'#f5b94a').setAttribute('font-size',10.5);
+  y+=64;});
+ txt(s,x0,y-6,'│ guidance range   ● actual   green = in/above','#5e7a72').setAttribute('font-size',9.5);
+})();
+
+/* ── C: NET CASH COST BRIDGE ── */
+(function(){const s=document.getElementById('br');const y0=300,base=300,x0=70,bw=90,gap=42;
+ const sc=v=>v*68;  // px per $/lb
+ const bars=[
+  {l:'Site C1',v:2.71,from:0,col:'#9fc4ba',sign:'+'},
+  {l:'− Gold',v:-2.40,from:2.71,col:'#e5c84a',sign:''},
+  {l:'− Ag/Mo',v:-0.39,from:0.31,col:'#5cc8e0',sign:''},
+  {l:'Net cost',v:-0.08,from:0,col:'#37d39a',sign:'',tot:1},
+ ];
+ // zero line
+ const yz=y0-sc(0);el(s,'line',{x1:50,y1:yz,x2:700,y2:yz,stroke:'rgba(120,170,155,.25)'});
+ txt(s,46,yz+3,'$0','#5e7a72','end').setAttribute('font-size',9);
+ for(let c=1;c<=3;c++){const y=y0-sc(c);el(s,'line',{x1:50,y1:y,x2:700,y2:y,stroke:'rgba(120,170,155,.08)'});txt(s,46,y+3,'$'+c,'#5e7a72','end').setAttribute('font-size',9);}
+ let x=x0;
+ bars.forEach((b,i)=>{
+  const top=b.tot? y0-sc(Math.max(b.v,0)) : y0-sc(Math.max(b.from,b.from+b.v));
+  const h=Math.abs(sc(b.v))||2; const yT=b.tot? y0-sc(0)-(b.v<0?0:sc(b.v)) : y0-sc(Math.max(b.from,b.from+b.v));
+  const yy=b.tot? (b.v<0? y0-sc(0): y0-sc(b.v)) : y0-sc(Math.max(b.from,b.from+b.v));
+  el(s,'rect',{x,y:yy,width:bw,height:Math.max(Math.abs(sc(b.v)),3),rx:3,fill:b.col,opacity:b.tot?1:.85});
+  txt(s,x+bw/2,yy-8,(b.v>0?'+':'')+b.v.toFixed(2),'#eafff8','middle').setAttribute('font-size',11);
+  txt(s,x+bw/2,y0+18,b.l,'#9fc4ba','middle').setAttribute('font-size',10);
+  // connector
+  if(i<bars.length-1&&!bars[i+1].tot){const yc=y0-sc(b.from+b.v);el(s,'line',{x1:x+bw,y1:yc,x2:x+bw+gap,y2:yc,stroke:'rgba(120,170,155,.3)','stroke-dasharray':'3 3'});}
+  x+=bw+gap;
+ });
+ txt(s,x0,40,'Grasberg gold credit ≈ wipes out the copper cash cost','#e5c84a').setAttribute('font-size',10.5);
+})();
+
+/* ── D: SCATTER ── */
+(function(){const s=document.getElementById('sc');const x0=70,x1=680,y0=300,y1=36;
+ const px=q=>x1-(x1-x0)*(q-1)/3;   // Q1 right(best)... invert so best=left? keep Q1 left
+ const pxL=q=>x0+(x1-x0)*(q-1)/3;
+ const py=m=>y0-(y0-y1)*m/45;
+ // axes
+ el(s,'line',{x1:x0,y1:y0,x2:x1,y2:y0,stroke:'rgba(120,170,155,.25)'});
+ el(s,'line',{x1:x0,y1:y0,x2:x0,y2:y1,stroke:'rgba(120,170,155,.25)'});
+ [1,2,3,4].forEach(q=>txt(s,pxL(q),y0+18,'Q'+q,'#5e7a72','middle').setAttribute('font-size',10));
+ [10,20,30,40].forEach(m=>txt(s,x0-8,py(m)+3,m+'%','#5e7a72','end').setAttribute('font-size',9));
+ txt(s,(x0+x1)/2,y0+34,'cost-curve quartile  (Q1 = lowest cost, most resilient)','#5e7a72','middle').setAttribute('font-size',9.5);
+ const pts=[
+  {n:'Freeport',q:1,m:40,e:60,c:'#8f9dff'},
+  {n:'Inalum',q:1,m:26,e:18,c:'#5cc8e0'},
+  {n:'Bukit Asam',q:2,m:19,e:14,c:'#d9920f'},
+  {n:'Timah',q:3,m:16,e:8,c:'#dc5a50'},
+  {n:'Antam',q:4,m:10,e:12,c:'#37d39a'},
+ ];
+ // "good" quadrant hint
+ el(s,'rect',{x:x0,y:y1,width:(x1-x0)/3,height:py(20)-y1,fill:'rgba(55,211,154,.05)'});
+ txt(s,x0+10,y1+16,'low-cost · high-margin','#37d39a').setAttribute('font-size',9.5);
+ pts.forEach(p=>{const cx=pxL(p.q),cy=py(p.m),r=8+p.e*0.7;
+  el(s,'circle',{cx,cy,r,fill:p.c,opacity:.22});
+  el(s,'circle',{cx,cy,r,fill:'none',stroke:p.c,'stroke-width':1.6});
+  el(s,'circle',{cx,cy,r:3,fill:p.c});
+  txt(s,cx,cy-r-6,p.n,'#eafff8','middle').setAttribute('font-size',10.5);
+ });
+})();
+</script></body></html>
