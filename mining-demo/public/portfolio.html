@@ -172,6 +172,44 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 .pdstat .pl2{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
 .pdstat .pv{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--tx);margin-top:1px}
 .pdben,.pdrisk{font-size:10.5px;color:var(--mut);margin-top:9px;line-height:1.4}.pdben b,.pdrisk b{color:var(--tx)}
+/* elevated project cards */
+.pcardgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:11px}
+.pcard{border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;background:var(--panel);transition:transform .15s,border-color .15s;box-shadow:0 1px 2px rgba(42,36,28,.04),0 10px 24px -18px rgba(42,36,28,.2)}
+.pcard:hover{transform:translateY(-2px);border-color:var(--border2)}
+.pbanner{height:58px;position:relative;display:flex;align-items:flex-end;padding:0 11px 7px;color:#FBF8F2}
+.pbanner .ptype{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.12em;text-transform:uppercase;opacity:.92}
+.pbanner .pglyph{position:absolute;left:10px;top:5px;font-size:26px;opacity:.28;line-height:1}
+.pbanner .pjv{position:absolute;left:11px;top:9px;font-family:'IBM Plex Mono',monospace;font-size:7px;background:rgba(255,255,255,.22);padding:1px 5px;border-radius:4px;opacity:0}
+.pgauge{position:absolute;right:9px;top:7px}
+.pbody{padding:8px 11px 10px}
+.pbody .pnm2{font-size:12px;font-weight:700;color:var(--tx);line-height:1.14}
+.pbody .pmeta{font-size:8.5px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.pchips{display:flex;gap:5px;margin-top:8px}
+.pchip{flex:1;text-align:center;padding:3px 0;border-radius:5px;font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:700}
+.pchip small{display:block;font-size:6.5px;opacity:.7;font-weight:500;letter-spacing:.04em}
+/* project detail (elevated screen) */
+.pdback{cursor:pointer;font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace}.pdback:hover{color:var(--teal)}
+.ptl{position:relative;height:34px;margin:4px 0 2px}
+.ptl .bar{position:absolute;top:14px;height:5px;border-radius:3px}
+.ptl .lbl{position:absolute;font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--faint)}
+.pcol{display:grid;gap:10px}
+.phbar{display:flex;align-items:center;gap:9px;margin:6px 0}
+.phbar .phn{font-size:10.5px;color:var(--tx);width:150px;flex:none}
+.phbar .pht{flex:1;height:12px;background:var(--panel2);border:1px solid var(--border);border-radius:6px;position:relative;overflow:hidden}
+.phbar .pha{position:absolute;left:0;top:0;height:100%;border-radius:6px}
+.phbar .php{position:absolute;top:-2px;width:2px;height:16px;background:#6B655B}
+.phbar .phv{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--faint);width:66px;text-align:right;flex:none}
+.pscore{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #F2EDE3;font-size:11px}
+.pscore:last-child{border-bottom:0}.pscore b{font-family:'IBM Plex Mono',monospace}
+.pmini{background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:9px 11px}
+.pmini .l{font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);font-family:'IBM Plex Mono',monospace}
+.pmini .v{font-size:15px;font-weight:700;font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.pmini .d{font-size:9.5px;color:var(--mut);margin-top:3px;line-height:1.35}
+.pphoto{border:1px solid var(--border);border-radius:9px;overflow:hidden;background:var(--panel)}
+.pphoto .pimg{height:56px;display:flex;align-items:center;justify-content:center;font-size:22px;color:#FBF8F2;opacity:.9}
+.pphoto .pcap{font-size:9px;color:var(--mut);padding:5px 7px;line-height:1.3}
+.readck{font-size:10px;margin:4px 0;color:var(--mut)}.readck b{color:var(--tx);font-weight:600}
+.readck .ok{color:#5E7350;font-weight:700}.readck .pend{color:#A9842F;font-weight:700}
 /* cost & quality */
 .two{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;flex:1;min-height:0}
 .ccsel{display:flex;gap:5px;margin:2px 0 2px;flex-wrap:wrap}
@@ -316,15 +354,24 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 
    <!-- PROJECTS — capital project monitoring (PMO + BOD) -->
    <div class="view" id="v-projects">
-     <div class="kpis" id="projkpis"></div>
-     <div style="display:grid;grid-template-columns:1.55fr 1fr;gap:12px;flex:1;min-height:0">
-       <div class="card" style="display:flex;flex-direction:column;min-height:0">
-         <div class="ch">Strategic project portfolio <span class="cs" style="display:inline">· cost × schedule × benefit · click a row</span></div>
-         <div class="cq">Which projects need the board's attention?</div>
-         <div style="overflow-y:auto;flex:1;min-height:0;margin-top:8px"><table class="fin" id="projtbl"></table></div>
+     <!-- portfolio state -->
+     <div id="projPortfolio" style="flex:1;display:flex;flex-direction:column;gap:12px;min-height:0">
+       <div class="kpis" id="projkpis" style="flex:none"></div>
+       <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;flex:1;min-height:0">
+         <div class="card" style="display:flex;flex-direction:column;min-height:0">
+           <div class="ch">Strategic project portfolio <span class="cs" style="display:inline">· click a card for detail</span></div>
+           <div class="cq">Which projects need the board's attention?</div>
+           <div id="projcards" class="pcardgrid" style="overflow-y:auto;flex:1;min-height:0;margin-top:9px;padding-right:4px"></div>
+         </div>
+         <div class="card" style="display:flex;flex-direction:column;min-height:0">
+           <div class="ch">Geo footprint <span class="cs" style="display:inline">· across the archipelago</span></div>
+           <div class="cq">Where in Indonesia is the capital going?</div>
+           <div class="fillsvg" style="margin-top:6px"><svg id="projmap" viewBox="0 0 520 320" preserveAspectRatio="xMidYMid meet"></svg></div>
+         </div>
        </div>
-       <div class="card" id="projdetail" style="display:flex;flex-direction:column;min-height:0"></div>
      </div>
+     <!-- detail state -->
+     <div id="projDetailView" style="display:none;flex:1;min-height:0;overflow-y:auto"></div>
    </div>
 
    <!-- OUTLOOK -->
@@ -699,16 +746,51 @@ function projTotals(){const n=PROJ.length,red=PROJ.filter(p=>pworst(p)==='r').le
   {l:'Benefits at risk',v:benR+' projects',s:'IRR / capacity eroded',r:benR>0?'a':'g'},
  ];
  document.getElementById('projkpis').innerHTML=cards.map(c=>`<div class="kpi"><div class="l">${c.l}</div><div class="act" style="font-size:26px${c.r?';color:'+RCOL[c.r]:''}">${c.v}</div><div class="note" style="margin-top:6px">${c.s}</div></div>`).join('');}
-function projTable(){
- const rows=PROJ.slice().sort((a,b)=>({g:0,a:1,r:2})[pworst(b)]-({g:0,a:1,r:2})[pworst(a)]).map(p=>{const R=RAGX[pworst(p)];
-  return `<tr data-id="${p.id}"><td><div class="nm"><span class="e" style="background:${PCOL[p.co]||'#8A8275'}"></span><div><b>${p.nm}</b><div class="sec">${p.co}${p.jv?' · JV':''}</div></div></div></td>`
-   +`<td class="pl" style="text-align:left">${p.stage}<div class="sec2">gate ${p.gate}/${p.gates}</div></td>`
-   +`<td>${hcell(p.ragC,'CPI '+p.cpi.toFixed(2),'EAC '+p.eac+'/'+p.budget)}</td>`
-   +`<td>${hcell(p.ragS,'SPI '+p.spi.toFixed(2),p.pctA+'% / '+p.pctP+'%')}</td>`
-   +`<td>${hcell(p.ragB,'IRR '+p.irrC+'%','vs '+p.irrS+'%')}</td>`
-   +`<td><span class="rag ${R.c}">${R.g}</span></td></tr>`;}).join('');
- document.getElementById('projtbl').innerHTML=`<thead><tr><th class="l">Project</th><th class="l">Stage</th><th>Cost</th><th>Schedule</th><th>Benefit</th><th>RAG</th></tr></thead><tbody>${rows}</tbody>`;
- [...document.querySelectorAll('#projtbl tbody tr')].forEach(tr=>tr.onclick=()=>projDetail(tr.dataset.id));}
+const PMETA={
+ manyar:{type:'smelter',x:238,y:214,place:'Gresik, East Java',epc:'Chiyoda–PP',escore:4.1},
+ sgar1:{type:'refinery',x:206,y:112,place:'Mempawah, W. Kalimantan',epc:'Chalieco (MCC)',escore:3.6},
+ sgar2:{type:'refinery',x:222,y:122,place:'Mempawah, W. Kalimantan',epc:'FID pending',escore:3.4},
+ grasberg:{type:'mine',x:466,y:180,place:'Tembagapura, Papua',epc:'PTFI in-house',escore:4.0},
+ inalumx:{type:'smelter',x:78,y:86,place:'Kuala Tanjung, N. Sumatra',epc:'CHALCO / local',escore:3.8},
+ halmahera:{type:'downstream',x:398,y:118,place:'Halmahera, N. Maluku',epc:'Lygend JV',escore:3.0},
+ dme:{type:'downstream',x:116,y:170,place:'Tanjung Enim, S. Sumatra',epc:'Air Products (exited)',escore:2.4},
+ ptbare:{type:'power',x:130,y:182,place:'Tanjung Enim, S. Sumatra',epc:'Local EPC',escore:3.7},
+ timahtsl:{type:'smelter',x:162,y:166,place:'Bangka Island',epc:'Metso Outotec',escore:4.2},
+ battery:{type:'downstream',x:336,y:158,place:'Morowali, C. Sulawesi',epc:'CATL consortium',escore:3.3},
+};
+const PTYPE={
+ smelter:{grad:'linear-gradient(135deg,#9C6644,#5f3f2b)',icon:'▲',lab:'Smelter'},
+ refinery:{grad:'linear-gradient(135deg,#7C766B,#494540)',icon:'⬢',lab:'Refinery'},
+ mine:{grad:'linear-gradient(135deg,#6B5B4A,#3c3225)',icon:'⛰',lab:'Mine development'},
+ power:{grad:'linear-gradient(135deg,#A9842F,#6a521c)',icon:'⚡',lab:'Power / RE'},
+ downstream:{grad:'linear-gradient(135deg,#5E7350,#39472f)',icon:'⬡',lab:'Downstream'},
+};
+const PHASES={smelter:['Civil & foundations','Mechanical erection','Electrical & instrumentation','Commissioning'],refinery:['Site & civil','Process units','Utilities & tie-ins','Commissioning'],mine:['Underground development','Materials handling','Processing','Ramp-up'],power:['Civil works','Equipment install','Grid interconnection','Commissioning'],downstream:['FEED & permits','Civil & structures','Process package','Commissioning']};
+const PHOTOS={smelter:['Furnace shell erection','Piperack & structures','Electrical building','Concentrate shed'],refinery:['Digestion area civil','Precipitation tanks','Utilities corridor','Control room'],mine:['Decline development','Conveyor drift','Ore handling','Ventilation raise'],power:['Foundation piling','Turbine hall','Switchyard','Solar array'],downstream:['Site earthworks','Reactor foundations','Module assembly','Laydown yard']};
+const phaseVal=(o,i,n)=>Math.max(0,Math.min(100,Math.round((o-i*100/n)/(100/n)*100)));
+function gauge(pct,col,sz,dark){const r=sz/2-4,c=2*Math.PI*r,off=c*(1-pct/100),tr=dark?'#E7DFCF':'rgba(255,255,255,.28)',tc=dark?'#211C16':'#FBF8F2';
+ return `<svg width="${sz}" height="${sz}" viewBox="0 0 ${sz} ${sz}"><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${tr}" stroke-width="${dark?5:4}"/><circle cx="${sz/2}" cy="${sz/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${dark?5:4}" stroke-linecap="round" stroke-dasharray="${c.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}" transform="rotate(-90 ${sz/2} ${sz/2})"/><text x="${sz/2}" y="${sz/2+4}" text-anchor="middle" font-size="${dark?13:11}" font-weight="700" fill="${tc}">${pct}%</text></svg>`;}
+function projCards(){const el=document.getElementById('projcards');if(!el)return;
+ el.innerHTML=PROJ.slice().sort((a,b)=>({g:0,a:1,r:2})[pworst(b)]-({g:0,a:1,r:2})[pworst(a)]).map(p=>{const m=PMETA[p.id],T=PTYPE[m.type],gc=p.ragS==='r'?'#ff9c86':p.ragS==='a'?'#f0cf8f':'#bfe0a8';
+  const chip=(r,lab,val)=>`<span class="pchip h-${r}">${val}<small>${lab}</small></span>`;
+  return `<div class="pcard" data-id="${p.id}"><div class="pbanner" style="background:${T.grad}"><span class="pglyph">${T.icon}</span><span class="pgauge">${gauge(p.pctA,gc,44)}</span><span class="ptype">${T.lab}${p.jv?' · JV':''}</span></div>`
+   +`<div class="pbody"><div class="pnm2">${p.nm}</div><div class="pmeta">${p.co} · ${m.place}</div>`
+   +`<div class="pchips">${chip(p.ragC,'cost','CPI '+p.cpi.toFixed(2))}${chip(p.ragS,'sched','SPI '+p.spi.toFixed(2))}${chip(p.ragB,'benefit','IRR '+p.irrC+'%')}</div></div></div>`;}).join('');
+ [...el.querySelectorAll('.pcard')].forEach(c=>c.onclick=()=>projOpen(c.dataset.id));}
+function projMap(){const s=document.getElementById('projmap');if(!s)return;s.innerHTML='';
+ [[95,120,20,66,-35],[210,232,58,12,-4],[246,120,58,46,0],[330,150,17,52,18],[350,118,16,20,-28],[396,124,11,25,0],[462,168,54,30,0]].forEach(i=>E(s,'ellipse',{cx:i[0],cy:i[1],rx:i[2],ry:i[3],transform:`rotate(${i[4]} ${i[0]} ${i[1]})`,fill:'#E3DAC8',opacity:.6}));
+ E(s,'text',{x:12,y:20,'font-size':9.5,fill:'#A39B8C'},'pin colour = RAG · size = capex · click to open');
+ PROJ.slice().sort((a,b)=>b.budget-a.budget).forEach(p=>{const m=PMETA[p.id],r=Math.max(5,Math.min(15,Math.sqrt(p.budget)*1.7)),c=RCOL[pworst(p)];
+  E(s,'circle',{cx:m.x,cy:m.y,r:r+4,fill:c,opacity:.16});
+  const g=E(s,'g',{style:'cursor:pointer'});g.addEventListener('click',()=>projOpen(p.id));
+  E(g,'circle',{cx:m.x,cy:m.y,r,fill:c,opacity:.85,stroke:'#FBF8F2','stroke-width':1.5});
+  E(g,'text',{x:m.x,y:m.y-r-4,'text-anchor':'middle','font-size':8,fill:'#3A352D','font-weight':600},p.nm.split(' ')[0]);});}
+function projTimeline(p){const s=p.fpS-2,pe=p.fpS,fe=p.fpF||p.fpS+1,mx=Math.max(pe,fe),span=Math.max(1,mx-s),w=v=>((v-s)/span*100).toFixed(1),slip=fe>pe;
+ return `<div class="ptl"><div class="bar" style="left:0;width:100%;background:#E7DFCF"></div><div class="bar" style="left:0;width:${w(pe)}%;background:#8A9A6E"></div>`
+  +(slip?`<div class="bar" style="left:${w(pe)}%;width:${(w(fe)-w(pe)).toFixed(1)}%;background:#A4543C;opacity:.55"></div>`:'')
+  +`<div class="lbl" style="left:0;top:0">baseline ${s}</div><div class="lbl" style="left:${w(pe)}%;top:0;transform:translateX(-50%)">planned ${pe}</div>`
+  +(slip?`<div class="lbl" style="left:${w(fe)}%;top:0;transform:translateX(-100%);color:#A4543C">forecast ${fe}</div>`:'')
+  +`<div class="lbl" style="left:0;bottom:0">${p.pctA}% complete · SPI ${p.spi.toFixed(2)}</div></div>`;}
 function projSCurve(s,p){if(!s)return;s.innerHTML='';
  const x0=42,x1=482,y0=142,y1=18,maxY=Math.max(p.budget,p.eac)*1.06,now=Math.max(0.06,Math.min(0.94,p.pctA/100)),slip=Math.max(0,(p.pctP-p.pctA)/100),tEnd=Math.min(1.34,1+slip*1.3);
  const px=t=>x0+(x1-x0)*t/tEnd,py=v=>y0-(y0-y1)*v/maxY,sm=t=>t*t*(3-2*t),step=maxY>50?20:maxY>20?10:1;
@@ -720,22 +802,28 @@ function projSCurve(s,p){if(!s)return;s.innerHTML='';
  let dF='';for(let i=0;i<=24;i++){const t=now+(tEnd-now)*i/24,f=(t-now)/(tEnd-now);dF+=(i?'L':'M')+px(t).toFixed(1)+' '+py(p.spent+(p.eac-p.spent)*sm(f)).toFixed(1)+' ';}E(s,'path',{d:dF,fill:'none',stroke:ac,'stroke-width':1.8,'stroke-dasharray':'4 3',opacity:.85});
  E(s,'line',{x1:px(now),y1:y1,x2:px(now),y2:y0,stroke:'#8A8275','stroke-dasharray':'2 3'});E(s,'text',{x:px(now),y:y1-2,'text-anchor':'middle','font-size':8,fill:'#6B655B'},'now');
  E(s,'text',{x:x0,y:y0+14,'font-size':8,fill:'#A39B8C'},'cumulative spend Rp T · planned / actual / forecast(EAC) →');}
-function projDetail(id){const p=PROJ.find(x=>x.id===id);if(!p)return;const R=RAGX[pworst(p)],el=document.getElementById('projdetail');
- const st=(l,v,r)=>`<div class="pdstat"><div class="pl2">${l}</div><div class="pv"${r?` style="color:${RCOL[r]}"`:''}>${v}</div></div>`;
- el.innerHTML=`<div class="ch">${p.nm} <span class="cs" style="display:inline">· ${p.co}${p.jv?' · JV (summary)':''}</span></div>`
-  +`<div class="cq">${p.stage} · gate ${p.gate}/${p.gates} · <span class="rag ${R.c}" style="font-size:8.5px;padding:1px 7px">${R.g} ${R.w}</span></div>`
-  +`<div style="height:162px;margin-top:8px;flex:none"><svg id="projsc" viewBox="0 0 500 158" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block"></svg></div>`
-  +`<div class="pdgrid">`
-   +st('Budget','Rp '+p.budget+'T')+st('EAC · forecast','Rp '+p.eac+'T',p.eac>p.budget?'r':'g')
-   +st('Spent','Rp '+p.spent+'T')+st('VAC','Rp '+(p.budget-p.eac).toFixed(1)+'T',p.eac>p.budget?'r':'g')
-   +st('% complete','act '+p.pctA+' / plan '+p.pctP,p.ragS)+st('First production','fcst '+(p.fpF?p.fpF:'TBD')+' / '+p.fpS,p.fpF&&p.fpF>p.fpS?'a':p.fpF?'g':'r')
-   +st('SPI · CPI',p.spi.toFixed(2)+' · '+p.cpi.toFixed(2),pworst({ragC:p.cpi<0.9?'r':p.cpi<0.95?'a':'g',ragS:p.spi<0.9?'r':p.spi<0.95?'a':'g',ragB:'g'}))
-   +st('IRR now / sanction',p.irrC+'% / '+p.irrS+'%',p.ragB)
+function projOpen(id){const p=PROJ.find(x=>x.id===id);if(!p)return;const m=PMETA[p.id],T=PTYPE[m.type],R=RAGX[pworst(p)],ph=PHASES[m.type],n=ph.length,el=document.getElementById('projDetailView');
+ const gatePct=Math.round(p.gate/p.gates*100),ck=(l,c)=>`<div class="readck"><b>${l}</b> ${c?'<span class="ok">✓</span>':'<span class="pend">◦ pending</span>'}</div>`,sc=(l,v,c)=>`<div class="pmini"><div class="l">${l}</div><div class="v"${c?` style="color:${c}"`:''}>${v}</div></div>`;
+ el.innerHTML=`<div style="display:flex;align-items:center;gap:13px;margin-bottom:10px;flex-wrap:wrap"><span class="pdback" onclick="projBack()">‹ Portfolio</span><b style="font-size:16px">${p.nm}</b><span class="rag ${R.c}" style="font-size:9px;padding:2px 8px">${R.g} ${R.w}</span><span class="pl">${T.lab} · ${p.co}${p.jv?' · JV (summary)':''} · ${m.place}</span><span class="pl" style="margin-left:auto">${p.stage} · gate ${p.gate}/${p.gates}</span></div>`
+  +projTimeline(p)
+  +`<div style="display:grid;grid-template-columns:0.82fr 1.35fr 0.9fr;gap:12px;margin-top:12px">`
+   +`<div class="card" style="padding:13px 15px"><div class="ch">Readiness</div><div style="display:flex;align-items:center;gap:13px;margin-top:9px">${gauge(gatePct,'#5E7350',58,1)}<div style="flex:1">${ck('Permits & AMDAL',p.gate>=3)}${ck('Final investment decision',p.gate>=3)}${ck('Financing secured',p.gate>=3)}${ck('Land & site ready',p.gate>=4)}</div></div></div>`
+   +`<div class="card" style="padding:13px 15px;display:flex;flex-direction:column"><div class="ch">Cost S-curve <span class="cs" style="display:inline">· planned / actual / forecast</span></div><div style="flex:1;min-height:150px;margin-top:4px"><svg id="projscd" viewBox="0 0 500 158" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block"></svg></div></div>`
+   +`<div class="card" style="padding:13px 15px"><div class="ch">Cost &amp; schedule</div><div class="pdgrid" style="margin-top:9px">${sc('Budget','Rp '+p.budget+'T')}${sc('EAC','Rp '+p.eac+'T',p.eac>p.budget?'#A4543C':'#5E7350')}${sc('Spent','Rp '+p.spent+'T')}${sc('VAC','Rp '+(p.budget-p.eac).toFixed(1)+'T',p.eac>p.budget?'#A4543C':'#5E7350')}${sc('SPI · CPI',p.spi.toFixed(2)+' · '+p.cpi.toFixed(2))}${sc('% complete',p.pctA+' / '+p.pctP)}</div></div>`
   +`</div>`
-  +`<div class="pdben"><b>Benefit:</b> ${p.benCap} · ${BENX[p.benSt]}</div>`
-  +`<div class="pdrisk"><b>Top risk:</b> ${p.risk}</div>`;
- projSCurve(el.querySelector('#projsc'),p);
- [...document.querySelectorAll('#projtbl tbody tr')].forEach(tr=>tr.classList.toggle('sel',tr.dataset.id===id));}
+  +`<div style="display:grid;grid-template-columns:1.3fr 1fr;gap:12px;margin-top:12px">`
+   +`<div class="card" style="padding:13px 15px"><div class="ch">Phases <span class="cs" style="display:inline">· actual vs planned (▏)</span></div><div style="margin-top:9px">`
+    +ph.map((nm,i)=>{const pl=phaseVal(p.pctP,i,n),ac=phaseVal(p.pctA,i,n),c=ac>=pl?'#5E7350':ac>=pl-10?'#A9842F':'#A4543C';return `<div class="phbar"><span class="phn">${nm}</span><span class="pht"><span class="pha" style="width:${ac}%;background:${c}"></span><span class="php" style="left:${pl}%"></span></span><span class="phv">${ac}% / ${pl}%</span></div>`;}).join('')
+   +`</div></div>`
+   +`<div class="card" style="padding:13px 15px"><div class="ch">EPC partner &amp; benefit</div><div class="pscore" style="margin-top:6px"><span>${m.epc}</span><b>score ${m.escore.toFixed(1)}/5</b></div><div class="pscore"><span>Capacity</span><b>${p.benCap}</b></div><div class="pscore"><span>IRR now / sanction</span><b style="color:${RCOL[p.ragB]}">${p.irrC}% / ${p.irrS}%</b></div><div class="pscore"><span>First production</span><b>${p.fpF?p.fpF:'TBD'} / ${p.fpS}</b></div><div class="pscore" style="border-bottom:0"><span>Benefit status</span><b style="color:${RCOL[p.ragB]}">${BENX[p.benSt]}</b></div><div class="pdrisk"><b>Top risk:</b> ${p.risk}</div></div>`
+  +`</div>`
+  +`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px">${sc('Safety','0 LTI')}${sc('Quality',(p.ragS==='r'?6:p.ragS==='a'?3:1)+' NCRs')}${sc('Balance of work',(100-p.pctA)+'%')}${sc('Next gate','G'+Math.min(p.gate+1,p.gates))}</div>`
+  +`<div class="ch" style="margin-top:14px">Progress documentation <span class="cs" style="display:inline">· latest site photos</span></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px;padding-bottom:8px">`
+   +PHOTOS[m.type].map(cap=>`<div class="pphoto"><div class="pimg" style="background:${T.grad}">${T.icon}</div><div class="pcap">${cap}</div></div>`).join('')
+  +`</div>`;
+ projSCurve(el.querySelector('#projscd'),p);
+ document.getElementById('projPortfolio').style.display='none';el.style.display='block';el.scrollTop=0;}
+function projBack(){document.getElementById('projDetailView').style.display='none';document.getElementById('projPortfolio').style.display='flex';}
 
 /* view switching */
 const TITLES={overview:['Overview','State of the portfolio'],financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],capital:['Capital allocation','Where cash is generated & deployed — and whether it earns its cost of capital'],ops:['Operations','Output, safety, mine life & the build — across operating companies'],projects:['Capital projects','Strategic megaproject delivery — cost, schedule, benefit & risk'],outlook:['Outlook','Forward risks & scenario copilot'],act:['Act','The recommended moves']};
@@ -745,7 +833,7 @@ function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.remov
  document.getElementById('vt').textContent=TITLES[v][0];document.getElementById('vc').textContent=TITLES[v][1];
  try{history.replaceState(null,'','#'+v);}catch(e){}
  // render charts lazily (need layout, so after display)
- requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capInsight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();opsHealth();opsBuild();opsInsight();drawn.ops=1;}if(v==='projects'&&!drawn.proj){projTotals();projTable();projDetail('halmahera');drawn.proj=1;}});
+ requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capInsight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();opsHealth();opsBuild();opsInsight();drawn.ops=1;}if(v==='projects'&&!drawn.proj){projTotals();projCards();projMap();drawn.proj=1;}});
 }
 document.querySelectorAll('.item[data-v]').forEach(i=>i.onclick=()=>show(i.dataset.v));
 document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=()=>show(a.dataset.jump));
