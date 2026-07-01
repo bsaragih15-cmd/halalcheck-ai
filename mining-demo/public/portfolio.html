@@ -155,6 +155,14 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 .obar>span{display:block;height:100%;border-radius:4px}
 .qchip{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;border:1px solid;background:transparent}
 #opsc .sec2{font-size:9px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+/* disruption & asset health list */
+.ohrow{display:flex;gap:11px;padding:9px 0;border-bottom:1px solid #F2EDE3;cursor:pointer}
+.ohrow:last-child{border-bottom:0}.ohrow:hover{background:#F7F3EA}
+.ohdot{width:9px;height:9px;border-radius:50%;flex:none;margin-top:4px}
+.ohdot.green{background:#5E7350}.ohdot.amber{background:#A9842F}.ohdot.red{background:#A4543C}
+.ohnm{font-size:12.5px;font-weight:600;color:var(--tx);display:flex;align-items:center;gap:8px}
+.ohev{font-size:10px;color:var(--faint);margin-top:2px;font-family:'IBM Plex Mono',monospace}
+.ohim{font-size:11px;color:var(--mut);margin-top:3px;line-height:1.35}
 /* cost & quality */
 .two{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;flex:1;min-height:0}
 .ccsel{display:flex;gap:5px;margin:2px 0 2px;flex-wrap:wrap}
@@ -276,17 +284,15 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
        <table class="fin" id="opsc" style="margin-top:9px"></table>
      </div>
      <div class="two" style="flex:1">
-       <div class="card" style="display:flex;flex-direction:column">
-         <div class="ch">Delivery vs guidance <span class="cs" style="display:inline">· production trajectory by asset</span></div>
-         <div class="cq">Who is trending below plan — and who's ramping?</div>
-         <div class="fillsvg" style="margin-top:4px"><svg id="deliv" viewBox="0 0 620 300" preserveAspectRatio="xMidYMid meet"></svg></div>
-         <div class="ccread" id="delivread"></div>
+       <div class="card" style="display:flex;flex-direction:column;min-height:0">
+         <div class="ch">Disruption &amp; asset health <span class="cs" style="display:inline">· what's physically impaired</span></div>
+         <div class="cq">Is anything operationally broken across the fleet?</div>
+         <div id="ohealth" style="margin-top:8px;overflow-y:auto;flex:1;min-height:0"></div>
        </div>
-       <div class="card" style="display:flex;flex-direction:column">
-         <div class="ch">Reserves &amp; depletion <span class="cs" style="display:inline">· life vs replacement</span></div>
-         <div class="cq">How long does each asset last — and is it replacing what it mines?</div>
-         <div class="fillsvg" style="margin-top:4px"><svg id="resv" viewBox="0 0 620 300" preserveAspectRatio="xMidYMid meet"></svg></div>
-         <div class="ccread" id="resvread"></div>
+       <div class="card" style="display:flex;flex-direction:column;min-height:0">
+         <div class="ch">Growth-build tracker <span class="cs" style="display:inline">· construction &amp; first production</span></div>
+         <div class="cq">Are the growth projects physically on track?</div>
+         <div id="obuild" style="margin-top:11px"></div>
        </div>
      </div>
      <div class="card" id="opdrill" style="flex:none"></div>
@@ -545,30 +551,6 @@ function curve(){const C=CURVES[curCm];cc.innerHTML='';const x0=52,x1=720,y0=255
  const mg=price-C.assetCost;document.getElementById('ccread').innerHTML=`<b>${sub.nm}</b> at <b>${C.fmt(C.assetCost)}</b> (Q${sub.quart}) vs <b>${C.fmt(price)}</b> → `+(uw?`<span class="txt-red">underwater ${C.fmt(C.assetCost-price)} — curtails first</span>`:`<span class="txt-green">${C.fmt(mg)} margin — survives</span>`);}
 
 /* ── delivery vs guidance — quarterly production trajectory by asset ── */
-const DELIV=[{id:'ptfi',q:[97,95,90,89]},{id:'ptba',q:[99,100,102,101]},{id:'antam',q:[92,90,88,89]},{id:'inalum',q:[118,122,130,127]},{id:'timah',q:[110,118,125,123]}];
-function deliveryTrend(){const s=document.getElementById('deliv');if(!s)return;s.innerHTML='';
- const x0=44,x1=544,y0=248,y1=44,ymin=80,ymax=135,n=4,px=i=>x0+(x1-x0)*i/(n-1),py=v=>y0-(y0-y1)*(v-ymin)/(ymax-ymin);
- for(let g=80;g<=130;g+=10){const y=py(g),on=g===100;E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:on?'#B7B0A0':'#E7DFCF','stroke-width':on?1.3:1,'stroke-dasharray':on?'':'2 5'});E(s,'text',{x:x0-6,y:y+3,'text-anchor':'end','font-size':9,fill:'#A39B8C'},g+'%');}
- E(s,'text',{x:x1,y:py(100)-5,'text-anchor':'end','font-size':9,fill:'#6B655B'},'guidance');
- ['Q1','Q2','Q3','Q4'].forEach((q,i)=>E(s,'text',{x:px(i),y:y0+16,'text-anchor':'middle','font-size':9,fill:'#A39B8C'},q));
- let lx=x0;const lg=DELIV.map(d=>SUBS.find(x=>x.id===d.id).nm.split(' ')[0]);
- DELIV.forEach((d,k)=>{E(s,'rect',{x:lx,y:14,width:10,height:10,rx:2,fill:COL[d.id],opacity:.85});E(s,'text',{x:lx+14,y:23,'font-size':9.5,fill:'#6B655B'},lg[k]);lx+=lg[k].length*5.6+30;});
- DELIV.forEach(d=>{const c=COL[d.id],pts=d.q.map((v,i)=>px(i).toFixed(1)+','+py(v).toFixed(1)).join(' ');E(s,'polyline',{points:pts,fill:'none',stroke:c,'stroke-width':2.2,'stroke-linecap':'round','stroke-linejoin':'round',opacity:.92});d.q.forEach((v,i)=>E(s,'circle',{cx:px(i),cy:py(v),r:2.6,fill:c}));});
- document.getElementById('delivread').innerHTML='<b>Bukit Asam, Inalum and Timah</b> are delivering above guidance; <b>Freeport</b> (mud rush) and <b>Antam</b> (high-cost FeNi) sit below and are trending down.';}
-/* ── reserves & depletion — reserve life vs replacement ratio ── */
-const RES=[{id:'ptfi',life:25,rrr:1.1},{id:'ptba',life:18,rrr:0.9},{id:'antam',life:20,rrr:1.0},{id:'timah',life:14,rrr:0.4}];
-function reservesDepletion(){const s=document.getElementById('resv');if(!s)return;s.innerHTML='';
- const x0=52,x1=576,y0=246,y1=40,xmin=0.2,xmax=1.3,ymin=0,ymax=30,px=v=>x0+(x1-x0)*(v-xmin)/(xmax-xmin),py=v=>y0-(y0-y1)*(v-ymin)/(ymax-ymin);
- E(s,'rect',{x:x0,y:py(15),width:x1-x0,height:y0-py(15),fill:'rgba(164,84,60,.06)'});
- E(s,'text',{x:x0+6,y:y0-6,'font-size':9,fill:'#A4543C'},'depletion risk · under 15-yr life');
- E(s,'line',{x1:px(1),y1:y1,x2:px(1),y2:y0,stroke:'#B7B0A0','stroke-dasharray':'4 4'});
- E(s,'text',{x:px(1),y:y1-4,'text-anchor':'middle','font-size':8.5,fill:'#6B655B'},'reserves steady (1.0×)');
- for(let g=0;g<=30;g+=10){const y=py(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'#E7DFCF'});E(s,'text',{x:x0-6,y:y+3,'text-anchor':'end','font-size':9,fill:'#A39B8C'},g);}
- [0.4,0.7,1.0,1.3].forEach(g=>E(s,'text',{x:px(g),y:y0+16,'text-anchor':'middle','font-size':9,fill:'#A39B8C'},g.toFixed(1)+'×'));
- E(s,'text',{x:(x0+x1)/2,y:y0+30,'text-anchor':'middle','font-size':9,fill:'#6B655B'},'reserve replacement — added ÷ mined  →');
- RES.forEach(r=>{const c=COL[r.id],cx=px(r.rrr),cy=py(r.life);E(s,'circle',{cx,cy,r:9,fill:c,opacity:.22});E(s,'circle',{cx,cy,r:9,fill:'none',stroke:c,'stroke-width':1.7});E(s,'circle',{cx,cy,r:3,fill:c});E(s,'text',{x:cx,y:cy-14,'text-anchor':'middle','font-size':9.5,fill:c,'font-weight':600},SUBS.find(x=>x.id===r.id).nm.split(' ')[0]);});
- E(s,'text',{x:x1,y:y1+8,'text-anchor':'end','font-size':8.5,fill:'#A39B8C'},'Inalum: smelter — no reserve base');
- document.getElementById('resvread').innerHTML='<b>Timah</b> is the structural watch — a 14-yr life and replacing only <b>0.4×</b> of what it mines. Freeport and Antam are replenishing (~1.0×+); Inalum is feedstock-based.';}
 /* scatter */
 function scatter(){const s=document.getElementById('sc');if(!s)return;s.innerHTML='';const x0=58,x1=596,y0=272,y1=22,pxq=q=>x0+(x1-x0)*(q-1)/3,py=m=>y0-(y0-y1)*m/45;E(s,'rect',{x:x0,y:y1,width:(x1-x0)/3,height:py(20)-y1,fill:'#ECF0E4'});E(s,'text',{x:x0+8,y:y1+14,'font-size':9.5,fill:'#5E7350'},'low-cost · high-margin');E(s,'line',{x1:x0,y1:y0,x2:x1,y2:y0,stroke:'#CBC2B0'});E(s,'line',{x1:x0,y1:y0,x2:x0,y2:y1,stroke:'#CBC2B0'});[1,2,3,4].forEach(q=>E(s,'text',{x:pxq(q),y:y0+16,'text-anchor':'middle','font-size':10,fill:'#A39B8C'},'Q'+q));[10,20,30,40].forEach(m=>E(s,'text',{x:x0-8,y:py(m)+3,'text-anchor':'end','font-size':9,fill:'#A39B8C'},m+'%'));SUBS.forEach(p=>{const cx=pxq(p.quart),cy=py(p.margin),r=8+p.ebScale*0.56,g=E(s,'g',{style:'cursor:pointer'});g.addEventListener('click',()=>drill(p.id));E(g,'circle',{cx,cy,r,fill:COL[p.id],opacity:.2});E(g,'circle',{cx,cy,r,fill:'none',stroke:COL[p.id],'stroke-width':1.6});E(g,'circle',{cx,cy,r:3,fill:COL[p.id]});E(g,'text',{x:cx,y:cy-r-5,'text-anchor':'middle','font-size':10,fill:'#211C16'},p.nm.split(' ')[0]);});}
 
@@ -576,27 +558,47 @@ function scatter(){const s=document.getElementById('sc');if(!s)return;s.innerHTM
 const stx={green:{c:'rag green',g:'✓',w:'ON TRACK'},amber:{c:'rag amber',g:'!',w:'WATCH'},red:{c:'rag red',g:'▲',w:'RISK'}};
 /* ── cross-subsidiary operations scorecard — normalized metrics across commodities ── */
 const OPS=[
- {id:'ptfi',deliver:89,dv:'Sept mud rush cuts ’26 ~35%',trifr:0.42,trifrUp:1,life:25,st:'red',stw:'force majeure'},
- {id:'ptba',deliver:101,dv:'record 43.3 Mt',trifr:0.55,trifrUp:0,life:18,st:'amber',stw:'coal price'},
- {id:'antam',deliver:89,dv:'FeNi 20.1k / 22.5k TNi',trifr:0.38,trifrUp:0,life:20,st:'amber',stw:'high-cost FeNi'},
- {id:'inalum',deliver:127,dv:'+27% volume',trifr:0.30,trifrUp:0,life:null,st:'green',stw:'on track'},
- {id:'timah',deliver:123,dv:'+23% refined tin',trifr:0.61,trifrUp:1,life:14,st:'amber',stw:'reserve life'},
+ {id:'ptfi',deliver:89,dv:'Grasberg mud rush',ltifr:0.42,fatal:0,life:25,ost:'fm'},
+ {id:'ptba',deliver:101,dv:'record 43.3 Mt',ltifr:0.55,fatal:0,life:18,ost:'run'},
+ {id:'antam',deliver:89,dv:'FeNi 20.1k / 22.5k TNi',ltifr:0.38,fatal:0,life:20,ost:'con'},
+ {id:'inalum',deliver:127,dv:'+27% volume',ltifr:0.30,fatal:0,life:null,ost:'run'},
+ {id:'timah',deliver:123,dv:'+23% refined tin',ltifr:0.61,fatal:0,life:14,ost:'run'},
 ];
-const stxOps={green:{c:'green',g:'✓',w:'ON TRACK'},amber:{c:'amber',g:'!',w:'WATCH'},red:{c:'red',g:'▲',w:'RISK'}};
+const ostx={run:{c:'green',g:'✓',w:'RUNNING'},con:{c:'amber',g:'!',w:'CONSTRAINED'},fm:{c:'red',g:'▲',w:'FORCE MAJEURE'}};
+const ORANK={fm:0,con:1,run:2};
 function opsScorecard(){
- const rows=OPS.map(o=>{const s=SUBS.find(x=>x.id===o.id),St=stxOps[o.st],qc=s.quart;
+ const rows=OPS.map(o=>{const s=SUBS.find(x=>x.id===o.id),St=ostx[o.ost];
   const dw=Math.min(o.deliver,140)/140*100,dcol=o.deliver>=100?'#5E7350':o.deliver>=90?'#A9842F':'#A4543C';
-  const tcol=o.trifr<0.4?'#5E7350':o.trifr<=0.6?'#A9842F':'#A4543C';
+  const tcol=o.ltifr<0.4?'#5E7350':o.ltifr<=0.6?'#A9842F':'#A4543C';
   const life=o.life==null?'n/a':o.life+' yr',lcol=o.life==null?'#A39B8C':o.life>20?'#5E7350':o.life>=15?'#A9842F':'#A4543C',lflag=o.life!=null&&o.life<15?' <span class="txt-red" style="font-size:9px">▲ depleting</span>':'';
-  const qcol=qc<=1?'#5E7350':qc===2?'#7C8A5E':qc===3?'#A9842F':'#A4543C';
   return `<tr data-id="${o.id}"><td><div class="nm"><span class="e" style="background:${COL[o.id]}"></span><div><b>${s.nm}</b><div class="sec">${s.sec}</div></div></div></td>`
    +`<td style="white-space:nowrap"><span class="obar"><span style="width:${dw.toFixed(0)}%;background:${dcol}"></span></span><span class="big" style="color:${dcol}">${o.deliver}%</span><div class="sec2">${o.dv}</div></td>`
-   +`<td><span class="qchip" style="color:${qcol};border-color:${qcol}">Q${qc}</span></td>`
-   +`<td style="white-space:nowrap"><span class="big" style="color:${tcol}">${o.trifr.toFixed(2)}</span> <span style="color:${o.trifrUp?'#A4543C':'#5E7350'};font-size:11px" title="${o.trifrUp?'up vs prior — worse':'down vs prior — better'}">${o.trifrUp?'▲':'▼'}</span></td>`
+   +`<td style="white-space:nowrap"><span class="big" style="color:${tcol}">${o.ltifr.toFixed(2)}</span><div class="sec2">${o.fatal} fatalities</div></td>`
    +`<td style="white-space:nowrap"><span class="big" style="color:${lcol}">${life}</span>${lflag}</td>`
    +`<td><span class="rag ${St.c}">${St.g} ${St.w}</span></td></tr>`;}).join('');
- document.getElementById('opsc').innerHTML=`<thead><tr><th class="l">Subsidiary</th><th class="l">Deliver · vs guidance</th><th>Cost</th><th>Safe · TRIFR</th><th>Durable · reserves</th><th>Status</th></tr></thead><tbody>${rows}</tbody>`;
+ document.getElementById('opsc').innerHTML=`<thead><tr><th class="l">Company</th><th class="l">Output · vs plan</th><th>Safety · LTIFR</th><th>Mine life</th><th>Operational status</th></tr></thead><tbody>${rows}</tbody>`;
  [...document.querySelectorAll('#opsc tbody tr')].forEach(tr=>tr.onclick=()=>drill(tr.dataset.id));}
+/* disruption & asset health — what's physically impaired across the fleet */
+const OHEALTH=[
+ {id:'ptfi',ev:'Grasberg mud rush · Sep-2025',im:'2026 output ~−35%; ramp recovery through the year',st:'fm'},
+ {id:'antam',ev:'RKEF FeNi below nameplate',im:'20.1k of 22.5k TNi; high-cost, curtailment under review',st:'con'},
+ {id:'ptba',ev:'Record production',im:'43.3 Mt; strip ratio beat 6.23× vs 6.44×',st:'run'},
+ {id:'inalum',ev:'Smelter ramp',im:'+27% volume toward ~900 kt; captive hydro',st:'run'},
+ {id:'timah',ev:'Refined tin +23%',im:'operating well; <15-yr reserve life the structural watch',st:'run'},
+];
+function opsHealth(){const el=document.getElementById('ohealth');if(!el)return;
+ el.innerHTML=OHEALTH.slice().sort((a,b)=>ORANK[a.st]-ORANK[b.st]).map(h=>{const s=SUBS.find(x=>x.id===h.id),St=ostx[h.st];
+  return `<div class="ohrow" data-id="${h.id}"><span class="ohdot ${St.c}"></span><div class="ohmain"><div class="ohnm">${s.nm} <span class="rag ${St.c}" style="font-size:8px;padding:1px 6px">${St.w}</span></div><div class="ohev">${h.ev}</div><div class="ohim">${h.im}</div></div></div>`;}).join('');
+ [...el.querySelectorAll('.ohrow')].forEach(r=>r.onclick=()=>drill(r.dataset.id));}
+/* growth-build tracker — physical construction progress & first production (capex/IRR live on Capital) */
+const OBUILD=[
+ {p:'Manyar Cu smelter',own:'Freeport · Gresik',pct:95,prod:'2024',st:'Commissioning'},
+ {p:'SGAR alumina Ph.1',own:'Inalum/Antam · Mempawah',pct:85,prod:'2025',st:'Construction'},
+ {p:'Grasberg underground',own:'Freeport · block cave',pct:70,prod:'ramping',st:'Ramp-up'},
+ {p:'Smelters · debottleneck',own:'Antam · Timah',pct:55,prod:'’25–26',st:'In progress'},
+];
+function opsBuild(){const el=document.getElementById('obuild');if(!el)return;
+ el.innerHTML='<div class="phd" style="grid-template-columns:1.5fr 1.15fr 50px 1fr"><span>Project</span><span>Progress</span><span>1st</span><span>Status</span></div>'+OBUILD.map(b=>`<div class="prow" style="grid-template-columns:1.5fr 1.15fr 50px 1fr"><div class="pnm">${b.p}<small>${b.own}</small></div><div class="ppct"><span class="pbar" style="max-width:none"><span style="width:${b.pct}%"></span></span><small>${b.pct}%</small></div><div class="pprod">${b.prod}</div><div class="pprod" style="color:var(--tx);font-weight:600">${b.st}</div></div>`).join('');}
 function drill(id){const s=SUBS.find(x=>x.id===id);const S=stx[s.st];document.getElementById('opdrill').innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:11px"><span style="width:4px;height:26px;border-radius:2px;background:${COL[s.id]}"></span><b style="font-size:16px">${s.nm}</b><span class="${S.c}">${S.g} ${S.w}</span><span class="pl">${s.sec} · Q${s.quart}</span><span class="pl" style="margin-left:auto">${s.own}</span></div><div style="display:grid;grid-template-columns:repeat(4,1fr) 1.4fr;gap:11px"><div class="op"><div class="l">${s.ops[0].l}</div><div class="v">${s.ops[0].v}</div><div class="d">${s.ops[0].d}</div></div><div class="op"><div class="l">${s.ops[1].l}</div><div class="v">${s.ops[1].v}</div><div class="d">${s.ops[1].d}</div></div><div class="op"><div class="l">${s.ops[2].l}</div><div class="v">${s.ops[2].v}</div><div class="d">${s.ops[2].d}</div></div><div class="op"><div class="l">${s.ops[3].l}</div><div class="v">${s.ops[3].v}</div><div class="d">${s.ops[3].d}</div></div><div class="op" style="background:transparent;border-color:transparent"><div class="l">Read</div><div class="d" style="font-size:11.5px;margin-top:6px">${s.watch}</div></div></div>`;}
 
 /* outlook */
@@ -613,14 +615,14 @@ document.getElementById('scform').addEventListener('submit',e=>{e.preventDefault
 document.querySelectorAll('.scex a').forEach(a=>a.onclick=()=>{document.getElementById('scq').value=a.dataset.q;runScenario(a.dataset.q);});
 
 /* view switching */
-const TITLES={overview:['Overview','State of the portfolio'],financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],capital:['Capital allocation','Where cash is generated & deployed — and whether it earns its cost of capital'],ops:['Operations','Delivery, cost, safety & reserves — across subsidiaries'],outlook:['Outlook','Forward risks & scenario copilot'],act:['Act','The recommended moves']};
+const TITLES={overview:['Overview','State of the portfolio'],financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],capital:['Capital allocation','Where cash is generated & deployed — and whether it earns its cost of capital'],ops:['Operations','Output, safety, mine life & the build — across operating companies'],outlook:['Outlook','Forward risks & scenario copilot'],act:['Act','The recommended moves']};
 let drawn={};
 function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById('v-'+v).classList.add('on');
  document.querySelectorAll('.item[data-v]').forEach(i=>i.classList.toggle('on',i.dataset.v===v));
  document.getElementById('vt').textContent=TITLES[v][0];document.getElementById('vc').textContent=TITLES[v][1];
  try{history.replaceState(null,'','#'+v);}catch(e){}
  // render charts lazily (need layout, so after display)
- requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capInsight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();deliveryTrend();reservesDepletion();drill('ptfi');drawn.ops=1;}});
+ requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capInsight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();opsHealth();opsBuild();drill('ptfi');drawn.ops=1;}});
 }
 document.querySelectorAll('.item[data-v]').forEach(i=>i.onclick=()=>show(i.dataset.v));
 document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=()=>show(a.dataset.jump));
