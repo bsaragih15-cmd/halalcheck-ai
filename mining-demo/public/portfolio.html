@@ -150,6 +150,11 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 .rag{font-size:9.5px;font-weight:700;font-family:'IBM Plex Mono',monospace;padding:3px 8px;border-radius:5px}
 .rag.green{color:#5E7350;background:#ECF0E4}.rag.amber{color:#A9842F;background:#F5EEDC}.rag.red{color:#A4543C;background:#F3E5DF}
 .shareb{display:inline-block;height:7px;border-radius:4px;vertical-align:middle;margin-right:7px}
+/* operations scorecard */
+.obar{display:inline-block;width:56px;height:7px;border-radius:4px;background:var(--panel2);border:1px solid var(--border);vertical-align:middle;overflow:hidden;margin-right:7px}
+.obar>span{display:block;height:100%;border-radius:4px}
+.qchip{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;border:1px solid;background:transparent}
+#opsc .sec2{font-size:9px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin-top:2px}
 /* cost & quality */
 .two{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;flex:1;min-height:0}
 .ccsel{display:flex;gap:5px;margin:2px 0 2px;flex-wrap:wrap}
@@ -265,7 +270,12 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 
    <!-- OPERATIONS -->
    <div class="view" id="v-ops">
-     <div class="two">
+     <div class="card" style="flex:none">
+       <div class="ch">Cross-subsidiary operations scorecard <span class="cs" style="display:inline">· normalized across commodities · click a row to drill</span></div>
+       <div class="cq">Are all five assets delivering, safe, and durable?</div>
+       <table class="fin" id="opsc" style="margin-top:9px"></table>
+     </div>
+     <div class="two" style="flex:1">
        <div class="card" style="display:flex;flex-direction:column">
          <div class="ch">Cost curve — drag the price line</div><div class="cs">asset goes underwater when its cost is above the price</div>
          <div class="ccsel" id="ccsel"></div>
@@ -537,6 +547,29 @@ function scatter(){const s=document.getElementById('sc');s.innerHTML='';const x0
 
 /* drill panel */
 const stx={green:{c:'rag green',g:'✓',w:'ON TRACK'},amber:{c:'rag amber',g:'!',w:'WATCH'},red:{c:'rag red',g:'▲',w:'RISK'}};
+/* ── cross-subsidiary operations scorecard — normalized metrics across commodities ── */
+const OPS=[
+ {id:'ptfi',deliver:89,dv:'Sept mud rush cuts ’26 ~35%',trifr:0.42,trifrUp:1,life:25,st:'red',stw:'force majeure'},
+ {id:'ptba',deliver:101,dv:'record 43.3 Mt',trifr:0.55,trifrUp:0,life:18,st:'amber',stw:'coal price'},
+ {id:'antam',deliver:89,dv:'FeNi 20.1k / 22.5k TNi',trifr:0.38,trifrUp:0,life:20,st:'amber',stw:'high-cost FeNi'},
+ {id:'inalum',deliver:127,dv:'+27% volume',trifr:0.30,trifrUp:0,life:null,st:'green',stw:'on track'},
+ {id:'timah',deliver:123,dv:'+23% refined tin',trifr:0.61,trifrUp:1,life:14,st:'amber',stw:'reserve life'},
+];
+const stxOps={green:{c:'green',g:'✓',w:'ON TRACK'},amber:{c:'amber',g:'!',w:'WATCH'},red:{c:'red',g:'▲',w:'RISK'}};
+function opsScorecard(){
+ const rows=OPS.map(o=>{const s=SUBS.find(x=>x.id===o.id),St=stxOps[o.st],qc=s.quart;
+  const dw=Math.min(o.deliver,140)/140*100,dcol=o.deliver>=100?'#5E7350':o.deliver>=90?'#A9842F':'#A4543C';
+  const tcol=o.trifr<0.4?'#5E7350':o.trifr<=0.6?'#A9842F':'#A4543C';
+  const life=o.life==null?'n/a':o.life+' yr',lcol=o.life==null?'#A39B8C':o.life>20?'#5E7350':o.life>=15?'#A9842F':'#A4543C',lflag=o.life!=null&&o.life<15?' <span class="txt-red" style="font-size:9px">▲ depleting</span>':'';
+  const qcol=qc<=1?'#5E7350':qc===2?'#7C8A5E':qc===3?'#A9842F':'#A4543C';
+  return `<tr data-id="${o.id}"><td><div class="nm"><span class="e" style="background:${COL[o.id]}"></span><div><b>${s.nm}</b><div class="sec">${s.sec}</div></div></div></td>`
+   +`<td style="white-space:nowrap"><span class="obar"><span style="width:${dw.toFixed(0)}%;background:${dcol}"></span></span><span class="big" style="color:${dcol}">${o.deliver}%</span><div class="sec2">${o.dv}</div></td>`
+   +`<td><span class="qchip" style="color:${qcol};border-color:${qcol}">Q${qc}</span></td>`
+   +`<td style="white-space:nowrap"><span class="big" style="color:${tcol}">${o.trifr.toFixed(2)}</span> <span style="color:${o.trifrUp?'#A4543C':'#5E7350'};font-size:11px" title="${o.trifrUp?'up vs prior — worse':'down vs prior — better'}">${o.trifrUp?'▲':'▼'}</span></td>`
+   +`<td style="white-space:nowrap"><span class="big" style="color:${lcol}">${life}</span>${lflag}</td>`
+   +`<td><span class="rag ${St.c}">${St.g} ${St.w}</span></td></tr>`;}).join('');
+ document.getElementById('opsc').innerHTML=`<thead><tr><th class="l">Subsidiary</th><th class="l">Deliver · vs guidance</th><th>Cost</th><th>Safe · TRIFR</th><th>Durable · reserves</th><th>Status</th></tr></thead><tbody>${rows}</tbody>`;
+ [...document.querySelectorAll('#opsc tbody tr')].forEach(tr=>tr.onclick=()=>drill(tr.dataset.id));}
 function drill(id){const s=SUBS.find(x=>x.id===id);const S=stx[s.st];document.getElementById('opdrill').innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:11px"><span style="width:4px;height:26px;border-radius:2px;background:${COL[s.id]}"></span><b style="font-size:16px">${s.nm}</b><span class="${S.c}">${S.g} ${S.w}</span><span class="pl">${s.sec} · Q${s.quart}</span><span class="pl" style="margin-left:auto">${s.own}</span></div><div style="display:grid;grid-template-columns:repeat(4,1fr) 1.4fr;gap:11px"><div class="op"><div class="l">${s.ops[0].l}</div><div class="v">${s.ops[0].v}</div><div class="d">${s.ops[0].d}</div></div><div class="op"><div class="l">${s.ops[1].l}</div><div class="v">${s.ops[1].v}</div><div class="d">${s.ops[1].d}</div></div><div class="op"><div class="l">${s.ops[2].l}</div><div class="v">${s.ops[2].v}</div><div class="d">${s.ops[2].d}</div></div><div class="op"><div class="l">${s.ops[3].l}</div><div class="v">${s.ops[3].v}</div><div class="d">${s.ops[3].d}</div></div><div class="op" style="background:transparent;border-color:transparent"><div class="l">Read</div><div class="d" style="font-size:11.5px;margin-top:6px">${s.watch}</div></div></div>`;}
 
 /* outlook */
@@ -553,14 +586,14 @@ document.getElementById('scform').addEventListener('submit',e=>{e.preventDefault
 document.querySelectorAll('.scex a').forEach(a=>a.onclick=()=>{document.getElementById('scq').value=a.dataset.q;runScenario(a.dataset.q);});
 
 /* view switching */
-const TITLES={overview:['Overview','State of the portfolio'],financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],capital:['Capital allocation','Where cash is generated & deployed — and whether it earns its cost of capital'],ops:['Operations','Cost position & asset state'],outlook:['Outlook','Forward risks & scenario copilot'],act:['Act','The recommended moves']};
+const TITLES={overview:['Overview','State of the portfolio'],financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],capital:['Capital allocation','Where cash is generated & deployed — and whether it earns its cost of capital'],ops:['Operations','Delivery, cost, safety & reserves — across subsidiaries'],outlook:['Outlook','Forward risks & scenario copilot'],act:['Act','The recommended moves']};
 let drawn={};
 function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById('v-'+v).classList.add('on');
  document.querySelectorAll('.item[data-v]').forEach(i=>i.classList.toggle('on',i.dataset.v===v));
  document.getElementById('vt').textContent=TITLES[v][0];document.getElementById('vc').textContent=TITLES[v][1];
  try{history.replaceState(null,'','#'+v);}catch(e){}
  // render charts lazily (need layout, so after display)
- requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capInsight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){curve();scatter();drill('ptfi');drawn.ops=1;}});
+ requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capInsight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();curve();scatter();drill('ptfi');drawn.ops=1;}});
 }
 document.querySelectorAll('.item[data-v]').forEach(i=>i.onclick=()=>show(i.dataset.v));
 document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=()=>show(a.dataset.jump));
