@@ -132,12 +132,15 @@ project {
 - **Phase 2:** alerts/exceptions engine, benefits-realization tracker, portfolio risk register, AI project copilot.
 - **Phase 3:** integration with subsidiary systems, predictive overrun/slip forecasting, stage-gate workflow & approvals.
 
-## 13. Risks & open questions
+## 13. Risks & resolved decisions
+**Open risks**
 - **Data standardization** across subsidiaries is the make-or-break (definitions of % complete, EAC). — *the real product risk.*
 - **Adoption:** subsidiaries may resist holding scrutiny; needs low-friction submission + clear value back to them.
-- **JV data rights** (Freeport) — what can be shown at holding level?
-- **Threshold** for "strategic" — exact cutoff (Rp value / strategic flag)?
-- **Benefits ownership** — who signs off realized benefits, and when?
+
+**Resolved (this iteration)**
+- **Threshold for "strategic":** in scope = **sanctioned value ≥ Rp 1T, OR board-designated strategic** (regardless of size). Captures the ~10–15 megaprojects that move the group; smaller/sustaining capex aggregates as one roll-up line per subsidiary later.
+- **JV data rights (assumed):** for JV projects (Freeport 51/49), the holding sees **summary cost/schedule/benefit + RAG only**; detailed contractor/commercial data is redacted. JV projects are marked "JV — summary". To be confirmed against the shareholder agreement.
+- **Benefits sign-off (assumed):** the **Holding Investment Committee** signs off realized benefits at defined checkpoints — **first production, +12 months, +24 months** — on subsidiary submissions validated by the PMO.
 
 ## 14. MVP acceptance (what "done" looks like for Phase 1)
 A single "Projects" tab where the BOD sees, in one screen, which strategic projects are red/amber and why, the total capital committed vs overrun exposure, and can open any project to a controls-grade detail (S-curve, EAC/VAC, milestones, gate, risks, benefits) — all on standard, comparable definitions.

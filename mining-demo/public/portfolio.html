@@ -163,6 +163,15 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 .ohnm{font-size:12.5px;font-weight:600;color:var(--tx);display:flex;align-items:center;gap:8px}
 .ohev{font-size:10px;color:var(--faint);margin-top:2px;font-family:'IBM Plex Mono',monospace}
 .ohim{font-size:11px;color:var(--mut);margin-top:3px;line-height:1.35}
+/* capital projects — heatmap + detail */
+.sec2{font-size:9px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+.hcell{display:inline-flex;flex-direction:column;align-items:center;min-width:66px;padding:4px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace}
+.hcell b{font-size:11.5px;font-weight:700}.hcell small{font-size:8px;font-weight:500;opacity:.85;margin-top:1px}
+.h-g{background:#ECF0E4;color:#5E7350}.h-a{background:#F5EEDC;color:#A9842F}.h-r{background:#F3E5DF;color:#A4543C}
+.pdgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:11px}
+.pdstat .pl2{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
+.pdstat .pv{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:700;color:var(--tx);margin-top:1px}
+.pdben,.pdrisk{font-size:10.5px;color:var(--mut);margin-top:9px;line-height:1.4}.pdben b,.pdrisk b{color:var(--tx)}
 /* cost & quality */
 .two{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;flex:1;min-height:0}
 .ccsel{display:flex;gap:5px;margin:2px 0 2px;flex-wrap:wrap}
@@ -213,7 +222,8 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
    <a class="item" data-v="financials"><span class="ic">01</span>Financials<span class="kx dn">−10%</span></a>
    <a class="item" data-v="capital"><span class="ic">02</span>Capital</a>
    <a class="item" data-v="ops"><span class="ic">03</span>Operations<span class="kx am">1 risk</span></a>
-   <a class="item" data-v="outlook"><span class="ic">04</span>Outlook</a>
+   <a class="item" data-v="projects"><span class="ic">04</span>Projects<span class="kx dn">2 red</span></a>
+   <a class="item" data-v="outlook"><span class="ic">05</span>Outlook</a>
    <div class="grp">Decide</div>
    <a class="item" href="ceo-cockpit.html"><span class="ic">◇</span>Stress test</a>
    <a class="item" data-v="act"><span class="ic">→</span>Act</a>
@@ -301,6 +311,19 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
        <div class="ch">Growth-build tracker <span class="cs" style="display:inline">· construction &amp; first production</span></div>
        <div class="cq">Are the growth projects physically on track?</div>
        <div id="obuild" style="margin-top:10px"></div>
+     </div>
+   </div>
+
+   <!-- PROJECTS — capital project monitoring (PMO + BOD) -->
+   <div class="view" id="v-projects">
+     <div class="kpis" id="projkpis"></div>
+     <div style="display:grid;grid-template-columns:1.55fr 1fr;gap:12px;flex:1;min-height:0">
+       <div class="card" style="display:flex;flex-direction:column;min-height:0">
+         <div class="ch">Strategic project portfolio <span class="cs" style="display:inline">· cost × schedule × benefit · click a row</span></div>
+         <div class="cq">Which projects need the board's attention?</div>
+         <div style="overflow-y:auto;flex:1;min-height:0;margin-top:8px"><table class="fin" id="projtbl"></table></div>
+       </div>
+       <div class="card" id="projdetail" style="display:flex;flex-direction:column;min-height:0"></div>
      </div>
    </div>
 
@@ -647,15 +670,82 @@ async function runScenario(q){if(!q)return;document.getElementById('scres').inne
 document.getElementById('scform').addEventListener('submit',e=>{e.preventDefault();runScenario(document.getElementById('scq').value);});
 document.querySelectorAll('.scex a').forEach(a=>a.onclick=()=>{document.getElementById('scq').value=a.dataset.q;runScenario(a.dataset.q);});
 
+/* ── CAPITAL PROJECTS — PMO/BOD monitoring of the strategic megaproject portfolio ── */
+const PROJ=[
+ {id:'manyar',nm:'Manyar copper smelter',co:'Freeport',jv:1,stage:'Commissioning',gate:5,gates:6,budget:58,committed:57,spent:55,eac:60,pctP:98,pctA:95,fpS:2024,fpF:2024,spi:0.97,cpi:0.93,benCap:'600 kt Cu cathode',irrS:14,irrC:13,benSt:'ontrack',risk:'Commissioning ramp slower than plan; concentrate & acid logistics.',ragC:'a',ragS:'g',ragB:'g'},
+ {id:'sgar1',nm:'SGAR alumina Ph.1',co:'Inalum/Antam',jv:0,stage:'Construction',gate:4,gates:6,budget:15,committed:13,spent:11,eac:16,pctP:88,pctA:85,fpS:2025,fpF:2025,spi:0.96,cpi:0.94,benCap:'1.0 Mtpa alumina',irrS:13,irrC:12,benSt:'ontrack',risk:'EPC labour availability + monsoon schedule pressure.',ragC:'a',ragS:'a',ragB:'g'},
+ {id:'sgar2',nm:'SGAR alumina Ph.2',co:'Inalum/Antam',jv:0,stage:'FEED',gate:2,gates:6,budget:16,committed:2,spent:1,eac:16,pctP:8,pctA:8,fpS:2027,fpF:2027,spi:1.00,cpi:1.00,benCap:'+1.0 Mtpa alumina',irrS:13,irrC:13,benSt:'ontrack',risk:'FID pending; bauxite feedstock security.',ragC:'g',ragS:'g',ragB:'g'},
+ {id:'grasberg',nm:'Grasberg underground',co:'Freeport',jv:1,stage:'Ramp-up',gate:5,gates:6,budget:40,committed:38,spent:34,eac:41,pctP:80,pctA:74,fpS:2023,fpF:2024,spi:0.93,cpi:0.98,benCap:'sustain ~1.6 Blb Cu',irrS:20,irrC:18,benSt:'atrisk',risk:'Sep-2025 mud rush — 2026 output ~−35%, ramp recovery through the year.',ragC:'g',ragS:'a',ragB:'a'},
+ {id:'inalumx',nm:'Inalum smelter expansion',co:'Inalum',jv:0,stage:'Construction',gate:4,gates:6,budget:12,committed:8,spent:5,eac:12,pctP:45,pctA:44,fpS:2026,fpF:2026,spi:0.98,cpi:1.00,benCap:'→ ~900 kt aluminium',irrS:12,irrC:12,benSt:'ontrack',risk:'Captive power supply for the new pot line.',ragC:'g',ragS:'g',ragB:'g'},
+ {id:'halmahera',nm:'Antam Halmahera nickel',co:'Antam',jv:0,stage:'Construction',gate:4,gates:6,budget:10,committed:9,spent:8,eac:12.5,pctP:70,pctA:55,fpS:2025,fpF:2026,spi:0.79,cpi:0.80,benCap:'FeNi / MHP lines',irrS:12,irrC:8,benSt:'atrisk',risk:'~Rp 2.5T overrun + ~12-month slip; high-cost RKEF economics under soft nickel.',ragC:'r',ragS:'r',ragB:'a'},
+ {id:'dme',nm:'PTBA coal-to-DME',co:'Bukit Asam',jv:0,stage:'FEED · on hold',gate:2,gates:6,budget:33,committed:3,spent:2,eac:33,pctP:35,pctA:12,fpS:2027,fpF:0,spi:0.34,cpi:1.00,benCap:'1.4 Mtpa DME',irrS:10,irrC:4,benSt:'eroded',risk:'Technology partner exit; economics eroded vs LPG import parity — effectively stalled.',ragC:'a',ragS:'r',ragB:'r'},
+ {id:'ptbare',nm:'PTBA renewables & power',co:'Bukit Asam',jv:0,stage:'Construction',gate:4,gates:6,budget:4,committed:3,spent:2,eac:4,pctP:60,pctA:58,fpS:2025,fpF:2025,spi:0.97,cpi:1.00,benCap:'~200 MW RE + solar',irrS:11,irrC:11,benSt:'ontrack',risk:'Grid interconnection & land acquisition.',ragC:'g',ragS:'g',ragB:'g'},
+ {id:'timahtsl',nm:'Timah TSL furnace upgrade',co:'Timah',jv:0,stage:'Commissioning',gate:5,gates:6,budget:3,committed:3,spent:2.8,eac:3.1,pctP:95,pctA:92,fpS:2025,fpF:2025,spi:0.97,cpi:0.97,benCap:'modern low-cost tin smelting',irrS:12,irrC:12,benSt:'ontrack',risk:'Commissioning; feed-grade variability.',ragC:'g',ragS:'a',ragB:'g'},
+ {id:'battery',nm:'Battery materials / HPAL',co:'MIND ID JV',jv:1,stage:'FEED',gate:2,gates:6,budget:20,committed:4,spent:2,eac:20,pctP:15,pctA:14,fpS:2028,fpF:2028,spi:0.93,cpi:1.00,benCap:'precursor / pCAM',irrS:15,irrC:14,benSt:'atrisk',risk:'Offtake commitments & partner alignment on the EV supply chain.',ragC:'g',ragS:'a',ragB:'a'},
+];
+const RCOL={g:'#5E7350',a:'#A9842F',r:'#A4543C'};
+const RAGX={g:{c:'green',g:'✓',w:'ON TRACK'},a:{c:'amber',g:'!',w:'WATCH'},r:{c:'red',g:'▲',w:'ESCALATE'}};
+const BENX={ontrack:'benefit on track',atrisk:'benefit at risk',eroded:'benefit eroded'};
+const PCOL={'Freeport':'#9C6644','Inalum/Antam':'#7C766B','Inalum':'#7C766B','Antam':'#A9842F','Bukit Asam':'#6B5B4A','Timah':'#B07A4A','MIND ID JV':'#8A8275'};
+function pworst(p){const rk={g:0,a:1,r:2};let w='g';[p.ragC,p.ragS,p.ragB].forEach(x=>{if(rk[x]>rk[w])w=x;});return w;}
+const hcell=(r,b,s)=>`<span class="hcell h-${r}"><b>${b}</b><small>${s}</small></span>`;
+function projTotals(){const n=PROJ.length,red=PROJ.filter(p=>pworst(p)==='r').length,amb=PROJ.filter(p=>pworst(p)==='a').length,grn=n-red-amb;
+ const sanc=PROJ.reduce((a,p)=>a+p.budget,0),spent=PROJ.reduce((a,p)=>a+p.spent,0),eac=PROJ.reduce((a,p)=>a+p.eac,0),vac=sanc-eac,benR=PROJ.filter(p=>p.ragB!=='g').length;
+ const cards=[
+  {l:'Strategic projects',v:n,s:`<b style="color:#A4543C">${red} escalate</b> · ${amb} watch · ${grn} on track`},
+  {l:'Capital sanctioned',v:'Rp '+sanc+'T',s:'committed Rp '+PROJ.reduce((a,p)=>a+p.committed,0)+'T'},
+  {l:'Spent to date',v:'Rp '+Math.round(spent)+'T',s:Math.round(spent/sanc*100)+'% of sanctioned'},
+  {l:'Forecast overrun',v:(vac<0?'−':'+')+'Rp '+Math.abs(vac).toFixed(1)+'T',s:'EAC vs budget (VAC)',r:vac<0?'r':'g'},
+  {l:'Benefits at risk',v:benR+' projects',s:'IRR / capacity eroded',r:benR>0?'a':'g'},
+ ];
+ document.getElementById('projkpis').innerHTML=cards.map(c=>`<div class="kpi"><div class="l">${c.l}</div><div class="act" style="font-size:26px${c.r?';color:'+RCOL[c.r]:''}">${c.v}</div><div class="note" style="margin-top:6px">${c.s}</div></div>`).join('');}
+function projTable(){
+ const rows=PROJ.slice().sort((a,b)=>({g:0,a:1,r:2})[pworst(b)]-({g:0,a:1,r:2})[pworst(a)]).map(p=>{const R=RAGX[pworst(p)];
+  return `<tr data-id="${p.id}"><td><div class="nm"><span class="e" style="background:${PCOL[p.co]||'#8A8275'}"></span><div><b>${p.nm}</b><div class="sec">${p.co}${p.jv?' · JV':''}</div></div></div></td>`
+   +`<td class="pl" style="text-align:left">${p.stage}<div class="sec2">gate ${p.gate}/${p.gates}</div></td>`
+   +`<td>${hcell(p.ragC,'CPI '+p.cpi.toFixed(2),'EAC '+p.eac+'/'+p.budget)}</td>`
+   +`<td>${hcell(p.ragS,'SPI '+p.spi.toFixed(2),p.pctA+'% / '+p.pctP+'%')}</td>`
+   +`<td>${hcell(p.ragB,'IRR '+p.irrC+'%','vs '+p.irrS+'%')}</td>`
+   +`<td><span class="rag ${R.c}">${R.g}</span></td></tr>`;}).join('');
+ document.getElementById('projtbl').innerHTML=`<thead><tr><th class="l">Project</th><th class="l">Stage</th><th>Cost</th><th>Schedule</th><th>Benefit</th><th>RAG</th></tr></thead><tbody>${rows}</tbody>`;
+ [...document.querySelectorAll('#projtbl tbody tr')].forEach(tr=>tr.onclick=()=>projDetail(tr.dataset.id));}
+function projSCurve(s,p){if(!s)return;s.innerHTML='';
+ const x0=42,x1=482,y0=142,y1=18,maxY=Math.max(p.budget,p.eac)*1.06,now=Math.max(0.06,Math.min(0.94,p.pctA/100)),slip=Math.max(0,(p.pctP-p.pctA)/100),tEnd=Math.min(1.34,1+slip*1.3);
+ const px=t=>x0+(x1-x0)*t/tEnd,py=v=>y0-(y0-y1)*v/maxY,sm=t=>t*t*(3-2*t),step=maxY>50?20:maxY>20?10:1;
+ for(let g=0;g<=maxY;g+=step){const y=py(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'#E7DFCF'});E(s,'text',{x:x0-5,y:y+3,'text-anchor':'end','font-size':8,fill:'#A39B8C'},g);}
+ E(s,'line',{x1:x0,y1:py(p.budget),x2:x1,y2:py(p.budget),stroke:'#A9842F','stroke-dasharray':'5 4',opacity:.5});E(s,'text',{x:x1,y:py(p.budget)-3,'text-anchor':'end','font-size':8,fill:'#A9842F'},'budget '+p.budget);
+ let dP='';for(let i=0;i<=30;i++){const t=i/30;dP+=(i?'L':'M')+px(t).toFixed(1)+' '+py(p.budget*sm(t)).toFixed(1)+' ';}E(s,'path',{d:dP,fill:'none',stroke:'#B7B0A0','stroke-width':1.6});
+ const ac=RCOL[p.ragC];
+ let dA='';for(let i=0;i<=24;i++){const t=now*i/24;dA+=(i?'L':'M')+px(t).toFixed(1)+' '+py(p.spent*sm(t)/Math.max(0.001,sm(now))).toFixed(1)+' ';}E(s,'path',{d:dA,fill:'none',stroke:ac,'stroke-width':2.4});
+ let dF='';for(let i=0;i<=24;i++){const t=now+(tEnd-now)*i/24,f=(t-now)/(tEnd-now);dF+=(i?'L':'M')+px(t).toFixed(1)+' '+py(p.spent+(p.eac-p.spent)*sm(f)).toFixed(1)+' ';}E(s,'path',{d:dF,fill:'none',stroke:ac,'stroke-width':1.8,'stroke-dasharray':'4 3',opacity:.85});
+ E(s,'line',{x1:px(now),y1:y1,x2:px(now),y2:y0,stroke:'#8A8275','stroke-dasharray':'2 3'});E(s,'text',{x:px(now),y:y1-2,'text-anchor':'middle','font-size':8,fill:'#6B655B'},'now');
+ E(s,'text',{x:x0,y:y0+14,'font-size':8,fill:'#A39B8C'},'cumulative spend Rp T · planned / actual / forecast(EAC) →');}
+function projDetail(id){const p=PROJ.find(x=>x.id===id);if(!p)return;const R=RAGX[pworst(p)],el=document.getElementById('projdetail');
+ const st=(l,v,r)=>`<div class="pdstat"><div class="pl2">${l}</div><div class="pv"${r?` style="color:${RCOL[r]}"`:''}>${v}</div></div>`;
+ el.innerHTML=`<div class="ch">${p.nm} <span class="cs" style="display:inline">· ${p.co}${p.jv?' · JV (summary)':''}</span></div>`
+  +`<div class="cq">${p.stage} · gate ${p.gate}/${p.gates} · <span class="rag ${R.c}" style="font-size:8.5px;padding:1px 7px">${R.g} ${R.w}</span></div>`
+  +`<div style="height:162px;margin-top:8px;flex:none"><svg id="projsc" viewBox="0 0 500 158" preserveAspectRatio="xMidYMid meet" style="width:100%;height:100%;display:block"></svg></div>`
+  +`<div class="pdgrid">`
+   +st('Budget','Rp '+p.budget+'T')+st('EAC · forecast','Rp '+p.eac+'T',p.eac>p.budget?'r':'g')
+   +st('Spent','Rp '+p.spent+'T')+st('VAC','Rp '+(p.budget-p.eac).toFixed(1)+'T',p.eac>p.budget?'r':'g')
+   +st('% complete','act '+p.pctA+' / plan '+p.pctP,p.ragS)+st('First production','fcst '+(p.fpF?p.fpF:'TBD')+' / '+p.fpS,p.fpF&&p.fpF>p.fpS?'a':p.fpF?'g':'r')
+   +st('SPI · CPI',p.spi.toFixed(2)+' · '+p.cpi.toFixed(2),pworst({ragC:p.cpi<0.9?'r':p.cpi<0.95?'a':'g',ragS:p.spi<0.9?'r':p.spi<0.95?'a':'g',ragB:'g'}))
+   +st('IRR now / sanction',p.irrC+'% / '+p.irrS+'%',p.ragB)
+  +`</div>`
+  +`<div class="pdben"><b>Benefit:</b> ${p.benCap} · ${BENX[p.benSt]}</div>`
+  +`<div class="pdrisk"><b>Top risk:</b> ${p.risk}</div>`;
+ projSCurve(el.querySelector('#projsc'),p);
+ [...document.querySelectorAll('#projtbl tbody tr')].forEach(tr=>tr.classList.toggle('sel',tr.dataset.id===id));}
+
 /* view switching */
-const TITLES={overview:['Overview','State of the portfolio'],financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],capital:['Capital allocation','Where cash is generated & deployed — and whether it earns its cost of capital'],ops:['Operations','Output, safety, mine life & the build — across operating companies'],outlook:['Outlook','Forward risks & scenario copilot'],act:['Act','The recommended moves']};
+const TITLES={overview:['Overview','State of the portfolio'],financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],capital:['Capital allocation','Where cash is generated & deployed — and whether it earns its cost of capital'],ops:['Operations','Output, safety, mine life & the build — across operating companies'],projects:['Capital projects','Strategic megaproject delivery — cost, schedule, benefit & risk'],outlook:['Outlook','Forward risks & scenario copilot'],act:['Act','The recommended moves']};
 let drawn={};
 function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById('v-'+v).classList.add('on');
  document.querySelectorAll('.item[data-v]').forEach(i=>i.classList.toggle('on',i.dataset.v===v));
  document.getElementById('vt').textContent=TITLES[v][0];document.getElementById('vc').textContent=TITLES[v][1];
  try{history.replaceState(null,'','#'+v);}catch(e){}
  // render charts lazily (need layout, so after display)
- requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capInsight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();opsHealth();opsBuild();opsInsight();drawn.ops=1;}});
+ requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capInsight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();opsHealth();opsBuild();opsInsight();drawn.ops=1;}if(v==='projects'&&!drawn.proj){projTotals();projTable();projDetail('halmahera');drawn.proj=1;}});
 }
 document.querySelectorAll('.item[data-v]').forEach(i=>i.onclick=()=>show(i.dataset.v));
 document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=()=>show(a.dataset.jump));
