@@ -10,7 +10,7 @@ import { irocFallback, irocParseFallback, irocCopilotFallback } from './data/iro
 import { blastFallback, blastParseFallback, blastCopilotFallback } from './data/blast.js';
 import { shippingFallback, shippingDisruptionFallback, shippingCopilotFallback } from './data/shipping.js';
 import { cockpitBriefFallback } from './data/cockpit.js';
-import { boardReadFallback, scenarioFallback, capitalCopilotFallback } from './data/portfolio.js';
+import { boardReadFallback, scenarioFallback, capitalCopilotFallback, opsCopilotFallback } from './data/portfolio.js';
 import { USE_CASES } from './public/js/usecases.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -503,6 +503,15 @@ Return JSON with EXACTLY this structure:
 
 IMPORTANT: Return ONLY valid JSON, no other text.`;
 
+const OPS_COPILOT_PROMPT = `You are the AI Operations copilot to MIND ID's Group CEO, answering questions about the FY2024 PHYSICAL operational state of the operating companies (Freeport/PTFI copper-gold, Bukit Asam/PTBA coal, Antam nickel/gold, Inalum aluminium, Timah tin). Answer in 2-3 sentences, grounded ONLY in the provided state JSON. Stay physical — output vs plan, safety (LTIFR, fatalities), mine life, operational status (running / constrained / force majeure), disruptions, and growth-build progress. Do NOT discuss money (cost, margin, EBITDA, dividend) — that lives on other tabs. You MAY wrap a key figure or company name in <b>...</b>.
+
+Central operational picture: the fleet runs well (records at Bukit Asam, Inalum, Timah); the two exceptions are Freeport (force majeure from the Grasberg mud rush, 2026 output ~-35%) and Antam (RKEF ferronickel below nameplate). Zero fatalities across the portfolio. Timah's ~14-yr reserve life is the one structural watch. Growth build: Manyar Cu smelter 95%, SGAR alumina 85%, Grasberg underground ramping.
+
+Return JSON with EXACTLY this structure:
+{ "answer": "<2-3 sentences, physical/operational only; may use <b>...</b>>" }
+
+IMPORTANT: Return ONLY valid JSON, no other text.`;
+
 // ── Endpoints ─────────────────────────────────────────────────────────────────
 app.get('/api/health', (req, res) => res.json({ ok: true, aiMode: aiMode() }));
 
@@ -553,6 +562,19 @@ app.post('/api/portfolio/capital-copilot', async (req, res) => {
     systemPrompt: CAPITAL_COPILOT_PROMPT,
     userMessage: `Capital-allocation state:\n${JSON.stringify(state || {}, null, 2).slice(0, 4000)}\n\nCEO question: ${question.trim().slice(0, 400)}\n\nReturn only valid JSON.`,
     fallback: capitalCopilotFallback({ question }),
+  });
+  res.json(result);
+});
+
+// Portfolio Control Tower: Operations Copilot — company-aware Q&A over the physical operational state.
+app.post('/api/portfolio/ops-copilot', async (req, res) => {
+  const { question, state } = req.body || {};
+  if (!question || !question.trim()) return res.status(400).json({ error: 'A question is required' });
+  const result = await askClaude({
+    label: 'portfolio:ops-copilot',
+    systemPrompt: OPS_COPILOT_PROMPT,
+    userMessage: `Operational state:\n${JSON.stringify(state || {}, null, 2).slice(0, 4000)}\n\nCEO question: ${question.trim().slice(0, 400)}\n\nReturn only valid JSON.`,
+    fallback: opsCopilotFallback({ question }),
   });
   res.json(result);
 });

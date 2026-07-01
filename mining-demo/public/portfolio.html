@@ -279,23 +279,29 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
    <!-- OPERATIONS -->
    <div class="view" id="v-ops">
      <div class="card" style="flex:none">
-       <div class="ch">Cross-subsidiary operations scorecard <span class="cs" style="display:inline">· normalized across commodities · click a row to drill</span></div>
+       <div class="ch">Cross-subsidiary operations scorecard <span class="cs" style="display:inline">· normalized across commodities · click a row to ask the copilot</span></div>
        <div class="cq">Are all five assets delivering, safe, and durable?</div>
        <table class="fin" id="opsc" style="margin-top:9px"></table>
      </div>
-     <div class="two" style="flex:1">
+     <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;flex:1;min-height:0">
        <div class="card" style="display:flex;flex-direction:column;min-height:0">
          <div class="ch">Disruption &amp; asset health <span class="cs" style="display:inline">· what's physically impaired</span></div>
          <div class="cq">Is anything operationally broken across the fleet?</div>
          <div id="ohealth" style="margin-top:8px;overflow-y:auto;flex:1;min-height:0"></div>
        </div>
        <div class="card" style="display:flex;flex-direction:column;min-height:0">
-         <div class="ch">Growth-build tracker <span class="cs" style="display:inline">· construction &amp; first production</span></div>
-         <div class="cq">Are the growth projects physically on track?</div>
-         <div id="obuild" style="margin-top:11px"></div>
+         <div class="ch">◇ AI Operations copilot <span class="cs" id="opsaibadge" style="display:inline">· by company</span></div>
+         <div class="cq">Ask about a specific operating company</div>
+         <div id="opsailog" class="capailog" style="flex:1;min-height:0;overflow-y:auto;margin-top:10px;border-top:1px solid var(--border);padding-top:11px"></div>
+         <div class="aiex" id="opsaiex">try: <a data-q="How is Freeport performing operationally?">Freeport</a> · <a data-q="Why is Antam constrained?">Antam</a> · <a data-q="What's the reserve risk at Timah?">Timah</a> · <a data-q="Is the Manyar smelter on track?">Manyar build</a></div>
+         <form id="opsaiform" class="capaiform"><input id="opsaiq" autocomplete="off" placeholder="Ask about a company (e.g. Freeport, Antam)…"><button type="submit">Ask</button></form>
        </div>
      </div>
-     <div class="card" id="opdrill" style="flex:none"></div>
+     <div class="card" style="flex:none">
+       <div class="ch">Growth-build tracker <span class="cs" style="display:inline">· construction &amp; first production</span></div>
+       <div class="cq">Are the growth projects physically on track?</div>
+       <div id="obuild" style="margin-top:10px"></div>
+     </div>
    </div>
 
    <!-- OUTLOOK -->
@@ -577,7 +583,7 @@ function opsScorecard(){
    +`<td style="white-space:nowrap"><span class="big" style="color:${lcol}">${life}</span>${lflag}</td>`
    +`<td><span class="rag ${St.c}">${St.g} ${St.w}</span></td></tr>`;}).join('');
  document.getElementById('opsc').innerHTML=`<thead><tr><th class="l">Company</th><th class="l">Output · vs plan</th><th>Safety · LTIFR</th><th>Mine life</th><th>Operational status</th></tr></thead><tbody>${rows}</tbody>`;
- [...document.querySelectorAll('#opsc tbody tr')].forEach(tr=>tr.onclick=()=>drill(tr.dataset.id));}
+ [...document.querySelectorAll('#opsc tbody tr')].forEach(tr=>tr.onclick=()=>opsAskCompany(tr.dataset.id));}
 /* disruption & asset health — what's physically impaired across the fleet */
 const OHEALTH=[
  {id:'ptfi',ev:'Grasberg mud rush · Sep-2025',im:'2026 output ~−35%; ramp recovery through the year',st:'fm'},
@@ -589,7 +595,7 @@ const OHEALTH=[
 function opsHealth(){const el=document.getElementById('ohealth');if(!el)return;
  el.innerHTML=OHEALTH.slice().sort((a,b)=>ORANK[a.st]-ORANK[b.st]).map(h=>{const s=SUBS.find(x=>x.id===h.id),St=ostx[h.st];
   return `<div class="ohrow" data-id="${h.id}"><span class="ohdot ${St.c}"></span><div class="ohmain"><div class="ohnm">${s.nm} <span class="rag ${St.c}" style="font-size:8px;padding:1px 6px">${St.w}</span></div><div class="ohev">${h.ev}</div><div class="ohim">${h.im}</div></div></div>`;}).join('');
- [...el.querySelectorAll('.ohrow')].forEach(r=>r.onclick=()=>drill(r.dataset.id));}
+ [...el.querySelectorAll('.ohrow')].forEach(r=>r.onclick=()=>opsAskCompany(r.dataset.id));}
 /* growth-build tracker — physical construction progress & first production (capex/IRR live on Capital) */
 const OBUILD=[
  {p:'Manyar Cu smelter',own:'Freeport · Gresik',pct:95,prod:'2024',st:'Commissioning'},
@@ -599,6 +605,33 @@ const OBUILD=[
 ];
 function opsBuild(){const el=document.getElementById('obuild');if(!el)return;
  el.innerHTML='<div class="phd" style="grid-template-columns:1.5fr 1.15fr 50px 1fr"><span>Project</span><span>Progress</span><span>1st</span><span>Status</span></div>'+OBUILD.map(b=>`<div class="prow" style="grid-template-columns:1.5fr 1.15fr 50px 1fr"><div class="pnm">${b.p}<small>${b.own}</small></div><div class="ppct"><span class="pbar" style="max-width:none"><span style="width:${b.pct}%"></span></span><small>${b.pct}%</small></div><div class="pprod">${b.prod}</div><div class="pprod" style="color:var(--tx);font-weight:600">${b.st}</div></div>`).join('');}
+/* ── AI Operations copilot — company-aware Q&A over the operational state ── */
+const OPSFACT={
+ ptfi:'<b>Freeport</b> is the group\'s one impaired asset: the Sep-2025 <b>Grasberg mud rush</b> puts it under <b>force majeure</b>, cutting 2026 output ~35% with ramp recovery through the year. FY24 output ~89% of plan, LTIFR 0.42, 0 fatalities, mine life ~25 yr. Its <b>Manyar copper smelter</b> is 95% complete (commissioning, first cathode 2024).',
+ antam:'<b>Antam</b> is <b>constrained</b>: RKEF ferronickel is running below nameplate (20.1k of 22.5k TNi) — high-cost, with curtailment under review. Output ~89% of plan, LTIFR 0.38, 0 fatalities, mine life ~20 yr. It co-owns the <b>SGAR alumina</b> refinery (85% complete, first alumina 2025).',
+ ptba:'<b>Bukit Asam</b> is <b>running well</b>: record 43.3 Mt production, strip ratio beat (6.23× vs 6.44× plan), output 101% of plan. LTIFR 0.55, 0 fatalities, mine life ~18 yr.',
+ inalum:'<b>Inalum</b> is the cleanest operational performer — <b>running</b> at +27% volume (127% of plan) toward ~900 kt, captive Asahan hydro, LTIFR 0.30 (best), 0 fatalities. As a smelter it has no mineral reserve base; it leads the SGAR alumina build.',
+ timah:'<b>Timah</b> is <b>running</b> operationally (refined tin +23%, 123% of plan, LTIFR 0.61, 0 fatalities), but its <b>~14-yr reserve life</b> is the structural watch — depleting faster than it replaces.',
+};
+const OPS_INTRO='Operationally the fleet runs well — record volumes at Bukit Asam, Inalum and Timah. The two exceptions: <b>Freeport</b> under force majeure (Grasberg mud rush, 2026 ~−35%) and <b>Antam</b> constrained (high-cost FeNi below target). Zero fatalities across the portfolio; <b>Timah\'s ~14-yr reserve life</b> is the one structural watch. Ask me about any company.';
+function opsLocalAnswer(q){const t=(q||'').toLowerCase(),map={ptfi:['freeport','ptfi','grasberg','manyar'],antam:['antam','antm','ferronickel','feni','sgar'],ptba:['bukit','ptba','coal'],inalum:['inalum','alumin'],timah:['timah','tins','tin']};
+ for(const id in map){if(map[id].some(k=>t.includes(k)))return OPSFACT[id];}
+ if(/safe|ltifr|fatal|injur/.test(t))return 'Safety: <b>zero fatalities</b> across the portfolio. LTIFR runs 0.30 (Inalum, best) to 0.61 (Timah); Freeport 0.42, Bukit Asam 0.55, Antam 0.38.';
+ if(/reserve|mine life|deplet|last|how long/.test(t))return 'Mine life: Freeport ~25 yr, Antam ~20 yr, Bukit Asam ~18 yr, <b>Timah ~14 yr — the depletion watch</b>. Inalum is a smelter (no reserve base).';
+ if(/build|project|construct|smelter|first prod/.test(t))return 'Growth build: <b>Manyar Cu smelter 95%</b> (commissioning, first cathode 2024), <b>SGAR alumina 85%</b> (construction, 2025), Grasberg underground ramping (70%), smelters/debottleneck 55%.';
+ if(/disrupt|broken|impair|force majeure|down|outage/.test(t))return 'Only two assets are off-nominal: <b>Freeport</b> (force majeure — Grasberg mud rush, 2026 ~−35%) and <b>Antam</b> (FeNi below nameplate). The rest are running, several at records.';
+ if(/output|production|deliver|plan|volume/.test(t))return 'Output vs plan: Inalum 127%, Timah 123%, Bukit Asam 101% (above); <b>Freeport 89%</b> (mud rush) and <b>Antam 89%</b> (FeNi) below.';
+ if(/summar|overview|status|how are|fleet|everything/.test(t))return OPS_INTRO;
+ return 'Ask me about a specific company — <b>Freeport, Bukit Asam, Antam, Inalum, or Timah</b> — or about safety, reserves, the growth build, or disruptions across the fleet.';}
+function opsPush(role,html){const log=document.getElementById('opsailog');if(!log)return null;const d=document.createElement('div');d.className=role==='user'?'aiu':'aim';d.innerHTML=html;log.appendChild(d);log.scrollTop=log.scrollHeight;return d;}
+let opsAiInit=false;
+function opsInsight(){if(opsAiInit)return;opsAiInit=true;opsPush('ai',OPS_INTRO);}
+async function opsAsk(q){if(!q||!q.trim())return;opsPush('user',esc(q));const el=opsPush('ai','<span class="aidots">thinking…</span>');if(!el)return;
+ let ans;try{const r=await postJSON('/api/portfolio/ops-copilot',{question:q,state:{scorecard:OPS,health:OHEALTH,build:OBUILD}});ans=(r&&r.answer)?r.answer:opsLocalAnswer(q);}catch(e){ans=opsLocalAnswer(q);}
+ el.innerHTML=ans;const log=document.getElementById('opsailog');if(log)log.scrollTop=1e7;}
+function opsAskCompany(id){const nm=(SUBS.find(x=>x.id===id)||{}).nm||id;opsAsk('How is '+nm+' performing operationally?');}
+{const f=document.getElementById('opsaiform');if(f)f.addEventListener('submit',e=>{e.preventDefault();const i=document.getElementById('opsaiq');opsAsk(i.value);i.value='';});
+ document.querySelectorAll('#opsaiex a').forEach(a=>a.onclick=()=>opsAsk(a.dataset.q));}
 function drill(id){const s=SUBS.find(x=>x.id===id);const S=stx[s.st];document.getElementById('opdrill').innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:11px"><span style="width:4px;height:26px;border-radius:2px;background:${COL[s.id]}"></span><b style="font-size:16px">${s.nm}</b><span class="${S.c}">${S.g} ${S.w}</span><span class="pl">${s.sec} · Q${s.quart}</span><span class="pl" style="margin-left:auto">${s.own}</span></div><div style="display:grid;grid-template-columns:repeat(4,1fr) 1.4fr;gap:11px"><div class="op"><div class="l">${s.ops[0].l}</div><div class="v">${s.ops[0].v}</div><div class="d">${s.ops[0].d}</div></div><div class="op"><div class="l">${s.ops[1].l}</div><div class="v">${s.ops[1].v}</div><div class="d">${s.ops[1].d}</div></div><div class="op"><div class="l">${s.ops[2].l}</div><div class="v">${s.ops[2].v}</div><div class="d">${s.ops[2].d}</div></div><div class="op"><div class="l">${s.ops[3].l}</div><div class="v">${s.ops[3].v}</div><div class="d">${s.ops[3].d}</div></div><div class="op" style="background:transparent;border-color:transparent"><div class="l">Read</div><div class="d" style="font-size:11.5px;margin-top:6px">${s.watch}</div></div></div>`;}
 
 /* outlook */
@@ -622,7 +655,7 @@ function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.remov
  document.getElementById('vt').textContent=TITLES[v][0];document.getElementById('vc').textContent=TITLES[v][1];
  try{history.replaceState(null,'','#'+v);}catch(e){}
  // render charts lazily (need layout, so after display)
- requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capInsight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();opsHealth();opsBuild();drill('ptfi');drawn.ops=1;}});
+ requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capInsight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();opsHealth();opsBuild();opsInsight();drawn.ops=1;}});
 }
 document.querySelectorAll('.item[data-v]').forEach(i=>i.onclick=()=>show(i.dataset.v));
 document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=()=>show(a.dataset.jump));
