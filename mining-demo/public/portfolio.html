@@ -277,14 +277,16 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
      </div>
      <div class="two" style="flex:1">
        <div class="card" style="display:flex;flex-direction:column">
-         <div class="ch">Cost curve — drag the price line</div><div class="cs">asset goes underwater when its cost is above the price</div>
-         <div class="ccsel" id="ccsel"></div>
-         <div class="fillsvg"><svg id="cc" viewBox="0 0 760 300" preserveAspectRatio="xMidYMid meet"></svg></div>
-         <div class="ccread" id="ccread"></div>
+         <div class="ch">Delivery vs guidance <span class="cs" style="display:inline">· production trajectory by asset</span></div>
+         <div class="cq">Who is trending below plan — and who's ramping?</div>
+         <div class="fillsvg" style="margin-top:4px"><svg id="deliv" viewBox="0 0 620 300" preserveAspectRatio="xMidYMid meet"></svg></div>
+         <div class="ccread" id="delivread"></div>
        </div>
        <div class="card" style="display:flex;flex-direction:column">
-         <div class="ch">Portfolio quality map</div><div class="cs">cost quartile × EBITDA margin · bubble = EBITDA · click to drill</div>
-         <div class="fillsvg"><svg id="sc" viewBox="0 0 620 320" preserveAspectRatio="xMidYMid meet"></svg></div>
+         <div class="ch">Reserves &amp; depletion <span class="cs" style="display:inline">· life vs replacement</span></div>
+         <div class="cq">How long does each asset last — and is it replacing what it mines?</div>
+         <div class="fillsvg" style="margin-top:4px"><svg id="resv" viewBox="0 0 620 300" preserveAspectRatio="xMidYMid meet"></svg></div>
+         <div class="ccread" id="resvread"></div>
        </div>
      </div>
      <div class="card" id="opdrill" style="flex:none"></div>
@@ -529,7 +531,7 @@ document.getElementById('cappipe').innerHTML='<div class="phd"><span>Project</sp
 
 /* cost curve */
 let curCm='copper',dragPrice={};
-const ccsel=document.getElementById('ccsel');Object.keys(CURVES).forEach(c=>{const b=document.createElement('button');b.textContent=CMNAME[c];b.dataset.c=c;b.onclick=()=>{curCm=c;curve();[...ccsel.children].forEach(x=>x.classList.toggle('on',x.dataset.c===c));};ccsel.appendChild(b);});ccsel.children[0].classList.add('on');
+const ccsel=document.getElementById('ccsel');if(ccsel){Object.keys(CURVES).forEach(c=>{const b=document.createElement('button');b.textContent=CMNAME[c];b.dataset.c=c;b.onclick=()=>{curCm=c;curve();[...ccsel.children].forEach(x=>x.classList.toggle('on',x.dataset.c===c));};ccsel.appendChild(b);});ccsel.children[0].classList.add('on');}
 const cc=document.getElementById('cc');
 function curve(){const C=CURVES[curCm];cc.innerHTML='';const x0=52,x1=720,y0=255,y1=18,sub=SUBS.find(s=>s.id===C.asset);const px=p=>x0+(x1-x0)*p/100,py=v=>y0-(y0-y1)*Math.min(v,C.ymax)/C.ymax;if(dragPrice[curCm]===undefined)dragPrice[curCm]=C.price;const price=dragPrice[curCm];
  for(let i=0;i<=5;i++){const v=C.ymax*i/5,y=py(v);E(cc,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'#E7DFCF'});E(cc,'text',{x:x0-6,y:y+3,'text-anchor':'end','font-size':9,fill:'#A39B8C'},C.fmt(v));}
@@ -542,8 +544,33 @@ function curve(){const C=CURVES[curCm];cc.innerHTML='';const x0=52,x1=720,y0=255
  hit.addEventListener('mousedown',ev=>{ev.preventDefault();const mv=e=>setY(e.clientY),up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);};document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);});
  const mg=price-C.assetCost;document.getElementById('ccread').innerHTML=`<b>${sub.nm}</b> at <b>${C.fmt(C.assetCost)}</b> (Q${sub.quart}) vs <b>${C.fmt(price)}</b> → `+(uw?`<span class="txt-red">underwater ${C.fmt(C.assetCost-price)} — curtails first</span>`:`<span class="txt-green">${C.fmt(mg)} margin — survives</span>`);}
 
+/* ── delivery vs guidance — quarterly production trajectory by asset ── */
+const DELIV=[{id:'ptfi',q:[97,95,90,89]},{id:'ptba',q:[99,100,102,101]},{id:'antam',q:[92,90,88,89]},{id:'inalum',q:[118,122,130,127]},{id:'timah',q:[110,118,125,123]}];
+function deliveryTrend(){const s=document.getElementById('deliv');if(!s)return;s.innerHTML='';
+ const x0=44,x1=544,y0=248,y1=44,ymin=80,ymax=135,n=4,px=i=>x0+(x1-x0)*i/(n-1),py=v=>y0-(y0-y1)*(v-ymin)/(ymax-ymin);
+ for(let g=80;g<=130;g+=10){const y=py(g),on=g===100;E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:on?'#B7B0A0':'#E7DFCF','stroke-width':on?1.3:1,'stroke-dasharray':on?'':'2 5'});E(s,'text',{x:x0-6,y:y+3,'text-anchor':'end','font-size':9,fill:'#A39B8C'},g+'%');}
+ E(s,'text',{x:x1,y:py(100)-5,'text-anchor':'end','font-size':9,fill:'#6B655B'},'guidance');
+ ['Q1','Q2','Q3','Q4'].forEach((q,i)=>E(s,'text',{x:px(i),y:y0+16,'text-anchor':'middle','font-size':9,fill:'#A39B8C'},q));
+ let lx=x0;const lg=DELIV.map(d=>SUBS.find(x=>x.id===d.id).nm.split(' ')[0]);
+ DELIV.forEach((d,k)=>{E(s,'rect',{x:lx,y:14,width:10,height:10,rx:2,fill:COL[d.id],opacity:.85});E(s,'text',{x:lx+14,y:23,'font-size':9.5,fill:'#6B655B'},lg[k]);lx+=lg[k].length*5.6+30;});
+ DELIV.forEach(d=>{const c=COL[d.id],pts=d.q.map((v,i)=>px(i).toFixed(1)+','+py(v).toFixed(1)).join(' ');E(s,'polyline',{points:pts,fill:'none',stroke:c,'stroke-width':2.2,'stroke-linecap':'round','stroke-linejoin':'round',opacity:.92});d.q.forEach((v,i)=>E(s,'circle',{cx:px(i),cy:py(v),r:2.6,fill:c}));});
+ document.getElementById('delivread').innerHTML='<b>Bukit Asam, Inalum and Timah</b> are delivering above guidance; <b>Freeport</b> (mud rush) and <b>Antam</b> (high-cost FeNi) sit below and are trending down.';}
+/* ── reserves & depletion — reserve life vs replacement ratio ── */
+const RES=[{id:'ptfi',life:25,rrr:1.1},{id:'ptba',life:18,rrr:0.9},{id:'antam',life:20,rrr:1.0},{id:'timah',life:14,rrr:0.4}];
+function reservesDepletion(){const s=document.getElementById('resv');if(!s)return;s.innerHTML='';
+ const x0=52,x1=576,y0=246,y1=40,xmin=0.2,xmax=1.3,ymin=0,ymax=30,px=v=>x0+(x1-x0)*(v-xmin)/(xmax-xmin),py=v=>y0-(y0-y1)*(v-ymin)/(ymax-ymin);
+ E(s,'rect',{x:x0,y:py(15),width:x1-x0,height:y0-py(15),fill:'rgba(164,84,60,.06)'});
+ E(s,'text',{x:x0+6,y:y0-6,'font-size':9,fill:'#A4543C'},'depletion risk · under 15-yr life');
+ E(s,'line',{x1:px(1),y1:y1,x2:px(1),y2:y0,stroke:'#B7B0A0','stroke-dasharray':'4 4'});
+ E(s,'text',{x:px(1),y:y1-4,'text-anchor':'middle','font-size':8.5,fill:'#6B655B'},'reserves steady (1.0×)');
+ for(let g=0;g<=30;g+=10){const y=py(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'#E7DFCF'});E(s,'text',{x:x0-6,y:y+3,'text-anchor':'end','font-size':9,fill:'#A39B8C'},g);}
+ [0.4,0.7,1.0,1.3].forEach(g=>E(s,'text',{x:px(g),y:y0+16,'text-anchor':'middle','font-size':9,fill:'#A39B8C'},g.toFixed(1)+'×'));
+ E(s,'text',{x:(x0+x1)/2,y:y0+30,'text-anchor':'middle','font-size':9,fill:'#6B655B'},'reserve replacement — added ÷ mined  →');
+ RES.forEach(r=>{const c=COL[r.id],cx=px(r.rrr),cy=py(r.life);E(s,'circle',{cx,cy,r:9,fill:c,opacity:.22});E(s,'circle',{cx,cy,r:9,fill:'none',stroke:c,'stroke-width':1.7});E(s,'circle',{cx,cy,r:3,fill:c});E(s,'text',{x:cx,y:cy-14,'text-anchor':'middle','font-size':9.5,fill:c,'font-weight':600},SUBS.find(x=>x.id===r.id).nm.split(' ')[0]);});
+ E(s,'text',{x:x1,y:y1+8,'text-anchor':'end','font-size':8.5,fill:'#A39B8C'},'Inalum: smelter — no reserve base');
+ document.getElementById('resvread').innerHTML='<b>Timah</b> is the structural watch — a 14-yr life and replacing only <b>0.4×</b> of what it mines. Freeport and Antam are replenishing (~1.0×+); Inalum is feedstock-based.';}
 /* scatter */
-function scatter(){const s=document.getElementById('sc');s.innerHTML='';const x0=58,x1=596,y0=272,y1=22,pxq=q=>x0+(x1-x0)*(q-1)/3,py=m=>y0-(y0-y1)*m/45;E(s,'rect',{x:x0,y:y1,width:(x1-x0)/3,height:py(20)-y1,fill:'#ECF0E4'});E(s,'text',{x:x0+8,y:y1+14,'font-size':9.5,fill:'#5E7350'},'low-cost · high-margin');E(s,'line',{x1:x0,y1:y0,x2:x1,y2:y0,stroke:'#CBC2B0'});E(s,'line',{x1:x0,y1:y0,x2:x0,y2:y1,stroke:'#CBC2B0'});[1,2,3,4].forEach(q=>E(s,'text',{x:pxq(q),y:y0+16,'text-anchor':'middle','font-size':10,fill:'#A39B8C'},'Q'+q));[10,20,30,40].forEach(m=>E(s,'text',{x:x0-8,y:py(m)+3,'text-anchor':'end','font-size':9,fill:'#A39B8C'},m+'%'));SUBS.forEach(p=>{const cx=pxq(p.quart),cy=py(p.margin),r=8+p.ebScale*0.56,g=E(s,'g',{style:'cursor:pointer'});g.addEventListener('click',()=>drill(p.id));E(g,'circle',{cx,cy,r,fill:COL[p.id],opacity:.2});E(g,'circle',{cx,cy,r,fill:'none',stroke:COL[p.id],'stroke-width':1.6});E(g,'circle',{cx,cy,r:3,fill:COL[p.id]});E(g,'text',{x:cx,y:cy-r-5,'text-anchor':'middle','font-size':10,fill:'#211C16'},p.nm.split(' ')[0]);});}
+function scatter(){const s=document.getElementById('sc');if(!s)return;s.innerHTML='';const x0=58,x1=596,y0=272,y1=22,pxq=q=>x0+(x1-x0)*(q-1)/3,py=m=>y0-(y0-y1)*m/45;E(s,'rect',{x:x0,y:y1,width:(x1-x0)/3,height:py(20)-y1,fill:'#ECF0E4'});E(s,'text',{x:x0+8,y:y1+14,'font-size':9.5,fill:'#5E7350'},'low-cost · high-margin');E(s,'line',{x1:x0,y1:y0,x2:x1,y2:y0,stroke:'#CBC2B0'});E(s,'line',{x1:x0,y1:y0,x2:x0,y2:y1,stroke:'#CBC2B0'});[1,2,3,4].forEach(q=>E(s,'text',{x:pxq(q),y:y0+16,'text-anchor':'middle','font-size':10,fill:'#A39B8C'},'Q'+q));[10,20,30,40].forEach(m=>E(s,'text',{x:x0-8,y:py(m)+3,'text-anchor':'end','font-size':9,fill:'#A39B8C'},m+'%'));SUBS.forEach(p=>{const cx=pxq(p.quart),cy=py(p.margin),r=8+p.ebScale*0.56,g=E(s,'g',{style:'cursor:pointer'});g.addEventListener('click',()=>drill(p.id));E(g,'circle',{cx,cy,r,fill:COL[p.id],opacity:.2});E(g,'circle',{cx,cy,r,fill:'none',stroke:COL[p.id],'stroke-width':1.6});E(g,'circle',{cx,cy,r:3,fill:COL[p.id]});E(g,'text',{x:cx,y:cy-r-5,'text-anchor':'middle','font-size':10,fill:'#211C16'},p.nm.split(' ')[0]);});}
 
 /* drill panel */
 const stx={green:{c:'rag green',g:'✓',w:'ON TRACK'},amber:{c:'rag amber',g:'!',w:'WATCH'},red:{c:'rag red',g:'▲',w:'RISK'}};
@@ -593,7 +620,7 @@ function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.remov
  document.getElementById('vt').textContent=TITLES[v][0];document.getElementById('vc').textContent=TITLES[v][1];
  try{history.replaceState(null,'','#'+v);}catch(e){}
  // render charts lazily (need layout, so after display)
- requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capInsight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();curve();scatter();drill('ptfi');drawn.ops=1;}});
+ requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capInsight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();deliveryTrend();reservesDepletion();drill('ptfi');drawn.ops=1;}});
 }
 document.querySelectorAll('.item[data-v]').forEach(i=>i.onclick=()=>show(i.dataset.v));
 document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=()=>show(a.dataset.jump));
