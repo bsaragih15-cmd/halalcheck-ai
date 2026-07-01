@@ -399,18 +399,13 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
  </div>
  </div><!-- /shell -->
 
+<script src="data/tower-data.js"></script>
 <script>
 const NS='http://www.w3.org/2000/svg';
 function E(p,t,a,txt){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!=null)e.textContent=txt;p.appendChild(e);return e;}
 const esc=s=>String(s==null?'':s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
 const COL={ptfi:'#9C6644',ptba:'#6B5B4A',antam:'#5E7350',inalum:'#7C766B',timah:'#B07A4A'};
-const SUBS=[
- {id:'ptfi',nm:'Freeport Indonesia',tic:'—',sec:'Copper · Gold',cm:'copper',frev:150,frevP:160,febitda:21.3,febitdaP:22.6,fnp:48.8,fnpP:52,rag:'amber',fdrv:'grade dilution + force majeure',margin:40,quart:1,ebScale:60,st:'red',own:'PTFI · MIND ID 51.2% / FCX 48.8%',ops:[{l:'Mill throughput',v:'~200 ktpd',d:'240 nameplate; all-underground'},{l:'Ore grade',v:'0.92% Cu',d:'+0.76 g/t Au — world-class'},{l:'Net cash cost',v:'~$0/lb',d:'C1 $2.71/lb − gold credits'},{l:'Block cave',v:'133 ktpd',d:'record 151,582 t/day'}],watch:'Lowest-cost copper, biggest earner — but the Sept-2025 mud rush cuts 2026 output ~35%.'},
- {id:'ptba',nm:'Bukit Asam',tic:'PTBA',sec:'Thermal coal',cm:'coal',frev:42.8,frevP:44,febitda:7.4,febitdaP:10.4,fnp:5.1,fnpP:6.5,rag:'red',fdrv:'coal price below budget',margin:19,quart:2,ebScale:14,st:'amber',own:'IDX: PTBA · MIND ID 65%',ops:[{l:'Coal production',v:'43.3 Mt',d:'record'},{l:'Strip ratio',v:'6.23×',d:'beat 6.44× target'},{l:'Cash cost',v:'~$53/t',d:'−6% YoY'},{l:'Realized',v:'$74/t',d:'−12% YoY ICI-3'}],watch:'Margin squeezed by coal price (−22% vs plan) despite record volume.'},
- {id:'antam',nm:'Antam',tic:'ANTM',sec:'Ni · Au · Bauxite',cm:'nickel',frev:69.2,frevP:50,febitda:6.5,febitdaP:7.4,fnp:3.6,fnpP:3.2,rag:'green',fdrv:'record gold trade; nickel soft',margin:10,quart:4,ebScale:12,st:'green',own:'IDX: ANTM · MIND ID 65%',ops:[{l:'Ferronickel',v:'20,103 TNi',d:'below 22.5k target'},{l:'Gold sold',v:'43.8 t',d:'record 1.41 Moz trade'},{l:'Gold revenue',v:'Rp 57.6 T',d:'+120% — drove top line'},{l:'Ni cost-curve',v:'Q4',d:'RKEF FeNi high-cost'}],watch:'Record revenue is gold-trading-driven; nickel economics soft & high-cost.'},
- {id:'inalum',nm:'Inalum',tic:'—',sec:'Aluminium',cm:'alu',frev:11.4,frevP:11,febitda:4.0,febitdaP:3.6,fnp:2.0,fnpP:1.5,rag:'green',fdrv:'low-cost hydro; vol +27%',margin:26,quart:1,ebScale:18,st:'green',own:'Unlisted · MIND ID 100%',ops:[{l:'Aluminium',v:'274 kt',d:'+27%; target ~900 kt'},{l:'Specific energy',v:'~14,000',d:'DC kWh/t'},{l:'Captive power',v:'~603 MW',d:'Asahan hydro — low-carbon'},{l:'Cost-curve',v:'Q1',d:'first-quartile resilience'}],watch:'Structurally advantaged (hydro, low carbon). EBITDA +213%. Watch growth execution.'},
- {id:'timah',nm:'Timah',tic:'TINS',sec:'Tin',cm:'tin',frev:10.9,frevP:9.5,febitda:1.3,febitdaP:1.0,fnp:1.2,fnpP:0.6,rag:'green',fdrv:'turnaround on price +17%',margin:16,quart:3,ebScale:8,st:'amber',own:'IDX: TINS · MIND ID 65%',ops:[{l:'Refined tin',v:'18,915 t',d:'+23% YoY'},{l:'Realized',v:'$31,181/t',d:'+17% YoY'},{l:'Net profit',v:'Rp 1.19 T',d:'+364% — reversed loss'},{l:'Reserve life',v:'<15 yr',d:'depletion the watch'}],watch:'Genuine turnaround, but tin is volatile and reserve life is the structural watch.'},
-];
+const SUBS=TOWER.subs;
 const CURVES={
  copper:{unit:'$/lb',ymax:4.0,fmt:v=>'$'+v.toFixed(2),price:4.20,asset:'ptfi',assetCum:5,assetCost:0.0,steps:[[0,0.4],[8,0.4],[8,1.2],[28,1.2],[28,1.8],[55,1.8],[55,2.4],[80,2.4],[80,3.1],[100,3.4]]},
  nickel:{unit:'$/lb',ymax:9.0,fmt:v=>'$'+v.toFixed(1),price:6.8,asset:'antam',assetCum:74,assetCost:7.6,steps:[[0,3.8],[20,3.8],[20,4.6],[45,4.6],[45,5.6],[68,5.6],[68,7.2],[88,7.2],[88,8.4],[100,8.6]]},
@@ -422,19 +417,7 @@ const CMNAME={copper:'Copper',nickel:'Nickel',coal:'Coal',alu:'Aluminium',tin:'T
 
 /* ── market signal ticker (persistent across tabs; reacts to the scenario copilot) ── */
 const SUBCOL={ptba:'#6B5B4A',antam:'#5E7350',inalum:'#7C766B',timah:'#B07A4A',ptfi:'#9C6644'};
-const COMMOD=[
- {id:'coalhba',n:'Coal HBA',px:117,u:'/t',d:-1.4,sub:'ptba',sn:'Bukit Asam'},
- {id:'coalnew',n:'Coal Newc.',px:124,u:'/t',d:-0.8,sub:'ptba',sn:'Bukit Asam'},
- {id:'gold',n:'Gold',px:2335,u:'/oz',d:1.0,sub:'antam',sn:'Antam'},
- {id:'nickel',n:'Nickel LME',px:16578,u:'/t',d:-0.5,sub:'antam',sn:'Antam'},
- {id:'nickelore',n:'Nickel ore',px:52,u:'/wmt',d:-0.6,sub:'antam',sn:'Antam'},
- {id:'alu',n:'Alum. LME',px:2426,u:'/t',d:0.6,sub:'inalum',sn:'Inalum'},
- {id:'alumina',n:'Alumina',px:382,u:'/t',d:1.6,sub:'inalum',sn:'Inalum'},
- {id:'tin',n:'Tin LME',px:31189,u:'/t',d:-0.5,sub:'timah',sn:'Timah'},
- {id:'copper',n:'Copper LME',px:9675,u:'/t',d:-0.4,sub:'ptfi',sn:'Freeport',jv:1},
- {id:'bauxite',n:'Bauxite',px:57,u:'/t',d:0.5,sub:'antam',sn:'Antam'},
- {id:'idr',n:'USD / IDR',px:16000,u:'',d:0.0,sub:null,sn:null},
-];
+const COMMOD=TOWER.commod;
 const TKBASE=COMMOD.map(c=>c.d);
 const fmtPx=v=>v>=1000?v.toLocaleString('en-US'):String(v);
 function sparkSVG(seed,dir,color){const W=46,H=16,pts=[];let v=.5;for(let i=0;i<9;i++){v+=Math.sin(seed*1.7+i*1.05)*.16+dir*.045;v=Math.max(.12,Math.min(.88,v));pts.push(v);}let d='';pts.forEach((p,i)=>{const x=(i/8*W).toFixed(1),y=(H-2-p*(H-4)).toFixed(1);d+=(i?' L':'M')+x+' '+y;});return `<svg width="${W}" height="${H}" style="display:block"><path d="${d}" fill="none" stroke="${color}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity=".9"/></svg>`;}
@@ -447,12 +430,7 @@ function applyTickerScenario(drivers){if(!drivers||!drivers.length)return;const 
 function resetTicker(){COMMOD.forEach((c,i)=>c.d=TKBASE[i]);renderTicker();document.getElementById('tkstate').innerHTML='prices &amp; Δ move with the scenario · vs plan';}
 
 /* KPIs */
-const KPI=[
- {l:'Revenue',a:145.2,p:132,q:[32.5,35.0,37.5,40.2],n:'Beat plan — on <b>gold trading</b>, not core mining.',flag:'⚠ low-margin trade'},
- {l:'EBITDA',a:40.5,p:45,q:[12.2,10.8,9.3,8.2],n:'Margin squeeze, <b>not volume</b>.',hero:1,margin:'Margin 34.1% → 27.9% · −6.2 pts'},
- {l:'Net profit',a:36.5,p:41,q:[10.8,9.6,8.4,7.7],n:'Feeds the <b>dividend &amp; State</b>.'},
- {l:'Free cash flow',a:18.0,p:22,q:[5.6,3.2,4.4,4.8],n:'Lower earnings + <b>Manyar/SGAR</b> capex.'},
- {l:'To State',a:90.4,p:88,q:[21.4,22.3,23.2,23.5],n:'<b>Royalty up</b> on PP19/2025.'}];
+const KPI=TOWER.kpi;
 /* quarterly trend sparkline — line vs a dashed plan-pace (RKAP ÷ 4) reference */
 function spark(q,plan,up,co){const W=158,H=30,pad=3,all=q.concat([plan]),mn=Math.min(...all),mx=Math.max(...all),rng=(mx-mn)||1;
  const x=i=>pad+i*(W-2*pad)/(q.length-1),y=v=>H-pad-(v-mn)/rng*(H-2*pad),col=co||(up?'#5E7350':'#A4543C');
@@ -462,8 +440,8 @@ function spark(q,plan,up,co){const W=158,H=30,pad=3,all=q.concat([plan]),mn=Math
 document.getElementById('kpis').innerHTML=KPI.map(k=>{const v=(k.a-k.p)/k.p*100,up=v>=0;return `<div class="kpi${k.hero?' hero':''}"><div class="l">${k.l}</div><div class="var ${up?'up':'down'}">${up?'▲ +':'▼ '}${v.toFixed(0)}%</div><div class="act">${k.a.toFixed(1)}<small> Rp T</small></div><div class="base">vs RKAP ${k.p}</div>${spark(k.q,k.p/4,up)}<div class="spkc">Q1→Q4 quarterly · ‑‑ plan pace</div>${k.margin?`<div class="mgc">${k.margin}</div>`:''}<div class="note">${k.n}</div>${k.flag?`<div class="flag">${k.flag}</div>`:''}</div>`}).join('');
 
 /* EBITDA variance bridge — same Rp 45→40.5 gap, decomposed two ways (why ⇄ who) */
-const EV={ptba:-3.0,ptfi:-1.3,antam:-0.9,inalum:0.4,timah:0.3}; // per-subsidiary EBITDA Δ vs plan, sums to −4.5
-const SUBEV=[{id:'ptba',l:'Bukit Asam',sub:'coal price'},{id:'ptfi',l:'Freeport',sub:'grade + force majeure'},{id:'antam',l:'Antam',sub:'nickel, net of gold'},{id:'inalum',l:'Inalum',sub:'+27% volume'},{id:'timah',l:'Timah',sub:'price turnaround'}];
+const EV=TOWER.ev; // per-subsidiary EBITDA Δ vs plan, sums to −4.5
+const SUBEV=TOWER.subev;
 const BRIDGE={
  driver:{read:'A <b>price-led</b> miss — coal (−3.0) and nickel (−2.0) drove the gap; record gold (+1.2) and a weaker rupiah only partly offset.',
   steps:[{l:'RKAP plan',v:45,t:'b'},{l:'Coal price',v:-3.0,sub:'HBA/ICI < budget'},{l:'Nickel',v:-2.0,sub:'LME soft'},{l:'Tin/other',v:-0.5},{l:'Gold',v:1.2,sub:'record trade'},{l:'FX',v:0.8,sub:'weaker IDR'},{l:'Cost',v:-1.0,sub:'royalty+infl'},{l:'Actual',v:40.5,t:'a'}]},
@@ -496,17 +474,7 @@ finRows.forEach(tr=>tr.onclick=()=>selRow(tr.dataset.id));
 function selRow(id){finRows.forEach(tr=>tr.classList.toggle('sel',tr.dataset.id===id));if(curBridge!=='subsidiary'){[...bsel.children].forEach(x=>x.classList.toggle('on',x.dataset.m==='subsidiary'));wf('subsidiary');}}
 
 /* ── capital allocation — sources → uses waterfall (BHP/Rio-style framework) ── */
-const CAPALLOC=[
- {l:'EBITDA',v:40.5,t:'b',sub:'group · vs RKAP 45'},
- {l:'Tax & interest',v:-9.0,sub:'cash tax + finance'},
- {l:'Working capital',v:-2.0,sub:'inventory + AR'},
- {l:'Sustaining capex',v:-11.5,sub:'maintain assets'},
- {l:'Free cash flow',v:18.0,t:'s',sub:'vs RKAP 22'},
- {l:'Growth capex',v:-12.0,sub:'Manyar · SGAR',col:'#9C6644'},
- {l:'Net debt drawn',v:5.0,sub:'funds the gap',col:'#7C766B'},
- {l:'Dividends',v:-9.0,sub:'State + minorities'},
- {l:'Net cash Δ',v:2.0,t:'a',sub:'retained'},
-];
+const CAPALLOC=TOWER.capalloc;
 /* ── AI Chief of Staff for Capital — basic insight + ask-the-data chatbot ── */
 const CAP_STATE={ebitda:40.5,opCash:29.5,sustaining:11.5,growth:12.0,dividend:9.0,debtDrawn:5.0,fcf:18.0,netCash:2.0,
  discipline:{fcfDivCover:'2.0×',netDebtEbitda:'0.8×',cashConversion:'44%',reinvestment:'80%'},
@@ -537,22 +505,10 @@ document.getElementById('capaiform').addEventListener('submit',e=>{e.preventDefa
 document.querySelectorAll('#capaiex a').forEach(a=>a.onclick=()=>capAsk(a.dataset.q));
 (async function(){try{const h=await(await fetch('/api/health')).json();const b=document.getElementById('capaibadge');if(b)b.textContent=h.aiMode==='live'?'· live':'· capital';}catch(e){}})();
 /* capital KPI strip — headline generation/deployment metrics with quarterly sparklines */
-const CKPI=[
- {l:'Operating cash',a:29.5,p:31,u:'Rp T',q:[6.8,7.2,7.6,7.9],gd:'up',n:'EBITDA less tax & working capital.'},
- {l:'Free cash flow',a:18.0,p:22,u:'Rp T',q:[5.6,3.2,4.4,4.8],gd:'up',n:'Post-sustaining capex — below plan.'},
- {l:'Growth capex',a:12.0,p:10,u:'Rp T',q:[2.4,3.0,3.2,3.4],gd:'flat',n:'Manyar + SGAR — the build, ramping.'},
- {l:'Dividend paid',a:9.0,p:9.5,u:'Rp T',q:[2.1,2.2,2.3,2.4],gd:'flat',n:'To the State & minorities.'},
- {l:'Net debt / EBITDA',a:0.8,p:0.7,u:'×',dec:1,q:[0.55,0.6,0.7,0.8],gd:'down',n:'Rose on the draw; headroom to ~2.0×.'},
-];
+const CKPI=TOWER.ckpi;
 document.getElementById('ckpis').innerHTML=CKPI.map(k=>{const v=(k.a-k.p)/k.p*100,pos=k.gd==='flat'?null:(k.gd==='up'?v>=0:v<=0),cls=pos===null?'flat':(pos?'up':'down'),co=pos===null?'#7C766B':(pos?'#5E7350':'#A4543C'),pp=k.u==='×'?k.p:k.p/4,vt=k.a.toFixed(1),pt=k.dec?k.p.toFixed(1):k.p,ux=k.u==='×'?'×':'';return `<div class="kpi"><div class="l">${k.l}</div><div class="var ${cls}">${v>=0?'▲ +':'▼ '}${Math.abs(v).toFixed(0)}%</div><div class="act">${vt}<small> ${k.u}</small></div><div class="base">vs RKAP ${pt}${ux}</div>${spark(k.q,pp,true,co)}<div class="spkc">quarterly · ‑‑ plan</div><div class="note">${k.n}</div></div>`}).join('');
 /* returns by subsidiary — ROIC vs cost of capital; bar=ROIC, tick=WACC, height=capital, label=economic profit (sorted by spread) */
-const RET=[
- {nm:'Freeport',ce:170,roic:14,wacc:10},
- {nm:'Inalum',ce:28,roic:11,wacc:9},
- {nm:'Timah',ce:8,roic:10,wacc:12},
- {nm:'Bukit Asam',ce:22,roic:9,wacc:12},
- {nm:'Antam',ce:40,roic:8,wacc:11},
-];
+const RET=TOWER.ret;
 function drawWaterfall(steps,ymax){const s=document.getElementById('caf');s.innerHTML='';
  const x0=132,x1=1544,y0=520,yT0=44,H=y0-yT0,sc=v=>H*v/ymax;
  const n=steps.length,bw=Math.min(150,(x1-x0)/n-16),gap=(x1-x0-bw*n)/(n-1);
@@ -584,13 +540,7 @@ function returnsMini(){const s=document.getElementById('capret');if(!s)return;s.
  E(s,'line',{x1:px0,y1:bot,x2:px1,y2:bot,stroke:'#CBC2B0'});
  E(s,'text',{x:6,y:bot+16,'font-size':8.5,fill:'#6B655B'},'Group economic profit +Rp 5.3T · ~96% from Freeport');}
 /* capital deployed over time — stacked uses of cash (sustaining/dividend/growth), FY20→FY24 */
-const CHIST=[
- {y:'FY20',sus:9.0,div:7.0,grw:4.0},
- {y:'FY21',sus:9.5,div:8.0,grw:6.0},
- {y:'FY22',sus:10.0,div:11.0,grw:8.0},
- {y:'FY23',sus:11.0,div:10.0,grw:10.0},
- {y:'FY24',sus:11.5,div:9.0,grw:12.0},
-];
+const CHIST=TOWER.chist;
 function histRender(){const s=document.getElementById('caphist');if(!s)return;s.innerHTML='';
  const x0=34,x1=508,y0=176,y1=36,n=CHIST.length,tot=CHIST.map(d=>d.sus+d.div+d.grw),ymax=Math.ceil(Math.max(...tot)/10)*10;
  const sc=v=>(y0-y1)*v/ymax,bw=Math.min(54,(x1-x0)/n-14),gap=(x1-x0-bw*n)/(n-1);
@@ -602,12 +552,7 @@ function histRender(){const s=document.getElementById('caphist');if(!s)return;s.
  lg.forEach(([t,c])=>{E(s,'rect',{x:lx,y:14,width:9,height:9,rx:1.5,fill:c,opacity:.86});E(s,'text',{x:lx+13,y:22,'font-size':8.5,fill:'#6B655B'},t);lx+=t.length*5.4+34;});
  E(s,'text',{x:x1,y:22,'text-anchor':'end','font-size':8.5,'font-weight':700,fill:'#9C6644'},'growth 4→12 · now the biggest use');}
 /* growth pipeline — the Rp 12T build, by project: capex · % complete · first production · expected IRR */
-const PIPE=[
- {nm:'Manyar Cu smelter',own:'PTFI · Gresik',cap:5.5,pct:95,prod:'2024',irr:14},
- {nm:'SGAR alumina Ph.1',own:'Inalum/Antam',cap:3.5,pct:85,prod:'2025',irr:13},
- {nm:'Grasberg underground',own:'PTFI · block cave',cap:2.0,pct:70,prod:'ramp',irr:null},
- {nm:'Smelters · debottleneck',own:'Antam · Timah',cap:1.0,pct:55,prod:'’25–26',irr:12},
-];
+const PIPE=TOWER.pipe;
 document.getElementById('cappipe').innerHTML='<div class="phd"><span>Project</span><span>Capex</span><span>Complete</span><span>1st</span><span>IRR</span></div>'+PIPE.map(p=>`<div class="prow"><div class="pnm">${p.nm}<small>${p.own}</small></div><div class="pcap">${p.cap.toFixed(1)}</div><div class="ppct"><span class="pbar"><span style="width:${p.pct}%"></span></span><small>${p.pct}%</small></div><div class="pprod">${p.prod}</div><div class="pirr">${p.irr?'~'+p.irr+'%':'—'}</div></div>`).join('');
 /* capital discipline — the metrics that judge whether the allocation is sound */
 
@@ -633,13 +578,7 @@ function scatter(){const s=document.getElementById('sc');if(!s)return;s.innerHTM
 /* drill panel */
 const stx={green:{c:'rag green',g:'✓',w:'ON TRACK'},amber:{c:'rag amber',g:'!',w:'WATCH'},red:{c:'rag red',g:'▲',w:'RISK'}};
 /* ── cross-subsidiary operations scorecard — normalized metrics across commodities ── */
-const OPS=[
- {id:'ptfi',deliver:89,dv:'Grasberg mud rush',ltifr:0.42,fatal:0,life:25,ost:'fm'},
- {id:'ptba',deliver:101,dv:'record 43.3 Mt',ltifr:0.55,fatal:0,life:18,ost:'run'},
- {id:'antam',deliver:89,dv:'FeNi 20.1k / 22.5k TNi',ltifr:0.38,fatal:0,life:20,ost:'con'},
- {id:'inalum',deliver:127,dv:'+27% volume',ltifr:0.30,fatal:0,life:null,ost:'run'},
- {id:'timah',deliver:123,dv:'+23% refined tin',ltifr:0.61,fatal:0,life:14,ost:'run'},
-];
+const OPS=TOWER.ops;
 const ostx={run:{c:'green',g:'✓',w:'RUNNING'},con:{c:'amber',g:'!',w:'CONSTRAINED'},fm:{c:'red',g:'▲',w:'FORCE MAJEURE'}};
 const ORANK={fm:0,con:1,run:2};
 function opsScorecard(){
@@ -655,24 +594,13 @@ function opsScorecard(){
  document.getElementById('opsc').innerHTML=`<thead><tr><th class="l">Company</th><th class="l">Output · vs plan</th><th>Safety · LTIFR</th><th>Mine life</th><th>Operational status</th></tr></thead><tbody>${rows}</tbody>`;
  [...document.querySelectorAll('#opsc tbody tr')].forEach(tr=>tr.onclick=()=>opsAskCompany(tr.dataset.id));}
 /* disruption & asset health — what's physically impaired across the fleet */
-const OHEALTH=[
- {id:'ptfi',ev:'Grasberg mud rush · Sep-2025',im:'2026 output ~−35%; ramp recovery through the year',st:'fm'},
- {id:'antam',ev:'RKEF FeNi below nameplate',im:'20.1k of 22.5k TNi; high-cost, curtailment under review',st:'con'},
- {id:'ptba',ev:'Record production',im:'43.3 Mt; strip ratio beat 6.23× vs 6.44×',st:'run'},
- {id:'inalum',ev:'Smelter ramp',im:'+27% volume toward ~900 kt; captive hydro',st:'run'},
- {id:'timah',ev:'Refined tin +23%',im:'operating well; <15-yr reserve life the structural watch',st:'run'},
-];
+const OHEALTH=TOWER.ohealth;
 function opsHealth(){const el=document.getElementById('ohealth');if(!el)return;
  el.innerHTML=OHEALTH.slice().sort((a,b)=>ORANK[a.st]-ORANK[b.st]).map(h=>{const s=SUBS.find(x=>x.id===h.id),St=ostx[h.st];
   return `<div class="ohrow" data-id="${h.id}"><span class="ohdot ${St.c}"></span><div class="ohmain"><div class="ohnm">${s.nm} <span class="rag ${St.c}" style="font-size:8px;padding:1px 6px">${St.w}</span></div><div class="ohev">${h.ev}</div><div class="ohim">${h.im}</div></div></div>`;}).join('');
  [...el.querySelectorAll('.ohrow')].forEach(r=>r.onclick=()=>opsAskCompany(r.dataset.id));}
 /* growth-build tracker — physical construction progress & first production (capex/IRR live on Capital) */
-const OBUILD=[
- {p:'Manyar Cu smelter',own:'Freeport · Gresik',pct:95,prod:'2024',st:'Commissioning'},
- {p:'SGAR alumina Ph.1',own:'Inalum/Antam · Mempawah',pct:85,prod:'2025',st:'Construction'},
- {p:'Grasberg underground',own:'Freeport · block cave',pct:70,prod:'ramping',st:'Ramp-up'},
- {p:'Smelters · debottleneck',own:'Antam · Timah',pct:55,prod:'’25–26',st:'In progress'},
-];
+const OBUILD=TOWER.obuild;
 function opsBuild(){const el=document.getElementById('obuild');if(!el)return;
  el.innerHTML='<div class="phd" style="grid-template-columns:1.5fr 1.15fr 50px 1fr"><span>Project</span><span>Progress</span><span>1st</span><span>Status</span></div>'+OBUILD.map(b=>`<div class="prow" style="grid-template-columns:1.5fr 1.15fr 50px 1fr"><div class="pnm">${b.p}<small>${b.own}</small></div><div class="ppct"><span class="pbar" style="max-width:none"><span style="width:${b.pct}%"></span></span><small>${b.pct}%</small></div><div class="pprod">${b.prod}</div><div class="pprod" style="color:var(--tx);font-weight:600">${b.st}</div></div>`).join('');}
 /* ── AI Operations copilot — company-aware Q&A over the operational state ── */
@@ -718,18 +646,7 @@ document.getElementById('scform').addEventListener('submit',e=>{e.preventDefault
 document.querySelectorAll('.scex a').forEach(a=>a.onclick=()=>{document.getElementById('scq').value=a.dataset.q;runScenario(a.dataset.q);});
 
 /* ── CAPITAL PROJECTS — PMO/BOD monitoring of the strategic megaproject portfolio ── */
-const PROJ=[
- {id:'manyar',nm:'Manyar copper smelter',co:'Freeport',jv:1,stage:'Commissioning',gate:5,gates:6,budget:58,committed:57,spent:55,eac:60,pctP:98,pctA:95,fpS:2024,fpF:2024,spi:0.97,cpi:0.93,benCap:'600 kt Cu cathode',irrS:14,irrC:13,benSt:'ontrack',risk:'Commissioning ramp slower than plan; concentrate & acid logistics.',ragC:'a',ragS:'g',ragB:'g'},
- {id:'sgar1',nm:'SGAR alumina Ph.1',co:'Inalum/Antam',jv:0,stage:'Construction',gate:4,gates:6,budget:15,committed:13,spent:11,eac:16,pctP:88,pctA:85,fpS:2025,fpF:2025,spi:0.96,cpi:0.94,benCap:'1.0 Mtpa alumina',irrS:13,irrC:12,benSt:'ontrack',risk:'EPC labour availability + monsoon schedule pressure.',ragC:'a',ragS:'a',ragB:'g'},
- {id:'sgar2',nm:'SGAR alumina Ph.2',co:'Inalum/Antam',jv:0,stage:'FEED',gate:2,gates:6,budget:16,committed:2,spent:1,eac:16,pctP:8,pctA:8,fpS:2027,fpF:2027,spi:1.00,cpi:1.00,benCap:'+1.0 Mtpa alumina',irrS:13,irrC:13,benSt:'ontrack',risk:'FID pending; bauxite feedstock security.',ragC:'g',ragS:'g',ragB:'g'},
- {id:'grasberg',nm:'Grasberg underground',co:'Freeport',jv:1,stage:'Ramp-up',gate:5,gates:6,budget:40,committed:38,spent:34,eac:41,pctP:80,pctA:74,fpS:2023,fpF:2024,spi:0.93,cpi:0.98,benCap:'sustain ~1.6 Blb Cu',irrS:20,irrC:18,benSt:'atrisk',risk:'Sep-2025 mud rush — 2026 output ~−35%, ramp recovery through the year.',ragC:'g',ragS:'a',ragB:'a'},
- {id:'inalumx',nm:'Inalum smelter expansion',co:'Inalum',jv:0,stage:'Construction',gate:4,gates:6,budget:12,committed:8,spent:5,eac:12,pctP:45,pctA:44,fpS:2026,fpF:2026,spi:0.98,cpi:1.00,benCap:'→ ~900 kt aluminium',irrS:12,irrC:12,benSt:'ontrack',risk:'Captive power supply for the new pot line.',ragC:'g',ragS:'g',ragB:'g'},
- {id:'halmahera',nm:'Antam Halmahera nickel',co:'Antam',jv:0,stage:'Construction',gate:4,gates:6,budget:10,committed:9,spent:8,eac:12.5,pctP:70,pctA:55,fpS:2025,fpF:2026,spi:0.79,cpi:0.80,benCap:'FeNi / MHP lines',irrS:12,irrC:8,benSt:'atrisk',risk:'~Rp 2.5T overrun + ~12-month slip; high-cost RKEF economics under soft nickel.',ragC:'r',ragS:'r',ragB:'a'},
- {id:'dme',nm:'PTBA coal-to-DME',co:'Bukit Asam',jv:0,stage:'FEED · on hold',gate:2,gates:6,budget:33,committed:3,spent:2,eac:33,pctP:35,pctA:12,fpS:2027,fpF:0,spi:0.34,cpi:1.00,benCap:'1.4 Mtpa DME',irrS:10,irrC:4,benSt:'eroded',risk:'Technology partner exit; economics eroded vs LPG import parity — effectively stalled.',ragC:'a',ragS:'r',ragB:'r'},
- {id:'ptbare',nm:'PTBA renewables & power',co:'Bukit Asam',jv:0,stage:'Construction',gate:4,gates:6,budget:4,committed:3,spent:2,eac:4,pctP:60,pctA:58,fpS:2025,fpF:2025,spi:0.97,cpi:1.00,benCap:'~200 MW RE + solar',irrS:11,irrC:11,benSt:'ontrack',risk:'Grid interconnection & land acquisition.',ragC:'g',ragS:'g',ragB:'g'},
- {id:'timahtsl',nm:'Timah TSL furnace upgrade',co:'Timah',jv:0,stage:'Commissioning',gate:5,gates:6,budget:3,committed:3,spent:2.8,eac:3.1,pctP:95,pctA:92,fpS:2025,fpF:2025,spi:0.97,cpi:0.97,benCap:'modern low-cost tin smelting',irrS:12,irrC:12,benSt:'ontrack',risk:'Commissioning; feed-grade variability.',ragC:'g',ragS:'a',ragB:'g'},
- {id:'battery',nm:'Battery materials / HPAL',co:'MIND ID JV',jv:1,stage:'FEED',gate:2,gates:6,budget:20,committed:4,spent:2,eac:20,pctP:15,pctA:14,fpS:2028,fpF:2028,spi:0.93,cpi:1.00,benCap:'precursor / pCAM',irrS:15,irrC:14,benSt:'atrisk',risk:'Offtake commitments & partner alignment on the EV supply chain.',ragC:'g',ragS:'a',ragB:'a'},
-];
+const PROJ=TOWER.proj;
 const RCOL={g:'#5E7350',a:'#A9842F',r:'#A4543C'};
 const RAGX={g:{c:'green',g:'✓',w:'ON TRACK'},a:{c:'amber',g:'!',w:'WATCH'},r:{c:'red',g:'▲',w:'ESCALATE'}};
 const BENX={ontrack:'benefit on track',atrisk:'benefit at risk',eroded:'benefit eroded'};
@@ -746,18 +663,7 @@ function projTotals(){const n=PROJ.length,red=PROJ.filter(p=>pworst(p)==='r').le
   {l:'Benefits at risk',v:benR+' projects',s:'IRR / capacity eroded',r:benR>0?'a':'g'},
  ];
  document.getElementById('projkpis').innerHTML=cards.map(c=>`<div class="kpi"><div class="l">${c.l}</div><div class="act" style="font-size:26px${c.r?';color:'+RCOL[c.r]:''}">${c.v}</div><div class="note" style="margin-top:6px">${c.s}</div></div>`).join('');}
-const PMETA={
- manyar:{type:'smelter',x:198.8,y:146.3,place:'Gresik, East Java',epc:'Chiyoda–PP',escore:4.1},
- sgar1:{type:'refinery',x:157.9,y:62.8,place:'Mempawah, W. Kalimantan',epc:'Chalieco (MCC)',escore:3.6},
- sgar2:{type:'refinery',x:150.5,y:64.6,place:'Mempawah, W. Kalimantan',epc:'FID pending',escore:3.4},
- grasberg:{type:'mine',x:470.4,y:111.9,place:'Tembagapura, Papua',epc:'PTFI in-house',escore:4.0},
- inalumx:{type:'smelter',x:51.9,y:29.4,place:'Kuala Tanjung, N. Sumatra',epc:'CHALCO / local',escore:3.8},
- halmahera:{type:'downstream',x:368.1,y:60.8,place:'Halmahera, N. Maluku',epc:'Lygend JV',escore:3.0},
- dme:{type:'downstream',x:100.5,y:108,place:'Tanjung Enim, S. Sumatra',epc:'Air Products (exited)',escore:2.4},
- ptbare:{type:'power',x:108.6,y:108.1,place:'Tanjung Enim, S. Sumatra',epc:'Local EPC',escore:3.7},
- timahtsl:{type:'smelter',x:126.1,y:90.6,place:'Bangka Island',epc:'Metso Outotec',escore:4.2},
- battery:{type:'downstream',x:302.6,y:99.1,place:'Morowali, C. Sulawesi',epc:'CATL consortium',escore:3.3},
-};
+const PMETA=TOWER.pmeta;
 const PTYPE={
  smelter:{grad:'linear-gradient(135deg,#9C6644,#5f3f2b)',icon:'▲',lab:'Smelter'},
  refinery:{grad:'linear-gradient(135deg,#7C766B,#494540)',icon:'⬢',lab:'Refinery'},
