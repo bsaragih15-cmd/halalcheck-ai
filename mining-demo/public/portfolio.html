@@ -54,10 +54,33 @@ svg text{font-family:'IBM Plex Mono',monospace}
 .stage .sd{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:8.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
 .sub{margin-left:6px;padding-left:12px;border-left:1px solid var(--border)}
 .exbar{display:flex;align-items:center;gap:12px;flex:none;padding:7px 13px;margin-top:12px;background:var(--panel);border:1px solid var(--border);border-radius:10px}
-.exbar .exlab{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--tx);white-space:nowrap}
-.exbar .alertrow{margin-top:0;flex:1;min-width:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;padding-bottom:1px;-ms-overflow-style:none;scrollbar-width:none}
+.exbar .exlab{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.04em;color:var(--tx);white-space:nowrap;cursor:pointer}
+.exbar .exlab .cnt{display:inline-block;margin-left:5px;padding:1px 7px;border-radius:9px;background:#F3E5DF;color:#A4543C}
+.exbar .alertrow{margin-top:0;flex:1;min-width:0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;padding-bottom:1px;-ms-overflow-style:none;scrollbar-width:none;-webkit-mask-image:linear-gradient(90deg,#000 90%,transparent);mask-image:linear-gradient(90deg,#000 90%,transparent)}
 .exbar .alertrow::-webkit-scrollbar{display:none}
 .exbar .alert{flex:none}
+.exbar .exmore{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--mut);cursor:pointer;white-space:nowrap;padding:3px 8px;border:1px solid var(--border);border-radius:7px}
+.exbar .exmore:hover{color:var(--tx);background:var(--panel2)}
+.exbar.open{flex-wrap:wrap}
+.exbar.open .alertrow{flex-wrap:wrap;overflow:visible;-webkit-mask-image:none;mask-image:none}
+/* table row affordance */
+.fin tbody tr .chev{font-family:'IBM Plex Mono',monospace;color:var(--faint);opacity:0;transition:opacity .13s;margin-left:6px}
+.fin tbody tr:hover .chev{opacity:1}
+/* forward risks (merged from Outlook) */
+.fcrisk{display:flex;gap:9px;padding:7px 0;border-bottom:1px solid #F2EDE3;align-items:flex-start}.fcrisk:last-child{border-bottom:0}
+.fcrisk .fdot{width:8px;height:8px;border-radius:50%;flex:none;margin-top:4px}
+.fcrisk .ft1{font-size:11.5px;font-weight:700;color:var(--tx)}.fcrisk .ft2{font-size:10.5px;color:var(--mut);line-height:1.4;margin-top:1px}
+/* stress → allocate re-rank link */
+.rerank{display:inline-block;margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:700;color:var(--teal);cursor:pointer;text-decoration:underline}
+/* allocate: rank deltas + decision-log filters */
+.rkd{font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:700;margin-left:7px;padding:1px 6px;border-radius:5px}
+.rkd.up{color:#5E7350;background:#ECF0E4}.rkd.dn{color:#A4543C;background:#F3E5DF}.rkd.eq{color:var(--faint)}
+.dlfil{display:flex;gap:5px;margin:7px 0 3px;flex-wrap:wrap}
+.dlfil button{font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:700;color:var(--mut);background:var(--panel2);border:1px solid var(--border);padding:2px 8px;border-radius:6px;cursor:pointer}
+.dlfil button.on{color:#FBF8F2;background:var(--teal);border-color:var(--teal)}
+.dlfil .duec{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:700;color:#A9842F;background:#F5EEDC;border-radius:6px;padding:2px 8px}
+/* period pill (vhead) */
+.periodsel{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--tx);background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:4px 8px;margin-top:6px;cursor:pointer}
 .railft{margin-top:auto;border-top:1px solid var(--border);padding:14px 10px 4px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--faint);line-height:1.7}
 .railft .ai{color:var(--violet)}
 .railft .pill{display:inline-block;border:1px solid var(--border);border-radius:6px;padding:3px 8px;color:var(--tx);margin-top:6px}
@@ -130,9 +153,9 @@ svg text{font-family:'IBM Plex Mono',monospace}
 .r .big{color:var(--red)}.r .ed{background:var(--red)}.v2 .big{color:var(--violet)}.v2 .ed{background:var(--violet)}.a2 .big{color:var(--amber)}.a2 .ed{background:var(--amber)}
 /* kpi */
 .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:13px;flex:none}
-.kpi{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:12px 15px;position:relative}
+.kpi{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:10px 14px;position:relative}
 .kpi .l{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);font-family:'IBM Plex Mono',monospace}
-.kpi .act{font-size:30px;font-weight:800;font-family:'IBM Plex Mono',monospace;margin-top:8px}.kpi .act small{font-size:12px;color:var(--mut)}
+.kpi .act{font-size:27px;font-weight:800;font-family:'IBM Plex Mono',monospace;margin-top:6px}.kpi .act small{font-size:12px;color:var(--mut)}
 .kpi .base{font-size:11px;color:var(--mut);font-family:'IBM Plex Mono',monospace;margin-top:3px}
 .kpi .var{position:absolute;top:14px;right:14px;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;padding:4px 8px;border-radius:6px}
 .up{color:#5E7350;background:#ECF0E4}.down{color:#A4543C;background:#F3E5DF}
@@ -141,7 +164,7 @@ svg text{font-family:'IBM Plex Mono',monospace}
 .kpi.hero{border-color:rgba(164,84,60,.4);box-shadow:0 0 0 1px #F3E5DF,0 6px 22px rgba(164,84,60,.08)}
 .kpi .mgc{font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:#8A7B55;background:#F5EFE2;border-radius:6px;padding:4px 7px;margin-top:7px;display:inline-block}
 .kpi .flag{font-family:'IBM Plex Mono',monospace;font-size:8.5px;font-weight:700;color:#8A7B55;background:#F5EFE2;border:1px solid #EBE0CB;border-radius:5px;padding:2px 6px;margin-top:7px;display:inline-block}
-.kpi .spk{display:block;width:100%;height:auto;margin:9px 0 1px}
+.kpi .spk{display:block;width:100%;height:auto;margin:6px 0 1px}
 .kpi .spkc{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.03em;color:var(--faint)}
 /* capital — growth-capex deployment bars + discipline scorecard */
 .dpl{display:flex;align-items:center;gap:11px;margin:8px 0}
@@ -199,6 +222,9 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
 .ohnm{font-size:12.5px;font-weight:600;color:var(--tx);display:flex;align-items:center;gap:8px}
 .ohev{font-size:10px;color:var(--faint);margin-top:2px;font-family:'IBM Plex Mono',monospace}
 .ohim{font-size:11px;color:var(--mut);margin-top:3px;line-height:1.35}
+.ohspk{width:132px;flex:none;display:flex;flex-direction:column;gap:2px;justify-content:center}
+.ohspk .spk{width:100%;height:auto;margin:0}
+.ohspk .sec2{font-size:7.5px}
 /* capital projects — heatmap + detail */
 .sec2{font-size:9px;color:var(--faint);font-family:'IBM Plex Mono',monospace;margin-top:2px}
 .hcell{display:inline-flex;flex-direction:column;align-items:center;min-width:66px;padding:4px 8px;border-radius:6px;font-family:'IBM Plex Mono',monospace}
@@ -300,7 +326,6 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
    <div class="stage"><span class="sn">02</span><span class="st">Forecast</span><span class="sd">Predictive</span></div>
    <div class="sub">
      <a class="item" data-v="forecast"><span class="ic">›</span>Driver model<span class="kx am" id="fckx"></span></a>
-     <a class="item" data-v="outlook"><span class="ic">›</span>Outlook</a>
    </div>
    <div class="stage"><span class="sn">03</span><span class="st">Stress test</span><span class="sd">Simulative</span></div>
    <div class="sub">
@@ -317,12 +342,13 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
  <!-- ════ MAIN ════ -->
  <div class="main">
    <div class="vhead"><div><div class="t" id="vt">Financial performance</div><div class="c" id="vc">Group results &amp; per-subsidiary attribution vs RKAP</div></div>
-     <div class="r">MIND ID CONSOLIDATED<br>Rp trillion · FY2024 actual vs RKAP</div></div>
+     <div class="r">MIND ID CONSOLIDATED · Rp trillion<br><select class="periodsel" id="periodsel" title="demo dataset — FY2024 actuals as of 30 Jun"><option>FY2024 actual vs RKAP</option><option disabled>Q1-2025 flash (soon)</option><option disabled>Q2-2025 flash (soon)</option></select></div></div>
 
-   <div class="exbar"><span class="exlab">⚠ Exceptions</span><div class="alertrow" id="alerts"></div></div>
+   <div class="exbar" id="exbar"><span class="exlab" id="exlab">⚠ Exceptions</span><div class="alertrow" id="alerts"></div><span class="exmore" id="exmore">show all ▾</span></div>
 
    <!-- FINANCIALS (group results + subsidiary attribution, merged) -->
    <div class="view on" id="v-financials">
+     <div style="display:flex;justify-content:flex-end;flex:none;margin-bottom:-6px"><div class="ccsel" id="cmpsel" style="margin:0"><button data-c="p" class="on">vs RKAP</button><button data-c="y">vs FY23</button></div></div>
      <div class="kpis" id="kpis"></div>
      <div class="card" style="flex:1;display:flex;flex-direction:column">
        <div class="bhead"><div class="ch">What moved EBITDA vs RKAP <span class="cs" style="display:inline">· Rp T · the same Rp 4.5T gap, two ways</span></div>
@@ -354,20 +380,20 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
        </div>
      </div>
      <div style="display:grid;grid-template-columns:1.05fr 1.2fr 1fr;gap:12px;flex:none">
-       <div class="card" style="padding:13px 16px"><div class="ch">Returns on capital</div><div class="cq">Is each business earning above its cost of capital?</div><svg id="capret" viewBox="0 0 520 214" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;margin-top:7px"></svg></div>
+       <div class="card" style="padding:13px 16px"><div class="ch">Returns on capital <span class="cs" style="display:inline">· click a row to ask the copilot</span></div><div class="cq">Is each business earning above its cost of capital?</div><svg id="capret" viewBox="0 0 520 214" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;margin-top:7px"></svg></div>
        <div class="card" style="padding:13px 16px"><div class="ch">Growth pipeline</div><div class="cq">What is the build buying — and when does it deliver?</div><div id="cappipe" style="margin-top:9px"></div></div>
        <div class="card" style="padding:13px 16px"><div class="ch">Capital deployed over time</div><div class="cq">How has the mix of cash uses shifted?</div><svg id="caphist" viewBox="0 0 520 214" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;margin-top:7px"></svg></div>
      </div>
    </div>
 
    <!-- OPERATIONS -->
-   <div class="view" id="v-ops">
+   <div class="view" id="v-ops" style="overflow-y:auto">
      <div class="card" style="flex:none">
        <div class="ch">Cross-subsidiary operations scorecard <span class="cs" style="display:inline">· normalized across commodities · click a row to ask the copilot</span></div>
        <div class="cq">Are all five assets delivering, safe, and durable?</div>
        <table class="fin" id="opsc" style="margin-top:9px"></table>
      </div>
-     <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;flex:1;min-height:0">
+     <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px;flex:1;min-height:300px">
        <div class="card" style="display:flex;flex-direction:column;min-height:0">
          <div class="ch">Disruption &amp; asset health <span class="cs" style="display:inline">· what's physically impaired</span></div>
          <div class="cq">Is anything operationally broken across the fleet?</div>
@@ -399,10 +425,17 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
            <div class="cq">Which projects need the board's attention?</div>
            <div id="projcards" class="pcardgrid" style="overflow-y:auto;flex:1;min-height:0;margin-top:9px;padding-right:4px"></div>
          </div>
-         <div class="card" style="display:flex;flex-direction:column;min-height:0">
-           <div class="ch">Geo footprint <span class="cs" style="display:inline">· across the archipelago</span></div>
-           <div class="cq">Where in Indonesia is the capital going?</div>
-           <div class="fillsvg" style="margin-top:6px"><svg id="projmap" viewBox="0 0 520 188" preserveAspectRatio="xMidYMid meet"></svg></div>
+         <div style="display:flex;flex-direction:column;gap:12px;min-height:0">
+           <div class="card" style="display:flex;flex-direction:column;min-height:0;flex:1.15">
+             <div class="ch">Geo footprint <span class="cs" style="display:inline">· across the archipelago</span></div>
+             <div class="cq">Where in Indonesia is the capital going?</div>
+             <div class="fillsvg" style="margin-top:6px"><svg id="projmap" viewBox="0 0 520 188" preserveAspectRatio="xMidYMid meet"></svg></div>
+           </div>
+           <div class="card" style="display:flex;flex-direction:column;min-height:0;flex:1">
+             <div class="ch">Portfolio S-curve <span class="cs" style="display:inline">· all 10 projects · Rp T</span></div>
+             <div class="cq">Is the whole build spending to plan — and where does it land?</div>
+             <div class="fillsvg" style="margin-top:4px"><svg id="projsagg" viewBox="0 0 520 170" preserveAspectRatio="xMidYMid meet"></svg></div>
+           </div>
          </div>
        </div>
      </div>
@@ -427,6 +460,9 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
          <div class="ch" style="margin-top:14px">Dividend capacity &amp; funding</div>
          <div class="cq">Can FY25 fund the build and the dividend?</div>
          <div class="pdgrid" id="fundtiles" style="margin-top:9px"></div>
+         <div class="ch" style="margin-top:14px">Forward risks</div>
+         <div class="cq">What could move this forecast — and who owns it?</div>
+         <div id="fcrisks" style="margin-top:5px"></div>
        </div>
      </div>
    </div>
@@ -434,10 +470,18 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
    <!-- STRESS — stage 3 · simulative (correlated shock library on the forecast baseline) -->
    <div class="view" id="v-stress">
      <div style="display:grid;grid-template-columns:1.45fr 1fr;gap:12px;flex:1;min-height:0">
-       <div class="card" style="display:flex;flex-direction:column;min-height:0">
-         <div class="ch">Scenario library <span class="cs" style="display:inline">· correlated shocks on the FY25 baseline · click a row</span></div>
-         <div class="cq">What hits EBITDA, the dividend and leverage — and how hard?</div>
-         <div style="overflow-y:auto;flex:1;min-height:0;margin-top:8px"><table class="fin" id="scentbl"></table></div>
+       <div style="display:flex;flex-direction:column;gap:12px;min-height:0">
+         <div class="card" style="display:flex;flex-direction:column;min-height:0;flex:1">
+           <div class="ch">Scenario library <span class="cs" style="display:inline">· correlated shocks on the FY25 baseline · click a row</span></div>
+           <div class="cq">What hits EBITDA, the dividend and leverage — and how hard?</div>
+           <div style="overflow-y:auto;flex:1;min-height:0;margin-top:8px"><table class="fin" id="scentbl"></table></div>
+         </div>
+         <div class="card copilot" style="flex:none">
+           <div class="ch" style="margin-bottom:8px">◇ Scenario copilot <span class="cs" style="display:inline">· type a shock → who's exposed · feeds the ticker</span></div>
+           <form id="scform"><input id="scq" autocomplete="off" placeholder="e.g. copper −30% and rupiah weakens 10%"><button type="submit">Run</button></form>
+           <div class="scex">try: <a data-q="coal falls 20%">coal falls 20%</a> · <a data-q="nickel down 25%">nickel −25%</a> · <a data-q="copper -30% and rupiah weakens 10%">copper −30% + rupiah −10%</a></div>
+           <div id="scres"></div>
+         </div>
        </div>
        <div class="card" style="display:flex;flex-direction:column;min-height:0">
          <div class="ch" id="scenbrkh">Scenario breakdown</div>
@@ -467,17 +511,6 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
          <div class="cq">Prescriptions become tracked actions — the loop closes here</div>
          <div id="declog" style="margin-top:8px;overflow-y:auto;flex:1;min-height:0"></div>
        </div>
-     </div>
-   </div>
-
-   <!-- OUTLOOK -->
-   <div class="view" id="v-outlook">
-     <div class="outlook" id="outlookcards"></div>
-     <div class="card copilot" style="flex:none">
-       <div class="ch" style="margin-bottom:8px">◇ Scenario copilot <span class="cs" style="display:inline">· type a shock → who's exposed</span></div>
-       <form id="scform"><input id="scq" autocomplete="off" placeholder="e.g. copper −30% and rupiah weakens 10%"><button type="submit">Run</button></form>
-       <div class="scex">try: <a data-q="coal falls 20%">coal falls 20%</a> · <a data-q="nickel down 25%">nickel −25%</a> · <a data-q="copper -30% and rupiah weakens 10%">copper −30% + rupiah −10%</a></div>
-       <div id="scres"></div>
      </div>
    </div>
 
@@ -522,7 +555,11 @@ function spark(q,plan,up,co){const W=158,H=30,pad=3,all=q.concat([plan]),mn=Math
  const pts=q.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' '),area=pad+','+(H-pad)+' '+pts+' '+(W-pad)+','+(H-pad);
  const py=y(plan).toFixed(1),lx=x(q.length-1).toFixed(1),ly=y(q[q.length-1]).toFixed(1);
  return `<svg class="spk" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet"><polyline points="${area}" fill="${col}" opacity=".09"/><line x1="${pad}" y1="${py}" x2="${W-pad}" y2="${py}" stroke="#B7B0A3" stroke-width="1" stroke-dasharray="3 3" opacity=".55"/><polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="${lx}" cy="${ly}" r="2.5" fill="${col}"/></svg>`;}
-document.getElementById('kpis').innerHTML=KPI.map(k=>{const v=(k.a-k.p)/k.p*100,up=v>=0;return `<div class="kpi${k.hero?' hero':''}"><div class="l">${k.l}</div><div class="var ${up?'up':'down'}">${up?'▲ +':'▼ '}${v.toFixed(0)}%</div><div class="act">${k.a.toFixed(1)}<small> Rp T</small></div><div class="base">vs RKAP ${k.p}</div>${spark(k.q,k.p/4,up)}<div class="spkc">Q1→Q4 quarterly · ‑‑ plan pace</div>${k.margin?`<div class="mgc">${k.margin}</div>`:''}<div class="note">${k.n}</div>${k.flag?`<div class="flag">${k.flag}</div>`:''}</div>`}).join('');
+let cmpMode='p';
+function kpisRender(){const yoy=cmpMode==='y';
+ document.getElementById('kpis').innerHTML=KPI.map(k=>{const base=yoy?k.y:k.p,v=(k.a-base)/base*100,up=v>=0;return `<div class="kpi${k.hero?' hero':''}"><div class="l">${k.l}</div><div class="var ${up?'up':'down'}">${up?'▲ +':'▼ '}${v.toFixed(0)}%</div><div class="act">${k.a.toFixed(1)}<small> Rp T</small></div><div class="base">vs ${yoy?'FY23':'RKAP'} ${base}</div>${spark(k.q,k.p/4,up)}<div class="spkc">Q1→Q4 quarterly · ‑‑ plan pace</div>${k.margin?`<div class="mgc">${k.margin}</div>`:''}<div class="note">${k.n}</div>${k.flag?`<div class="flag">${k.flag}</div>`:''}</div>`}).join('');}
+kpisRender();
+{const cs=document.getElementById('cmpsel');if(cs)[...cs.children].forEach(b=>b.onclick=()=>{cmpMode=b.dataset.c;[...cs.children].forEach(x=>x.classList.toggle('on',x===b));kpisRender();});}
 
 /* EBITDA variance bridge — same Rp 45→40.5 gap, decomposed two ways (why ⇄ who) */
 const EV=TOWER.ev; // per-subsidiary EBITDA Δ vs plan, sums to −4.5
@@ -553,7 +590,7 @@ const bsel=document.getElementById('bridgesel');[...bsel.children].forEach(b=>b.
 const totNp=SUBS.reduce((a,s)=>a+s.fnp,0);
 const vc=(a,p)=>{const v=(a-p)/p*100;return `<span class="big">${a.toFixed(1)}</span> <span class="pl">/ ${p}</span> <span class="${v>=0?'vpos':'vneg'}">${v>=0?'+':''}${v.toFixed(0)}%</span>`;};
 function evbar(v){const W=128,H=18,zx=W/2,sc=40/3.2,w=Math.min(Math.abs(v)*sc,W/2-3),x=v<0?zx-w:zx,c=v<0?'#A4543C':'#5E7350';return `<svg width="${W}" height="${H}" style="vertical-align:middle"><line x1="${zx}" y1="2" x2="${zx}" y2="${H-2}" stroke="#CBC2B0"/><rect x="${x}" y="4" width="${Math.max(w,1.5)}" height="${H-8}" rx="3" fill="${c}" opacity=".85"/></svg>`;}
-document.getElementById('fin').innerHTML=`<thead><tr><th class="l">Subsidiary</th><th>Revenue act/RKAP</th><th>EBITDA act/RKAP</th><th>EBITDA margin</th><th>EBITDA Δ vs plan</th><th class="l">Share of group profit</th><th>Variance driver</th><th>RAG</th></tr></thead><tbody>${SUBS.map(s=>{const sh=s.fnp/totNp*100,ev=EV[s.id];return `<tr data-id="${s.id}"><td><div class="nm"><span class="e" style="background:${COL[s.id]}"></span><div><b>${s.nm}</b><div class="sec">${s.tic} · ${s.sec}</div></div></div></td><td>${vc(s.frev,s.frevP)}</td><td>${vc(s.febitda,s.febitdaP)}</td><td><span class="big">${s.margin}%</span></td><td style="white-space:nowrap">${evbar(ev)} <span class="evval ${ev<0?'vneg':'vpos'}">${ev>0?'+':''}${ev.toFixed(1)}</span></td><td class="l"><span class="shareb" style="width:${Math.max(sh*1.4,5)}px;background:${COL[s.id]}"></span><span class="pl">${sh.toFixed(0)}%</span></td><td class="pl" style="text-align:right">${s.fdrv}</td><td><span class="rag ${s.rag}">${s.rag==='green'?'✓':s.rag==='amber'?'!':'▲'}</span></td></tr>`}).join('')}</tbody>`;
+document.getElementById('fin').innerHTML=`<thead><tr><th class="l">Subsidiary</th><th>Revenue act/RKAP</th><th>EBITDA act/RKAP</th><th>EBITDA margin</th><th>EBITDA Δ vs plan</th><th class="l">Share of group profit</th><th>Variance driver</th><th>RAG</th></tr></thead><tbody>${SUBS.map(s=>{const sh=s.fnp/totNp*100,ev=EV[s.id];return `<tr data-id="${s.id}"><td><div class="nm"><span class="e" style="background:${COL[s.id]}"></span><div><b>${s.nm}<span class="chev">›</span></b><div class="sec">${s.tic} · ${s.sec}</div></div></div></td><td>${vc(s.frev,s.frevP)}</td><td>${vc(s.febitda,s.febitdaP)}</td><td><span class="big">${s.margin}%</span></td><td style="white-space:nowrap">${evbar(ev)} <span class="evval ${ev<0?'vneg':'vpos'}">${ev>0?'+':''}${ev.toFixed(1)}</span></td><td class="l"><span class="shareb" style="width:${Math.max(sh*1.4,5)}px;background:${COL[s.id]}"></span><span class="pl">${sh.toFixed(0)}%</span></td><td class="pl" style="text-align:right">${s.fdrv}</td><td><span class="rag ${s.rag}">${s.rag==='green'?'✓':s.rag==='amber'?'!':'▲'}</span></td></tr>`}).join('')}</tbody>`;
 const finRows=[...document.querySelectorAll('#fin tbody tr')];
 finRows.forEach(tr=>tr.onclick=()=>selRow(tr.dataset.id));
 function selRow(id){finRows.forEach(tr=>tr.classList.toggle('sel',tr.dataset.id===id));if(curBridge!=='subsidiary'){[...bsel.children].forEach(x=>x.classList.toggle('on',x.dataset.m==='subsidiary'));wf('subsidiary');}}
@@ -590,7 +627,7 @@ function makeCopilot(cfg){
   el.innerHTML=ans;const l=log();if(l)l.scrollTop=1e7;}
  const f=document.getElementById(cfg.form);if(f)f.addEventListener('submit',e=>{e.preventDefault();const i=document.getElementById(cfg.input);ask(i.value);i.value='';});
  document.querySelectorAll('#'+cfg.ex+' a').forEach(a=>a.onclick=()=>ask(a.dataset.q));
- return {ask,insight(){if(inited)return;inited=true;push('ai',cfg.intro);}};
+ return {ask,insight(){if(inited)return;inited=true;push('ai',cfg.intro);const l=log();if(l)l.scrollTop=0;}};
 }
 const capCopilot=makeCopilot({log:'capailog',form:'capaiform',input:'capaiq',ex:'capaiex',endpoint:'/api/portfolio/capital-copilot',state:CAP_STATE,local:capLocalAnswer,intro:CAP_INSIGHT});
 (async function(){try{const h=await(await fetch('/api/health')).json();const b=document.getElementById('capaibadge');if(b)b.textContent=h.aiMode==='live'?'· live':'· capital';}catch(e){}})();
@@ -623,10 +660,14 @@ function returnsMini(){const s=document.getElementById('capret');if(!s)return;s.
  for(let g=4;g<=xmax;g+=4){const x=sx(g);E(s,'line',{x1:x,y1:top-6,x2:x,y2:bot,stroke:'#EDE6D8','stroke-dasharray':'2 5'});}
  RET.forEach((r,i)=>{const cy=top+band*i+band/2,sp=r.roic-r.wacc,ep=sp*r.ce/100,up=sp>=0,col=up?'#5E7350':'#A4543C';
   const bh=Math.max(8,Math.min(19,r.ce/170*19));
-  E(s,'rect',{x:px0,y:cy-bh/2,width:Math.max(sx(r.roic)-px0,2),height:bh,rx:2,fill:col,opacity:.82});
-  const wx=sx(r.wacc);E(s,'line',{x1:wx,y1:cy-bh/2-4,x2:wx,y2:cy+bh/2+4,stroke:'#3A352D','stroke-width':1.6});
-  E(s,'text',{x:6,y:cy+3,'font-size':10,'font-weight':600,fill:'#211C16'},r.nm);
-  E(s,'text',{x:rx,y:cy+3,'font-size':9.5,'font-weight':700,fill:col},(ep>=0?'+':'−')+'Rp '+Math.abs(ep).toFixed(1)+'T');});
+  const g=E(s,'g',{style:'cursor:pointer'});
+  const hov=E(g,'rect',{x:2,y:cy-band/2+1,width:436,height:band-2,rx:5,fill:'#F7F3EA',opacity:0});
+  g.addEventListener('mouseenter',()=>hov.setAttribute('opacity',.9));g.addEventListener('mouseleave',()=>hov.setAttribute('opacity',0));
+  g.addEventListener('click',()=>capCopilot.ask('Is '+r.nm+' earning above its cost of capital?'));
+  E(g,'rect',{x:px0,y:cy-bh/2,width:Math.max(sx(r.roic)-px0,2),height:bh,rx:2,fill:col,opacity:.82});
+  const wx=sx(r.wacc);E(g,'line',{x1:wx,y1:cy-bh/2-4,x2:wx,y2:cy+bh/2+4,stroke:'#3A352D','stroke-width':1.6});
+  E(g,'text',{x:6,y:cy+3,'font-size':10,'font-weight':600,fill:'#211C16'},r.nm);
+  E(g,'text',{x:rx,y:cy+3,'font-size':9.5,'font-weight':700,fill:col},(ep>=0?'+':'−')+'Rp '+Math.abs(ep).toFixed(1)+'T');});
  E(s,'line',{x1:px0,y1:bot,x2:px1,y2:bot,stroke:'#CBC2B0'});
  E(s,'text',{x:6,y:bot+16,'font-size':8.5,fill:'#6B655B'},'Group economic profit +Rp 5.3T · ~96% from Freeport');}
 /* capital deployed over time — stacked uses of cash (sustaining/dividend/growth), FY20→FY24 */
@@ -675,7 +716,7 @@ function opsScorecard(){
  const rows=OPS.map(o=>{const s=SUBS.find(x=>x.id===o.id),St=ostx[o.ost];
   const dw=Math.min(o.deliver,140)/140*100,dcol=o.deliver>=100?'#5E7350':o.deliver>=90?'#A9842F':'#A4543C';
   const tcol=o.ltifr<0.4?'#5E7350':o.ltifr<=0.6?'#A9842F':'#A4543C';
-  const life=o.life==null?'n/a':o.life+' yr',lcol=o.life==null?'#A39B8C':o.life>20?'#5E7350':o.life>=15?'#A9842F':'#A4543C',lflag=o.life!=null&&o.life<15?' <span class="txt-red" style="font-size:9px">▲ depleting</span>':'';
+  const life=o.life==null?'n/a':o.life+' yr',lcol=o.life==null?'#A39B8C':o.life>20?'#5E7350':o.life>=15?'#A9842F':'#A4543C',lflag=o.life!=null&&o.life<15?' <span class="txt-red" style="font-size:9px">▲ depleting</span>':(o.lifeNote?`<div class="sec2">${o.lifeNote}</div>`:'');
   return `<tr data-id="${o.id}"><td><div class="nm"><span class="e" style="background:${COL[o.id]}"></span><div><b>${s.nm}</b><div class="sec">${s.sec}</div></div></div></td>`
    +`<td style="white-space:nowrap"><span class="obar"><span style="width:${dw.toFixed(0)}%;background:${dcol}"></span></span><span class="big" style="color:${dcol}">${o.deliver}%</span><div class="sec2">${o.dv}</div></td>`
    +`<td style="white-space:nowrap"><span class="big" style="color:${tcol}">${o.ltifr.toFixed(2)}</span><div class="sec2">${o.fatal} fatalities</div></td>`
@@ -686,8 +727,9 @@ function opsScorecard(){
 /* disruption & asset health — what's physically impaired across the fleet */
 const OHEALTH=TOWER.ohealth;
 function opsHealth(){const el=document.getElementById('ohealth');if(!el)return;
- el.innerHTML=OHEALTH.slice().sort((a,b)=>ORANK[a.st]-ORANK[b.st]).map(h=>{const s=SUBS.find(x=>x.id===h.id),St=ostx[h.st];
-  return `<div class="ohrow" data-id="${h.id}"><span class="ohdot ${St.c}"></span><div class="ohmain"><div class="ohnm">${s.nm} <span class="rag ${St.c}" style="font-size:8px;padding:1px 6px">${St.w}</span></div><div class="ohev">${h.ev}</div><div class="ohim">${h.im}</div></div></div>`;}).join('');
+ el.innerHTML=OHEALTH.slice().sort((a,b)=>ORANK[a.st]-ORANK[b.st]).map(h=>{const s=SUBS.find(x=>x.id===h.id),St=ostx[h.st],o=OPS.find(x=>x.id===h.id);
+  const tr=o&&o.oq?`<div class="ohspk">${spark(o.oq,100,o.deliver>=100)}<span class="sec2" style="margin-top:0">output vs plan · Q1→Q4 · ‑‑ 100%</span></div>`:'';
+  return `<div class="ohrow" data-id="${h.id}"><span class="ohdot ${St.c}"></span><div class="ohmain" style="flex:1"><div class="ohnm">${s.nm} <span class="rag ${St.c}" style="font-size:8px;padding:1px 6px">${St.w}</span></div><div class="ohev">${h.ev}</div><div class="ohim">${h.im}</div></div>${tr}</div>`;}).join('');
  [...el.querySelectorAll('.ohrow')].forEach(r=>r.onclick=()=>opsAskCompany(r.dataset.id));}
 /* growth-build tracker — physical construction progress & first production (capex/IRR live on Capital) */
 const OBUILD=TOWER.obuild;
@@ -715,9 +757,11 @@ const opsCopilot=makeCopilot({log:'opsailog',form:'opsaiform',input:'opsaiq',ex:
 function opsAskCompany(id){const nm=(SUBS.find(x=>x.id===id)||{}).nm||id;opsCopilot.ask('How is '+nm+' performing operationally?');}
 function drill(id){const s=SUBS.find(x=>x.id===id);const S=stx[s.st];document.getElementById('opdrill').innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:11px"><span style="width:4px;height:26px;border-radius:2px;background:${COL[s.id]}"></span><b style="font-size:16px">${s.nm}</b><span class="${S.c}">${S.g} ${S.w}</span><span class="pl">${s.sec} · Q${s.quart}</span><span class="pl" style="margin-left:auto">${s.own}</span></div><div style="display:grid;grid-template-columns:repeat(4,1fr) 1.4fr;gap:11px"><div class="op"><div class="l">${s.ops[0].l}</div><div class="v">${s.ops[0].v}</div><div class="d">${s.ops[0].d}</div></div><div class="op"><div class="l">${s.ops[1].l}</div><div class="v">${s.ops[1].v}</div><div class="d">${s.ops[1].d}</div></div><div class="op"><div class="l">${s.ops[2].l}</div><div class="v">${s.ops[2].v}</div><div class="d">${s.ops[2].d}</div></div><div class="op"><div class="l">${s.ops[3].l}</div><div class="v">${s.ops[3].v}</div><div class="d">${s.ops[3].d}</div></div><div class="op" style="background:transparent;border-color:transparent"><div class="l">Read</div><div class="d" style="font-size:11.5px;margin-top:6px">${s.watch}</div></div></div>`;}
 
-/* outlook */
-const OL=[{c:'r',t1:'Grasberg force majeure',t2:'Sept-2025 mud rush cuts 2026 PTFI output ~35%. Largest forward risk to group profit & the dividend.'},{c:'a',t1:'Coal price cycle',t2:'PTBA margin tracks HBA/ICI; DMO 25% at $70/t caps domestic upside.'},{c:'a',t1:'Royalty step-up (PP19/2025)',t2:'Progressive royalties are a structural cost increase across the whole book.'},{c:'t',t1:'Dividend & State contribution',t2:'The EBITDA miss flows to the dividend (via Danantara) and the Rp 90T State contribution.'}];
-document.getElementById('outlookcards').innerHTML=OL.map(o=>`<div class="ol ${o.c}"><div class="t1c">${o.t1}</div><div class="t2c">${o.t2}</div></div>`).join('');
+/* forward risks (lives on Forecast; formerly the Outlook tab) */
+const OL=[{c:'r',own:'PMO · PTFI',jump:'ops',t1:'Grasberg force majeure',t2:'Sept-2025 mud rush cuts 2026 PTFI output ~35%. Largest forward risk to group profit & the dividend.'},{c:'a',own:'Group Treasury',jump:'stress',t1:'Coal price cycle',t2:'PTBA margin tracks HBA/ICI; DMO 25% at $70/t caps domestic upside.'},{c:'a',own:'Gov Relations',jump:'financials',t1:'Royalty step-up (PP19/2025)',t2:'Progressive royalties are a structural cost increase across the whole book.'},{c:'t',own:'CFO',jump:'allocate',t1:'Dividend & State contribution',t2:'The EBITDA miss flows to the dividend (via Danantara) and the Rp 90T State contribution.'}];
+function fcRisks(){const el=document.getElementById('fcrisks');if(!el)return;const dc={r:'#A4543C',a:'#A9842F',t:'#9C6644'};
+ el.innerHTML=OL.map((o,i)=>`<div class="fcrisk" data-i="${i}" style="cursor:pointer"><span class="fdot" style="background:${dc[o.c]}"></span><div><div class="ft1">${o.t1} <span class="sec2" style="display:inline">· ${o.own}</span></div><div class="ft2">${o.t2}</div></div></div>`).join('');
+ [...el.querySelectorAll('.fcrisk')].forEach(r=>r.onclick=()=>show(OL[+r.dataset.i].jump));}
 
 /* AI */
 async function postJSON(u,b){const r=await fetch(u,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});return r.json();}
@@ -739,7 +783,7 @@ const hcell=(r,b,s)=>`<span class="hcell h-${r}"><b>${b}</b><small>${s}</small><
 function projTotals(){const n=PROJ.length,red=PROJ.filter(p=>pworst(p)==='r').length,amb=PROJ.filter(p=>pworst(p)==='a').length,grn=n-red-amb;
  const sanc=PROJ.reduce((a,p)=>a+p.budget,0),spent=PROJ.reduce((a,p)=>a+p.spent,0),eac=PROJ.reduce((a,p)=>a+p.eac,0),vac=sanc-eac,benR=PROJ.filter(p=>p.ragB!=='g').length;
  const cards=[
-  {l:'Strategic projects',v:n,s:`<b style="color:#A4543C">${red} escalate</b> · ${amb} watch · ${grn} on track`},
+  {l:'Board attention',v:red+' escalate',s:`of <b>${n}</b> strategic projects · ${amb} watch · ${grn} on track`,r:red>0?'r':'g'},
   {l:'Capital sanctioned',v:'Rp '+sanc+'T',s:'committed Rp '+PROJ.reduce((a,p)=>a+p.committed,0)+'T'},
   {l:'Spent to date',v:'Rp '+Math.round(spent)+'T',s:Math.round(spent/sanc*100)+'% of sanctioned'},
   {l:'Forecast overrun',v:(vac<0?'−':'+')+'Rp '+Math.abs(vac).toFixed(1)+'T',s:'EAC vs budget (VAC)',r:vac<0?'r':'g'},
@@ -770,11 +814,26 @@ const IDNPATH='M288.3 180.7L283.7 180.9L268.9 173.1L279.3 170.9L285.1 174.3L289.
 function projMap(){const s=document.getElementById('projmap');if(!s)return;s.innerHTML='';
  E(s,'path',{d:IDNPATH,fill:'#E3DAC8',stroke:'#CBC2B0','stroke-width':0.5,opacity:.72});
  E(s,'text',{x:10,y:183,'font-size':8.5,fill:'#A39B8C'},'pin colour = RAG · size = capex · click to open');
- PROJ.slice().sort((a,b)=>b.budget-a.budget).forEach(p=>{const m=PMETA[p.id],r=Math.max(4,Math.min(11,Math.sqrt(p.budget)*1.4)),c=RCOL[pworst(p)];
-  E(s,'circle',{cx:m.x,cy:m.y,r:r+3,fill:c,opacity:.16});
+ PROJ.slice().sort((a,b)=>b.budget-a.budget).forEach(p=>{const m=PMETA[p.id],r=Math.max(5.5,Math.min(14,Math.sqrt(p.budget)*1.9)),w=pworst(p),c=RCOL[w];
+  E(s,'circle',{cx:m.x,cy:m.y,r:r+3.5,fill:c,opacity:.16});
   const g=E(s,'g',{style:'cursor:pointer'});g.addEventListener('click',()=>projOpen(p.id));
-  E(g,'circle',{cx:m.x,cy:m.y,r,fill:c,opacity:.85,stroke:'#FBF8F2','stroke-width':1.3});
-  if(!['sgar2','ptbare'].includes(p.id))E(g,'text',{x:m.x,y:m.y-r-3,'text-anchor':'middle','font-size':7.5,fill:'#3A352D','font-weight':600},p.nm.split(' ')[0]);});}
+  E(g,'circle',{cx:m.x,cy:m.y,r,fill:c,opacity:.85,stroke:'#FBF8F2','stroke-width':1.5});
+  if(r>=7)E(g,'text',{x:m.x,y:m.y+2.8,'text-anchor':'middle','font-size':7.5,'font-weight':700,fill:'#FBF8F2'},w==='g'?'✓':w==='a'?'!':'▲');
+  if(!['sgar2','ptbare'].includes(p.id))E(g,'text',{x:m.x,y:m.y-r-3.5,'text-anchor':'middle','font-size':8.5,fill:'#3A352D','font-weight':600},p.nm.split(' ')[0]);});}
+function projAgg(){const s=document.getElementById('projsagg');if(!s)return;s.innerHTML='';
+ const sanc=PROJ.reduce((a,p)=>a+p.budget,0),spent=PROJ.reduce((a,p)=>a+p.spent,0),eac=PROJ.reduce((a,p)=>a+p.eac,0);
+ const now=Math.max(0.1,Math.min(0.9,PROJ.reduce((a,p)=>a+p.pctA*p.budget,0)/sanc/100)),tEnd=1.2;
+ const x0=42,x1=506,y0=138,y1=22,maxY=Math.max(sanc,eac)*1.08;
+ const px=t=>x0+(x1-x0)*t/tEnd,py=v=>y0-(y0-y1)*v/maxY,sm=t=>t*t*(3-2*t);
+ for(let g=0;g<=maxY;g+=50){const y=py(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'#E7DFCF'});E(s,'text',{x:x0-5,y:y+3,'text-anchor':'end','font-size':8,fill:'#A39B8C'},g);}
+ E(s,'line',{x1:x0,y1:py(sanc),x2:x1,y2:py(sanc),stroke:'#A9842F','stroke-dasharray':'5 4',opacity:.55});
+ E(s,'text',{x:x1,y:py(sanc)-4,'text-anchor':'end','font-size':8,fill:'#A9842F'},'sanctioned Rp '+sanc+'T');
+ let dP='';for(let i=0;i<=30;i++){const t=i/30;dP+=(i?'L':'M')+px(t).toFixed(1)+' '+py(sanc*sm(t)).toFixed(1)+' ';}E(s,'path',{d:dP,fill:'none',stroke:'#B7B0A0','stroke-width':1.6});
+ let dA='';for(let i=0;i<=24;i++){const t=now*i/24;dA+=(i?'L':'M')+px(t).toFixed(1)+' '+py(spent*sm(t)/Math.max(.001,sm(now))).toFixed(1)+' ';}E(s,'path',{d:dA,fill:'none',stroke:'#9C6644','stroke-width':2.4});
+ let dF='';for(let i=0;i<=24;i++){const t=now+(tEnd-now)*i/24,f=(t-now)/(tEnd-now);dF+=(i?'L':'M')+px(t).toFixed(1)+' '+py(spent+(eac-spent)*sm(f)).toFixed(1)+' ';}E(s,'path',{d:dF,fill:'none',stroke:'#A4543C','stroke-width':1.8,'stroke-dasharray':'4 3',opacity:.9});
+ E(s,'line',{x1:px(now),y1:y1,x2:px(now),y2:y0,stroke:'#8A8275','stroke-dasharray':'2 3'});E(s,'text',{x:px(now),y:y1-4,'text-anchor':'middle','font-size':8,fill:'#6B655B'},'now · Rp '+Math.round(spent)+'T');
+ E(s,'text',{x:px(tEnd)-3,y:py(eac)-6,'text-anchor':'end','font-size':8.5,'font-weight':700,fill:'#A4543C'},'EAC '+eac.toFixed(0)+' · +'+(eac-sanc).toFixed(1)+'T');
+ E(s,'text',{x:x0,y:y0+14,'font-size':8,fill:'#A39B8C'},'cumulative spend Rp T · planned ▬ grey · actual ▬ copper · forecast ┄ to EAC');}
 function projTimeline(p){const s=p.fpS-2,pe=p.fpS,fe=p.fpF||p.fpS+1,mx=Math.max(pe,fe),span=Math.max(1,mx-s),w=v=>((v-s)/span*100).toFixed(1),slip=fe>pe;
  return `<div class="ptl"><div class="bar" style="left:0;width:100%;background:#E7DFCF"></div><div class="bar" style="left:0;width:${w(pe)}%;background:#8A9A6E"></div>`
   +(slip?`<div class="bar" style="left:${w(pe)}%;width:${(w(fe)-w(pe)).toFixed(1)}%;background:#A4543C;opacity:.55"></div>`:'')
@@ -831,9 +890,10 @@ const fcBand=i=>1.28*FC.volQ*Math.sqrt(i+1);
 const FCBASE=fcCompute();
 const FY25LO=FCBASE.group.slice(0,4).reduce((a,v,i)=>a+v*(1-fcBand(i)),0),FY25HI=FCBASE.group.slice(0,4).reduce((a,v,i)=>a+v*(1+fcBand(i)),0);
 function fanChart(){const s=document.getElementById('fan');if(!s)return;s.innerHTML='';
- const x0=56,x1=968,y0=384,y1=42,ymax=15,H=FC.histQ,G=FCBASE.group,N=H.length+G.length;
- const px=i=>x0+(x1-x0)*i/(N-1),py=v=>y0-(y0-y1)*v/ymax;
- for(let g=0;g<=14;g+=2){const y=py(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'#E7DFCF'});E(s,'text',{x:x0-8,y:y+4,'text-anchor':'end','font-size':11,fill:'#A39B8C'},'Rp '+g);}
+ const x0=56,x1=968,y0=384,y1=42,ymin=6,ymax=15,H=FC.histQ,G=FCBASE.group,N=H.length+G.length;
+ const px=i=>x0+(x1-x0)*i/(N-1),py=v=>y0-(y0-y1)*(Math.max(v,ymin)-ymin)/(ymax-ymin);
+ for(let g=ymin;g<=ymax-1;g++){const y=py(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'#E7DFCF'});E(s,'text',{x:x0-8,y:y+4,'text-anchor':'end','font-size':11,fill:'#A39B8C'},'Rp '+g);}
+ E(s,'text',{x:x0-8,y:y0+4,'text-anchor':'end','font-size':8.5,fill:'#A39B8C'},'⁄⁄');
  const hx=px(H.length-1);E(s,'line',{x1:hx,y1:y1-6,x2:hx,y2:y0,stroke:'#8A8275','stroke-dasharray':'3 4'});E(s,'text',{x:hx,y:y1-12,'text-anchor':'middle','font-size':10,fill:'#6B655B'},'now');
  // P10–P90 band
  let band='';G.forEach((v,i)=>{band+=(i?'L':'M')+px(H.length+i).toFixed(1)+' '+py(v*(1+fcBand(i))).toFixed(1)+' ';});
@@ -849,7 +909,7 @@ function fanChart(){const s=document.getElementById('fan');if(!s)return;s.innerH
  E(s,'path',{d:dm,fill:'none',stroke:'#9C6644','stroke-width':2.2,'stroke-dasharray':'6 4'});
  G.forEach((v,i)=>E(s,'circle',{cx:px(H.length+i),cy:py(v),r:2.6,fill:'#9C6644'}));
  ['Q1-24','Q2-24','Q3-24','Q4-24'].concat(FC.quarters).forEach((q,i)=>E(s,'text',{x:px(i),y:y0+20,'text-anchor':'middle','font-size':9.5,fill:'#A39B8C'},q));
- E(s,'text',{x:x0,y:y1-12,'font-size':11,fill:'#6B655B'},'actual ▬ · P50 forecast ┄ · band = P10–P90 · driver-based (forward curves × volume plans × FM ramp)');
+ E(s,'text',{x:x1,y:y1-14,'text-anchor':'end','font-size':10.5,fill:'#6B655B'},'actual ▬ · P50 ┄ · band = P10–P90 · forward curves × volume plans × FM ramp');
  const gap=(FCBASE.fy25-FC.planFY25)/FC.planFY25*100;
  document.getElementById('fanread').innerHTML=`FY25 is heading to <b>Rp ${FCBASE.fy25.toFixed(1)}T</b> (P10–P90 <b>${FY25LO.toFixed(0)}–${FY25HI.toFixed(0)}</b>) vs RKAP ${FC.planFY25.toFixed(0)} — <b>${gap.toFixed(0)}% below plan before results land</b>, on soft coal and the Grasberg Q4 dip. FY26 P50 <b>Rp ${FCBASE.fy26.toFixed(1)}T</b>: the mud-rush trough in H1, recovering through the ramp.`;}
 function fcKpis(){const el=document.getElementById('fckpis');if(!el)return;const g25=(FCBASE.fy25-FC.planFY25)/FC.planFY25*100,g26=(FCBASE.fy26-FC.planFY26)/FC.planFY26*100;
@@ -897,13 +957,15 @@ function scenBreakdown(){const s=document.getElementById('scenbrk');if(!s)return
   E(s,'text',{x:neg?zx-w-6:zx+w+6,y:cy+4,'text-anchor':neg?'end':'start','font-size':10.5,'font-weight':700,fill:neg?'#A4543C':'#5E7350'},(d.d>=0?'+':'−')+Math.abs(d.d).toFixed(1));});
  E(s,'line',{x1:zx,y1:22,x2:zx,y2:242,stroke:'#CBC2B0'});
  const worst=del.filter(x=>x.d<0),tot=worst.reduce((a,x)=>a+x.d,0),top3=worst.slice(0,3).reduce((a,x)=>a+x.d,0);
- document.getElementById('scenread').innerHTML=worst.length>1
+ document.getElementById('scenread').innerHTML=(worst.length>1
   ?`<b>${worst.slice(0,3).map(x=>x.nm.split(' ')[0]).join(', ')}</b> move together — Rp ${Math.abs(top3).toFixed(1)}T of the Rp ${Math.abs(tot).toFixed(1)}T hit (${Math.round(top3/tot*100)}%). <b>Correlation, not any single asset, is the risk.</b> Dividend cover ${r.cover.toFixed(1)}× ${r.cover>=1?'holds':'breaks'}.`
-  :`Concentrated in <b>${(worst[0]||del[0]).nm}</b>. Dividend cover ${r.cover.toFixed(1)}× ${r.cover>=1?'holds':'breaks'}.`;}
+  :`Concentrated in <b>${(worst[0]||del[0]).nm}</b>. Dividend cover ${r.cover.toFixed(1)}× ${r.cover>=1?'holds':'breaks'}.`)
+  +`<br><span class="rerank" id="rerankbtn">→ re-rank the capital moves under “${sc.nm}”</span>`;
+ const rb=document.getElementById('rerankbtn');if(rb)rb.onclick=()=>{alScen=selScen;show('allocate');requestAnimationFrame(()=>{allocRender();decLog();drawn.al=1;});};}
 
 /* ═══ STAGE 4 · ALLOCATE ENGINE — ranked moves vs hurdle rates + decision log ═══ */
 const AL=TOWER.allocate;let alScen='base';
-function allocRank(){const base=alScen==='base'?FCBASE:scenCompute(TOWER.scenarios.find(s=>s.id===alScen));
+function allocRank(scen){scen=scen||alScen;const base=scen==='base'?FCBASE:scenCompute(TOWER.scenarios.find(s=>s.id===scen));
  const stressed=base.cover<1.6,upside=base.cover>2.0;
  const ranked=AL.options.map(o=>{let score,why;
   if(o.type==='reinvest'||o.type==='fix'){const sp=o.irr-o.hurdle;score=sp*o.capital/10+(o.type==='fix'?-0.4:0)+(stressed?-1.1:0);
@@ -912,17 +974,49 @@ function allocRank(){const base=alScen==='base'?FCBASE:scenCompute(TOWER.scenari
   else{score=upside?0.9:stressed?-1.6:0.1;why=stressed?`cover ${base.cover.toFixed(1)}× — <b>defer the step-up</b>, protect the base payout`:`affordable at ${base.cover.toFixed(1)}× cover · meets the State's expectation`;}
   return {...o,score,why};}).sort((a,b)=>b.score-a.score);
  return {ranked,base};}
+function allocBridge(base){const el=document.getElementById('alcap');if(!el)return;
+ const div=FC.divBase,build=FC.growthCapexFY25,lo=Math.max(0,base.fcf25-div-build+10),hi=base.fcf25-div-build+15;
+ el.innerHTML=`<svg id="albridge" viewBox="0 0 560 92" style="width:100%;height:auto;display:block"></svg><div class="sec2" style="margin-top:2px">≈ Rp ${lo.toFixed(0)}–${hi.toFixed(0)}T discretionary this cycle · dividend cover ${base.cover.toFixed(1)}×${alScen!=='base'?' · under '+TOWER.scenarios.find(s=>s.id===alScen).nm:''}</div>`;
+ const s=document.getElementById('albridge'),steps=[{l:'FCF · P50',v:base.fcf25,abs:1},{l:'dividend',v:-div},{l:'committed build',v:-build},{l:'debt headroom',v:12.5,c:'#7C766B'},{l:'discretionary',abs:1,c:'#9C6644'}];
+ // pre-walk the cumulative path so the zero line sits right even when a stressed FCF goes negative mid-bridge
+ let r=0;const runs=steps.map((st,i)=>{if(st.abs){if(i===0)r=st.v;}else r+=st.v;return r;});
+ const cmin=Math.min(0,...runs),cmax=Math.max(...runs,0.1);
+ const x0=6,bw=88,gap=(560-x0*2-bw*5)/4,yT=14,yB=66,scv=52/(cmax-cmin),yv=v=>yB-(v-cmin)*scv;
+ let x=x0,run=0;steps.forEach((st,i)=>{let top,h;
+  if(st.abs){if(i===0)run=st.v;else run=runs[3];top=yv(Math.max(run,0));h=Math.max(Math.abs(yv(0)-yv(run)),2);}
+  else{const f=run,to=run+st.v;run=to;top=yv(Math.max(f,to));h=Math.max(Math.abs(yv(f)-yv(to)),2);}
+  const fill=st.c||(st.abs?'#5E7350':(st.v<0?'#A4543C':'#5E7350'));
+  E(s,'rect',{x,y:top,width:bw,height:h,rx:3,fill,opacity:.86});
+  E(s,'text',{x:x+bw/2,y:top-5,'text-anchor':'middle','font-size':11.5,'font-weight':700,fill:'#211C16'},(st.abs?'':(st.v>0?'+':''))+(st.abs?run.toFixed(1):st.v.toFixed(1)));
+  E(s,'text',{x:x+bw/2,y:yB+13,'text-anchor':'middle','font-size':9,fill:'#6B655B'},st.l);
+  if(i<4)E(s,'line',{x1:x+bw,y1:yv(run),x2:x+bw+gap,y2:yv(run),stroke:'#CBC2B0','stroke-dasharray':'3 3'});
+  x+=bw+gap;});
+ if(cmin<0)E(s,'line',{x1:x0,y1:yv(0),x2:560-x0,y2:yv(0),stroke:'#A39B8C','stroke-width':.8,'stroke-dasharray':'2 3'});}
 function allocRender(){const el=document.getElementById('ranked');if(!el)return;const {ranked,base}=allocRank();
- document.getElementById('alcap').innerHTML=`Discretionary capital ≈ <b>Rp ${Math.max(0,base.fcf25-FC.divBase-FC.growthCapexFY25+10).toFixed(0)}–${(base.fcf25-FC.divBase-FC.growthCapexFY25+15).toFixed(0)}T</b> (FCF Rp ${base.fcf25.toFixed(1)}T − dividend − committed build, + debt headroom) · cover <b>${base.cover.toFixed(1)}×</b>`;
- el.innerHTML=ranked.map((o,i)=>`<div class="rkc${i===0?' top':''}"><span class="rkn">${i+1}</span><div style="flex:1"><div class="rkt">${o.nm}</div><div class="rkw">${o.why}</div><div class="sec2" style="margin-top:3px">${o.co} · Rp ${o.capital}T</div></div><span class="rktype ty-${o.type}">${o.type}</span></div>`).join('');
- [...document.querySelectorAll('#alsel button')].forEach(b=>b.classList.toggle('on',b.dataset.s===alScen));}
+ allocBridge(base);
+ let basePos=null;if(alScen!=='base'){basePos={};allocRank('base').ranked.forEach((o,i)=>basePos[o.nm]=i);}
+ el.innerHTML=ranked.map((o,i)=>{let dm='';if(basePos){const d=basePos[o.nm]-i;dm=d>0?`<span class="rkd up">▲ +${d}</span>`:d<0?`<span class="rkd dn">▼ ${d}</span>`:`<span class="rkd eq">=</span>`;}
+  return `<div class="rkc${i===0?' top':''}"><span class="rkn">${i+1}</span><div style="flex:1"><div class="rkt">${o.nm}${dm}</div><div class="rkw">${o.why}</div><div class="sec2" style="margin-top:3px">${o.co} · Rp ${o.capital}T</div></div><span class="rktype ty-${o.type}">${o.type}</span></div>`;}).join('')
+  +(basePos?`<div class="sec2" style="margin-top:6px">▲▼ = rank change vs baseline — what this scenario re-orders.</div>`:'');
+ const sel=document.getElementById('alsel');
+ if(sel){const std=[...sel.querySelectorAll('button[data-s]')].map(b=>b.dataset.s);let cust=document.getElementById('alscustom');
+  if(!std.includes(alScen)){const nm=TOWER.scenarios.find(s2=>s2.id===alScen).nm;if(!cust){cust=document.createElement('button');cust.id='alscustom';sel.appendChild(cust);}cust.textContent=nm;cust.dataset.s=alScen;cust.onclick=()=>{alScen=cust.dataset.s;allocRender();};}
+  else if(cust)cust.remove();
+  [...sel.children].forEach(b=>b.classList.toggle('on',b.dataset.s===alScen));}}
 {const sel=document.getElementById('alsel');if(sel)[...sel.children].forEach(b=>b.onclick=()=>{alScen=b.dataset.s;allocRender();});}
 const DSTAT=['PROPOSED','APPROVED','IN PROGRESS','DONE'],DCOLS=['#A9842F','#7C766B','#9C6644','#5E7350'];
+let dlFil=-1;
 function decLog(){const el=document.getElementById('declog');if(!el)return;
  let saved={};try{saved=JSON.parse(localStorage.getItem('mindid_decisions')||'{}');}catch(e){}
- el.innerHTML=TOWER.decisions.map((d,i)=>{const st=saved[i]!=null?saved[i]:d.st,c=DCOLS[st];
-  return `<div class="dlrow"><div class="dlmv">${d.mv}<small>${d.own} · from ${d.src} · due ${d.due}</small></div><button class="dlst" data-i="${i}" data-st="${st}" style="color:${c};border-color:${c}">${DSTAT[st]}</button></div>`;}).join('')
+ const rows=TOWER.decisions.map((d,i)=>({d,i,st:saved[i]!=null?saved[i]:d.st}));
+ const due=rows.filter(r=>r.st<3&&/Q3-25|now/.test(r.d.due)).length;
+ const vis=rows.filter(r=>dlFil<0||r.st===dlFil);
+ el.innerHTML=`<div class="dlfil">${['All'].concat(DSTAT).map((l,j)=>`<button data-f="${j-1}" class="${dlFil===j-1?'on':''}">${l}</button>`).join('')}${due?`<span class="duec">${due} due Q3-25 / now</span>`:''}</div>`
+  +vis.map(({d,i,st})=>{const c=DCOLS[st];
+   return `<div class="dlrow"><div class="dlmv">${d.mv}<small>${d.own} · from ${d.src} · due ${d.due}</small></div><button class="dlst" data-i="${i}" data-st="${st}" style="color:${c};border-color:${c}">${DSTAT[st]}</button></div>`;}).join('')
+  +(vis.length?'':'<div class="sec2" style="margin-top:8px">Nothing in this status.</div>')
   +`<div class="sec2" style="margin-top:8px">Every prescription carries an owner and a status — click to advance. Persisted locally in the demo.</div>`;
+ [...el.querySelectorAll('.dlfil button')].forEach(b=>b.onclick=()=>{dlFil=+b.dataset.f;decLog();});
  [...el.querySelectorAll('.dlst')].forEach(b=>b.onclick=()=>{const i=+b.dataset.i,st=(+b.dataset.st+1)%4;
   let sv={};try{sv=JSON.parse(localStorage.getItem('mindid_decisions')||'{}');}catch(e){}
   sv[i]=st;try{localStorage.setItem('mindid_decisions',JSON.stringify(sv));}catch(e){}
@@ -944,25 +1038,29 @@ function computeAlerts(){const A=[],T=TOWER;
 function renderAlerts(){const el=document.getElementById('alerts');if(!el)return;const A=computeAlerts();
  el.innerHTML=A.map(a=>`<span class="alert ${a.s}" data-t="${a.t}">${a.s==='r'?'▲':'!'}&nbsp;${a.m}&nbsp;<span class="rule">${a.r}</span></span>`).join('');
  [...el.querySelectorAll('.alert')].forEach(x=>x.onclick=()=>show(x.dataset.t));
+ const lab=document.getElementById('exlab');if(lab)lab.innerHTML=`⚠ Exceptions<span class="cnt">${A.length}</span>`;
  const kx=document.getElementById('alertkx');if(kx)kx.textContent=A.length+'⚠';
  const sub=document.getElementById('alertsub');if(sub)sub.textContent=`· ${A.filter(a=>a.s==='r').length} escalations · ${A.filter(a=>a.s==='a').length} watch · thresholds on the data layer · as of ${TOWER.meta.asOf}`;
  const fk=document.getElementById('fckx');if(fk){const g=(FCBASE.fy25-FC.planFY25)/FC.planFY25*100;fk.textContent=(g>0?'+':'')+g.toFixed(0)+'%';}}
+{const bar=document.getElementById('exbar'),more=document.getElementById('exmore');
+ const tog=()=>{bar.classList.toggle('open');more.textContent=bar.classList.contains('open')?'collapse ▴':'show all ▾';};
+ if(more)more.onclick=tog;const lab=document.getElementById('exlab');if(lab)lab.onclick=tog;}
 document.getElementById('railft').innerHTML=`${TOWER.meta.period}<br><span class="ai">◇ AI Chief of Staff</span> <span id="aibadge"></span><br><span class="pill">as of ${TOWER.meta.asOf}</span><br><span style="font-size:8.5px;opacity:.85">${TOWER.meta.source} · ${TOWER.meta.version}</span>`;
 
 /* view switching */
-const TITLES={financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],capital:['Capital allocation','Where cash is generated & deployed — and whether it earns its cost of capital'],ops:['Operations','Output, safety, mine life & the build — across operating companies'],projects:['Capital projects','Strategic megaproject delivery — cost, schedule, benefit & risk'],forecast:['Forecast','Where FY25–26 are heading before results land — driver-based · P10–P90'],stress:['Scenario library','Correlated shocks through EBITDA, dividend cover & leverage — full distribution in the Stress test'],allocate:['Allocate','The ranked capital moves — and the decision log that tracks them'],outlook:['Outlook','Forward risks & scenario copilot']};
+const TITLES={financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],capital:['Capital allocation','Where cash is generated & deployed — and whether it earns its cost of capital'],ops:['Operations','Output, safety, mine life & the build — across operating companies'],projects:['Capital projects','Strategic megaproject delivery — cost, schedule, benefit & risk'],forecast:['Forecast','Where FY25–26 are heading before results land — driver-based · P10–P90'],stress:['Scenario library','Correlated shocks through EBITDA, dividend cover & leverage — full distribution in the Stress test'],allocate:['Allocate','The ranked capital moves — and the decision log that tracks them']};
 let drawn={};
 function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById('v-'+v).classList.add('on');
  document.querySelectorAll('.item[data-v]').forEach(i=>i.classList.toggle('on',i.dataset.v===v));
  document.getElementById('vt').textContent=TITLES[v][0];document.getElementById('vc').textContent=TITLES[v][1];
  try{history.replaceState(null,'','#'+v);}catch(e){}
  // render charts lazily (need layout, so after display)
- requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capCopilot.insight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();opsHealth();opsBuild();opsCopilot.insight();drawn.ops=1;}if(v==='projects'&&!drawn.proj){projTotals();projCards();projMap();drawn.proj=1;}if(v==='forecast'&&!drawn.fc){fcKpis();fanChart();nowcastRender();fundTiles();drawn.fc=1;}if(v==='stress'&&!drawn.st){stressRender();drawn.st=1;}if(v==='allocate'&&!drawn.al){allocRender();decLog();drawn.al=1;}});
+ requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capCopilot.insight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();opsHealth();opsBuild();opsCopilot.insight();drawn.ops=1;}if(v==='projects'&&!drawn.proj){projTotals();projCards();projMap();projAgg();drawn.proj=1;}if(v==='forecast'&&!drawn.fc){fcKpis();fanChart();nowcastRender();fundTiles();fcRisks();drawn.fc=1;}if(v==='stress'&&!drawn.st){stressRender();drawn.st=1;}if(v==='allocate'&&!drawn.al){allocRender();decLog();drawn.al=1;}});
 }
 document.querySelectorAll('.item[data-v]').forEach(i=>i.onclick=()=>show(i.dataset.v));
 document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=()=>show(a.dataset.jump));
 /* deep-link router: honour #hash on load + back/forward (old links use #operations/#ops) */
-const HASHALIAS={operations:'ops',financial:'financials',subsidiaries:'financials',subs:'financials',performance:'financials',act:'allocate'};
+const HASHALIAS={operations:'ops',financial:'financials',subsidiaries:'financials',subs:'financials',performance:'financials',act:'allocate',outlook:'forecast',overview:'financials'};
 function fromHash(){let h=(location.hash||'').replace('#','');h=HASHALIAS[h]||h;show(TITLES[h]?h:'financials');}
 renderAlerts();fromHash();window.addEventListener('hashchange',fromHash);
 </script></body></html>

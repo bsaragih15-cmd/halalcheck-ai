@@ -26,11 +26,11 @@ window.TOWER={
  {id:'idr',n:'USD / IDR',px:16000,u:'',d:0.0,sub:null,sn:null},
 ],
  kpi: [
- {l:'Revenue',a:145.2,p:132,q:[32.5,35.0,37.5,40.2],n:'Beat plan — on <b>gold trading</b>, not core mining.',flag:'⚠ low-margin trade'},
- {l:'EBITDA',a:40.5,p:45,q:[12.2,10.8,9.3,8.2],n:'Margin squeeze, <b>not volume</b>.',hero:1,margin:'Margin 34.1% → 27.9% · −6.2 pts'},
- {l:'Net profit',a:36.5,p:41,q:[10.8,9.6,8.4,7.7],n:'Feeds the <b>dividend &amp; State</b>.'},
- {l:'Free cash flow',a:18.0,p:22,q:[5.6,3.2,4.4,4.8],n:'Lower earnings + <b>Manyar/SGAR</b> capex.'},
- {l:'To State',a:90.4,p:88,q:[21.4,22.3,23.2,23.5],n:'<b>Royalty up</b> on PP19/2025.'}],
+ {l:'Revenue',a:145.2,p:132,y:107.9,q:[32.5,35.0,37.5,40.2],n:'Beat plan — on <b>gold trading</b>, not core mining.',flag:'⚠ low-margin trade'},
+ {l:'EBITDA',a:40.5,p:45,y:36.8,q:[12.2,10.8,9.3,8.2],n:'Margin squeeze, <b>not volume</b>.',hero:1,margin:'Margin 34.1% → 27.9% · −6.2 pts'},
+ {l:'Net profit',a:36.5,p:41,y:33.9,q:[10.8,9.6,8.4,7.7],n:'Feeds the <b>dividend &amp; State</b>.'},
+ {l:'Free cash flow',a:18.0,p:22,y:20.5,q:[5.6,3.2,4.4,4.8],n:'Lower earnings + <b>Manyar/SGAR</b> capex.'},
+ {l:'To State',a:90.4,p:88,y:82.1,q:[21.4,22.3,23.2,23.5],n:'<b>Royalty up</b> on PP19/2025.'}],
  ev: {ptba:-3.0,ptfi:-1.3,antam:-0.9,inalum:0.4,timah:0.3},
  subev: [{id:'ptba',l:'Bukit Asam',sub:'coal price'},{id:'ptfi',l:'Freeport',sub:'grade + force majeure'},{id:'antam',l:'Antam',sub:'nickel, net of gold'},{id:'inalum',l:'Inalum',sub:'+27% volume'},{id:'timah',l:'Timah',sub:'price turnaround'}],
  capalloc: [
@@ -72,11 +72,11 @@ window.TOWER={
  {l:'Net debt / EBITDA',a:0.8,p:0.7,u:'×',dec:1,q:[0.55,0.6,0.7,0.8],gd:'down',n:'Rose on the draw; headroom to ~2.0×.'},
 ],
  ops: [
- {id:'ptfi',deliver:89,dv:'Grasberg mud rush',ltifr:0.42,fatal:0,life:25,ost:'fm'},
- {id:'ptba',deliver:101,dv:'record 43.3 Mt',ltifr:0.55,fatal:0,life:18,ost:'run'},
- {id:'antam',deliver:89,dv:'FeNi 20.1k / 22.5k TNi',ltifr:0.38,fatal:0,life:20,ost:'con'},
- {id:'inalum',deliver:127,dv:'+27% volume',ltifr:0.30,fatal:0,life:null,ost:'run'},
- {id:'timah',deliver:123,dv:'+23% refined tin',ltifr:0.61,fatal:0,life:14,ost:'run'},
+ {id:'ptfi',deliver:89,dv:'Grasberg mud rush',ltifr:0.42,fatal:0,life:25,ost:'fm',oq:[97,95,91,89]},
+ {id:'ptba',deliver:101,dv:'record 43.3 Mt',ltifr:0.55,fatal:0,life:18,ost:'run',oq:[96,99,102,101]},
+ {id:'antam',deliver:89,dv:'FeNi 20.1k / 22.5k TNi',ltifr:0.38,fatal:0,life:20,ost:'con',oq:[93,91,90,89]},
+ {id:'inalum',deliver:127,dv:'+27% volume',ltifr:0.30,fatal:0,life:null,lifeNote:'smelter · feedstock-based',ost:'run',oq:[108,115,121,127]},
+ {id:'timah',deliver:123,dv:'+23% refined tin',ltifr:0.61,fatal:0,life:14,ost:'run',oq:[104,112,118,123]},
 ],
  ohealth: [
  {id:'ptfi',ev:'Grasberg mud rush · Sep-2025',im:'2026 output ~−35%; ramp recovery through the year',st:'fm'},
