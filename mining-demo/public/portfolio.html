@@ -379,11 +379,6 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
          <form id="capaiform" class="capaiform"><input id="capaiq" autocomplete="off" placeholder="Ask about the capital data…"><button type="submit">Ask</button></form>
        </div>
      </div>
-     <div style="display:grid;grid-template-columns:1.05fr 1.2fr 1fr;gap:12px;flex:none">
-       <div class="card" style="padding:13px 16px"><div class="ch">Returns on capital <span class="cs" style="display:inline">· click a row to ask the copilot</span></div><div class="cq">Is each business earning above its cost of capital?</div><svg id="capret" viewBox="0 0 520 214" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;margin-top:7px"></svg></div>
-       <div class="card" style="padding:13px 16px"><div class="ch">Growth pipeline</div><div class="cq">What is the build buying — and when does it deliver?</div><div id="cappipe" style="margin-top:9px"></div></div>
-       <div class="card" style="padding:13px 16px"><div class="ch">Capital deployed over time</div><div class="cq">How has the mix of cash uses shifted?</div><svg id="caphist" viewBox="0 0 520 214" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;margin-top:7px"></svg></div>
-     </div>
    </div>
 
    <!-- OPERATIONS -->
@@ -684,7 +679,7 @@ function histRender(){const s=document.getElementById('caphist');if(!s)return;s.
  E(s,'text',{x:x1,y:22,'text-anchor':'end','font-size':8.5,'font-weight':700,fill:'#9C6644'},'growth 4→12 · now the biggest use');}
 /* growth pipeline — the Rp 12T build, by project: capex · % complete · first production · expected IRR */
 const PIPE=TOWER.pipe;
-document.getElementById('cappipe').innerHTML='<div class="phd"><span>Project</span><span>Capex</span><span>Complete</span><span>1st</span><span>IRR</span></div>'+PIPE.map(p=>`<div class="prow"><div class="pnm">${p.nm}<small>${p.own}</small></div><div class="pcap">${p.cap.toFixed(1)}</div><div class="ppct"><span class="pbar"><span style="width:${p.pct}%"></span></span><small>${p.pct}%</small></div><div class="pprod">${p.prod}</div><div class="pirr">${p.irr?'~'+p.irr+'%':'—'}</div></div>`).join('');
+{const cp=document.getElementById('cappipe');if(cp)cp.innerHTML='<div class="phd"><span>Project</span><span>Capex</span><span>Complete</span><span>1st</span><span>IRR</span></div>'+PIPE.map(p=>`<div class="prow"><div class="pnm">${p.nm}<small>${p.own}</small></div><div class="pcap">${p.cap.toFixed(1)}</div><div class="ppct"><span class="pbar"><span style="width:${p.pct}%"></span></span><small>${p.pct}%</small></div><div class="pprod">${p.prod}</div><div class="pirr">${p.irr?'~'+p.irr+'%':'—'}</div></div>`).join('');}
 /* capital discipline — the metrics that judge whether the allocation is sound */
 
 /* cost curve */
@@ -1055,7 +1050,7 @@ function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.remov
  document.getElementById('vt').textContent=TITLES[v][0];document.getElementById('vc').textContent=TITLES[v][1];
  try{history.replaceState(null,'','#'+v);}catch(e){}
  // render charts lazily (need layout, so after display)
- requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capCopilot.insight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();opsHealth();opsBuild();opsCopilot.insight();drawn.ops=1;}if(v==='projects'&&!drawn.proj){projTotals();projCards();projMap();projAgg();drawn.proj=1;}if(v==='forecast'&&!drawn.fc){fcKpis();fanChart();nowcastRender();fundTiles();fcRisks();drawn.fc=1;}if(v==='stress'&&!drawn.st){stressRender();drawn.st=1;}if(v==='allocate'&&!drawn.al){allocRender();decLog();drawn.al=1;}});
+ requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);capCopilot.insight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();opsHealth();opsBuild();opsCopilot.insight();drawn.ops=1;}if(v==='projects'&&!drawn.proj){projTotals();projCards();projMap();projAgg();drawn.proj=1;}if(v==='forecast'&&!drawn.fc){fcKpis();fanChart();nowcastRender();fundTiles();fcRisks();drawn.fc=1;}if(v==='stress'&&!drawn.st){stressRender();drawn.st=1;}if(v==='allocate'&&!drawn.al){allocRender();decLog();drawn.al=1;}});
 }
 document.querySelectorAll('.item[data-v]').forEach(i=>i.onclick=()=>show(i.dataset.v));
 document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=()=>show(a.dataset.jump));
