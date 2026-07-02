@@ -7,7 +7,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,2 95,27 95,73 50,98 5,73 5,27' fill='%2315803d'/><text x='50' y='64' font-size='38' font-family='monospace' font-weight='800' text-anchor='middle' fill='%23ffffff'>OS</text></svg>" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   :root{
     --bg:#eef4ef; --paper:#fbfdf9; --paper2:#ffffff; --inset:#f2f7f2;
@@ -142,6 +142,32 @@
   [data-theme="neo"] .vd-status,[data-theme="neo"] .lnav-item.on .lnav-n{text-shadow:0 0 16px currentColor}
   [data-theme="neo"] .preset-sel:focus,[data-theme="neo"] .cop-form input:focus{outline:1px solid var(--green);box-shadow:0 0 0 3px var(--green-soft)}
 
+  /* ───────── THEME: Mineral terminal (light · matches the Portfolio Control Tower) ───────── */
+  [data-theme="mineral"]{
+    --sans:'IBM Plex Sans',system-ui,sans-serif;
+    --app-bg:radial-gradient(circle at 100% 0%,rgba(156,102,68,.05),transparent 40%),linear-gradient(170deg,#EFEAE0,#EBE6DB 60%);
+    --paper:#FFFFFF; --paper2:#FBF8F2; --inset:#F4EFE4;
+    --ink:#211C16; --muted:#6B655B; --faint:#A39B8C; --line:#E6DECF; --line2:#EBE3D5;
+    --green:#5E7350; --green-dark:#4E6142; --green-soft:rgba(94,115,80,.12);
+    --gold:#A9842F; --red:#A4543C; --blue:#7C766B; --violet:#9C6644;
+    --shadow:0 1px 2px rgba(42,36,28,.04),0 14px 34px -22px rgba(42,36,28,.25);
+    --r-panel:13px; --r-kpi:13px;
+    --bar-bg:rgba(251,248,242,.88); --bar-line:rgba(230,222,207,.9);
+    --ticker-bg:#211C16; --ticker-foot-bg:#191510;
+    --tile-bg:linear-gradient(135deg,#3A3126,#211C16); --tile-ink:#FBF8F2; --tile-k:#C9BCA8; --tile-u:#A39B8C; --tile-border:transparent;
+    --brief-bg:linear-gradient(160deg,#2A241C,#211C16);
+    --cv-ink:#211C16; --cv-faint:#A39B8C; --cv-grid:#E7DFCF; --cv-labelbg:251,248,242;
+    --cv-green:#5E7350; --cv-red:#A4543C; --cv-gold:#A9842F; --cv-blue:#7C766B;
+  }
+  [data-theme="mineral"] #handoffBar{background:#FBF8F2;border-color:#E6DECF;color:#6B655B;box-shadow:0 6px 24px rgba(42,36,28,.2)}
+  [data-theme="mineral"] #handoffBar b{color:#9C6644}
+  [data-theme="mineral"] #handoffBar .hb-x{color:#A39B8C}
+  [data-theme="mineral"] #handoffBar .hb-x:hover{color:#211C16}
+  [data-theme="mineral"] body.stress-solo #prodToggle{background:#FBF8F2;border-color:#E6DECF;box-shadow:0 6px 22px rgba(42,36,28,.22)}
+  [data-theme="mineral"] #prodToggle .pt{color:#6B655B}
+  [data-theme="mineral"] #prodToggle .pt:hover{color:#211C16}
+  [data-theme="mineral"] #prodToggle .pt.active{background:#5E7350;color:#FBF8F2}
+
   /* Warm — forest green on cream/ivory paper, gold-forward (earthy commodity) */
   [data-theme="warm"]{
     --app-bg:linear-gradient(180deg,#f6f3ea 0%,#fbf9f2 60%);
@@ -157,7 +183,7 @@
   *{margin:0;padding:0;box-sizing:border-box}
   html{background:#fbfbf9}
   html[data-theme="night"]{background:#0d1117} html[data-theme="neo"]{background:#060c0b}
-  html[data-theme="deep"]{background:#0a140d} html[data-theme="terminal"]{background:#eef0f2} html[data-theme="fintech"]{background:#f4f6fa}
+  html[data-theme="deep"]{background:#0a140d} html[data-theme="terminal"]{background:#eef0f2} html[data-theme="fintech"]{background:#f4f6fa} html[data-theme="mineral"]{background:#EBE6DB}
   body{background:var(--app-bg);background-attachment:fixed;
     color:var(--ink);font-family:var(--sans);line-height:1.45;-webkit-font-smoothing:antialiased;
     min-height:100vh;padding-bottom:54px}
@@ -850,7 +876,8 @@
 </style>
 <script>(function(){var d=document.documentElement;
   if(new URLSearchParams(location.search).has('embed'))d.classList.add('embed');
-  var t='neo';try{t=localStorage.getItem('cockpitTheme')||'neo';}catch(e){}
+  var t='mineral';try{t=localStorage.getItem('cockpitTheme')||'mineral';}catch(e){}
+  if(t==='neo')t='mineral'; /* migrate the old default */
   if(t!=='forest')d.setAttribute('data-theme',t);})();</script>
 </head>
 <body>
@@ -1960,7 +1987,8 @@ function setTheme(t){
   if(typeof activeView!=='undefined'){if(activeView==='forecast')renderForecast();else if(activeView==='allocate')renderAllocate();}
 }
 document.querySelectorAll('#themeSeg button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.t)));
-let _savedTheme='neo'; try{_savedTheme=localStorage.getItem('cockpitTheme')||'neo';}catch(e){}
+let _savedTheme='mineral'; try{_savedTheme=localStorage.getItem('cockpitTheme')||'mineral';}catch(e){}
+if(_savedTheme==='neo')_savedTheme='mineral'; /* migrate the old default */
 
 /* ════════ CEO Cockpit: layers · scope · drawer · macro · stress chain ════════ */
 let lastBP=0, lastP50=0, lastFloor=2, lastView=null;
@@ -2654,7 +2682,7 @@ const M = {
   detectPreset(v,regime){for(const p of this.PRESETS){let ok=p.regime===regime;if(ok)for(const k in p.values)if(Math.abs(p.values[k]-v[k])>1e-6){ok=false;break;}if(ok)return p.id;}return null;},
   THEMES:{
     dark:{bg:'#060c0b',panel:'#0b1614',inset:'#0a1412',ink:'#e2f5ef',muted:'#82a79e',faint:'#557067',border:'rgba(45,224,196,.15)',green:'#2fe0c0',gold:'#f0a830',red:'#ff5d6c',blue:'#36c5d6',violet:'#8f9dff',ptba:'#d9920f',antam:'#15a06d',inalum:'#3f86cf',timah:'#dc5a50',freeport:'#7d6be0',track:'rgba(130,167,158,.25)'},
-    light:{bg:'#eef4ef',panel:'#fbfdf9',inset:'#f2f7f2',ink:'#16211d',muted:'#64756f',faint:'#8b9a92',border:'#c4d5cb',green:'#15a06d',gold:'#d9920f',red:'#dc5a50',blue:'#3f86cf',violet:'#7d6be0',ptba:'#d9920f',antam:'#15a06d',inalum:'#3f86cf',timah:'#dc5a50',freeport:'#7d6be0',track:'rgba(100,117,111,.30)'},
+    light:{bg:'#EBE6DB',panel:'#FFFFFF',inset:'#F4EFE4',ink:'#211C16',muted:'#6B655B',faint:'#A39B8C',border:'#E6DECF',green:'#5E7350',gold:'#A9842F',red:'#A4543C',blue:'#7C766B',violet:'#9C6644',ptba:'#6B5B4A',antam:'#5E7350',inalum:'#7C766B',timah:'#B07A4A',freeport:'#9C6644',track:'rgba(163,155,140,.35)'},
   },
   _memo:{}, _noise:null,
   paths(){return 2500;},
