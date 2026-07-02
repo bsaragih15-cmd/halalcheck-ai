@@ -161,3 +161,27 @@ export function capitalCopilotFallback(body = {}) {
     answer = 'I can answer on the <b>sources</b> & <b>uses</b> of cash, <b>returns vs cost of capital</b>, the <b>debt draw / leverage</b>, the <b>dividend</b>, or the <b>growth pipeline</b>. Try one of those, or ask about a specific subsidiary.';
   return { answer };
 }
+
+// ── Operations Copilot — company-aware Q&A over the physical operational state ──
+const OPSFACT = {
+  ptfi: "<b>Freeport</b> is the group's one impaired asset: the Sep-2025 <b>Grasberg mud rush</b> puts it under <b>force majeure</b>, cutting 2026 output ~35% with ramp recovery through the year. FY24 output ~89% of plan, LTIFR 0.42, 0 fatalities, mine life ~25 yr. Its Manyar copper smelter is 95% complete (commissioning, first cathode 2024).",
+  antam: '<b>Antam</b> is <b>constrained</b>: RKEF ferronickel runs below nameplate (20.1k of 22.5k TNi) — high-cost, curtailment under review. Output ~89% of plan, LTIFR 0.38, 0 fatalities, mine life ~20 yr. Co-owns the SGAR alumina refinery (85% complete, first alumina 2025).',
+  ptba: '<b>Bukit Asam</b> is <b>running well</b>: record 43.3 Mt, strip ratio beat (6.23× vs 6.44×), output 101% of plan. LTIFR 0.55, 0 fatalities, mine life ~18 yr.',
+  inalum: '<b>Inalum</b> is the cleanest operational performer — <b>running</b> at +27% volume (127% of plan) toward ~900 kt, captive Asahan hydro, LTIFR 0.30 (best), 0 fatalities. A smelter, so no reserve base; leads the SGAR build.',
+  timah: "<b>Timah</b> is <b>running</b> (refined tin +23%, 123% of plan, LTIFR 0.61, 0 fatalities), but its <b>~14-yr reserve life</b> is the structural watch — depleting faster than it replaces.",
+};
+export function opsCopilotFallback(body = {}) {
+  const t = String(body.question || '').toLowerCase();
+  const re = (x) => new RegExp(x).test(t);
+  const map = { ptfi: ['freeport', 'ptfi', 'grasberg', 'manyar'], antam: ['antam', 'antm', 'ferronickel', 'feni', 'sgar'], ptba: ['bukit', 'ptba', 'coal'], inalum: ['inalum', 'alumin'], timah: ['timah', 'tins', 'tin'] };
+  for (const id in map) if (map[id].some((k) => t.includes(k))) return { answer: OPSFACT[id] };
+  let answer;
+  if (re('safe|ltifr|fatal|injur')) answer = 'Safety: <b>zero fatalities</b> across the portfolio. LTIFR runs 0.30 (Inalum, best) to 0.61 (Timah); Freeport 0.42, Bukit Asam 0.55, Antam 0.38.';
+  else if (re('reserve|mine life|deplet|last|how long')) answer = 'Mine life: Freeport ~25 yr, Antam ~20 yr, Bukit Asam ~18 yr, <b>Timah ~14 yr — the depletion watch</b>. Inalum is a smelter (no reserve base).';
+  else if (re('build|project|construct|smelter|first prod')) answer = 'Growth build: <b>Manyar Cu smelter 95%</b> (commissioning, first cathode 2024), <b>SGAR alumina 85%</b> (construction, 2025), Grasberg underground ramping (70%), smelters/debottleneck 55%.';
+  else if (re('disrupt|broken|impair|force majeure|outage')) answer = 'Only two assets are off-nominal: <b>Freeport</b> (force majeure — Grasberg mud rush, 2026 ~−35%) and <b>Antam</b> (FeNi below nameplate). The rest are running, several at records.';
+  else if (re('output|production|deliver|plan|volume')) answer = 'Output vs plan: Inalum 127%, Timah 123%, Bukit Asam 101% (above); <b>Freeport 89%</b> (mud rush) and <b>Antam 89%</b> (FeNi) below.';
+  else if (re('summar|overview|status|how are|fleet|everything')) answer = 'Operationally the fleet runs well — records at Bukit Asam, Inalum and Timah. Exceptions: <b>Freeport</b> under force majeure and <b>Antam</b> constrained. Zero fatalities; Timah\'s ~14-yr reserve life is the one structural watch.';
+  else answer = 'Ask me about a specific company — <b>Freeport, Bukit Asam, Antam, Inalum, or Timah</b> — or about safety, reserves, the growth build, or disruptions across the fleet.';
+  return { answer };
+}
