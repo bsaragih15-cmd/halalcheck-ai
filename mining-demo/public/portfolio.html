@@ -87,6 +87,30 @@ svg text{font-family:'IBM Plex Mono',monospace}
 .verdict h1 .u{color:var(--amber)}
 .verdict .vr{font-size:14px;color:var(--mut);line-height:1.55;margin-top:12px;max-width:880px}
 .matters{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+/* exception / alert strip (threshold engine over the data layer) */
+.alertrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+.alert{display:flex;align-items:center;gap:8px;padding:6px 11px;border-radius:8px;cursor:pointer;border:1px solid;font-size:11px;transition:transform .12s}
+.alert:hover{transform:translateY(-1px)}
+.alert.r{background:#F3E5DF;border-color:rgba(164,84,60,.35);color:#7a3b28}
+.alert.a{background:#F5EEDC;border-color:rgba(169,132,47,.35);color:#6d5520}
+.alert b{font-weight:700}
+.alert .rule{font-family:'IBM Plex Mono',monospace;font-size:8px;opacity:.75}
+/* forecast — nowcast chips */
+.ncrow{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #F2EDE3}.ncrow:last-child{border-bottom:0}
+.ncnm{font-size:11.5px;font-weight:600;width:118px;flex:none}
+.ncv{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;width:64px;text-align:right}
+.ncd{font-size:9.5px;color:var(--faint);flex:1;font-family:'IBM Plex Mono',monospace}
+/* allocate — ranked moves + decision log */
+.rkc{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--border);border-radius:10px;padding:10px 13px;margin-bottom:8px;background:var(--panel2)}
+.rkc.top{border-color:rgba(94,115,80,.45);background:#F3F6EE}
+.rkc .rkn{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:800;color:var(--teal);width:22px;flex:none}
+.rkc .rkt{font-size:12.5px;font-weight:700}.rkc .rkw{font-size:10.5px;color:var(--mut);margin-top:3px;line-height:1.4}
+.rkc .rktype{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:5px;margin-left:auto;flex:none}
+.ty-reinvest{color:#5E7350;background:#ECF0E4}.ty-fix{color:#A4543C;background:#F3E5DF}.ty-deleverage{color:#7C766B;background:#EFEAE0}.ty-return{color:#A9842F;background:#F5EEDC}
+.dlrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F2EDE3}.dlrow:last-child{border-bottom:0}
+.dlmv{flex:1;font-size:11.5px;font-weight:600;line-height:1.3}
+.dlmv small{display:block;font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--faint);font-weight:500;margin-top:2px}
+.dlst{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:700;letter-spacing:.04em;padding:3px 8px;border-radius:5px;cursor:pointer;border:1px solid;flex:none;background:transparent}
 .m{display:flex;align-items:center;gap:15px;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:16px 17px;position:relative;overflow:hidden;text-decoration:none;color:inherit;transition:transform .18s,border-color .18s}
 .m:hover{transform:translateY(-2px);border-color:var(--border2)}.m .ed{position:absolute;left:0;top:0;bottom:0;width:4px}
 .m .big{font-family:'IBM Plex Mono',monospace;font-size:27px;font-weight:800;min-width:108px}
@@ -255,17 +279,19 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
  <div class="rail">
    <div class="logo"><span class="dot"></span><div>MIND ID<div class="s">Portfolio Control Tower</div></div></div>
    <div class="grp">Brief</div>
-   <a class="item on" data-v="overview"><span class="ic">◆</span>Overview</a>
-   <div class="grp">Performance · vs RKAP</div>
+   <a class="item on" data-v="overview"><span class="ic">◆</span>Overview<span class="kx dn" id="alertkx"></span></a>
+   <div class="grp">Monitor · vs RKAP</div>
    <a class="item" data-v="financials"><span class="ic">01</span>Financials<span class="kx dn">−10%</span></a>
    <a class="item" data-v="capital"><span class="ic">02</span>Capital</a>
    <a class="item" data-v="ops"><span class="ic">03</span>Operations<span class="kx am">1 risk</span></a>
    <a class="item" data-v="projects"><span class="ic">04</span>Projects<span class="kx dn">2 red</span></a>
-   <a class="item" data-v="outlook"><span class="ic">05</span>Outlook</a>
+   <div class="grp">Predict</div>
+   <a class="item" data-v="forecast"><span class="ic">05</span>Forecast<span class="kx am" id="fckx"></span></a>
+   <a class="item" data-v="outlook"><span class="ic">06</span>Outlook</a>
    <div class="grp">Decide</div>
-   <a class="item" href="ceo-cockpit.html"><span class="ic">◇</span>Stress test</a>
-   <a class="item" data-v="act"><span class="ic">→</span>Act</a>
-   <div class="railft">FY2024 · vs RKAP<br><span class="ai">◇ AI Chief of Staff</span> <span id="aibadge"></span><br><span class="pill">as of 30 Jun 2026</span></div>
+   <a class="item" data-v="stress"><span class="ic">◇</span>Stress test</a>
+   <a class="item" data-v="allocate"><span class="ic">→</span>Allocate</a>
+   <div class="railft" id="railft"></div>
  </div>
 
  <!-- ════ MAIN ════ -->
@@ -278,6 +304,10 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
      <div class="verdict"><span class="vi" id="cfobadge">CFO READ</span>
        <div><h1>A record top line that <span class="u">missed the plan</span> that matters.</h1>
        <div class="vr" id="ovread">Revenue beat RKAP on gold trading, but EBITDA came in ~Rp 4.5T under budget on coal and nickel prices — and the profit that's left leans ~80% on one asset, now under force majeure. The story is concentration, not the headline.</div></div></div>
+     <div class="card" style="flex:none;padding:12px 16px">
+       <div class="ch">⚠ Exceptions <span class="cs" style="display:inline" id="alertsub">· computed from thresholds on the data layer · click to jump</span></div>
+       <div class="alertrow" id="alerts"></div>
+     </div>
      <div class="matters">
        <a class="m r" data-jump="financials"><span class="ed"></span><span class="big">−10%</span><div class="tx"><b>EBITDA missed plan.</b><div class="s">Price-led — coal &amp; nickel below the RKAP deck.</div></div></a>
        <a class="m v2" data-jump="ops"><span class="ed"></span><span class="big">80%</span><div class="tx"><b>Profit leans on Grasberg.</b><div class="s">One asset, 51% owned — under force majeure.</div></div></a>
@@ -374,6 +404,66 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
      <div id="projDetailView" style="display:none;flex:1;min-height:0;overflow-y:auto"></div>
    </div>
 
+   <!-- FORECAST — stage 2 · predictive (driver-based, transparent) -->
+   <div class="view" id="v-forecast">
+     <div class="kpis" id="fckpis"></div>
+     <div style="display:grid;grid-template-columns:1.6fr 1fr;gap:12px;flex:1;min-height:0">
+       <div class="card" style="display:flex;flex-direction:column;min-height:0">
+         <div class="ch">Group EBITDA — projected forward <span class="cs" style="display:inline">· quarterly · Rp T · P10–P90 band</span></div>
+         <div class="cq">Where are FY25–26 heading before results land?</div>
+         <div class="fillsvg" style="margin-top:4px"><svg id="fan" viewBox="0 0 1000 430" preserveAspectRatio="xMidYMid meet"></svg></div>
+         <div class="ccread" id="fanread"></div>
+       </div>
+       <div class="card" style="display:flex;flex-direction:column;min-height:0;overflow-y:auto">
+         <div class="ch">Nowcast <span class="cs" style="display:inline">· from live market marks</span></div>
+         <div class="cq">Who is drifting off plan this quarter?</div>
+         <div id="nowcast" style="margin-top:8px"></div>
+         <div class="ch" style="margin-top:14px">Dividend capacity &amp; funding</div>
+         <div class="cq">Can FY25 fund the build and the dividend?</div>
+         <div class="pdgrid" id="fundtiles" style="margin-top:9px"></div>
+       </div>
+     </div>
+   </div>
+
+   <!-- STRESS — stage 3 · simulative (correlated shock library on the forecast baseline) -->
+   <div class="view" id="v-stress">
+     <div style="display:grid;grid-template-columns:1.45fr 1fr;gap:12px;flex:1;min-height:0">
+       <div class="card" style="display:flex;flex-direction:column;min-height:0">
+         <div class="ch">Scenario library <span class="cs" style="display:inline">· correlated shocks on the FY25 baseline · click a row</span></div>
+         <div class="cq">What hits EBITDA, the dividend and leverage — and how hard?</div>
+         <div style="overflow-y:auto;flex:1;min-height:0;margin-top:8px"><table class="fin" id="scentbl"></table></div>
+       </div>
+       <div class="card" style="display:flex;flex-direction:column;min-height:0">
+         <div class="ch" id="scenbrkh">Scenario breakdown</div>
+         <div class="cq">Which subsidiaries move together?</div>
+         <svg id="scenbrk" viewBox="0 0 520 250" preserveAspectRatio="xMidYMid meet" style="width:100%;height:auto;display:block;margin-top:8px"></svg>
+         <div class="ccread" id="scenread" style="margin-top:auto"></div>
+       </div>
+     </div>
+     <div class="card" style="flex:none;display:flex;align-items:center;gap:18px;padding:13px 18px">
+       <div><div class="ch">Need the full distribution?</div><div class="cs" style="margin:2px 0 0">10k-path Monte-Carlo · cash floor vs the board dividend · factor model</div></div>
+       <a href="ceo-cockpit.html" style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:#FBF8F2;background:var(--teal);border-radius:9px;padding:10px 18px;text-decoration:none">Open the Monte-Carlo cockpit →</a>
+     </div>
+   </div>
+
+   <!-- ALLOCATE — stage 4 · prescriptive (ranked moves + decision log) -->
+   <div class="view" id="v-allocate">
+     <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:12px;flex:1;min-height:0">
+       <div class="card" style="display:flex;flex-direction:column;min-height:0">
+         <div class="bhead"><div class="ch">Next best moves <span class="cs" style="display:inline">· ranked vs hurdle rates</span></div>
+           <div class="ccsel" id="alsel"><button data-s="base" class="on">Baseline</button><button data-s="combined">Combined downside</button><button data-s="goldspike">Gold +20%</button></div></div>
+         <div class="cq">Where should the next rupiah of capital go — under this scenario?</div>
+         <div class="ccread" id="alcap" style="margin:8px 0 2px"></div>
+         <div id="ranked" style="overflow-y:auto;flex:1;min-height:0;margin-top:6px"></div>
+       </div>
+       <div class="card" style="display:flex;flex-direction:column;min-height:0">
+         <div class="ch">Decision log <span class="cs" style="display:inline">· click a status to advance it</span></div>
+         <div class="cq">Prescriptions become tracked actions — the loop closes here</div>
+         <div id="declog" style="margin-top:8px;overflow-y:auto;flex:1;min-height:0"></div>
+       </div>
+     </div>
+   </div>
+
    <!-- OUTLOOK -->
    <div class="view" id="v-outlook">
      <div class="outlook" id="outlookcards"></div>
@@ -383,17 +473,6 @@ table.fin{border-collapse:collapse;width:100%;font-size:12.5px}
        <div class="scex">try: <a data-q="coal falls 20%">coal falls 20%</a> · <a data-q="nickel down 25%">nickel −25%</a> · <a data-q="copper -30% and rupiah weakens 10%">copper −30% + rupiah −10%</a></div>
        <div id="scres"></div>
      </div>
-   </div>
-
-   <!-- ACT -->
-   <div class="view" id="v-act">
-     <div class="moves">
-       <div class="mv"><span class="n">01</span><div><div class="t1">Hedge part of the coal price</div><div class="t2">Coal is the dominant drag vs plan and the biggest cash-floor exposure. Lock 30–50% of seaborne price for two quarters to collapse the left tail.</div></div></div>
-       <div class="mv"><span class="n">02</span><div><div class="t1">Anchor the dividend to a conservative case</div><div class="t2">Set the payout against P10, not P50 — protects the State contribution in a soft-price year while preserving upside.</div></div></div>
-       <div class="mv"><span class="n">03</span><div><div class="t1">Pre-position on Grasberg</div><div class="t2">Freeport is ~80% of profit and under force majeure. Stress the cash floor against the 2026 ramp and stage contingency before the dividend cycle.</div></div></div>
-       <div class="mv"><span class="n">04</span><div><div class="t1">Engage ESDM on royalty &amp; DMO</div><div class="t2">PP19/2025 royalties are a structural cost step-up. Manage the regulated levers (DMO mix, royalty timing) inside management control.</div></div></div>
-     </div>
-     <div class="card big-cta" style="flex:1"><div class="h">Size any of these in the Stress Test →</div><a href="ceo-cockpit.html">Open the Monte-Carlo cash-floor model</a></div>
    </div>
 
  </div>
@@ -495,14 +574,19 @@ function capLocalAnswer(q){const t=(q||'').toLowerCase();
  if(m('risk','concern','worry','watch','weak'))return 'The watch item is <b>concentration</b>: ~96% of economic profit and ~63% of capital sit in Freeport, which is under force majeure. Coal &amp; nickel capital earns below its cost of capital this year.';
  if(m('summar','overview','insight','tell me','read','sound','how are we'))return CAP_INSIGHT;
  return 'I can answer on the <b>sources</b> &amp; <b>uses</b> of cash, <b>returns vs cost of capital</b>, the <b>debt draw / leverage</b>, the <b>dividend</b>, or the <b>growth pipeline</b>. Try one of those, or ask about a specific subsidiary.';}
-function capPush(role,html){const log=document.getElementById('capailog');const d=document.createElement('div');d.className=role==='user'?'aiu':'aim';d.innerHTML=html;log.appendChild(d);log.scrollTop=log.scrollHeight;return d;}
-let capAiInit=false;
-function capInsight(){if(capAiInit)return;capAiInit=true;capPush('ai',CAP_INSIGHT);}
-async function capAsk(q){if(!q||!q.trim())return;capPush('user',esc(q));const el=capPush('ai','<span class="aidots">thinking…</span>');
- let ans;try{const r=await postJSON('/api/portfolio/capital-copilot',{question:q,state:CAP_STATE});ans=(r&&r.answer)?r.answer:capLocalAnswer(q);}catch(e){ans=capLocalAnswer(q);}
- el.innerHTML=ans;document.getElementById('capailog').scrollTop=1e7;}
-document.getElementById('capaiform').addEventListener('submit',e=>{e.preventDefault();const i=document.getElementById('capaiq');capAsk(i.value);i.value='';});
-document.querySelectorAll('#capaiex a').forEach(a=>a.onclick=()=>capAsk(a.dataset.q));
+/* ── unified AI copilot component — one pattern for every tab ── */
+function makeCopilot(cfg){
+ const log=()=>document.getElementById(cfg.log);
+ function push(role,html){const l=log();if(!l)return null;const d=document.createElement('div');d.className=role==='user'?'aiu':'aim';d.innerHTML=html;l.appendChild(d);l.scrollTop=l.scrollHeight;return d;}
+ let inited=false;
+ async function ask(q){if(!q||!q.trim())return;push('user',esc(q));const el=push('ai','<span class="aidots">thinking…</span>');if(!el)return;
+  let ans;try{const r=await postJSON(cfg.endpoint,{question:q,state:cfg.state});ans=(r&&r.answer)?r.answer:cfg.local(q);}catch(e){ans=cfg.local(q);}
+  el.innerHTML=ans;const l=log();if(l)l.scrollTop=1e7;}
+ const f=document.getElementById(cfg.form);if(f)f.addEventListener('submit',e=>{e.preventDefault();const i=document.getElementById(cfg.input);ask(i.value);i.value='';});
+ document.querySelectorAll('#'+cfg.ex+' a').forEach(a=>a.onclick=()=>ask(a.dataset.q));
+ return {ask,insight(){if(inited)return;inited=true;push('ai',cfg.intro);}};
+}
+const capCopilot=makeCopilot({log:'capailog',form:'capaiform',input:'capaiq',ex:'capaiex',endpoint:'/api/portfolio/capital-copilot',state:CAP_STATE,local:capLocalAnswer,intro:CAP_INSIGHT});
 (async function(){try{const h=await(await fetch('/api/health')).json();const b=document.getElementById('capaibadge');if(b)b.textContent=h.aiMode==='live'?'· live':'· capital';}catch(e){}})();
 /* capital KPI strip — headline generation/deployment metrics with quarterly sparklines */
 const CKPI=TOWER.ckpi;
@@ -621,15 +705,8 @@ function opsLocalAnswer(q){const t=(q||'').toLowerCase(),map={ptfi:['freeport','
  if(/output|production|deliver|plan|volume/.test(t))return 'Output vs plan: Inalum 127%, Timah 123%, Bukit Asam 101% (above); <b>Freeport 89%</b> (mud rush) and <b>Antam 89%</b> (FeNi) below.';
  if(/summar|overview|status|how are|fleet|everything/.test(t))return OPS_INTRO;
  return 'Ask me about a specific company — <b>Freeport, Bukit Asam, Antam, Inalum, or Timah</b> — or about safety, reserves, the growth build, or disruptions across the fleet.';}
-function opsPush(role,html){const log=document.getElementById('opsailog');if(!log)return null;const d=document.createElement('div');d.className=role==='user'?'aiu':'aim';d.innerHTML=html;log.appendChild(d);log.scrollTop=log.scrollHeight;return d;}
-let opsAiInit=false;
-function opsInsight(){if(opsAiInit)return;opsAiInit=true;opsPush('ai',OPS_INTRO);}
-async function opsAsk(q){if(!q||!q.trim())return;opsPush('user',esc(q));const el=opsPush('ai','<span class="aidots">thinking…</span>');if(!el)return;
- let ans;try{const r=await postJSON('/api/portfolio/ops-copilot',{question:q,state:{scorecard:OPS,health:OHEALTH,build:OBUILD}});ans=(r&&r.answer)?r.answer:opsLocalAnswer(q);}catch(e){ans=opsLocalAnswer(q);}
- el.innerHTML=ans;const log=document.getElementById('opsailog');if(log)log.scrollTop=1e7;}
-function opsAskCompany(id){const nm=(SUBS.find(x=>x.id===id)||{}).nm||id;opsAsk('How is '+nm+' performing operationally?');}
-{const f=document.getElementById('opsaiform');if(f)f.addEventListener('submit',e=>{e.preventDefault();const i=document.getElementById('opsaiq');opsAsk(i.value);i.value='';});
- document.querySelectorAll('#opsaiex a').forEach(a=>a.onclick=()=>opsAsk(a.dataset.q));}
+const opsCopilot=makeCopilot({log:'opsailog',form:'opsaiform',input:'opsaiq',ex:'opsaiex',endpoint:'/api/portfolio/ops-copilot',state:{scorecard:OPS,health:OHEALTH,build:OBUILD},local:opsLocalAnswer,intro:OPS_INTRO});
+function opsAskCompany(id){const nm=(SUBS.find(x=>x.id===id)||{}).nm||id;opsCopilot.ask('How is '+nm+' performing operationally?');}
 function drill(id){const s=SUBS.find(x=>x.id===id);const S=stx[s.st];document.getElementById('opdrill').innerHTML=`<div style="display:flex;align-items:center;gap:12px;margin-bottom:11px"><span style="width:4px;height:26px;border-radius:2px;background:${COL[s.id]}"></span><b style="font-size:16px">${s.nm}</b><span class="${S.c}">${S.g} ${S.w}</span><span class="pl">${s.sec} · Q${s.quart}</span><span class="pl" style="margin-left:auto">${s.own}</span></div><div style="display:grid;grid-template-columns:repeat(4,1fr) 1.4fr;gap:11px"><div class="op"><div class="l">${s.ops[0].l}</div><div class="v">${s.ops[0].v}</div><div class="d">${s.ops[0].d}</div></div><div class="op"><div class="l">${s.ops[1].l}</div><div class="v">${s.ops[1].v}</div><div class="d">${s.ops[1].d}</div></div><div class="op"><div class="l">${s.ops[2].l}</div><div class="v">${s.ops[2].v}</div><div class="d">${s.ops[2].d}</div></div><div class="op"><div class="l">${s.ops[3].l}</div><div class="v">${s.ops[3].v}</div><div class="d">${s.ops[3].d}</div></div><div class="op" style="background:transparent;border-color:transparent"><div class="l">Read</div><div class="d" style="font-size:11.5px;margin-top:6px">${s.watch}</div></div></div>`;}
 
 /* outlook */
@@ -732,20 +809,154 @@ function projOpen(id){const p=PROJ.find(x=>x.id===id);if(!p)return;const m=PMETA
  document.getElementById('projPortfolio').style.display='none';el.style.display='block';el.scrollTop=0;}
 function projBack(){document.getElementById('projDetailView').style.display='none';document.getElementById('projPortfolio').style.display='flex';}
 
+/* ═══ STAGE 2 · FORECAST ENGINE — driver-based projection on the data spine ═══ */
+const FC=TOWER.forecast;
+function fcCompute(shock){shock=shock||{};
+ const n=FC.quarters.length,subs={},group=[];FC.paths.forEach(p=>subs[p.id]=[]);
+ for(let i=0;i<n;i++){let g=0;const fx=(FC.fwd.fx[i]||0)+(shock.fx||0);
+  FC.paths.forEach(p=>{const pr=(FC.fwd[p.cm][i]||0)+(shock[p.cm]||0),gold=(FC.fwd.gold[i]||0)+(shock.gold||0);
+   let e=p.base*p.vol[i]*(1+p.beta*pr/100)*(1+(p.gbeta||0)*gold/100)*(1+FC.fxBeta*fx/100);e=Math.max(0,e);subs[p.id].push(e);g+=e;});
+  group.push(g);}
+ const fy25=group.slice(0,4).reduce((a,b)=>a+b,0),fy26=group.slice(4).reduce((a,b)=>a+b,0);
+ const be=FC.belowEbitda,ded=be.taxInt+be.workingCap+be.sustaining,fcf25=fy25-ded;
+ const fund=Math.max(0,FC.growthCapexFY25-(fcf25-FC.divBase));
+ return {group,subs,fy25,fy26,fcf25,cover:fcf25/FC.divBase,fund,nd:(FC.netDebt0+fund)/fy25};}
+const fcBand=i=>1.28*FC.volQ*Math.sqrt(i+1);
+const FCBASE=fcCompute();
+const FY25LO=FCBASE.group.slice(0,4).reduce((a,v,i)=>a+v*(1-fcBand(i)),0),FY25HI=FCBASE.group.slice(0,4).reduce((a,v,i)=>a+v*(1+fcBand(i)),0);
+function fanChart(){const s=document.getElementById('fan');if(!s)return;s.innerHTML='';
+ const x0=56,x1=968,y0=384,y1=42,ymax=15,H=FC.histQ,G=FCBASE.group,N=H.length+G.length;
+ const px=i=>x0+(x1-x0)*i/(N-1),py=v=>y0-(y0-y1)*v/ymax;
+ for(let g=0;g<=14;g+=2){const y=py(g);E(s,'line',{x1:x0,y1:y,x2:x1,y2:y,stroke:'#E7DFCF'});E(s,'text',{x:x0-8,y:y+4,'text-anchor':'end','font-size':11,fill:'#A39B8C'},'Rp '+g);}
+ const hx=px(H.length-1);E(s,'line',{x1:hx,y1:y1-6,x2:hx,y2:y0,stroke:'#8A8275','stroke-dasharray':'3 4'});E(s,'text',{x:hx,y:y1-12,'text-anchor':'middle','font-size':10,fill:'#6B655B'},'now');
+ // P10–P90 band
+ let band='';G.forEach((v,i)=>{band+=(i?'L':'M')+px(H.length+i).toFixed(1)+' '+py(v*(1+fcBand(i))).toFixed(1)+' ';});
+ for(let i=G.length-1;i>=0;i--)band+='L'+px(H.length+i).toFixed(1)+' '+py(G[i]*(1-fcBand(i))).toFixed(1)+' ';
+ E(s,'path',{d:band+'Z',fill:'#9C6644',opacity:.13});
+ E(s,'text',{x:px(N-1)+4,y:py(G[G.length-1]*(1+fcBand(G.length-1))),'font-size':9.5,fill:'#9C6644'},'P90');
+ E(s,'text',{x:px(N-1)+4,y:py(G[G.length-1]*(1-fcBand(G.length-1)))+8,'font-size':9.5,fill:'#9C6644'},'P10');
+ // plan pace (RKAP ÷ 4, per year)
+ [[0,4,FC.planFY25],[4,8,FC.planFY26]].forEach(([a,b,pl])=>{const y=py(pl/4);E(s,'line',{x1:px(H.length+a),y1:y,x2:px(H.length+b-1),y2:y,stroke:'#A9842F','stroke-dasharray':'5 4',opacity:.6});E(s,'text',{x:px(H.length+b-1),y:y-6,'text-anchor':'end','font-size':10,fill:'#A9842F'},'RKAP '+pl);});
+ // history + median
+ let dh='';H.forEach((v,i)=>dh+=(i?'L':'M')+px(i).toFixed(1)+' '+py(v).toFixed(1)+' ');E(s,'path',{d:dh,fill:'none',stroke:'#211C16','stroke-width':2.4});
+ let dm='M'+px(H.length-1)+' '+py(H[H.length-1])+' ';G.forEach((v,i)=>dm+='L'+px(H.length+i).toFixed(1)+' '+py(v).toFixed(1)+' ');
+ E(s,'path',{d:dm,fill:'none',stroke:'#9C6644','stroke-width':2.2,'stroke-dasharray':'6 4'});
+ G.forEach((v,i)=>E(s,'circle',{cx:px(H.length+i),cy:py(v),r:2.6,fill:'#9C6644'}));
+ ['Q1-24','Q2-24','Q3-24','Q4-24'].concat(FC.quarters).forEach((q,i)=>E(s,'text',{x:px(i),y:y0+20,'text-anchor':'middle','font-size':9.5,fill:'#A39B8C'},q));
+ E(s,'text',{x:x0,y:y1-12,'font-size':11,fill:'#6B655B'},'actual ▬ · P50 forecast ┄ · band = P10–P90 · driver-based (forward curves × volume plans × FM ramp)');
+ const gap=(FCBASE.fy25-FC.planFY25)/FC.planFY25*100;
+ document.getElementById('fanread').innerHTML=`FY25 is heading to <b>Rp ${FCBASE.fy25.toFixed(1)}T</b> (P10–P90 <b>${FY25LO.toFixed(0)}–${FY25HI.toFixed(0)}</b>) vs RKAP ${FC.planFY25.toFixed(0)} — <b>${gap.toFixed(0)}% below plan before results land</b>, on soft coal and the Grasberg Q4 dip. FY26 P50 <b>Rp ${FCBASE.fy26.toFixed(1)}T</b>: the mud-rush trough in H1, recovering through the ramp.`;}
+function fcKpis(){const el=document.getElementById('fckpis');if(!el)return;const g25=(FCBASE.fy25-FC.planFY25)/FC.planFY25*100,g26=(FCBASE.fy26-FC.planFY26)/FC.planFY26*100;
+ const card=(l,v,u,base,vr,n)=>`<div class="kpi"><div class="l">${l}</div>${vr!=null?`<div class="var ${vr>=0?'up':'down'}">${vr>=0?'▲ +':'▼ '}${Math.abs(vr).toFixed(0)}%</div>`:''}<div class="act" style="font-size:26px">${v}<small> ${u}</small></div><div class="base">${base}</div><div class="note" style="margin-top:6px">${n}</div></div>`;
+ el.innerHTML=card('FY25 EBITDA · P50','Rp '+FCBASE.fy25.toFixed(1),'T','vs RKAP '+FC.planFY25.toFixed(0),g25,'P10–P90: Rp '+FY25LO.toFixed(0)+'–'+FY25HI.toFixed(0)+'T.')
+  +card('FY26 EBITDA · P50','Rp '+FCBASE.fy26.toFixed(1),'T','vs RKAP '+FC.planFY26.toFixed(0),g26,'Mud-rush trough, then the ramp recovers.')
+  +card('FY25 FCF · P50','Rp '+FCBASE.fcf25.toFixed(1),'T','post-sustaining',null,'EBITDA less tax, WC & sustaining capex.')
+  +card('Dividend cover',FCBASE.cover.toFixed(1)+'×','','on Rp '+FC.divBase.toFixed(0)+'T payout',null,'P10 cover '+((FY25LO-21.5)/FC.divBase).toFixed(1)+'× — anchor the payout there.')
+  +card('Funding need','Rp '+FCBASE.fund.toFixed(1),'T','for Rp '+FC.growthCapexFY25.toFixed(0)+'T growth capex',null,'P10 need Rp '+Math.max(0,FC.growthCapexFY25-((FY25LO-21.5)-FC.divBase)).toFixed(1)+'T — pre-arrange the facility.');}
+function nowcastRender(){const el=document.getElementById('nowcast');if(!el)return;
+ const cmmap={coal:['coalhba','coalnew'],nickel:['nickel','nickelore'],copper:['copper'],gold:['gold'],alu:['alu','alumina'],tin:['tin']};
+ el.innerHTML=FC.paths.map(p=>{const ids=cmmap[p.cm]||[];let d=0;ids.forEach(id=>{const c=COMMOD.find(x=>x.id===id);if(c)d+=c.d;});d/=(ids.length||1);
+  let gold=0;if(p.gbeta){const g=COMMOD.find(x=>x.id==='gold');gold=g?g.d:0;}
+  const pct=p.beta*d+(p.gbeta||0)*gold,s=SUBS.find(x=>x.id===p.id),fm=p.vol[0]<0.95,col=fm?'#A4543C':pct<-1?'#A4543C':pct<0.5?'#A9842F':'#5E7350';
+  return `<div class="ncrow"><span class="ncnm">${s.nm}</span><span class="ncv" style="color:${col}">${pct>=0?'+':''}${pct.toFixed(1)}%</span><span class="ncd">${fm?'volume risk · force majeure':'price-driven · β '+p.beta.toFixed(1)+' × '+p.cm}</span></div>`;}).join('')
+  +`<div class="sec2" style="margin-top:6px">QTD EBITDA drift vs plan, from live ticker marks × driver betas — before any results land.</div>`;}
+function fundTiles(){const el=document.getElementById('fundtiles');if(!el)return;const lo=FY25LO-21.5;
+ const t=(l,v,c)=>`<div class="pdstat"><div class="pl2">${l}</div><div class="pv"${c?` style="color:${c}"`:''}>${v}</div></div>`;
+ el.innerHTML=t('FCF · P50 / P10','Rp '+FCBASE.fcf25.toFixed(1)+' / '+lo.toFixed(1)+'T')
+  +t('Cover · P50 / P10',FCBASE.cover.toFixed(1)+'× / '+(lo/FC.divBase).toFixed(1)+'×',(lo/FC.divBase)<1.2?'#A4543C':'#5E7350')
+  +t('Funding need · P50','Rp '+FCBASE.fund.toFixed(1)+'T')
+  +t('… at P10','Rp '+Math.max(0,FC.growthCapexFY25-(lo-FC.divBase)).toFixed(1)+'T','#A9842F')
+  +t('Net debt / EBITDA',FCBASE.nd.toFixed(2)+'×')
+  +t('Headroom to 2.0×','Rp '+((2.0*FCBASE.fy25)-FC.netDebt0-FCBASE.fund).toFixed(0)+'T','#5E7350');}
+
+/* ═══ STAGE 3 · STRESS ENGINE — correlated shock library on the forecast baseline ═══ */
+let selScen='china';
+function scenCompute(sc){const r=fcCompute(sc.sh);return {...r,ear:FCBASE.fy25-r.fy25};}
+function scenRag(r){return r.cover<1?'red':(r.cover<1.5||r.nd>1.2)?'amber':'green';}
+function stressRender(){const tbl=document.getElementById('scentbl');if(!tbl)return;
+ const rows=[`<tr><td class="l" style="text-align:left"><b>Baseline</b><div class="sec2">forward curves, no shock</div></td><td><span class="big">Rp ${FCBASE.fy25.toFixed(1)}</span></td><td><span class="pl">—</span></td><td><span class="big">${FCBASE.cover.toFixed(1)}×</span></td><td><span class="big">${FCBASE.nd.toFixed(2)}×</span></td><td><span class="rag green">✓</span></td></tr>`]
+ .concat(TOWER.scenarios.map(sc=>{const r=scenCompute(sc),rag=scenRag(r),up=r.ear<0;
+  return `<tr data-id="${sc.id}" class="${sc.id===selScen?'sel':''}"><td class="l" style="text-align:left;cursor:pointer"><b>${sc.nm}</b><div class="sec2">${sc.sub||''}</div></td><td><span class="big">Rp ${r.fy25.toFixed(1)}</span></td><td><span class="evval ${up?'vpos':'vneg'}">${up?'+':'−'}Rp ${Math.abs(r.ear).toFixed(1)}T</span></td><td><span class="big" style="color:${r.cover<1?'#A4543C':r.cover<1.5?'#A9842F':'#5E7350'}">${r.cover.toFixed(1)}×</span></td><td><span class="big" style="color:${r.nd>1.2?'#A9842F':'#5E7350'}">${r.nd.toFixed(2)}×</span></td><td><span class="rag ${rag}">${rag==='green'?'✓':rag==='amber'?'!':'▲'}</span></td></tr>`;}));
+ tbl.innerHTML=`<thead><tr><th class="l">Scenario</th><th>FY25 EBITDA</th><th>EBITDA-at-risk</th><th>Div cover</th><th>ND/EBITDA</th><th>RAG</th></tr></thead><tbody>${rows.join('')}</tbody>`;
+ [...tbl.querySelectorAll('tr[data-id]')].forEach(tr=>tr.onclick=()=>{selScen=tr.dataset.id;stressRender();});
+ scenBreakdown();}
+function scenBreakdown(){const s=document.getElementById('scenbrk');if(!s)return;s.innerHTML='';
+ const sc=TOWER.scenarios.find(x=>x.id===selScen),r=scenCompute(sc);
+ document.getElementById('scenbrkh').innerHTML=`${sc.nm} <span class="cs" style="display:inline">· FY25 Δ vs baseline, by company</span>`;
+ const del=FC.paths.map(p=>({id:p.id,nm:SUBS.find(x=>x.id===p.id).nm,d:r.subs[p.id].slice(0,4).reduce((a,b)=>a+b,0)-FCBASE.subs[p.id].slice(0,4).reduce((a,b)=>a+b,0)})).sort((a,b)=>a.d-b.d);
+ const mx=Math.max(...del.map(x=>Math.abs(x.d)),0.4),x0=150,x1=380,zx=x0+(x1-x0)*0.72,band=(230-30)/del.length;
+ del.forEach((d,i)=>{const cy=36+band*i,w=Math.abs(d.d)/mx*(zx-x0)*0.9,neg=d.d<0;
+  E(s,'text',{x:8,y:cy+4,'font-size':11,'font-weight':600,fill:'#211C16'},d.nm.split(' ')[0]);
+  E(s,'rect',{x:neg?zx-w:zx,y:cy-8,width:Math.max(w,1.5),height:16,rx:3,fill:neg?'#A4543C':'#5E7350',opacity:.85});
+  E(s,'text',{x:neg?zx-w-6:zx+w+6,y:cy+4,'text-anchor':neg?'end':'start','font-size':10.5,'font-weight':700,fill:neg?'#A4543C':'#5E7350'},(d.d>=0?'+':'−')+Math.abs(d.d).toFixed(1));});
+ E(s,'line',{x1:zx,y1:22,x2:zx,y2:242,stroke:'#CBC2B0'});
+ const worst=del.filter(x=>x.d<0),tot=worst.reduce((a,x)=>a+x.d,0),top3=worst.slice(0,3).reduce((a,x)=>a+x.d,0);
+ document.getElementById('scenread').innerHTML=worst.length>1
+  ?`<b>${worst.slice(0,3).map(x=>x.nm.split(' ')[0]).join(', ')}</b> move together — Rp ${Math.abs(top3).toFixed(1)}T of the Rp ${Math.abs(tot).toFixed(1)}T hit (${Math.round(top3/tot*100)}%). <b>Correlation, not any single asset, is the risk.</b> Dividend cover ${r.cover.toFixed(1)}× ${r.cover>=1?'holds':'breaks'}.`
+  :`Concentrated in <b>${(worst[0]||del[0]).nm}</b>. Dividend cover ${r.cover.toFixed(1)}× ${r.cover>=1?'holds':'breaks'}.`;}
+
+/* ═══ STAGE 4 · ALLOCATE ENGINE — ranked moves vs hurdle rates + decision log ═══ */
+const AL=TOWER.allocate;let alScen='base';
+function allocRank(){const base=alScen==='base'?FCBASE:scenCompute(TOWER.scenarios.find(s=>s.id===alScen));
+ const stressed=base.cover<1.6,upside=base.cover>2.0;
+ const ranked=AL.options.map(o=>{let score,why;
+  if(o.type==='reinvest'||o.type==='fix'){const sp=o.irr-o.hurdle;score=sp*o.capital/10+(o.type==='fix'?-0.4:0)+(stressed?-1.1:0);
+   why=sp>0?`IRR ${o.irr}% vs hurdle ${o.hurdle}% → <b>+Rp ${(sp*o.capital/100).toFixed(2)}T/yr</b> economic profit on Rp ${o.capital}T${stressed?' · deprioritised while cover is thin':''}`:`IRR ${o.irr}% is <b>below the ${o.hurdle}% hurdle</b> — finish-vs-pause, don't reinforce`;}
+  else if(o.type==='deleverage'){score=0.4+(stressed?1.8:0);why=`saves ~Rp 0.35T/yr interest · leverage ${base.nd.toFixed(2)}×${stressed?' · <b>first claim when cover thins</b>':' · optional at current cover'}`;}
+  else{score=upside?0.9:stressed?-1.6:0.1;why=stressed?`cover ${base.cover.toFixed(1)}× — <b>defer the step-up</b>, protect the base payout`:`affordable at ${base.cover.toFixed(1)}× cover · meets the State's expectation`;}
+  return {...o,score,why};}).sort((a,b)=>b.score-a.score);
+ return {ranked,base};}
+function allocRender(){const el=document.getElementById('ranked');if(!el)return;const {ranked,base}=allocRank();
+ document.getElementById('alcap').innerHTML=`Discretionary capital ≈ <b>Rp ${Math.max(0,base.fcf25-FC.divBase-FC.growthCapexFY25+10).toFixed(0)}–${(base.fcf25-FC.divBase-FC.growthCapexFY25+15).toFixed(0)}T</b> (FCF Rp ${base.fcf25.toFixed(1)}T − dividend − committed build, + debt headroom) · cover <b>${base.cover.toFixed(1)}×</b>`;
+ el.innerHTML=ranked.map((o,i)=>`<div class="rkc${i===0?' top':''}"><span class="rkn">${i+1}</span><div style="flex:1"><div class="rkt">${o.nm}</div><div class="rkw">${o.why}</div><div class="sec2" style="margin-top:3px">${o.co} · Rp ${o.capital}T</div></div><span class="rktype ty-${o.type}">${o.type}</span></div>`).join('');
+ [...document.querySelectorAll('#alsel button')].forEach(b=>b.classList.toggle('on',b.dataset.s===alScen));}
+{const sel=document.getElementById('alsel');if(sel)[...sel.children].forEach(b=>b.onclick=()=>{alScen=b.dataset.s;allocRender();});}
+const DSTAT=['PROPOSED','APPROVED','IN PROGRESS','DONE'],DCOLS=['#A9842F','#7C766B','#9C6644','#5E7350'];
+function decLog(){const el=document.getElementById('declog');if(!el)return;
+ let saved={};try{saved=JSON.parse(localStorage.getItem('mindid_decisions')||'{}');}catch(e){}
+ el.innerHTML=TOWER.decisions.map((d,i)=>{const st=saved[i]!=null?saved[i]:d.st,c=DCOLS[st];
+  return `<div class="dlrow"><div class="dlmv">${d.mv}<small>${d.own} · from ${d.src} · due ${d.due}</small></div><button class="dlst" data-i="${i}" data-st="${st}" style="color:${c};border-color:${c}">${DSTAT[st]}</button></div>`;}).join('')
+  +`<div class="sec2" style="margin-top:8px">Every prescription carries an owner and a status — click to advance. Persisted locally in the demo.</div>`;
+ [...el.querySelectorAll('.dlst')].forEach(b=>b.onclick=()=>{const i=+b.dataset.i,st=(+b.dataset.st+1)%4;
+  let sv={};try{sv=JSON.parse(localStorage.getItem('mindid_decisions')||'{}');}catch(e){}
+  sv[i]=st;try{localStorage.setItem('mindid_decisions',JSON.stringify(sv));}catch(e){}
+  decLog();});}
+
+/* ═══ EXCEPTION ENGINE — thresholds computed over the data layer ═══ */
+function computeAlerts(){const A=[],T=TOWER;
+ const ek=T.kpi.find(k=>k.l==='EBITDA');if(ek){const v=(ek.a-ek.p)/ek.p*100;if(v<=-8)A.push({s:'r',t:'financials',m:`EBITDA <b>${v.toFixed(0)}%</b> vs RKAP`,r:'Δplan ≤ −8%'});else if(v<=-4)A.push({s:'a',t:'financials',m:`EBITDA <b>${v.toFixed(0)}%</b> vs RKAP`,r:'Δplan ≤ −4%'});}
+ const fgap=(FCBASE.fy25-FC.planFY25)/FC.planFY25*100;if(fgap<=-5)A.push({s:'a',t:'forecast',m:`FY25 heading <b>Rp ${FCBASE.fy25.toFixed(0)}T · ${fgap.toFixed(0)}%</b> vs RKAP`,r:'nowcast ≤ −5%'});
+ T.proj.filter(p=>p.cpi<0.9||p.spi<0.9).forEach(p=>A.push({s:'r',t:'projects',m:`<b>${p.nm}</b> · CPI ${p.cpi.toFixed(2)} / SPI ${p.spi.toFixed(2)}`,r:'CPI∨SPI < 0.90'}));
+ const vac=T.proj.reduce((a,p)=>a+p.budget-p.eac,0);if(vac<0)A.push({s:'a',t:'projects',m:`Portfolio EAC <b>+Rp ${(-vac).toFixed(1)}T</b> over sanction`,r:'VAC < 0'});
+ T.ops.forEach(o=>{const s=T.subs.find(x=>x.id===o.id);
+  if(o.ost==='fm')A.push({s:'r',t:'ops',m:`<b>${s.nm}</b> under force majeure`,r:'status = FM'});
+  else if(o.deliver<90)A.push({s:'a',t:'ops',m:`<b>${s.nm}</b> output ${o.deliver}% of plan`,r:'output < 90%'});
+  if(o.ltifr>0.6)A.push({s:'a',t:'ops',m:`<b>${s.nm}</b> LTIFR ${o.ltifr.toFixed(2)} ▲`,r:'LTIFR > 0.60'});
+  if(o.life!=null&&o.life<15)A.push({s:'a',t:'ops',m:`<b>${s.nm}</b> reserve life ${o.life} yr`,r:'life < 15 yr'});});
+ const nd=T.ckpi.find(k=>k.l==='Net debt / EBITDA');if(nd&&nd.a>nd.p)A.push({s:'a',t:'capital',m:`Leverage <b>${nd.a.toFixed(1)}×</b> · up from ${nd.p.toFixed(1)}×`,r:'ND/EBITDA ↑'});
+ return A.sort((x,y)=>(x.s==='r'?0:1)-(y.s==='r'?0:1));}
+function renderAlerts(){const el=document.getElementById('alerts');if(!el)return;const A=computeAlerts();
+ el.innerHTML=A.map(a=>`<span class="alert ${a.s}" data-t="${a.t}">${a.s==='r'?'▲':'!'}&nbsp;${a.m}&nbsp;<span class="rule">${a.r}</span></span>`).join('');
+ [...el.querySelectorAll('.alert')].forEach(x=>x.onclick=()=>show(x.dataset.t));
+ const kx=document.getElementById('alertkx');if(kx)kx.textContent=A.length+'⚠';
+ const sub=document.getElementById('alertsub');if(sub)sub.textContent=`· ${A.filter(a=>a.s==='r').length} escalations · ${A.filter(a=>a.s==='a').length} watch · thresholds on the data layer · as of ${TOWER.meta.asOf}`;
+ const fk=document.getElementById('fckx');if(fk){const g=(FCBASE.fy25-FC.planFY25)/FC.planFY25*100;fk.textContent=(g>0?'+':'')+g.toFixed(0)+'%';}}
+document.getElementById('railft').innerHTML=`${TOWER.meta.period}<br><span class="ai">◇ AI Chief of Staff</span> <span id="aibadge"></span><br><span class="pill">as of ${TOWER.meta.asOf}</span><br><span style="font-size:8.5px;opacity:.85">${TOWER.meta.source} · ${TOWER.meta.version}</span>`;
+
 /* view switching */
-const TITLES={overview:['Overview','State of the portfolio'],financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],capital:['Capital allocation','Where cash is generated & deployed — and whether it earns its cost of capital'],ops:['Operations','Output, safety, mine life & the build — across operating companies'],projects:['Capital projects','Strategic megaproject delivery — cost, schedule, benefit & risk'],outlook:['Outlook','Forward risks & scenario copilot'],act:['Act','The recommended moves']};
+const TITLES={overview:['Overview','State of the portfolio'],financials:['Financial performance','Group results & per-subsidiary attribution vs RKAP'],capital:['Capital allocation','Where cash is generated & deployed — and whether it earns its cost of capital'],ops:['Operations','Output, safety, mine life & the build — across operating companies'],projects:['Capital projects','Strategic megaproject delivery — cost, schedule, benefit & risk'],forecast:['Forecast','Where FY25–26 are heading before results land — driver-based · P10–P90'],stress:['Stress test','Correlated shocks through EBITDA, dividend cover & leverage'],allocate:['Allocate','The ranked capital moves — and the decision log that tracks them'],outlook:['Outlook','Forward risks & scenario copilot']};
 let drawn={};
 function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById('v-'+v).classList.add('on');
  document.querySelectorAll('.item[data-v]').forEach(i=>i.classList.toggle('on',i.dataset.v===v));
  document.getElementById('vt').textContent=TITLES[v][0];document.getElementById('vc').textContent=TITLES[v][1];
  try{history.replaceState(null,'','#'+v);}catch(e){}
  // render charts lazily (need layout, so after display)
- requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capInsight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();opsHealth();opsBuild();opsInsight();drawn.ops=1;}if(v==='projects'&&!drawn.proj){projTotals();projCards();projMap();drawn.proj=1;}});
+ requestAnimationFrame(()=>{if(v==='financials'&&!drawn.fin){wf('driver');drawn.fin=1;}if(v==='capital'&&!drawn.cap){drawWaterfall(CAPALLOC,46);returnsMini();histRender();capCopilot.insight();drawn.cap=1;}if(v==='ops'&&!drawn.ops){opsScorecard();opsHealth();opsBuild();opsCopilot.insight();drawn.ops=1;}if(v==='projects'&&!drawn.proj){projTotals();projCards();projMap();drawn.proj=1;}if(v==='forecast'&&!drawn.fc){fcKpis();fanChart();nowcastRender();fundTiles();drawn.fc=1;}if(v==='stress'&&!drawn.st){stressRender();drawn.st=1;}if(v==='allocate'&&!drawn.al){allocRender();decLog();drawn.al=1;}});
 }
 document.querySelectorAll('.item[data-v]').forEach(i=>i.onclick=()=>show(i.dataset.v));
 document.querySelectorAll('[data-jump]').forEach(a=>a.onclick=()=>show(a.dataset.jump));
 /* deep-link router: honour #hash on load + back/forward (old links use #operations/#ops) */
-const HASHALIAS={operations:'ops',financial:'financials',subsidiaries:'financials',subs:'financials',performance:'financials'};
+const HASHALIAS={operations:'ops',financial:'financials',subsidiaries:'financials',subs:'financials',performance:'financials',act:'allocate'};
 function fromHash(){let h=(location.hash||'').replace('#','');h=HASHALIAS[h]||h;if(TITLES[h])show(h);}
-fromHash();window.addEventListener('hashchange',fromHash);
+renderAlerts();fromHash();window.addEventListener('hashchange',fromHash);
 </script></body></html>

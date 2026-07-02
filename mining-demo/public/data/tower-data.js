@@ -115,4 +115,53 @@ window.TOWER={
  timahtsl:{type:'smelter',x:126.1,y:90.6,place:'Bangka Island',epc:'Metso Outotec',escore:4.2},
  battery:{type:'downstream',x:302.6,y:99.1,place:'Morowali, C. Sulawesi',epc:'CATL consortium',escore:3.3},
 },
+
+ /* ── Stage 2 · FORECAST — driver-based projection inputs (transparent model, no ML) ── */
+ forecast:{
+  planFY25:44.0, planFY26:47.0,                       // RKAP EBITDA plans
+  histQ:[12.2,10.8,9.3,8.2],                          // FY24 actual quarterly EBITDA
+  quarters:['Q1-25','Q2-25','Q3-25','Q4-25','Q1-26','Q2-26','Q3-26','Q4-26'],
+  // commodity forward paths — % vs FY24 exit price, per quarter (fx: + = weaker IDR)
+  fwd:{coal:[-2,-4,-5,-6,-6,-5,-4,-3],nickel:[1,3,5,7,9,10,11,12],copper:[2,4,6,8,9,10,11,12],gold:[3,5,6,7,7,8,8,9],alu:[1,2,3,4,5,5,6,6],tin:[0,1,2,3,3,4,4,5],fx:[1,2,2,3,3,4,4,4]},
+  // per-subsidiary quarterly EBITDA base (FY24 avg, Rp T) · price beta · gold beta · volume path (Grasberg FM profile in ptfi)
+  paths:[
+   {id:'ptfi',base:5.33,cm:'copper',beta:1.5,gbeta:0.4,vol:[0.99,0.97,0.92,0.84,0.68,0.74,0.84,0.94]},
+   {id:'ptba',base:1.85,cm:'coal',beta:2.2,gbeta:0,vol:[1.00,1.00,1.01,1.01,1.02,1.02,1.02,1.02]},
+   {id:'antam',base:1.63,cm:'nickel',beta:1.8,gbeta:0.5,vol:[0.97,0.97,0.98,0.99,1.00,1.02,1.04,1.05]},
+   {id:'inalum',base:1.00,cm:'alu',beta:1.4,gbeta:0,vol:[1.04,1.07,1.10,1.13,1.16,1.20,1.24,1.28]},
+   {id:'timah',base:0.33,cm:'tin',beta:1.5,gbeta:0,vol:[1.02,1.03,1.03,1.04,1.04,1.05,1.05,1.06]},
+  ],
+  fxBeta:0.25, volQ:0.045,                            // FX sensitivity · quarterly vol for the P10/P90 band
+  belowEbitda:{taxInt:9.0,workingCap:1.0,sustaining:11.5}, // annual, to derive FCF
+  divBase:9.0, growthCapexFY25:10.0, netDebt0:32.4,
+ },
+ /* ── Stage 3 · STRESS — correlated shock library (applied on top of forward curves) ── */
+ scenarios:[
+  {id:'coalcrash',nm:'Coal downturn',sub:'HBA/ICI −25%',sh:{coal:-25}},
+  {id:'nickelglut',nm:'Nickel glut',sub:'LME −30% on supply wave',sh:{nickel:-30}},
+  {id:'china',nm:'China slowdown',sub:'correlated demand shock',sh:{coal:-25,nickel:-20,copper:-15,alu:-12,tin:-10,fx:5}},
+  {id:'idr',nm:'IDR shock',sub:'rupiah −12% (exporters partly hedge)',sh:{fx:12,coal:-5}},
+  {id:'goldspike',nm:'Gold +20%',sub:'upside · safe-haven bid',sh:{gold:20,copper:5}},
+  {id:'combined',nm:'Combined downside',sub:'China + credit + energy, correlated',sh:{coal:-30,nickel:-25,copper:-20,alu:-15,tin:-15,gold:8,fx:10}},
+ ],
+ /* ── Stage 4 · ALLOCATE — capital-move options vs hurdle rates ── */
+ allocate:{
+  costOfDebt:7.0, comfortLeverage:2.0,
+  options:[
+   {id:'sgar2',nm:'Fund SGAR alumina Ph.2 (FID)',type:'reinvest',capital:8,irr:13,hurdle:9.5,co:'Inalum/Antam',note:'import substitution; FEED done, FID-ready'},
+   {id:'battery',nm:'Battery / HPAL JV top-up',type:'reinvest',capital:6,irr:15,hurdle:11,co:'MIND ID JV',note:'EV-chain optionality; partner & offtake gated'},
+   {id:'halmahera',nm:'Halmahera completion capital',type:'fix',capital:2.5,irr:8,hurdle:11,co:'Antam',note:'finish-vs-pause; Rp 8T sunk, IRR below hurdle'},
+   {id:'debt',nm:'Repay the Rp 5T revolver draw',type:'deleverage',capital:5,irr:7,hurdle:7,co:'Holding',note:'saves ~Rp 0.35T/yr interest; protects dividend cover'},
+   {id:'divup',nm:'Dividend step-up (+Rp 2T)',type:'return',capital:2,irr:0,hurdle:0,co:'to State',note:'meets State expectation; consumes downside buffer'},
+  ],
+ },
+ /* ── Decision log — prescriptions become tracked actions (closes the loop) ── */
+ decisions:[
+  {mv:'Hedge 40% of FY25 seaborne coal price',own:'Group Treasury',src:'Stress · coal downturn',due:'Q3-25',st:1},
+  {mv:'Anchor FY25 dividend at the P10 cash floor',own:'CFO · Investment Committee',src:'Forecast · funding need',due:'Q3-25',st:0},
+  {mv:'Pre-position Grasberg contingency before dividend cycle',own:'PMO · PTFI',src:'Operations · force majeure',due:'now',st:2},
+  {mv:'Halmahera finish-vs-pause review to the IC',own:'Investment Committee',src:'Projects · CPI/SPI breach',due:'Q3-25',st:0},
+  {mv:'FID decision — SGAR alumina Ph.2',own:'BOD',src:'Allocate · ranked #1 move',due:'Q4-25',st:0},
+  {mv:'Engage ESDM on PP19/2025 royalty & DMO mix',own:'Gov Relations',src:'Financials · cost step-up',due:'H2-25',st:1},
+ ],
 };
